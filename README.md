@@ -1,54 +1,41 @@
-# React + TypeScript + Vite
+# Interconnectedness
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interconnectedness is a general-purpose idea tracking tool that helps users organize thoughts, concepts, and hierarchies using a visual, node-based layout. It combines the flexibility of a mind map with the structure of a non-linear document builder, enabling users to explore and manage their ideas intuitively.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Node Creation**: Create nodes (ideas) and link them to a parent or other ideas to build a network of interconnected thoughts.
+- **Zoom and Explore**: Double-click on a node to zoom in and treat it as the current "root," allowing focused exploration of ideas.
+- **Tree Navigation**: Navigate back up the hierarchy using the Back button for seamless movement between ideas.
+- **Add New Ideas**: Use the plus icon on the left to quickly add new ideas and expand your network.
 
-## Expanding the ESLint configuration
+## Building and Running the Project Locally
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+To build and run the project locally, follow these steps:
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/Africk-Hunter/Interconnectedness.git
+    ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Install the dependencies:
+    ```sh
+    npm install
+    ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+3. Create a `.env` file in the root directory and add your Firebase configuration:
+    ```env
+    REACT_APP_FIREBASE_API_KEY=your-api-key
+    REACT_APP_FIREBASE_AUTH_DOMAIN=your-auth-domain
+    REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+    REACT_APP_FIREBASE_STORAGE_BUCKET=your-storage-bucket
+    REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+    REACT_APP_FIREBASE_APP_ID=your-app-id
+    ```
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+4. Start the development server:
+    ```sh
+    npm run dev
+    ```
+
+5. Open [http://localhost:5173](http://localhost:5173) to view the app in the browser.

@@ -1,0 +1,103 @@
+.ideaPage {
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    width: calc(100% - 4rem);
+    height: calc(100vh - 5rem); 
+    margin: 2rem; 
+}
+
+.navbar {
+    display: flex;
+    flex-direction: column;
+    align-items: start; 
+    justify-content: space-between;
+    width: 20%;
+    height: 25%;
+}
+
+.navButton{
+    padding: 0.5rem;
+    aspect-ratio: 1 / 1;
+
+    &.navImg{
+        width: 100%;
+        height: 75%;
+    }
+
+}
+
+.logoButton{
+    width: 5.625rem;
+    height: 5.625rem;
+    background: $neutral;
+}
+
+.createIdea{
+    width: 3.75rem;
+    height: 3.75rem;
+    background: $leaf;
+}
+
+.help{
+    width: 2.5rem;
+    height: 2.5rem;
+    background: $neutral;
+}
+
+.ideaSpace{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    
+    height: 100%;
+    margin-right: 20%;
+    gap: 3.5rem;
+}
+
+.ideaRoot{
+    margin-top: calc(25% - 10.75rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14.75rem;
+    height: 7.25rem;
+    font-size: 3.125rem;
+    background: $roots;
+}
+
+.ideaNodes{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: 5rem;
+}
+
+.ideaNode{
+    display: flex;
+    align-items: center;
+    background: $leaf;
+    width: 12.75rem;
+    min-height: 4.625rem;
+    height: fit-content;
+    margin: 0.5rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    
+
+    &.parent{
+        background: $sky;
+        font-size: 1.875rem;
+        text-align: center;
+        justify-content: center;
+        padding: 1rem 1rem;
+    }
+
+    &.leaf{
+        background: $leaf;
+        font-size: 1.5rem;
+        text-align: left;
+    }
+}
