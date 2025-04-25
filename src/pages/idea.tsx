@@ -13,13 +13,9 @@ function Idea() {
                     <div className="ideaRoot neobrutal-button">Songs</div>
                     <button className="back neobrutal-button">Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
                 </section>
-{/*                 <section className="backHolder">
-                    <button className="back neobrutal-button">Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
-                </section> */}
             </section>
             <section className="bottom">
                 <main className="ideaSpace">
-
                     <section className='ideaNodes'>
                         <div className="ideaNode neobrutal-button parent">Re:Genesis</div>
                         <div className="ideaNode neobrutal-button leaf">An instrumental track that changes tempo mid song. The BPM and drum style change</div>
