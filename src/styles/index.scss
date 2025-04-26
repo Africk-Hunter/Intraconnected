@@ -38,8 +38,13 @@ body {
     }
 }
 
-.neobrutal-nonbutton {
-    cursor: pointer;
+.neobrutal-button:hover {
+    box-shadow: 0px 0px 0 2px black;
+    translate: 4px 4px;
+}
+
+.neobrutal-input {
+    cursor: text;
     border-radius: 5px;
     border: 2px solid black;
     transition: all 0.3s ease;
@@ -49,7 +54,7 @@ body {
     }
 }
 
-.neobrutal-nonbutton:focus {
+.neobrutal-input:focus {
     box-shadow: 4px 4px 0 2px black;
     background: $sky;
     color: black;

@@ -114,9 +114,9 @@ const Auth: React.FC = () => {
             <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
             <section className="authForm">
                 <section className="authInputs">
-                    <input type="text" className="input neobrutal-nonbutton" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <input type="password" className="input neobrutal-nonbutton" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <input type="password" className={`input neobrutal-nonbutton confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </section>
                 <button
                     className={`authSubmit neobrutal-button ${showConfirmPassword ? "register" : "login"}`}
