@@ -1,0 +1,148 @@
+.auth{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10rem;
+    gap: 5rem;
+    font-family: "DM Sans", sans-serif;
+
+    @media (min-width: $large-desktop) {
+        gap: 15rem;
+    }
+}
+
+.largeLogo{
+
+    @media (min-width: $large-desktop) {
+        scale: 1.5;
+    }
+}
+
+.authForm{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    @media (min-width: $large-desktop) {
+        scale: 1.5;
+    }
+}
+
+.authInputs{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;    
+}
+
+.input{
+    width: 26rem;
+    height: 2.5rem;
+    background: $neutral;
+    padding: 1rem;
+    font-size: 1.6rem;
+}
+
+.authSubmit{
+    width: 28rem;
+    height: 3.5rem;
+    font-size: 1.875rem;
+    margin-top: 3.5rem;
+    background: $leaf;
+    user-select: none;
+
+    &.login{
+        transform: translateY(-6.5rem);
+    }
+    &.register{
+        transform: translateY(0);
+    }
+
+    @media (min-width: $large-desktop) {
+        height: 4rem;
+    }
+}
+
+.switchAuth{
+    font-size: 1.25rem;
+    transition: all 0.3s ease;
+    user-select: none;
+
+    &.login{
+        transform: translateY(-6.5rem);
+    }
+    &.register{
+        transform: translateY(0);
+    }
+    
+}
+
+.switchAuthButton{
+    text-decoration: underline;
+    color: $neo-green;
+    cursor: pointer;
+}
+
+.confirmPassword {
+    opacity: 0; 
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease; 
+
+    &.visible {
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+
+    &.hidden {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+
+.messageBox {
+    position: absolute;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: .5s opacity;
+    font-weight: 500;
+    border-radius: 20px;
+    text-align: center;
+    bottom: 2rem;
+    width: 18rem;
+    height: 4rem;
+    font-size: 1rem;
+    padding: .25rem;
+
+
+    @media (min-width: $desktop) {
+        font-size: 1.5rem;
+        padding: .5rem;
+        bottom: 3rem;
+        right: 3rem;
+        min-width: 22rem;
+        height: 6rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        top: 4rem;
+        width: 30rem;
+        height: 8rem;
+        font-size: 2rem;
+        padding: 1.5rem;
+    }
+
+    &.bad {
+        background: $back;
+        opacity: 1;
+    }
+
+    &.good {
+        background: $leaf;
+        opacity: 1;
+    }
+}

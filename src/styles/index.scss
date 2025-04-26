@@ -1,6 +1,7 @@
 @import "./variables.scss";
 @import "./idea.scss";
 @import "./navbar.scss";
+@import "./auth.scss";
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 
@@ -8,8 +9,9 @@ body {
     background: $background-color;
     background-size: 40px 40px;
     background-image:
-        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px), 
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
         linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    font-family: "DM Sans", sans-serif;
 }
 
 .main {
@@ -19,7 +21,7 @@ body {
     width: 100%;
     min-height: 100vh;
     margin: 0;
-    font-family: "DM Sans", sans-serif;
+
 }
 
 .neobrutal-button {
@@ -36,7 +38,23 @@ body {
     }
 }
 
-.neobrutal-button:hover {
-    box-shadow: 0px 0px 0 2px black;
-    translate: 4px 4px;
+.neobrutal-nonbutton {
+    cursor: pointer;
+    border-radius: 5px;
+    border: 2px solid black;
+    transition: all 0.3s ease;
+
+    @media (min-width: $large-desktop) {
+        border: 2px solid black;
+    }
+}
+
+.neobrutal-nonbutton:focus {
+    box-shadow: 4px 4px 0 2px black;
+    background: $sky;
+    color: black;
+
+    &::placeholder {
+        color: black;
+    }
 }
