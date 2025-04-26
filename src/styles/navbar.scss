@@ -1,0 +1,54 @@
+.navbar {
+    display: flex;
+    
+    flex-direction: column;
+    align-items: start;
+    justify-content: space-between;
+    position: sticky;
+    width: 20%;
+    height: 25vh;
+    
+}
+
+.navButton {
+    padding: 0.5rem;
+    aspect-ratio: 1 / 1;
+
+    &.navImg {
+        width: 100%;
+        height: 75%;
+    }
+}
+
+.logoButton {
+    width: 5.625rem;
+    height: 5.625rem;
+    background: $neutral;
+
+    @media (min-width: $large-desktop) {
+        width: 7rem;
+        height: 7rem;
+    }
+}
+
+.createIdea {
+    width: 3.75rem;
+    height: 3.75rem;
+    background: $leaf;
+
+    @media (min-width: $large-desktop) {
+        width: 5.25rem;
+        height: 5.25rem;
+    }
+}
+
+.help {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: $neutral;
+
+    @media (min-width: $large-desktop) {
+        width: 4rem;
+        height: 4rem;
+    }
+}
