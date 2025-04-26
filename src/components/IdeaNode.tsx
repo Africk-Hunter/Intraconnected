@@ -1,9 +1,9 @@
 import React from 'react';
 
 interface IdeaNodeProps {
-    id: string;
+    id: number;
     title: string;
-    parentId?: string;
+    parentId: number;
     isLeaf: boolean;
     onAddChild: (parentId: string) => void;
     onDelete: (id: string) => void;

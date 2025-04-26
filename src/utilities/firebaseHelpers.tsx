@@ -1,0 +1,40 @@
+import { db, auth } from "../firebaseConfig";
+import { doc, setDoc, collection, getDocs, updateDoc, deleteDoc } from "firebase/firestore";
+
+
+export async function fetchIdeasFromFirebase() {
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("User is not authenticated");
+        return;
+    }
+
+    try {
+        const ideasCollection = collection(db, "users", user.uid, "ideas");
+        const ideasSnapshot = await getDocs(ideasCollection);
+        const ideasList = ideasSnapshot.docs.map(doc => ({ 
+            id: doc.data().id as number,
+            content: doc.data().content as string,
+            parentID: doc.data().parentID as number
+        }));
+        return ideasList;
+    } catch (error) {
+        console.error("Error fetching ideas:", error);
+    }
+}
+
+export async function addIdeaToFirebase(idea: { id: number; content: string; parentID: number }) {
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("User is not authenticated");
+        return;
+    }
+
+    try {
+        const ideasCollection = collection(db, "users", user.uid, "ideas");
+        await setDoc(doc(ideasCollection, idea.id.toString()), idea);
+    } catch (error) {
+        console.error("Error adding idea:", error);
+    }
+}
+

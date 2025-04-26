@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { auth } from "../firebaseConfig";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth";
 import AuthOptionMessage from "./AuthOptionMessage";
 
 const Auth: React.FC = () => {
@@ -13,8 +13,13 @@ const Auth: React.FC = () => {
     const [messageType, setMessageType] = useState("");
 
     useEffect(() => {
+        setPersistence(auth, browserLocalPersistence).catch((error) => {
+            console.error("Error setting persistence:", error);
+        });
+
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) {
+                console.log("Current user:  d", auth.currentUser);
                 window.location.href = '/';
             }
         });
