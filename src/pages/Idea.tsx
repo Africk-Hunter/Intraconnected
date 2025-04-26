@@ -25,6 +25,7 @@ function Idea() {
     const [rootName, setRootName] = useState("Ideas");
 
     useEffect(() => {
+
         setTimeout(() => {
             if (auth.currentUser) {
                 if (!initalFetch) {
@@ -32,7 +33,11 @@ function Idea() {
                         setInitialFetch(true);
                     });
                 }
-                setIdeas((prevIdeas) => [...prevIdeas, ...convertLocalStorageToDOM()]);
+                setTimeout(() => {
+                    const loadedIdeas = convertLocalStorageToDOM();
+                    setIdeas(loadedIdeas);
+                }, 500)
+                
             }
         }, 500);
 
@@ -43,7 +48,7 @@ function Idea() {
             <section className="top">
                 <Navbar />
                 <section className="rootHolder">
-                    <div className="ideaRoot neobrutal-button">{rootName}</div>
+                    <div className="ideaRoot neobrutal">{rootName}</div>
                     <button className="back neobrutal-button">Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
                 </section>
             </section>
