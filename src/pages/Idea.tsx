@@ -40,22 +40,35 @@ function Idea() {
     }, []);
 
     return (
-        <section className="ideaPage">
-            <section className="top">
-                <Navbar />
-                <section className="rootHolder">
-                    <div className="ideaRoot neobrutal">{rootName}</div>
-                    <button className="back neobrutal-button">Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
+        <>
+            <section className="ideaPage">
+                <section className="top">
+                    <Navbar />
+                    <section className="rootHolder">
+                        <div className="ideaRoot neobrutal">{rootName}</div>
+                        <button className="back neobrutal-button">Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
+                    </section>
+                </section>
+                <section className="bottom">
+                    <main className="ideaSpace">
+                        <section className='ideaNodes'>
+                            {ideas}
+                        </section>
+                    </main>
                 </section>
             </section>
-            <section className="bottom">
-                <main className="ideaSpace">
-                    <section className='ideaNodes'>
-                        {ideas}
+
+            <section className="overlay">
+                <div className="modal neobrutal">
+                    <textarea className="ideaContent neobrutal-input" placeholder='Whats your idea?'></textarea>
+                    <section className="modalButtons">
+                        <button className="modalButton cancel neobrutal-button">Cancel</button>
+                        <button className="modalButton continue neobrutal-button">Continue</button>
                     </section>
-                </main>
+                </div>
             </section>
-        </section>
+        </>
+
     );
 }
 

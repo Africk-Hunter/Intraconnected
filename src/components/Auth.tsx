@@ -19,7 +19,7 @@ const Auth: React.FC = () => {
 
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) {
-                console.log("Current user:  d", auth.currentUser);
+                console.log("Current user: ", auth.currentUser);
                 window.location.href = '/';
             }
         });
