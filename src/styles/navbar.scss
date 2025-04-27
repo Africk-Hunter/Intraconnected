@@ -6,9 +6,17 @@
     justify-content: space-between;
     position: sticky;
     width: 20%;
-    height: 25vh;
+    gap: 2rem;
+    height: 20vh;
     
+    &.rightSide{
+        justify-content: start;
+        gap: 2rem;
+        height: 20vh;
+        align-items: end;
+    }
 }
+
 
 .navButton {
     padding: 0.5rem;
@@ -20,10 +28,11 @@
     }
 }
 
-.logoButton {
+
+
+.largeSideButton{
     width: 5.625rem;
     height: 5.625rem;
-    background: $neutral;
 
     @media (min-width: $large-desktop) {
         width: 7rem;
@@ -31,10 +40,9 @@
     }
 }
 
-.createIdea {
+.mediumSideButton{
     width: 3.75rem;
     height: 3.75rem;
-    background: $leaf;
 
     @media (min-width: $large-desktop) {
         width: 5.25rem;
@@ -42,13 +50,18 @@
     }
 }
 
-.help {
+.smallSideButton{
     width: 2.5rem;
     height: 2.5rem;
-    background: $neutral;
 
     @media (min-width: $large-desktop) {
         width: 4rem;
         height: 4rem;
     }
+}
+
+.trashCan{
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

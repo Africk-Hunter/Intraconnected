@@ -59,27 +59,39 @@ function Idea() {
     return (
         <>
             <section className="ideaPage">
-                <section className="top">
+                <section className="left">
                     <Navbar />
-                    <section className="rootHolder">
-                        <div className="ideaRoot neobrutal-button">{rootName}</div>
-                        <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick( { setRootId, setRootName, rootIdStack, ideas } )}>Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
+                    <div className="largeSideButton neobrutal-button danger trashCan"><img src="/images/Trash.svg" alt="Trash Can" className="trashI" /></div>
+                </section>
+                <section className="mid">
+                    <section className="top">
+
+                        <section className="rootHolder">
+                            <div className="ideaRoot neobrutal-button">{rootName}</div>
+                            <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
+                        </section>
+                    </section>
+                    <section className="bottom">
+                        <main className="ideaSpace">
+                            <section className='ideaNodes'>
+                                {ideas?.map((idea: Idea) => (
+                                    <IdeaNode
+                                        key={idea.id}
+                                        id={idea.id}
+                                        title={idea.content}
+                                        parentId={idea.parentId}
+                                        isLeaf={checkIfIdeaIsLeaf(idea.id)}
+                                    />
+                                ))}
+                            </section>
+                        </main>
                     </section>
                 </section>
-                <section className="bottom">
-                    <main className="ideaSpace">
-                        <section className='ideaNodes'>
-                            {ideas?.map((idea: Idea) => (
-                                <IdeaNode
-                                    key={idea.id}
-                                    id={idea.id}
-                                    title={idea.content}
-                                    parentId={idea.parentId}
-                                    isLeaf={checkIfIdeaIsLeaf(idea.id)}
-                                />
-                            ))}
-                        </section>
-                    </main>
+                <section className="right">
+                    <nav className="navbar rightSide">
+                        <button className="mediumSideButton neutral neobrutal-button navButton" ><img src="/images/LogOut.svg" alt="" className="logoImg" /></button>
+                        <button className="smallSideButton neutral neobrutal-button navButton"><img src="/images/QuestionMark.svg" alt="Help" className="navImg" /></button>
+                    </nav>
                 </section>
             </section>
 

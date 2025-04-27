@@ -5,6 +5,7 @@ $roots: #A3703E;
 $sky: #00A9D8;
 $leaf: #41BC28;
 $back: #C84600;
+$danger: #C80000;
 $neo-pink: #DB44A4;
 $neo-green: #2B701D;
 
@@ -19,3 +20,16 @@ $very-large-desktop: 3840px;
 
 //Idea Component
 $back-size: 7rem;
+
+
+.neutral{
+    background: $neutral;
+}
+
+.leaf{
+    background: $leaf;
+}
+
+.danger {
+    background: $danger;
+}
