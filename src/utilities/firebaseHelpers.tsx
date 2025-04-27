@@ -1,5 +1,5 @@
 import { db, auth } from "../firebaseConfig";
-import { doc, setDoc, collection, getDocs, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, collection, getDocs} from "firebase/firestore";
 
 
 export async function fetchIdeasFromFirebase() {

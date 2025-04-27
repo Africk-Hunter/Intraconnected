@@ -1,7 +1,4 @@
 import React from 'react';
-import { addIdeaToFirebase } from '../utilities/firebaseHelpers';
-
-const idea = { id: Date.now(), content: 'Test', parentID: 1 }
 
 interface NavbarProps {
     setModalOpen: (open: boolean) => void;

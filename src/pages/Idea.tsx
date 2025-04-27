@@ -1,19 +1,11 @@
 import Navbar from '../components/Navbar';
 import { auth } from '../firebaseConfig';
-import { fetchAndOrganizeIdeas, convertLocalStorageToDOM, handleIdeaCreation } from '../utilities/ideaHandlers';
-import { useEffect, useState } from 'react';
-
-const nodes = [
-    { id: "1", title: "A loooooooooooooooooooooooooooooooooong title", parentId: undefined, isLeaf: true },
-    { id: "2", title: "Re:Genesis", parentId: undefined, isLeaf: false },
-    { id: "3", title: "An instrumental track that changes tempo mid song. The BPM and drum style change", parentId: "2", isLeaf: true },
-    { id: "4", title: "An idea", parentId: "2", isLeaf: true },
-    { id: "5", title: "A more medium length idea goes here", parentId: "2", isLeaf: true },
-    { id: "6", title: "Even parent nodes can have longer ideas, though it isnt as intuitive", parentId: undefined, isLeaf: false },
-    { id: "7", title: "A two length line idea", parentId: "6", isLeaf: true },
-    { id: "8", title: "The Jupiter EP", parentId: undefined, isLeaf: false },
-    { id: "9", title: "Having an interlude track talking about something random", parentId: "8", isLeaf: true },
-];
+import IdeaNode from '../components/IdeaNode';
+import { fetchFullIdeaList, checkIfIdeaIsLeaf,  } from '../utilities/independentIdeaHandlers';
+import { handleIdeaCreation } from '../utilities/ideaCreationHandlers';
+import { fetchFromFirebaseAndOrganizeIdeas } from '../utilities/FromFirebaseIdeaHandlers';
+import { getIdeasChildren } from '../utilities/parsingIdeasHandlers';
+import { useEffect, useRef, useState } from 'react';
 
 function Idea() {
 
@@ -23,18 +15,22 @@ function Idea() {
     const [rootId, setRootId] = useState(1);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState("");
+    const [newIdeaSwitch, setNewIdeaSwitch] = useState(false);
+
+    const rootIdStack = useRef<number[]>([]);
 
     useEffect(() => {
 
         setTimeout(() => {
             if (auth.currentUser) {
                 if (!initalFetch) {
-                    fetchAndOrganizeIdeas().then(() => {
+                    fetchFromFirebaseAndOrganizeIdeas().then(() => {
                         setInitialFetch(true);
                     });
                 }
                 setTimeout(() => {
-                    const loadedIdeas = convertLocalStorageToDOM();
+                    const loadedIdeas = getIdeasChildren(rootId);
+                    rootIdStack.current.push(rootId);
                     setIdeas(loadedIdeas);
                 }, 500)
             }
@@ -42,20 +38,63 @@ function Idea() {
 
     }, []);
 
+    useEffect(() => {
+        const loadedIdeas = getIdeasChildren(rootId);
+        setIdeas(loadedIdeas);
+    
+        const currentRoot = fetchFullIdeaList().find((idea: { id: number, content: string, parentId: number }) => idea.id === rootId);
+        
+        if (currentRoot) {
+            setRootName(currentRoot.content);
+        }
+    
+        console.log("Root ID Stack: " + rootIdStack.current);
+    }, [rootId]);
+
+    useEffect(() => {
+        setIdeas(getIdeasChildren(rootId));
+    } , [newIdeaSwitch]);
+
+    function handleBackClick() {
+        if (rootIdStack.current.length > 0) {
+            rootIdStack.current.pop();
+            const newRootId = rootIdStack.current[rootIdStack.current.length - 1] || 1;
+            setRootId(newRootId);
+    
+            const newRoot = ideas.find(idea => idea.id === newRootId);
+            if (newRoot) {
+                setRootName(newRoot.content); 
+            } else {
+                setRootName("Ideas"); 
+            }
+        }
+    }
+
     return (
         <>
             <section className="ideaPage">
                 <section className="top">
-                    <Navbar setModalOpen={setModalOpen}/>
+                    <Navbar setModalOpen={setModalOpen} />
                     <section className="rootHolder">
                         <div className="ideaRoot neobrutal-button">{rootName}</div>
-                        <button className="back neobrutal-button">Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
+                        <button className="back neobrutal-button" onClick={() => handleBackClick()}>Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
                     </section>
                 </section>
                 <section className="bottom">
                     <main className="ideaSpace">
                         <section className='ideaNodes'>
-                            {ideas}
+                            {ideas?.map(idea => (
+                                <IdeaNode
+                                    key={idea.id}
+                                    id={idea.id}
+                                    title={idea.content}
+                                    parentId={idea.parentID}
+                                    isLeaf={checkIfIdeaIsLeaf(idea.id)}
+                                    setRootId={setRootId}
+                                    setRootName={setRootName}
+                                    rootIdStack={rootIdStack}
+                                />
+                            ))}
                         </section>
                     </main>
                 </section>
@@ -67,7 +106,7 @@ function Idea() {
                         <textarea className="ideaContent neobrutal-input" placeholder='Whats your idea?' onChange={(e) => setModalContent(e.target.value)}></textarea>
                         <section className="modalButtons">
                             <button className="modalButton cancel neobrutal-button" onClick={() => setModalOpen(false)}>Cancel</button>
-                            <button className="modalButton continue neobrutal-button" onClick={() => handleIdeaCreation(modalContent, 1)}>Continue</button>
+                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaCreation(modalContent, rootId); setModalOpen(false); setNewIdeaSwitch(prev => !prev) }}>Continue</button>
                         </section>
                     </div>
                 </section> : <></>

@@ -5,13 +5,26 @@ interface IdeaNodeProps {
     title: string;
     parentId: number;
     isLeaf: boolean;
-    onAddChild: (parentId: string) => void;
-    onDelete: (id: string) => void;
+    setRootId: (id: number) => void;
+    setRootName: (name: string) => void;
+    rootIdStack: React.RefObject<number[]>;
 }
 
-const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, parentId, isLeaf, onAddChild, onDelete }) => {
+
+const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, parentId, isLeaf, setRootId, setRootName, rootIdStack }) => {
+
+    function makeRoot() {
+        setRootId(id);
+        setRootName(title);
+
+        console.log("Root ID: " + id);
+        console.log("Root Name: " + title);
+        console.log("parentID Name: " + parentId);
+        rootIdStack.current?.push(id);
+    }
+
     return (
-        <div className={isLeaf ? 'ideaNode neobrutal-button leaf' : 'ideaNode neobrutal-button parent'}>{title}</div>
+        <div className={isLeaf ? 'ideaNode neobrutal-button leaf' : 'ideaNode neobrutal-button parent'} onClick={makeRoot}>{title}</div>
     );
 };
 
