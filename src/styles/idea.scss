@@ -72,7 +72,7 @@
     align-items: center;
     justify-content: center;
     min-width: 14.75rem;
-    height: 7.25rem;
+    min-height: 7.25rem;
     font-size: 3.125rem;
     background: $roots;
     margin-left: 9.5rem;
@@ -82,7 +82,7 @@
     
     @media (min-width: $large-desktop) {
         min-width: 20rem;
-        height: 10rem;
+        min-height: 10rem;
         font-size: 4.72rem;
         padding: 1rem 2rem;
     }
@@ -174,7 +174,7 @@
 
 .ideaContent{
     width: 26.125rem;
-    height: 8rem;
+    min-height: 8rem;
     box-shadow: 4px 4px 0 2px black;
     font-size: 1.5rem;
     padding: 2rem 1rem;
@@ -183,7 +183,7 @@
 
     @media (min-width: $large-desktop) {
         width: 33rem;
-        height: 10rem;
+        min-height: 10rem;
         font-size: 2rem;
         padding: 2rem 2rem;
     }

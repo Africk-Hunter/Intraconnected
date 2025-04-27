@@ -16,10 +16,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, parentId, isLeaf, setRoo
     function makeRoot() {
         setRootId(id);
         setRootName(title);
-
-        console.log("Root ID: " + id);
-        console.log("Root Name: " + title);
-        console.log("parentID Name: " + parentId);
         rootIdStack.current?.push(id);
     }
 

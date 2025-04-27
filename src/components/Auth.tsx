@@ -20,7 +20,7 @@ const Auth: React.FC = () => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) {
                 console.log("Current user: ", auth.currentUser);
-                window.location.href = '/';
+                window.location.href = '/main';
             }
         });
         return () => unsubscribe();
@@ -89,7 +89,7 @@ const Auth: React.FC = () => {
         signInWithEmailAndPassword(auth, email, password)
             .then((userCredential) => {
                 const user = userCredential.user;
-                window.location.href = '/';
+                window.location.href = '/main';
             })
             .catch((error) => {
                 const errorMessage = error.message;
