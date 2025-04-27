@@ -1,10 +1,11 @@
 import React from 'react';
+import { useIdeaContext } from '../context/IdeaContext';
 
-interface NavbarProps {
-    setModalOpen: (open: boolean) => void;
-}   
 
-const Navbar: React.FC<NavbarProps> = ({ setModalOpen }) => {
+const Navbar: React.FC = () => {
+
+    const { setModalOpen } = useIdeaContext();
+
     return (
         <nav className="navbar">
             <button className="logoButton neobrutal-button navButton"><img src="/images/Logo.svg" alt="" className="logoImg" /></button>

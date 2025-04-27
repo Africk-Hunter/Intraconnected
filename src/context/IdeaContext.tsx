@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useRef, useState } from "react";
 
 interface IdeaContextType {
+    ideas: { id: number; content: string; parentId: number }[];
+    setIdeas: (ideas: any) => void
     rootId: number;
     setRootId: (id: number) => void;
     rootName: string;
@@ -17,16 +19,21 @@ interface IdeaContextType {
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
 
 export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+
+    const [ideas, setIdeas] = useState<any[]>([]);
     const [rootId, setRootId] = useState(1);
     const [rootName, setRootName] = useState("Ideas");
-    const rootIdStack = useRef<number[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState("");
     const [newIdeaSwitch, setNewIdeaSwitch] = useState(false);
+    const rootIdStack = useRef<number[]>([]);
+
 
     return (
         <IdeaContext.Provider
             value={{
+                ideas,
+                setIdeas,
                 rootId,
                 setRootId,
                 rootName,

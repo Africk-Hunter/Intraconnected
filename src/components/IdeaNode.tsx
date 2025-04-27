@@ -1,17 +1,17 @@
 import React from 'react';
+import { useIdeaContext } from '../context/IdeaContext';
 
 interface IdeaNodeProps {
     id: number;
     title: string;
     parentId: number;
     isLeaf: boolean;
-    setRootId: (id: number) => void;
-    setRootName: (name: string) => void;
-    rootIdStack: React.RefObject<number[]>;
 }
 
 
-const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, parentId, isLeaf, setRootId, setRootName, rootIdStack }) => {
+const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, isLeaf }) => {
+
+    const { setRootId, setRootName, rootIdStack } = useIdeaContext();
 
     function makeRoot() {
         setRootId(id);

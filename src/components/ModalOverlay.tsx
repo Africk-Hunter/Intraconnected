@@ -1,16 +1,12 @@
+import { useIdeaContext } from "../context/IdeaContext";
+
 interface ModalOverlayProps {
-    setModalOpen: (open: boolean) => void;
-    modalOpen: boolean;
     handleIdeaCreation: (content: string, parentId: number) => void;
-    rootId: number;
-    setNewIdeaSwitch: (value: (prev: boolean) => boolean) => void;
-    modalContent: string;
-    setModalContent: (content: string) => void;
 }
 
-function ModalOverlay({ setModalOpen, modalOpen, handleIdeaCreation, rootId, setNewIdeaSwitch, modalContent, setModalContent }: ModalOverlayProps) {
+function ModalOverlay({ handleIdeaCreation }: ModalOverlayProps) {
 
-    
+    const { rootId, modalOpen, setModalOpen, modalContent, setModalContent, setNewIdeaSwitch } = useIdeaContext();
 
     return (
         <>

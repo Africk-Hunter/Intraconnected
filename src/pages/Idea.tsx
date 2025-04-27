@@ -1,20 +1,20 @@
 import Navbar from '../components/Navbar';
-import { auth } from '../firebaseConfig';
 import IdeaNode from '../components/IdeaNode';
-import { fetchFullIdeaList, checkIfIdeaIsLeaf, } from '../utilities/independentIdeaHandlers';
+import ModalOverlay from '../components/ModalOverlay';
+import { useEffect, useState } from 'react';
+import { auth } from '../firebaseConfig';
+import { fetchFullIdeaList, checkIfIdeaIsLeaf, handleBackClick, returnToRoot } from '../utilities/independentIdeaHandlers';
 import { handleIdeaCreation } from '../utilities/ideaCreationHandlers';
 import { fetchFromFirebaseAndOrganizeIdeas } from '../utilities/FromFirebaseIdeaHandlers';
 import { getIdeasChildren } from '../utilities/parsingIdeasHandlers';
-import { useEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
-import ModalOverlay from '../components/ModalOverlay';
+
 
 function Idea() {
 
     const [initalFetch, setInitialFetch] = useState(false);
-    const [ideas, setIdeas] = useState<any[]>([]);
-    const { rootId, setRootId, rootName, setRootName, modalOpen, setModalOpen, modalContent, setModalContent, newIdeaSwitch, setNewIdeaSwitch } = useIdeaContext();
-    const rootIdStack = useRef<number[]>([]);
+
+    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas } = useIdeaContext();
 
     useEffect(() => {
 
@@ -50,52 +50,32 @@ function Idea() {
         setIdeas(getIdeasChildren(rootId));
     }, [newIdeaSwitch]);
 
-    function handleBackClick() {
-        if (rootIdStack.current.length > 0) {
-            rootIdStack.current.pop();
-            const newRootId = rootIdStack.current[rootIdStack.current.length - 1] || 1;
-            setRootId(newRootId);
-
-            const newRoot = ideas.find(idea => idea.id === newRootId);
-            if (newRoot) {
-                setRootName(newRoot.content);
-            } else {
-                setRootName("Ideas");
-            }
-        }
-    }
-
-    function returnToRoot() {
-        setRootId(1);
-        setRootName("Ideas");
-        while (rootIdStack.current.length > 0) {
-            rootIdStack.current.pop();
-        }
+    interface Idea {
+        id: number;
+        content: string;
+        parentId: number;
     }
 
     return (
         <>
             <section className="ideaPage">
                 <section className="top">
-                    <Navbar setModalOpen={setModalOpen} />
+                    <Navbar />
                     <section className="rootHolder">
                         <div className="ideaRoot neobrutal-button">{rootName}</div>
-                        {rootId != 1 ? <button className="back neobrutal-button" onClick={() => handleBackClick()}>Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button> :<></>}
+                        {rootId != 1 ? <button className="back neobrutal-button" onClick={() => handleBackClick( { setRootId, setRootName, rootIdStack, ideas } )}>Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button> : <></>}
                     </section>
                 </section>
                 <section className="bottom">
                     <main className="ideaSpace">
                         <section className='ideaNodes'>
-                            {ideas?.map(idea => (
+                            {ideas?.map((idea: Idea) => (
                                 <IdeaNode
                                     key={idea.id}
                                     id={idea.id}
                                     title={idea.content}
-                                    parentId={idea.parentID}
+                                    parentId={idea.parentId}
                                     isLeaf={checkIfIdeaIsLeaf(idea.id)}
-                                    setRootId={setRootId}
-                                    setRootName={setRootName}
-                                    rootIdStack={rootIdStack}
                                 />
                             ))}
                         </section>
@@ -103,16 +83,7 @@ function Idea() {
                 </section>
             </section>
 
-            <ModalOverlay
-                modalOpen={modalOpen}
-                setModalOpen={setModalOpen}
-                setNewIdeaSwitch={setNewIdeaSwitch}
-                modalContent={modalContent}
-                setModalContent={setModalContent}
-                handleIdeaCreation={handleIdeaCreation}
-                rootId={rootId}
-
-            />
+            <ModalOverlay handleIdeaCreation={handleIdeaCreation} />
         </>
 
     );
