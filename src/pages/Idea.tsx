@@ -1,6 +1,6 @@
 import Navbar from '../components/Navbar';
 import { auth } from '../firebaseConfig';
-import { fetchAndOrganizeIdeas, convertLocalStorageToDOM } from '../utilities/ideaHandlers';
+import { fetchAndOrganizeIdeas, convertLocalStorageToDOM, handleIdeaCreation } from '../utilities/ideaHandlers';
 import { useEffect, useState } from 'react';
 
 const nodes = [
@@ -20,6 +20,9 @@ function Idea() {
     const [initalFetch, setInitialFetch] = useState(false);
     const [ideas, setIdeas] = useState<any[]>([]);
     const [rootName, setRootName] = useState("Ideas");
+    const [rootId, setRootId] = useState(1);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalContent, setModalContent] = useState("");
 
     useEffect(() => {
 
@@ -43,9 +46,9 @@ function Idea() {
         <>
             <section className="ideaPage">
                 <section className="top">
-                    <Navbar />
+                    <Navbar setModalOpen={setModalOpen}/>
                     <section className="rootHolder">
-                        <div className="ideaRoot neobrutal">{rootName}</div>
+                        <div className="ideaRoot neobrutal-button">{rootName}</div>
                         <button className="back neobrutal-button">Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
                     </section>
                 </section>
@@ -58,15 +61,18 @@ function Idea() {
                 </section>
             </section>
 
-            <section className="overlay">
-                <div className="modal neobrutal">
-                    <textarea className="ideaContent neobrutal-input" placeholder='Whats your idea?'></textarea>
-                    <section className="modalButtons">
-                        <button className="modalButton cancel neobrutal-button">Cancel</button>
-                        <button className="modalButton continue neobrutal-button">Continue</button>
-                    </section>
-                </div>
-            </section>
+            {modalOpen ?
+                <section className="overlay">
+                    <div className="modal neobrutal">
+                        <textarea className="ideaContent neobrutal-input" placeholder='Whats your idea?' onChange={(e) => setModalContent(e.target.value)}></textarea>
+                        <section className="modalButtons">
+                            <button className="modalButton cancel neobrutal-button" onClick={() => setModalOpen(false)}>Cancel</button>
+                            <button className="modalButton continue neobrutal-button" onClick={() => handleIdeaCreation(modalContent, 1)}>Continue</button>
+                        </section>
+                    </div>
+                </section> : <></>
+            }
+
         </>
 
     );

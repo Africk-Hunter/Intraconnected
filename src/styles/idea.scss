@@ -151,7 +151,7 @@
     background: rgb(0, 0, 0, 0.5);
 }
 
-.modal{
+.neobrutal.modal{
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -161,7 +161,13 @@
     width: 33rem;
     min-height: 18rem;
     gap: 1rem;
-    padding: 1rem;
+    padding: 2rem 1rem;
+    border-radius: 10px;
+
+    @media (min-width: $large-desktop) {
+        width: 42.5rem;
+        min-height:24rem;
+    }
 }
 
 .ideaContent{
@@ -172,12 +178,23 @@
     padding: 2rem 1rem;
     background: $neutral;
     resize: vertical;
+
+    @media (min-width: $large-desktop) {
+        width: 33rem;
+        height: 10rem;
+        font-size: 2rem;
+        padding: 2rem 2rem;
+    }
 }
 
 .modalButtons{
     display: flex;
     width: 28.125rem;
     justify-content: space-between;
+
+    @media (min-width: $large-desktop) {
+        width: 37rem;
+    }
 }
 
 .modalButton{
@@ -194,5 +211,11 @@
 
     &.continue{
         background: $leaf;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 17rem;
+        height: 5rem;
+        font-size: 2rem;
     }
 }
