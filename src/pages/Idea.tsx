@@ -1,8 +1,7 @@
 import Navbar from '../components/Navbar';
-import IdeaNode from '../components/IdeaNode';
 import { auth } from '../firebaseConfig';
 import { fetchAndOrganizeIdeas, convertLocalStorageToDOM } from '../utilities/ideaHandlers';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const nodes = [
     { id: "1", title: "A loooooooooooooooooooooooooooooooooong title", parentId: undefined, isLeaf: true },
@@ -15,8 +14,6 @@ const nodes = [
     { id: "8", title: "The Jupiter EP", parentId: undefined, isLeaf: false },
     { id: "9", title: "Having an interlude track talking about something random", parentId: "8", isLeaf: true },
 ];
-
-
 
 function Idea() {
 
@@ -37,7 +34,6 @@ function Idea() {
                     const loadedIdeas = convertLocalStorageToDOM();
                     setIdeas(loadedIdeas);
                 }, 500)
-                
             }
         }, 500);
 

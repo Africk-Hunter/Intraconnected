@@ -4,26 +4,24 @@ import IdeaNode from "../components/IdeaNode";
 export async function fetchAndOrganizeIdeas() {
     clearLocalStorage();
     const ideas = await fetchIdeasFromFirebase();
-    
+
     if (ideas) {
         organizeIdeas(ideas);
     }
 }
 
-function clearLocalStorage(){
+function clearLocalStorage() {
     localStorage.clear();
 }
 
 function organizeIdeas(ideas: { id: number; content: string; parentID: number }[]) {
-    if (ideas) {
-        ideas.forEach(idea => {
-            appendToLocalStorage("ideas", idea);
-        });
-    }
+    ideas.forEach(idea => {
+        appendToLocalStorage("ideas", idea);
+    });
 }
 
 function appendToLocalStorage(name: string, data: any) {
-    console.log('data: ' + JSON.stringify([data]));
+    /* console.log('data: ' + JSON.stringify([data])); */
     let currentData = localStorage.getItem(name);
     if (currentData === null) {
         localStorage.setItem(name, JSON.stringify([data]));
@@ -44,7 +42,7 @@ function checkIfIdeaIsLeaf(ideaID: number) {
     }
 
     const parsedIdeas = JSON.parse(ideas);
-    const idea = parsedIdeas.some(idea => idea.parentID === ideaID);
+    const idea = parsedIdeas.some((idea: { id: number; content: string; parentID: number; }) => idea.parentID === ideaID);
     return idea ? idea.isLeaf : true;
 }
 
@@ -71,4 +69,10 @@ export function convertLocalStorageToDOM() {
     ));
 
     return nodes;
+}
+
+export function handleIdeaCreation(content: string, parentID: number) {
+    const newID = Date.now();
+    const idea = { id: newID, content: content, parentID: parentID };
+    addIdeaToFirebase(idea);
 }
