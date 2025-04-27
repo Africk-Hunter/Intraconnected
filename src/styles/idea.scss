@@ -47,6 +47,11 @@
         height: 3.2rem;
         font-size: 1.55rem;
     }
+    
+    &.layerZero {
+        opacity: 0;
+        pointer-events: none;
+    }
 }
 
 

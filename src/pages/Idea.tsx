@@ -3,7 +3,7 @@ import IdeaNode from '../components/IdeaNode';
 import ModalOverlay from '../components/ModalOverlay';
 import { useEffect, useState } from 'react';
 import { auth } from '../firebaseConfig';
-import { fetchFullIdeaList, checkIfIdeaIsLeaf, handleBackClick, returnToRoot } from '../utilities/independentIdeaHandlers';
+import { fetchFullIdeaList, checkIfIdeaIsLeaf, handleBackClick } from '../utilities/independentIdeaHandlers';
 import { handleIdeaCreation } from '../utilities/ideaCreationHandlers';
 import { fetchFromFirebaseAndOrganizeIdeas } from '../utilities/FromFirebaseIdeaHandlers';
 import { getIdeasChildren } from '../utilities/parsingIdeasHandlers';
@@ -63,7 +63,7 @@ function Idea() {
                     <Navbar />
                     <section className="rootHolder">
                         <div className="ideaRoot neobrutal-button">{rootName}</div>
-                        {rootId != 1 ? <button className="back neobrutal-button" onClick={() => handleBackClick( { setRootId, setRootName, rootIdStack, ideas } )}>Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button> : <></>}
+                        <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick( { setRootId, setRootName, rootIdStack, ideas } )}>Back <img src="/images/Arrow.svg" alt="Back" className="backImg" /></button>
                     </section>
                 </section>
                 <section className="bottom">
