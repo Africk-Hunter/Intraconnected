@@ -5,10 +5,11 @@ import { returnToRoot } from '../utilities/independentIdeaHandlers';
 
 interface NavbarProps {
     side: string;
-    
+    signUserOut: () => void;
+    setShowHelp: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Navbar: React.FC<NavbarProps> = ({side}) => {
+const Navbar: React.FC<NavbarProps> = ({side, signUserOut, setShowHelp}) => {
 
     const { setRootId, setRootName, rootIdStack, setModalOpen } = useIdeaContext();
 
@@ -18,7 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({side}) => {
 
                 <nav className="navbar rightSide">
                     <button className="mediumSideButton neutral neobrutal-button navButton" onClick={() => signUserOut()}><img src="/images/LogOut.svg" alt="" className="buttonImg" /></button>
-                    <button className="smallSideButton neutral neobrutal-button navButton" onClick={() => setShowHelp(prev => !prev)}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></button>
+                    <button className="smallSideButton neutral neobrutal-button navButton" onClick={() => setShowHelp((prev: boolean) => !prev)}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></button>
                 </nav>
 
                 :
@@ -29,9 +30,6 @@ const Navbar: React.FC<NavbarProps> = ({side}) => {
                 </nav>
             }
         </>
-
-
-
     );
 };
 
