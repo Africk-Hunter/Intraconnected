@@ -14,6 +14,7 @@ import { signUserOut } from '../utilities/firebaseHelpers'
 function Idea() {
 
     const [initalFetch, setInitialFetch] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
 
     const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas } = useIdeaContext();
 
@@ -62,7 +63,7 @@ function Idea() {
             <section className="ideaPage">
                 <section className="left">
                     <Navbar />
-                    <div className="largeSideButton neobrutal-button danger trashCan"><img src="/images/Trash.svg" alt="Trash Can" className="trashI" /></div>
+                    <div className="largeSideButton neobrutal-button danger trashCan"><img src="/images/Trash.svg" alt="Trash Can" className="buttonImg" /></div>
                 </section>
                 <section className="mid">
                     <section className="top">
@@ -90,12 +91,25 @@ function Idea() {
                 </section>
                 <section className="right">
                     <nav className="navbar rightSide">
-                        <button className="mediumSideButton neutral neobrutal-button navButton" onClick={ () => signUserOut()}><img src="/images/LogOut.svg" alt="" className="logoImg" /></button>
-                        <button className="smallSideButton neutral neobrutal-button navButton"><img src="/images/QuestionMark.svg" alt="Help" className="navImg" /></button>
+                        <button className="mediumSideButton neutral neobrutal-button navButton" onClick={ () => signUserOut()}><img src="/images/LogOut.svg" alt="" className="buttonImg" /></button>
+                        <button className="smallSideButton neutral neobrutal-button navButton" onClick={() => setShowHelp(prev => !prev)}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></button>
                     </nav>
+                    <section className={`howToUsePopup neutral ${showHelp ? 'show' : ''}`}>
+                        <h1 className="header">So How Do I Use <br/>This?</h1>
+                        <p className="details">Intraconnected is pretty simple. You're looking at the root node 
+                            <span className="detailsBox roots"> {rootName} </span><br/>
+                            You can create a related idea by clicking <span className="detailsBox leaf square"><img src="/images/Plus.svg" alt="" className="detailsImg" /></span><br/>
+
+                            Clicking any idea will turn it into the new root node. You can navigate back to the previous root node by clicking <span className="detailsBox backColor">Back</span> <br/>
+
+                            Oh, you can also delete ideas by clicking and dragging them in to the <span className="detailsBox danger square"><img src="/images/Trash.svg" alt="" className="detailsImg" /></span><br/> 
+                            
+                            
+                            </p>
+                    </section>
                 </section>
             </section>
-
+            
             <ModalOverlay handleIdeaCreation={handleIdeaCreation} />
         </>
 

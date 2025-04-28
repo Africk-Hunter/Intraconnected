@@ -26,6 +26,24 @@ const Auth: React.FC = () => {
         return () => unsubscribe();
     });
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                if (!showConfirmPassword) {
+                    handleSignIn(new MouseEvent("click") as unknown as React.MouseEvent<HTMLButtonElement>);
+                } else {
+                    defaultSignUp(new MouseEvent("click") as unknown as React.MouseEvent<HTMLButtonElement>);
+                }
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [showConfirmPassword, email, password, confirmPassword]);
+
     // Function to display messages in the message box
     function displayMessage(message: string, type: string) {
         setMessageBoxMessage(message);

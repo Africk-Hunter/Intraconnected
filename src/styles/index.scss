@@ -4,6 +4,9 @@
 @import "./auth.scss";
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
+html {
+    overflow-x: hidden;
+}
 
 body {
     background: $background-color;
@@ -27,7 +30,7 @@ body {
 .neobrutal-button {
     cursor: pointer;
     border-radius: 5px;
-    border: 2px solid black;
+    border: 3px solid black;
     box-shadow: 4px 4px 0 2px black;
     transition: all 0.3s ease;
 
@@ -69,5 +72,12 @@ body {
     border-radius: 5px;
     border: 3px solid black;
     transition: all 0.3s ease;
+
+    &.detailsBox {
+        border: 2px solid black;
+    }
 }
+
+
+
 

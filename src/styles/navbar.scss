@@ -1,6 +1,6 @@
 .navbar {
     display: flex;
-    
+
     flex-direction: column;
     align-items: start;
     justify-content: space-between;
@@ -8,12 +8,22 @@
     width: 20%;
     gap: 2rem;
     height: 20vh;
-    
-    &.rightSide{
+
+    &.rightSide {
         justify-content: start;
-        gap: 2rem;
+        gap: 2.5rem;
         height: 20vh;
         align-items: end;
+    }
+
+    @media (min-width: $large-desktop) {
+        &.rightSide {
+            height: 20vh;
+        }
+    }
+
+    @media (min-width: $large-desktop) {
+        
     }
 }
 
@@ -29,39 +39,63 @@
 }
 
 
+.largeSideButton {
+    user-select: none;
 
-.largeSideButton{
     width: 5.625rem;
     height: 5.625rem;
 
     @media (min-width: $large-desktop) {
-        width: 7rem;
-        height: 7rem;
+        width: 9rem;
+        height: 9rem;
     }
 }
 
-.mediumSideButton{
+.mediumSideButton {
+    user-select: none;
+
     width: 3.75rem;
     height: 3.75rem;
 
     @media (min-width: $large-desktop) {
-        width: 5.25rem;
-        height: 5.25rem;
+        width: 6.25rem;
+        height: 6.25rem;
     }
 }
 
-.smallSideButton{
+.smallSideButton {
+    user-select: none;
+
     width: 2.5rem;
     height: 2.5rem;
 
     @media (min-width: $large-desktop) {
-        width: 4rem;
-        height: 4rem;
+        width: 5rem;
+        height: 5rem;
     }
 }
 
-.trashCan{
+.trashCan {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.buttonImg {
+    user-select: none;
+
+    @media (min-width: $large-desktop) {
+        width: 55%;
+        height: 50%;
+
+        &.logoButton {
+            width: 90%;
+            height: 90%;
+        }
+    }
+}
+
+.trashCan>.buttonImg {
+    width: 70%;
+    height: 70%;
 }

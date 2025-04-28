@@ -9,8 +9,8 @@ const Navbar: React.FC = () => {
 
     return (
         <nav className="navbar">
-            <button className="largeSideButton neutral neobrutal-button navButton" onClick={() => returnToRoot( {setRootId, setRootName, rootIdStack} )}><img src="/images/Logo.svg" alt="" className="logoImg" /></button>
-            <button className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="navImg" /></button>
+            <button className="largeSideButton neutral neobrutal-button navButton" onClick={() => returnToRoot( {setRootId, setRootName, rootIdStack} )}><img src="/images/Logo.svg" alt="" className="buttonImg logoButton" /></button>
+            <button className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg" /></button>
         </nav>
     );
 };
