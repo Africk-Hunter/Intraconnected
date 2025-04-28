@@ -38,3 +38,11 @@ export async function addIdeaToFirebase(idea: { id: number; content: string; par
     }
 }
 
+export async function signUserOut() {
+    try {
+        await auth.signOut();
+        window.location.href = '/';
+    } catch (error) {
+        console.error("Sign out error:", error);
+    }
+}

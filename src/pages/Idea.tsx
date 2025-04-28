@@ -8,6 +8,7 @@ import { handleIdeaCreation } from '../utilities/ideaCreationHandlers';
 import { fetchFromFirebaseAndOrganizeIdeas } from '../utilities/FromFirebaseIdeaHandlers';
 import { getIdeasChildren } from '../utilities/parsingIdeasHandlers';
 import { useIdeaContext } from '../context/IdeaContext';
+import { signUserOut } from '../utilities/firebaseHelpers'
 
 
 function Idea() {
@@ -89,7 +90,7 @@ function Idea() {
                 </section>
                 <section className="right">
                     <nav className="navbar rightSide">
-                        <button className="mediumSideButton neutral neobrutal-button navButton" ><img src="/images/LogOut.svg" alt="" className="logoImg" /></button>
+                        <button className="mediumSideButton neutral neobrutal-button navButton" onClick={ () => signUserOut()}><img src="/images/LogOut.svg" alt="" className="logoImg" /></button>
                         <button className="smallSideButton neutral neobrutal-button navButton"><img src="/images/QuestionMark.svg" alt="Help" className="navImg" /></button>
                     </nav>
                 </section>
