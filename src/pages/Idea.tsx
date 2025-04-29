@@ -2,18 +2,24 @@ import Navbar from '../components/Navbar';
 import IdeaNode from '../components/IdeaNode';
 import ModalOverlay from '../components/ModalOverlay';
 import Help from '../components/Help';
+import Trash from '../components/Trash';
 import { useEffect, useState } from 'react';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { auth } from '../firebaseConfig';
 import { useIdeaContext } from '../context/IdeaContext';
-import {  fetchFullIdeaList, 
-    checkIfIdeaIsLeaf, 
-    handleBackClick, 
-    handleIdeaCreation, 
-    fetchFromFirebaseAndOrganizeIdeas, 
-    getIdeasChildren, 
-    signUserOut, 
-    IdeaType 
-  } from '../utilities/index';
+import {
+    fetchFullIdeaList,
+    checkIfIdeaIsLeaf,
+    handleBackClick,
+    handleIdeaCreation,
+    fetchFromFirebaseAndOrganizeIdeas,
+    getIdeasByParentID,
+    signUserOut,
+    IdeaType,
+    getChildrenToDelete,
+    recursivelyDeleteChildren
+} from '../utilities/index';
 
 
 function Idea() {
@@ -32,12 +38,12 @@ function Idea() {
                     setInitialFetch(true);
                 });
             }
-            const loadedIdeas = getIdeasChildren(rootId);
+            const loadedIdeas = getIdeasByParentID(rootId);
             rootIdStack.current.push(rootId);
             setIdeas(loadedIdeas);
         }
 
-        const unsubscribe = auth.onAuthStateChanged((user) => {
+        const unsubscribe = auth.onAuthStateChanged(() => {
             init();
         });
         return () => unsubscribe();
@@ -45,7 +51,7 @@ function Idea() {
 
     useEffect(() => {
         const loadIdeas = async () => {
-            const loadedIdeas = getIdeasChildren(rootId);
+            const loadedIdeas = getIdeasByParentID(rootId);
             setIdeas(loadedIdeas);
 
             const currentRoot = fetchFullIdeaList().find((idea: IdeaType) => idea.id === rootId);
@@ -55,12 +61,42 @@ function Idea() {
         loadIdeas();
     }, [rootId, newIdeaSwitch]);
 
+    const handleDragEnd = (event: any) => {
+        const { active, over } = event;
+        if (!active || !over) return;
+
+        const activeId = Number(active.id.split('-')[1]);
+
+        if (over.id === 'trash') {
+            console.log('Deleting idea with id:', activeId);
+            recursivelyDeleteChildren(activeId);
+
+            const childrenToDelete = getChildrenToDelete(activeId);
+            recursivelyDeleteChildren(activeId);
+            setIdeas((prevIdeas: IdeaType[]) =>
+                prevIdeas.filter(
+                    (idea: IdeaType) =>
+                        idea.id !== activeId &&
+                        !childrenToDelete.some((child: IdeaType) => child.id === idea.id)
+                )
+            );
+        }
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 10,
+            },
+        })
+    );
+
     return (
-        <>
+        <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
                     <Navbar side='left' signUserOut={signUserOut} setShowHelp={setShowHelp} />
-                    <div className="largeSideButton neobrutal-button danger trashCan"><img src="/images/Trash.svg" alt="Trash Can" className="buttonImg" /></div>
+                    <Trash />
                 </section>
                 <section className="mid">
                     <section className="top">
@@ -78,7 +114,7 @@ function Idea() {
                                         key={idea.id}
                                         id={idea.id}
                                         title={idea.content}
-                                        parentId={idea.parentId}
+                                        parentID={idea.parentID}
                                         isLeaf={checkIfIdeaIsLeaf(idea.id)}
                                     />
                                 ))}
@@ -91,10 +127,8 @@ function Idea() {
                     <Help showHelp={showHelp} />
                 </section>
             </section>
-
             <ModalOverlay handleIdeaCreation={handleIdeaCreation} />
-        </>
-
+        </DndContext>
     );
 }
 

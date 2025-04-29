@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface IdeaNodeManagerProps {
-    nodes: Array<{ id: string; title: string; parentId?: string }>;
-    onAddNode: (parentId?: string) => void;
+    nodes: Array<{ id: string; title: string; parentID?: string }>;
+    onAddNode: (parentID?: string) => void;
     onDeleteNode: (id: string) => void;
 }
 
