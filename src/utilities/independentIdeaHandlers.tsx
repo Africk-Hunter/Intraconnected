@@ -1,4 +1,14 @@
 import { IdeaType } from './types'
+import { updateIdeaParentIdInFirebase } from './firebaseHelpers';
+
+function getIdeas() {
+    const ideas = localStorage.getItem("ideas");
+    if (!ideas) {
+        console.warn("No ideas found in localStorage.");
+        return "[]";
+    }
+    return ideas;
+}
 
 export function checkIfIdeaIsLeaf(ideaID: number) {
     const ideas = localStorage.getItem("ideas");
@@ -7,7 +17,7 @@ export function checkIfIdeaIsLeaf(ideaID: number) {
         return true;
     }
 
-    const parsedIdeas = JSON.parse(ideas);
+    const parsedIdeas = ideas ? JSON.parse(ideas) : [];
     const idea = parsedIdeas.some((idea: { id: number; content: string; parentID: number; }) => idea.parentID === ideaID);
     return idea ? idea.isLeaf : true;
 }
@@ -73,3 +83,16 @@ export function deleteFromLocalStorage(id: number) {
     localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
 }
 
+
+export function updateIdeaParentId(id: number, newParentId: number) {
+    const ideas = JSON.parse(getIdeas());
+
+    const updatedIdeas = ideas.map((idea: IdeaType) => {
+        if (idea.id === id) {
+            return { ...idea, parentID: newParentId };
+        }
+        return idea;
+    });
+    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+    updateIdeaParentIdInFirebase(id, newParentId);
+}

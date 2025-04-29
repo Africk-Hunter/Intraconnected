@@ -18,7 +18,8 @@ import {
     signUserOut,
     IdeaType,
     getChildrenToDelete,
-    recursivelyDeleteChildren
+    recursivelyDeleteChildren,
+    updateIdeaParentId
 } from '../utilities/index';
 
 
@@ -66,6 +67,7 @@ function Idea() {
         if (!active || !over) return;
 
         const activeId = Number(active.id.split('-')[1]);
+        const overId = Number(over.id.split('-')[1]);
 
         if (over.id === 'trash') {
             console.log('Deleting idea with id:', activeId);
@@ -80,6 +82,17 @@ function Idea() {
                         !childrenToDelete.some((child: IdeaType) => child.id === idea.id)
                 )
             );
+        } else {
+            if (activeId === overId){
+                console.log('Dropping idea on itself, no action taken.');
+                return;
+            };
+            const newParentId = Number(over.id.split('-')[1]);
+            updateIdeaParentId(activeId, newParentId);
+            console.log('Moving idea with id:', activeId, 'to parent with id:', overId);
+            const loadedIdeas = getIdeasByParentID(rootId);
+            setIdeas(loadedIdeas);
+
         }
     };
 

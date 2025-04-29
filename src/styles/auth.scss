@@ -12,6 +12,8 @@
 }
 
 .largeLogo{
+    user-select: none;
+
     @media (min-width: $large-desktop) {
         scale: 1.5;
     }

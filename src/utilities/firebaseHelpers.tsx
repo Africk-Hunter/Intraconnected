@@ -62,3 +62,19 @@ export async function deleteIdeaFromFirebase(ideaId: number) {
         console.error("Error deleting idea:", error);
     }
 }
+
+export async function updateIdeaParentIdInFirebase(ideaId: number, newParentId: number) {
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("User is not authenticated");
+        return;
+    }
+
+    try {
+        const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
+        await setDoc(ideaDoc, { parentID: newParentId }, { merge: true });
+        console.log("Idea parent ID updated successfully");
+    } catch (error) {
+        console.error("Error updating idea parent ID:", error);
+    }
+}
