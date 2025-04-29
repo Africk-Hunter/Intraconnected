@@ -1,5 +1,5 @@
 import { db, auth } from "../firebaseConfig";
-import { doc, setDoc, collection, getDocs} from "firebase/firestore";
+import { doc, setDoc, collection, getDocs, deleteDoc} from "firebase/firestore";
 
 
 export async function fetchIdeasFromFirebase() {
@@ -44,5 +44,21 @@ export async function signUserOut() {
         window.location.href = '/';
     } catch (error) {
         console.error("Sign out error:", error);
+    }
+}
+
+export async function deleteIdeaFromFirebase(ideaId: number) {
+    const user = auth.currentUser;
+    if (!user) {
+        console.error("User is not authenticated");
+        return;
+    }
+
+    try {
+        const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
+        await deleteDoc(ideaDoc);
+        console.log("Idea deleted successfully");
+    } catch (error) {
+        console.error("Error deleting idea:", error);
     }
 }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useRef, useState } from "react";
 
 interface IdeaContextType {
-    ideas: { id: number; content: string; parentId: number }[];
+    ideas: { id: number; content: string; parentID: number }[];
     setIdeas: (ideas: any) => void
     rootId: number;
     setRootId: (id: number) => void;

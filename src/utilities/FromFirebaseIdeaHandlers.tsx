@@ -32,3 +32,4 @@ function appendToLocalStorageFromFirebase(name: string, data: any) {
         }
     }
 }
+
