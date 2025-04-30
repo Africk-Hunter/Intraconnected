@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDroppable, useDndMonitor } from '@dnd-kit/core';
 
 interface LastIdeaProps {
@@ -19,8 +19,8 @@ const LastIdea: React.FC<LastIdeaProps> = ({ lastRootName }) => {
     });
 
     const style = {
+        display: isDragging ? 'flex' : 'none', 
         scale: isOver ? '1.10' : '',
-        visibility: isDragging ? 'visible' : 'hidden',
         transition: 'scale 0.2s ease, opacity 0.2s ease',
         opacity: isOver ? .75 : 0.5,
     };

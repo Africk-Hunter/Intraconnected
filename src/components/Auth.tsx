@@ -65,6 +65,9 @@ const Auth: React.FC = () => {
             displayMessage("Password must be less than 20 characters long", "bad");
             console.log(messageBoxMessage)
             return false;
+        } else if (/\s/.test(password)) {
+            displayMessage("Password cannot contain spaces", "bad");
+            return false;
         }
         setMessageBoxMessage("");
         return true;
@@ -87,7 +90,7 @@ const Auth: React.FC = () => {
 
     // Function to handle sign up with Firebase
     function handleSignUp() {
-        createUserWithEmailAndPassword(auth, email, password)
+        createUserWithEmailAndPassword(auth, email.trim(), password)
             .then((userCredential) => {
                 const user = userCredential.user;
                 console.log(user);

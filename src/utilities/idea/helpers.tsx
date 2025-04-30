@@ -65,7 +65,7 @@ export function returnToRoot(params: {
     }
 }
 
-export function getParentID(parentID: number): number | null {
+export function getParentID(parentID: number): number {
     const ideas = fetchFullIdeaList();
     const idea = ideas.find((idea: IdeaType) => idea.id === parentID);
 
@@ -78,7 +78,7 @@ export function getParentID(parentID: number): number | null {
  * @param id The ID of the idea to check.
  * @returns The name of the idea, or null if not found.
  */
-export function getNameFromID(id: number): string | null {
+export function getNameFromID(id: number): string {
     const ideas = fetchFullIdeaList();
     const idea = ideas.find((idea: IdeaType) => idea.id === id);
     return idea ? idea.content : 'Idea';
