@@ -1,4 +1,3 @@
-import { updateIdeaParentIdInFirebase } from "../firebase/firebaseHelpers";
 import { IdeaType } from "../types";
 
 export function fetchFullIdeaList() {
@@ -66,15 +65,21 @@ export function returnToRoot(params: {
     }
 }
 
-/* export function updateIdeaParentId(id: number, newParentId: number) {
-    const ideas = JSON.parse(fetchFullIdeaList());
+export function getParentID(parentID: number): number | null {
+    const ideas = fetchFullIdeaList();
+    const idea = ideas.find((idea: IdeaType) => idea.id === parentID);
 
-    const updatedIdeas = ideas.map((idea: IdeaType) => {
-        if (idea.id === id) {
-            return { ...idea, parentID: newParentId };
-        }
-        return idea;
-    });
-    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
-    updateIdeaParentIdInFirebase(id, newParentId);
-} */
+    const parentsParentID = idea ? idea.parentID : null;
+    return parentsParentID ? parentsParentID : 1;
+}
+
+/**
+ * Gets the name of an idea by its ID.
+ * @param id The ID of the idea to check.
+ * @returns The name of the idea, or null if not found.
+ */
+export function getNameFromID(id: number): string | null {
+    const ideas = fetchFullIdeaList();
+    const idea = ideas.find((idea: IdeaType) => idea.id === id);
+    return idea ? idea.content : 'Idea';
+}

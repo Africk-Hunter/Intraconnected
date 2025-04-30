@@ -104,7 +104,7 @@
     background: $roots;
     margin-left: 9.5rem;
     user-select: none;
-    padding:.51rem 2rem;
+    padding: .5rem 2rem;
     transition: all 0.3s ease;
     
     @media (min-width: $large-desktop) {
@@ -112,6 +112,40 @@
         min-height: 10rem;
         font-size: 4.72rem;
         padding: 1rem 2rem;
+    }
+}
+
+.rootAdditionalButtons{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    height: 100%;
+    min-height: 8.5rem;
+
+    @media (min-width: $large-desktop) {
+        min-height: 12rem;
+    }
+}
+
+.moveBack {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.25rem;
+    min-width: 10rem;
+    opacity: 0.5;
+    border: 2px dashed black;
+    border-radius: 5px;
+    box-shadow: 2px 2px 0 2px black;
+    flex-grow: 1;
+
+    @media (min-width: $large-desktop) {
+        font-size: 2.5rem;
+        min-width: 15rem;
+        border-radius: 10px;
+        box-shadow: 4px 4px 0 2px black;
+        border: 4px dashed black;
     }
 }
 
