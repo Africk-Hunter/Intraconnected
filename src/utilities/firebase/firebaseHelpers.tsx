@@ -1,4 +1,4 @@
-import { db, auth } from "../firebaseConfig";
+import { db, auth } from "../../firebaseConfig";
 import { doc, setDoc, collection, getDocs, deleteDoc} from "firebase/firestore";
 
 
@@ -35,15 +35,6 @@ export async function addIdeaToFirebase(idea: { id: number; content: string; par
         await setDoc(doc(ideasCollection, idea.id.toString()), idea);
     } catch (error) {
         console.error("Error adding idea:", error);
-    }
-}
-
-export async function signUserOut() {
-    try {
-        await auth.signOut();
-        window.location.href = '/';
-    } catch (error) {
-        console.error("Sign out error:", error);
     }
 }
 

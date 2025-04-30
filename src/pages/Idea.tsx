@@ -1,11 +1,14 @@
+//Components
 import Navbar from '../components/Navbar';
 import IdeaNode from '../components/IdeaNode';
 import ModalOverlay from '../components/ModalOverlay';
 import Help from '../components/Help';
 import Trash from '../components/Trash';
+// 3rd Party Libraries
 import { useEffect, useState } from 'react';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+// Custom Libraries
 import { auth } from '../firebaseConfig';
 import { useIdeaContext } from '../context/IdeaContext';
 import {

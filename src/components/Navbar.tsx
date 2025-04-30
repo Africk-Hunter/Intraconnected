@@ -1,6 +1,6 @@
 import React from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
-import { returnToRoot } from '../utilities/independentIdeaHandlers';
+import { returnToRoot } from '../utilities/index';
 
 
 interface NavbarProps {

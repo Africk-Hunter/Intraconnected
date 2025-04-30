@@ -1,4 +1,4 @@
-import { fetchIdeasFromFirebase } from "./firebaseHelpers";
+import { fetchIdeasFromFirebase } from "../firebase/firebaseHelpers";
 
 export async function fetchFromFirebaseAndOrganizeIdeas() {
     clearLocalStorage();
