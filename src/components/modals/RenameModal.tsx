@@ -1,20 +1,17 @@
 import { useIdeaContext } from "../../context/IdeaContext";
-import { updateIdeaName, updateIdeaNameInFirebase, getIdeasByParentID } from "../../utilities";
+import { updateIdeaName, updateIdeaNameInFirebase } from "../../utilities";
 
-interface RenameModalProps {
 
-}
+function RenameModal() {
 
-function RenameModal({ }: RenameModalProps) {
-
-    const { rootId, setRootName, renameModalOpen, setRenameModalOpen, modalContent, setModalContent, setNewIdeaSwitch, setIdeas } = useIdeaContext();
+    const { rootId, setRootName, renameModalOpen, setRenameModalOpen, modalContent, setModalContent, setNewIdeaSwitch } = useIdeaContext();
 
     function handleIdeaRename(rootID: number, newName: string) {
         updateIdeaNameInFirebase(rootID, newName).then(() => {
             setRootName(newName);
             updateIdeaName(rootID, newName);
         }).catch((error) => {
-            console.error("Error renaming idea:", error);
+            console.error("Error renaming idea: ", error);
         });
     }
 
