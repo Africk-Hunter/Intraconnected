@@ -11,7 +11,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({side, signUserOut, setShowHelp}) => {
 
-    const { setRootId, setRootName, rootIdStack, setModalOpen } = useIdeaContext();
+    const { setRootId, setRootName, rootIdStack, setCreationModalOpen } = useIdeaContext();
 
     return (
         <>
@@ -26,7 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({side, signUserOut, setShowHelp}) => {
 
                 <nav className="navbar">
                     <button className="largeSideButton neutral neobrutal-button navButton" onClick={() => returnToRoot({ setRootId, setRootName, rootIdStack })}><img src="/images/Logo.svg" alt="" className="buttonImg logoButton" /></button>
-                    <button className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg" /></button>
+                    <button className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setCreationModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg" /></button>
                 </nav>
             }
         </>

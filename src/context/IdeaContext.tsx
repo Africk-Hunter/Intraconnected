@@ -8,8 +8,10 @@ interface IdeaContextType {
     rootName: string;
     setRootName: (name: string) => void;
     rootIdStack: React.RefObject<number[]>;
-    modalOpen: boolean;
-    setModalOpen: (open: boolean) => void;
+    creationModalOpen: boolean;
+    setCreationModalOpen: (open: boolean) => void;
+    renameModalOpen: boolean;
+    setRenameModalOpen: (open: boolean) => void;
     modalContent: string;
     setModalContent: (content: string) => void;
     newIdeaSwitch: boolean;
@@ -23,7 +25,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [ideas, setIdeas] = useState<any[]>([]);
     const [rootId, setRootId] = useState(1);
     const [rootName, setRootName] = useState("Ideas");
-    const [modalOpen, setModalOpen] = useState(false);
+    const [creationModalOpen, setCreationModalOpen] = useState(false);
+    const [renameModalOpen, setRenameModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState("");
     const [newIdeaSwitch, setNewIdeaSwitch] = useState(false);
     const rootIdStack = useRef<number[]>([]);
@@ -39,8 +42,10 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 rootName,
                 setRootName,
                 rootIdStack,
-                modalOpen,
-                setModalOpen,
+                creationModalOpen,
+                setCreationModalOpen,
+                renameModalOpen,
+                setRenameModalOpen,
                 modalContent,
                 setModalContent,
                 newIdeaSwitch,

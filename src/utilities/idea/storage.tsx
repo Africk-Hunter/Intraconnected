@@ -52,3 +52,14 @@ export function appendToLocalStorageFromFrontend(idea: IdeaType) {
         }
     }
 }
+
+export function updateIdeaName(id: number, newName: string) {
+    const ideas = fetchFullIdeaList();
+    const updatedIdeas = ideas.map((idea: IdeaType) => {
+        if (idea.id === id) {
+            return { ...idea, content: newName };
+        }
+        return idea;
+    });
+    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+}

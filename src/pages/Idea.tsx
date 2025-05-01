@@ -1,10 +1,12 @@
 // Components
 import Navbar from '../components/Navbar';
 import IdeaNode from '../components/IdeaNode';
-import ModalOverlay from '../components/ModalOverlay';
+import CreationModal from '../components/modals/CreationModal';
+import RenameModal from '../components/modals/RenameModal';
 import Help from '../components/Help';
 import Trash from '../components/Trash';
 import LastIdea from '../components/LastIdea';
+
 
 // 3rd Party Libraries
 import { useEffect, useState } from 'react';
@@ -35,7 +37,7 @@ function Idea() {
     const [showHelp, setShowHelp] = useState(false);
     const [lastRootName, setlastRootName] = useState('');
 
-    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas } = useIdeaContext();
+    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen } = useIdeaContext();
 
     useEffect(() => {
         async function init() {
@@ -53,7 +55,6 @@ function Idea() {
         const unsubscribe = auth.onAuthStateChanged(() => {
             init();
         });
-
         return () => unsubscribe();
     }, []);
 
@@ -69,7 +70,7 @@ function Idea() {
         loadIdeas();
 
         setlastRootName(getNameFromID(getParentID(rootId)));
-    }, [rootId, newIdeaSwitch]);
+    }, [rootId, newIdeaSwitch, rootName]);
 
     const handleDragEnd = (event: any) => {
         const { active, over } = event;
@@ -111,8 +112,6 @@ function Idea() {
             const loadedIdeas = getIdeasByParentID(rootId);
             setIdeas(loadedIdeas);
         }
-
-
     };
 
     const sensors = useSensors(
@@ -122,6 +121,7 @@ function Idea() {
             },
         })
     );
+
 
     return (
         <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
@@ -134,7 +134,7 @@ function Idea() {
                 <section className="mid">
                     <section className="top">
                         <section className="rootHolder">
-                            <div className="ideaRoot neobrutal-button">{rootName}</div>
+                            <div className="ideaRoot neobrutal-button" onClick={() => {rootId != 1 ? setRenameModalOpen(true) : undefined}}>{rootName}</div>
                             <section className="rootAdditionalButtons">
                                 <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /></button>
                                 {(rootId != 1) ? <LastIdea lastRootName={lastRootName} /> : <></>}
@@ -164,8 +164,8 @@ function Idea() {
                     <Help showHelp={showHelp} />
                 </section>
             </section>
-
-            <ModalOverlay handleIdeaCreation={handleIdeaCreation} />
+            <RenameModal />
+            <CreationModal handleIdeaCreation={handleIdeaCreation} />
         </DndContext>
     );
 }
