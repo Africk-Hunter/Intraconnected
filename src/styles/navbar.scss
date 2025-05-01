@@ -16,6 +16,18 @@
         align-items: end;
     }
 
+    @media (max-width: $mobile) {
+        flex-direction: row;
+        height: fit-content;
+
+        &.rightSide {
+            flex-direction: row-reverse;
+            height: fit-content;
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+
     @media (min-width: $large-desktop) {
         &.rightSide {
             height: 20vh;
@@ -45,6 +57,11 @@
     width: 5.625rem;
     height: 5.625rem;
 
+    @media (max-width: $mobile) {
+        width: 4rem;
+        height: 4rem;
+    }
+
     @media (min-width: $large-desktop) {
         width: 8rem;
         height: 8rem;
@@ -57,6 +74,11 @@
     width: 3.75rem;
     height: 3.75rem;
 
+    @media (max-width: $mobile) {
+        width: 4rem;
+        height: 4rem;
+    }
+
     @media (min-width: $large-desktop) {
         width: 5.25rem;
         height: 5.25rem;
@@ -68,6 +90,11 @@
 
     width: 2.5rem;
     height: 2.5rem;
+
+    @media (max-width: $mobile) {
+        width: 3rem;
+        height: 3rem;
+    }
 
     @media (min-width: $large-desktop) {
         width: 4rem;
@@ -83,9 +110,20 @@
 
 .buttonImg {
     user-select: none;
+    
+    @media (max-width: $mobile) {
+
+        &.logoButton {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 90%;
+            height: 90%;
+        }
+    }
 
     @media (min-width: $large-desktop) {
-        width: 55%;
+        width: 50%;
         height: 50%;
 
         &.logoButton {

@@ -25,6 +25,12 @@
     padding: 2rem 1rem;
     border-radius: 10px;
 
+    @media (max-width: $mobile) {
+        width: 85%;
+        min-height: 20rem;
+        padding: 2rem 1rem;
+    }
+
     @media (min-width: $large-desktop) {
         width: 42.5rem;
         min-height:24rem;
@@ -40,6 +46,13 @@
     background: $neutral;
     resize: vertical;
 
+    
+    @media (max-width: $mobile) {
+        width: 18rem;
+        min-height: 13rem;
+        padding: 1rem 1rem;
+    }
+
     @media (min-width: $large-desktop) {
         width: 33rem;
         min-height: 10rem;
@@ -52,6 +65,11 @@
     display: flex;
     width: 28.125rem;
     justify-content: space-between;
+
+    @media (max-width: $mobile) {
+        width: 20rem;
+        gap: 1rem;
+    }
 
     @media (min-width: $large-desktop) {
         width: 37rem;

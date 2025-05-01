@@ -6,13 +6,22 @@
     gap: 5rem;
     font-family: "DM Sans", sans-serif;
 
+    @media (max-width: $mobile) {
+        margin-top: 7rem;
+    }
+
     @media (min-width: $large-desktop) {
         gap: 15rem;
     }
+    
 }
 
 .largeLogo{
     user-select: none;
+
+    @media (max-width: $mobile) {
+        scale: .7;
+    }
 
     @media (min-width: $large-desktop) {
         scale: 1.5;
@@ -43,6 +52,10 @@
     padding: 1rem;
     font-size: 1.6rem;
 
+    @media (max-width: $mobile) {
+        width: 20rem;
+        height: 2rem;
+    }
 }
 
 .authSubmit{
@@ -63,6 +76,11 @@
     @media (min-width: $large-desktop) {
         height: 4rem;
     }
+
+    @media (max-width: $mobile) {
+        width: 22rem;
+        height: 3rem;
+    }
 }
 
 .switchAuth{
@@ -75,6 +93,10 @@
     }
     &.register{
         transform: translateY(0);
+    }
+
+    @media (max-width: $mobile) {
+        font-size: 1.1rem;
     }
     
 }

@@ -20,6 +20,16 @@
     transition: all 0.3s ease;
     gap: .5rem;
 
+    @media (max-width: $mobile) {
+        width: 80vw;
+        height: fit-content;
+        padding: 1rem 1rem;
+        right: 1rem;
+        top: -30rem;
+        left: 0;
+        margin: auto;
+    }
+
     @media (min-width: $large-desktop) {
         width: 58rem;
         height: 27rem;
