@@ -7,7 +7,6 @@ import Help from '../components/Help';
 import Trash from '../components/Trash';
 import LastIdea from '../components/LastIdea';
 
-
 // 3rd Party Libraries
 import { useEffect, useState } from 'react';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
@@ -18,7 +17,6 @@ import { auth } from '../firebaseConfig';
 import { useIdeaContext } from '../context/IdeaContext';
 import {
     fetchFullIdeaList,
-    checkIfIdeaIsLeaf,
     handleBackClick,
     handleIdeaCreation,
     fetchFromFirebaseAndOrganizeIdeas,
@@ -60,8 +58,7 @@ function Idea() {
 
     useEffect(() => {
         const loadIdeas = async () => {
-            const loadedIdeas = getIdeasByParentID(rootId);
-            setIdeas(loadedIdeas);
+            setIdeasFromStorage();
 
             const currentRoot = fetchFullIdeaList().find((idea: IdeaType) => idea.id === rootId);
             if (currentRoot) setRootName(currentRoot.content);
@@ -80,9 +77,6 @@ function Idea() {
         const overId = Number(over.id.split('-')[1]);
 
         if (over.id === 'trash') {
-            console.log('Deleting idea with id:', activeId);
-            recursivelyDeleteChildren(activeId);
-
             const childrenToDelete = getChildrenToDelete(activeId);
             recursivelyDeleteChildren(activeId);
 
@@ -97,8 +91,7 @@ function Idea() {
             console.log('Moving idea with id:', activeId, 'to root with id:', rootId);
             updateIdeaParentId(activeId, getParentID(rootId));
 
-            const loadedIdeas = getIdeasByParentID(rootId);
-            setIdeas(loadedIdeas);
+            setIdeasFromStorage();
         } else {
             if (activeId === overId) {
                 console.log('Dropping idea on itself, no action taken.');
@@ -109,10 +102,14 @@ function Idea() {
             updateIdeaParentId(activeId, newParentId);
             console.log('Moving idea with id:', activeId, 'to parent with id:', overId);
 
-            const loadedIdeas = getIdeasByParentID(rootId);
-            setIdeas(loadedIdeas);
+            setIdeasFromStorage();
         }
     };
+
+    function setIdeasFromStorage() {
+        const loadedIdeas = getIdeasByParentID(rootId);
+        setIdeas(loadedIdeas);
+    }
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -134,10 +131,10 @@ function Idea() {
                 <section className="mid">
                     <section className="top">
                         <section className="rootHolder">
-                            <div className="ideaRoot neobrutal-button" onClick={() => {rootId != 1 ? setRenameModalOpen(true) : undefined}}>{rootName}</div>
+                            <div className="ideaRoot neobrutal-button" onClick={() => { rootId != 1 ? setRenameModalOpen(true) : undefined }}>{rootName}</div>
                             <section className="rootAdditionalButtons">
                                 <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /></button>
-                                {(rootId != 1) ? <LastIdea lastRootName={lastRootName} /> : <></>}
+                                {(rootId != 1) && <LastIdea lastRootName={lastRootName} />}
                             </section>
                         </section>
                     </section>
@@ -151,7 +148,7 @@ function Idea() {
                                         id={idea.id}
                                         title={idea.content}
                                         parentID={idea.parentID}
-                                        isLeaf={checkIfIdeaIsLeaf(idea.id)}
+                                        link={idea.link}
                                     />
                                 ))}
                             </section>

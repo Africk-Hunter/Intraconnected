@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useRef, useState } from "react";
 
 interface IdeaContextType {
-    ideas: { id: number; content: string; parentID: number }[];
+    ideas: { id: number; content: string; parentID: number; link: string }[];
     setIdeas: (ideas: any) => void
     rootId: number;
     setRootId: (id: number) => void;
@@ -16,6 +16,10 @@ interface IdeaContextType {
     setModalContent: (content: string) => void;
     newIdeaSwitch: boolean;
     setNewIdeaSwitch: (value: (prev: boolean) => boolean) => void;
+    messageBoxMessage: string;
+    setMessageBoxMessage: (message: string) => void;
+    messageType: string;
+    setMessageType: (type: string) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -29,6 +33,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [renameModalOpen, setRenameModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState("");
     const [newIdeaSwitch, setNewIdeaSwitch] = useState(false);
+    const [messageBoxMessage, setMessageBoxMessage] = useState("");
+    const [messageType, setMessageType] = useState("");
     const rootIdStack = useRef<number[]>([]);
 
 
@@ -49,7 +55,11 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 modalContent,
                 setModalContent,
                 newIdeaSwitch,
-                setNewIdeaSwitch
+                setNewIdeaSwitch,
+                messageBoxMessage,
+                setMessageBoxMessage,
+                messageType,
+                setMessageType,
             }}>
             {children}
         </IdeaContext.Provider>

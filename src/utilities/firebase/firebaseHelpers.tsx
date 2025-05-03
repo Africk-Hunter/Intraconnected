@@ -1,6 +1,6 @@
 import { db, auth } from "../../firebaseConfig";
 import { doc, setDoc, collection, getDocs, deleteDoc} from "firebase/firestore";
-
+import { IdeaType } from "../types";
 
 function authCheck() {
     const user = auth.currentUser;
@@ -21,7 +21,8 @@ export async function fetchIdeasFromFirebase() {
         const ideasList = ideasSnapshot.docs.map(doc => ({ 
             id: doc.data().id as number,
             content: doc.data().content as string,
-            parentID: doc.data().parentID as number
+            parentID: doc.data().parentID as number,
+            link: doc.data().link as string,
         }));
         return ideasList;
     } catch (error) {
@@ -29,7 +30,7 @@ export async function fetchIdeasFromFirebase() {
     }
 }
 
-export async function addIdeaToFirebase(idea: { id: number; content: string; parentID: number }) {
+export async function addIdeaToFirebase(idea: IdeaType) {
     const user = authCheck();
     if (!user) return;
 

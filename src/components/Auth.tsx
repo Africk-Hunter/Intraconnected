@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth";
 import AuthOptionMessage from "./AuthOptionMessage";
+import MessageBox from "./MessageBox";
+import { useIdeaContext } from "../context/IdeaContext";
 
 const Auth: React.FC = () => {
 
@@ -9,8 +11,10 @@ const Auth: React.FC = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [messageBoxMessage, setMessageBoxMessage] = useState("");
-    const [messageType, setMessageType] = useState("");
+/*     const [messageBoxMessage, setMessageBoxMessage] = useState("");
+    const [messageType, setMessageType] = useState(""); */
+
+    const { setMessageBoxMessage, setMessageType, messageBoxMessage } = useIdeaContext();
 
     useEffect(() => {
         setPersistence(auth, browserLocalPersistence).catch((error) => {
@@ -120,22 +124,9 @@ const Auth: React.FC = () => {
             });
     }
 
-    interface MessageBoxProps {
-        messageBoxMessage: string;
-        goodOrBad: string;
-    }
-
-    function MessageBox({ messageBoxMessage, goodOrBad }: MessageBoxProps) {
-        return (
-            <section className={`messageBox shadowAndBorder neobrutal-button ${goodOrBad}`}>
-                <p className="messageBoxMessage">{messageBoxMessage}</p>
-            </section>
-        )
-    }
-
     return (
         <div className="auth">
-            <MessageBox messageBoxMessage={messageBoxMessage} goodOrBad={messageType} />
+            <MessageBox />
 
             <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
             <section className="authForm">
