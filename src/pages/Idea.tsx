@@ -27,7 +27,8 @@ import {
     recursivelyDeleteChildren,
     updateIdeaParentId,
     getParentID,
-    getNameFromID
+    getNameFromID,
+    checkIfIdeaIsLeaf
 } from '../utilities/index';
 
 function Idea() {
@@ -149,6 +150,7 @@ function Idea() {
                                         title={idea.content}
                                         parentID={idea.parentID}
                                         link={idea.link}
+                                        isLeaf={checkIfIdeaIsLeaf(idea.id)}
                                     />
                                 ))}
                             </section>

@@ -1,38 +1,38 @@
 import React, { useEffect } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { checkIfIdeaIsLeaf } from '../utilities';
 
 interface IdeaNodeProps {
     id: number;
     title: string;
     parentID: number;
     link: string;
+    isLeaf: boolean;
 }
 
-const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link}) => {
+const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
     const { setRootId, setRootName, rootIdStack } = useIdeaContext();
 
     const [nodeType, setNodeType] = React.useState('leaf');
     const [isLink, setIsLink] = React.useState(false);
+    const [copyPath, setCopyPath] = React.useState('images/CopyIcon.svg');
 
     function makeRoot() {
         setRootId(id);
         setRootName(title);
-        console.log('makeRoot called with id:', id);
         rootIdStack.current?.push(id);
     }
 
     useEffect(() => {
         determineNodeType();
-    }, [id, link]);
+    }, [id, link, isLeaf]);
 
     function determineNodeType() {
         if (link && link != '') {
             setNodeType('link');
             setIsLink(true);
             return;
-        } else if (checkIfIdeaIsLeaf(id)) {
+        } else if (isLeaf) {
             setNodeType('leaf');
         }
         else {
@@ -68,20 +68,31 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link}) => {
     };
     // -----
 
+    function copyToClipboard(e: React.MouseEvent) {
+        e.stopPropagation();
+
+        navigator.clipboard.writeText(title).then(() => {
+            console.log('Copied to clipboard:', title);
+            setTimeout(() => {
+                setCopyPath('images/CopyIcon.svg');
+            }, 1000);
+            setCopyPath('images/Checkmark.svg');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
+    }
+
     return (
         isLink ? (
-            <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`}
-                {...attributes}
-                {...listeners}>
+            <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
             </a >
 
         ) : (
 
-            <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`}
-                {...attributes}
-                {...listeners}>
+            <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
+                <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </div >
 
         )
