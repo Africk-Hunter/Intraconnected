@@ -48,6 +48,10 @@
     border-radius: 10px;
     border: 2px solid black;
 
+    @media (max-width: $mobile) {
+        width: 20rem;
+    }
+
     @media (min-width: $large-desktop) {
         border: 3px solid black;
         width: 37rem;
@@ -81,6 +85,12 @@
     &::selection{
         background: $background-color;
         color: black;
+    }
+
+    @media (max-width: $mobile) {
+        min-width: 15rem;
+        top: -3rem;
+        left: -17rem;
     }
 
     @media (min-width: $large-desktop) {

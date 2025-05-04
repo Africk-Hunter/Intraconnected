@@ -17,6 +17,17 @@ body {
         linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
         linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
     font-family: "DM Sans", sans-serif;
+
+    @media (max-width: $mobile) {
+        overflow: hidden;
+        position: fixed;
+    }
+}
+
+button {
+    @media (max-width: $mobile) {
+        color: black;
+    }
 }
 
 .main {

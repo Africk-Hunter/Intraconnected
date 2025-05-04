@@ -11,8 +11,6 @@ const Auth: React.FC = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-/*     const [messageBoxMessage, setMessageBoxMessage] = useState("");
-    const [messageType, setMessageType] = useState(""); */
 
     const { setMessageBoxMessage, setMessageType, messageBoxMessage } = useIdeaContext();
 
