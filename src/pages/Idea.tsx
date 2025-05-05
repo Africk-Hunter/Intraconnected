@@ -34,7 +34,7 @@ import {
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
-    const [lastRootName, setlastRootName] = useState('');
+    const [lastRootName, setLastRootName] = useState('');
 
     const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen } = useIdeaContext();
 
@@ -66,8 +66,7 @@ function Idea() {
         };
 
         loadIdeas();
-
-        setlastRootName(getNameFromID(getParentID(rootId)));
+        setLastRootName(getNameFromID(getParentID(rootId)));
     }, [rootId, newIdeaSwitch, rootName]);
 
     const handleDragEnd = (event: any) => {
@@ -132,7 +131,7 @@ function Idea() {
                 <section className="mid">
                     <section className="top">
                         <section className="rootHolder">
-                            <div className="ideaRoot neobrutal-button" onClick={() => { rootId != 1 ? setRenameModalOpen(true) : undefined }}>{rootName}</div>
+                            <div className="ideaRoot neobrutal-button" onClick={() => { rootId != 1 && setRenameModalOpen(true)}}>{rootName}</div>
                             <section className="rootAdditionalButtons">
                                 <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /></button>
                                 {(rootId != 1) && <LastIdea lastRootName={lastRootName} />}
