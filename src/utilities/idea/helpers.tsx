@@ -65,6 +65,16 @@ export function returnToRoot(params: {
     }
 }
 
+export function returnToRootOfID(params: { setRootId: (id: number) => void; setRootName: (name: string) => void; rootIdStack: React.RefObject<number[]>; rootToGoTo: number; newRootName: string }) {
+    const { setRootId, setRootName, rootIdStack, rootToGoTo, newRootName } = params;
+
+    setRootId(rootToGoTo);
+    setRootName(newRootName);
+    while (rootIdStack.current[rootIdStack.current.length - 1] !== rootToGoTo) {
+        rootIdStack.current.pop();
+    }
+}
+
 export function getParentID(parentID: number): number {
     const ideas = fetchFullIdeaList();
     const idea = ideas.find((idea: IdeaType) => idea.id === parentID);
