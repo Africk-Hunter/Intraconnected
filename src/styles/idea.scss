@@ -248,6 +248,7 @@
     margin-bottom: 10rem;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    justify-items: center;
 
     @media (max-width: $mobile) {
         display: flex;
@@ -257,20 +258,24 @@
         align-items: center;
         row-gap: 2rem;
     }
+
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 .ideaNode {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     align-items: center;
     background: $leaf;
     width: 15rem;
     min-height: 4.625rem;
     height: fit-content;
-    margin: 0.5rem;
     font-weight: 500;
     padding: 0.5rem 1rem;
     word-break: break-word;
+
 
     -webkit-user-select: none;
     user-select: none;
@@ -304,6 +309,11 @@
             width: 21rem;
             font-size: 2.25rem;
         }
+
+        @media screen and (min-width: $mobile) and (max-width: 1438px) {
+            width: 10rem; 
+            padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+        }
     }
 
     &.link {
@@ -329,6 +339,14 @@
     @media (min-width: $large-desktop) {
         width: 16rem;
         padding: 1rem 1rem;
+    }
+
+    @media screen and ($macbook-air-between) {
+        width: 1rem; 
+    }
+
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        width: 10rem; 
     }
 
     &:hover .copy {
