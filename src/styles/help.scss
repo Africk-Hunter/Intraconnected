@@ -37,11 +37,7 @@
     }
 }
 
-.show {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: auto;
-}
+
 
 .header {
     margin: 0;
@@ -55,9 +51,10 @@
     }
 }
 
-.subHeader{
+.subHeader {
     margin: .3rem 0 .75rem 0;
     user-select: none;
+
     @media (min-width: $large-desktop) {
         font-size: 1.2rem;
     }
@@ -69,7 +66,7 @@
     font-weight: 400;
     vertical-align: top;
     height: 100%;
-    
+
 
     @media (min-width: $large-desktop) {
         font-size: 1.5rem;
@@ -243,8 +240,19 @@
 }
 
 .moveArrow {
+    opacity: 0;
+    pointer-events: none;
     cursor: pointer;
     scale: 1.5;
     user-select: none;
     margin: 0 .5rem 0 .25rem;
+}
+
+.show {
+    &.howToUsePopup {
+        transform: translateX(0);
+    }
+
+    opacity: 1;
+    pointer-events: auto;
 }
