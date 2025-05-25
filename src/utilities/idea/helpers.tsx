@@ -60,7 +60,7 @@ export function returnToRoot(params: {
 
     setRootId(1);
     setRootName("Ideas");
-    while (rootIdStack.current.length > 0) {
+    while (rootIdStack.current.length > 1) {
         rootIdStack.current.pop();
     }
 }
