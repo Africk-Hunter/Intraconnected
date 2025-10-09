@@ -17,9 +17,16 @@ function LinkChangeModal() {
     }
 
     function cleanModalContent(userLink: string){
-        if(!userLink.includes('https://'))
-            return 'https://' + userLink
-        return userLink
+        if(!userLink.includes('https://')) {
+            if(userLink === "") {
+                return "";
+            }
+            userLink = 'https://' + userLink;
+        }
+        if(!userLink.includes('.')){
+            userLink = userLink + '.com'
+        }
+        return userLink;
     }
 
     return (
