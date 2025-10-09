@@ -82,3 +82,17 @@ export async function updateIdeaNameInFirebase(ideaId: number, newName: string) 
 
 
 }
+
+export async function updateIdeaLinkInFirebase(ideaId: number, newLink: string) {
+    const user = authCheck();
+    if (!user) return;
+
+    try {
+        const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
+        await setDoc(ideaDoc, { link: newLink }, { merge: true }); // <-- update the 'link' field
+        console.log("Idea link updated successfully");
+    } catch (error) {
+        console.error("Error updating idea link: ", error);
+    }
+}
+

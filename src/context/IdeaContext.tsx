@@ -12,6 +12,12 @@ interface IdeaContextType {
     setCreationModalOpen: (open: boolean) => void;
     renameModalOpen: boolean;
     setRenameModalOpen: (open: boolean) => void;
+    linkChangeModalOpen: boolean;
+    setLinkChangeModalOpen: (open: boolean) => void;
+    currentLinkID: number;
+    setCurrentLinkID: (id: number) => void;
+    currentLink: string;
+    setCurrentLink: (link: string) => void;
     modalContent: string;
     setModalContent: (content: string) => void;
     newIdeaSwitch: boolean;
@@ -31,10 +37,13 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [rootName, setRootName] = useState("Ideas");
     const [creationModalOpen, setCreationModalOpen] = useState(false);
     const [renameModalOpen, setRenameModalOpen] = useState(false);
+    const [linkChangeModalOpen, setLinkChangeModalOpen] = useState(false);
     const [modalContent, setModalContent] = useState("");
     const [newIdeaSwitch, setNewIdeaSwitch] = useState(false);
     const [messageBoxMessage, setMessageBoxMessage] = useState("");
     const [messageType, setMessageType] = useState("");
+    const [currentLinkID, setCurrentLinkID] = useState<number>(0);
+    const [currentLink, setCurrentLink] = useState<string>("");
     const rootIdStack = useRef<number[]>([]);
 
 
@@ -52,6 +61,12 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setCreationModalOpen,
                 renameModalOpen,
                 setRenameModalOpen,
+                linkChangeModalOpen,
+                setLinkChangeModalOpen,
+                currentLinkID,
+                setCurrentLinkID,
+                currentLink,
+                setCurrentLink,
                 modalContent,
                 setModalContent,
                 newIdeaSwitch,

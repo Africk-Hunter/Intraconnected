@@ -30,6 +30,7 @@ import {
     getNameFromID,
     checkIfIdeaIsLeaf
 } from '../utilities/index';
+import LinkChangeModal from '../components/modals/LinkChangeModal';
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
@@ -163,6 +164,7 @@ function Idea() {
                 </section>
             </section>
             <RenameModal />
+            <LinkChangeModal />
             <CreationModal handleIdeaCreation={handleIdeaCreation} />
         </DndContext>
     );

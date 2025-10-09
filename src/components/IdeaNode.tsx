@@ -11,11 +11,13 @@ interface IdeaNodeProps {
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
-    const { setRootId, setRootName, rootIdStack } = useIdeaContext();
+    const { setRootId, setRootName, rootIdStack, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink } = useIdeaContext();
 
     const [nodeType, setNodeType] = React.useState('leaf');
     const [isLink, setIsLink] = React.useState(false);
     const [copyPath, setCopyPath] = React.useState('images/CopyIcon.svg');
+    const [penPath, setPenPath] = React.useState('images/Pen.svg');
+
 
     function makeRoot() {
         setRootId(id);
@@ -82,10 +84,36 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
         });
     }
 
+    /* function renameIdea(e: React.MouseEvent) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        setRenameModalOpen(true)
+        navigator.clipboard.writeText(title).then(() => {
+            console.log('Copied to clipboard:', title);
+            setTimeout(() => {
+                setCopyPath('images/CopyIcon.svg');
+            }, 1000);
+            setCopyPath('images/Checkmark.svg');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
+    } */
+
+    function changeLink(e: React.MouseEvent) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        setCurrentLinkID(id)
+        setCurrentLink(link)
+        setLinkChangeModalOpen(true)
+    }
+
     return (
         isLink ? (
             <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
+                <button className="copy" onClick={changeLink}><img src={penPath} alt="Copy Idea Content" className="copyImg" /></button>
             </a >
 
         ) : (
