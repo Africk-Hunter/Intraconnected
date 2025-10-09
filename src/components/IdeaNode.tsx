@@ -113,13 +113,14 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
         isLink ? (
             <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
-                <button className="copy" onClick={changeLink}><img src={penPath} alt="Copy Idea Content" className="copyImg" /></button>
+                <button className="copy" onClick={changeLink}><img src={penPath} alt="Change Link" className="copyImg" /></button>
             </a >
 
         ) : (
 
             <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
+                <button className="editLink copy" onClick={changeLink}><img src={penPath} alt="Change Link" className="copyImg" /></button>
                 <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </div >
 
