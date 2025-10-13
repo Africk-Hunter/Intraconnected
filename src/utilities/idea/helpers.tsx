@@ -93,3 +93,9 @@ export function getNameFromID(id: number): string {
     const idea = ideas.find((idea: IdeaType) => idea.id === id);
     return idea ? idea.content : 'Idea';
 }
+
+export function geLinkFromID(id: number): string {
+    const ideas = fetchFullIdeaList();
+    const idea = ideas.find((idea: IdeaType) => idea.id === id);
+    return idea ? idea.link : '';
+}

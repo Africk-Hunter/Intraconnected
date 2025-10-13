@@ -28,7 +28,8 @@ import {
     updateIdeaParentId,
     getParentID,
     getNameFromID,
-    checkIfIdeaIsLeaf
+    checkIfIdeaIsLeaf,
+    geLinkFromID
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 
@@ -76,6 +77,7 @@ function Idea() {
 
         const activeId = Number(active.id.split('-')[1]);
         const overId = Number(over.id.split('-')[1]);
+        const overLink = geLinkFromID(overId);
 
         if (over.id === 'trash') {
             const childrenToDelete = getChildrenToDelete(activeId);
@@ -98,7 +100,10 @@ function Idea() {
                 console.log('Dropping idea on itself, no action taken.');
                 return;
             }
-
+            if (overLink != ""){
+                console.log('Dropping idea into link idea, no action taken.')
+                return;
+            }
             const newParentId = Number(over.id.split('-')[1]);
             updateIdeaParentId(activeId, newParentId);
             console.log('Moving idea with id:', activeId, 'to parent with id:', overId);
