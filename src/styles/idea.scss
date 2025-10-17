@@ -287,13 +287,13 @@
         font-size: 1.875rem;
         text-align: center;
         justify-content: center;
-        padding: 1rem;
+        padding: 2.5rem 1rem;
         gap: 1rem;
 
         @media (min-width: $large-desktop) {
             width: 20.5rem;
             font-size: 2.2rem;
-            padding: 1.5rem;
+            padding: 2.5rem 1.25rem;
         }
     }
 
@@ -303,11 +303,12 @@
         text-align: left;
         min-height: 2.625rem;
         width: 14rem;
-        padding: 2rem 1.5rem 2rem 1.5rem;
+        padding: 2.25rem 1.5rem 2rem 1.5rem;
 
         @media (min-width: $large-desktop) {
             width: 21rem;
             font-size: 2.25rem;
+            padding: 2.5rem 1.5rem 2rem 1.5rem;
         }
 
         @media screen and (min-width: $mobile) and (max-width: 1438px) {
@@ -321,7 +322,7 @@
         font-size: 1.875rem;
         text-align: center;
         justify-content: center;
-        padding: 1rem;
+        padding: 2.25rem 1rem 2.25rem 1rem;
         text-decoration: none;
         color: black;
 
@@ -388,13 +389,35 @@
 }
 
 .editLink{
-    right: 3rem;
+    right: 4rem;
+
+    @media (max-width: $mobile) {
+        right: 4rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        right: 5rem;
+    }
 }
 
 .copyImg{
     width: fit-content;
+    
 }
 
 .changeLinkImg{
     width: fit-content;
+}
+
+.renameButtonNode{
+    right: 2.5rem;
+
+    @media (max-width: $mobile) {
+        right: 2.5rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        right: 3rem;
+    }
+    
 }

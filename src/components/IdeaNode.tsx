@@ -11,12 +11,13 @@ interface IdeaNodeProps {
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
-    const { setRootId, setRootName, rootIdStack, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink } = useIdeaContext();
+    const { setRootId, setRootName, rootIdStack, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName, selectedIdeaName } = useIdeaContext();
 
     const [nodeType, setNodeType] = React.useState('leaf');
     const [isLink, setIsLink] = React.useState(false);
     const [copyPath, setCopyPath] = React.useState('images/CopyIcon.svg');
     const [penPath, setPenPath] = React.useState('images/Pen.svg');
+    const [linkPath, setLinkPath] = React.useState('images/LinkBlack.svg');
 
 
     function makeRoot() {
@@ -109,16 +110,29 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
         setLinkChangeModalOpen(true)
     }
 
+    function changeName(e: React.MouseEvent) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        setCurrentNameChangeId(id)
+        setSelectedIdeaName(title)
+        console.log(selectedIdeaName)
+        setRenameModalOpen(true)
+    }
+
     return (
         link && link !== "" ? (
             <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
-                <button className="copy" onClick={changeLink}><img src={penPath} alt="Change Link" className="copyImg" /></button>
+                {isLeaf ? <button className="editLink copy" onClick={changeLink}><img src={linkPath} alt="Change Link" className="copyImg" /></button> : <></>}
+                <button className="renameButtonNode copy" onClick={changeName}><img src={penPath} alt="Change Link" className="copyImg" /></button>
+                <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </a>
         ) : (
             <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
-                <button className="editLink copy" onClick={changeLink}><img src={penPath} alt="Change Link" className="copyImg" /></button>
+                {isLeaf ? <button className="editLink copy" onClick={changeLink}><img src={linkPath} alt="Change Link" className="copyImg" /></button> : <></>}
+                <button className="renameButtonNode copy" onClick={changeName}><img src={penPath} alt="Change Link" className="copyImg" /></button>
                 <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </div>
         )

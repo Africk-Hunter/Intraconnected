@@ -2,7 +2,7 @@ import React, { createContext, useContext, useRef, useState } from "react";
 
 interface IdeaContextType {
     ideas: { id: number; content: string; parentID: number; link: string }[];
-    setIdeas: (ideas: any) => void
+    setIdeas: (ideas: any) => void;
     rootId: number;
     setRootId: (id: number) => void;
     rootName: string;
@@ -20,6 +20,10 @@ interface IdeaContextType {
     setCurrentLink: (link: string) => void;
     modalContent: string;
     setModalContent: (content: string) => void;
+    currentNameChangeId: number;
+    setCurrentNameChangeId: (id: number) => void;
+    selectedIdeaName: string;
+    setSelectedIdeaName: (name: string) => void;
     newIdeaSwitch: boolean;
     setNewIdeaSwitch: (value: (prev: boolean) => boolean) => void;
     messageBoxMessage: string;
@@ -44,8 +48,10 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [messageType, setMessageType] = useState("");
     const [currentLinkID, setCurrentLinkID] = useState<number>(0);
     const [currentLink, setCurrentLink] = useState<string>("");
-    const rootIdStack = useRef<number[]>([]);
+    const [currentNameChangeId, setCurrentNameChangeId] = useState<number>(-1);
+    const [selectedIdeaName, setSelectedIdeaName] = useState<string>("");
 
+    const rootIdStack = useRef<number[]>([]);
 
     return (
         <IdeaContext.Provider
@@ -69,6 +75,10 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setCurrentLink,
                 modalContent,
                 setModalContent,
+                currentNameChangeId,
+                setCurrentNameChangeId,
+                selectedIdeaName,
+                setSelectedIdeaName,
                 newIdeaSwitch,
                 setNewIdeaSwitch,
                 messageBoxMessage,
