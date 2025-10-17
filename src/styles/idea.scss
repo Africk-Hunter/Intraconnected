@@ -292,9 +292,11 @@
 
         @media (min-width: $large-desktop) {
             width: 20.5rem;
-            font-size: 2.2rem;
-            padding: 2.5rem 1.25rem;
+            font-size: 2.5rem;
+            padding: 2.5rem 1.5rem 2.5rem 1.5rem;
         }
+
+
     }
 
     &.leaf {
@@ -312,7 +314,7 @@
         }
 
         @media screen and (min-width: $mobile) and (max-width: 1438px) {
-            width: 10rem; 
+            width: 10rem;
             padding: 1.5rem 1.5rem 1.5rem 1.5rem;
         }
     }
@@ -328,7 +330,7 @@
 
         @media (min-width: $large-desktop) {
             width: 20rem;
-            font-size: 2.2rem;
+            font-size: 2.75rem;
         }
     }
 
@@ -343,11 +345,11 @@
     }
 
     @media screen and ($macbook-air-between) {
-        width: 1rem; 
+        width: 1rem;
     }
 
     @media screen and (min-width: $mobile) and (max-width: 1438px) {
-        width: 10rem; 
+        width: 10rem;
     }
 
     &:hover .copy {
@@ -388,7 +390,7 @@
     }
 }
 
-.editLink{
+.editLink {
     right: 4rem;
 
     @media (max-width: $mobile) {
@@ -400,16 +402,16 @@
     }
 }
 
-.copyImg{
+.copyImg {
     width: fit-content;
-    
+
 }
 
-.changeLinkImg{
+.changeLinkImg {
     width: fit-content;
 }
 
-.renameButtonNode{
+.renameButtonNode {
     right: 2.5rem;
 
     @media (max-width: $mobile) {
@@ -419,5 +421,5 @@
     @media (min-width: $large-desktop) {
         right: 3rem;
     }
-    
+
 }
