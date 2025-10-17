@@ -5,7 +5,7 @@ import { useEffect as reactUseEffect, useEffect, useState } from "react";
 
 function RenameModal() {
 
-    const { rootId, rootName, setRootName, renameModalOpen, setRenameModalOpen, modalContent, setModalContent, setNewIdeaSwitch, setCurrentNameChangeId, currentNameChangeId, selectedIdeaName } = useIdeaContext();
+    const { rootId, rootName, setRootName, renameModalOpen, setRenameModalOpen, modalContent, setModalContent, setNewIdeaSwitch, setCurrentNameChangeId, currentNameChangeId, selectedIdeaName, setSelectedIdeaName } = useIdeaContext();
 
     const [editRootOrNot, setEditRootOrNot] = useState(true);
 
@@ -31,6 +31,7 @@ function RenameModal() {
     }
 
     function handleIdeaRename(newName: string) {
+        setSelectedIdeaName(newName);
         updateIdeaNameInFirebase(pickID(), newName).then(() => {
             setRootName(newName);
             updateIdeaName(pickID(), newName);
