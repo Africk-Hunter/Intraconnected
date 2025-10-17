@@ -99,6 +99,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
 
     function copyToClipboard(e: React.MouseEvent) {
         e.stopPropagation();
+        e.preventDefault();
 
         navigator.clipboard.writeText(title).then(() => {
             console.log('Copied to clipboard:', title);
