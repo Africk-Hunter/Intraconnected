@@ -135,7 +135,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
         link && link !== "" ? (
             <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
-                {isLeaf ? <button className="editLink copy" onClick={changeLink}><img src={linkPath} alt="Change Link" className="copyImg" /></button> : <></>}
+                <button className="editLink copy" onClick={changeLink}><img src={linkPath} alt="Change Link" className="copyImg" /></button>
                 <button className="renameButtonNode copy" onClick={changeName}><img src={penPath} alt="Change Link" className="copyImg" /></button>
                 <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </a>
