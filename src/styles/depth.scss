@@ -1,3 +1,4 @@
+
 .howDeepHolder {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -5,6 +6,7 @@
 }
 
 .depthIndicator {
+    position: relative;
     width: fit-content;
     min-width: 3rem;
     min-height: 3rem;
@@ -48,7 +50,7 @@
     opacity: 0;
     background: $roots;
     bottom: 0;
-    right: 13rem;
+    right: var(--label-right, 13rem);
     width: fit-content;
     white-space: nowrap;
 }

@@ -14,6 +14,10 @@ interface IdeaContextType {
     setRenameModalOpen: (open: boolean) => void;
     linkChangeModalOpen: boolean;
     setLinkChangeModalOpen: (open: boolean) => void;
+    deleteConfirmModalOpen: boolean;
+    setDeleteConfirmModalOpen: (open: boolean) => void;
+    pendingDeleteId: number | null;
+    setPendingDeleteId: (id: number | null) => void;
     currentLinkID: number;
     setCurrentLinkID: (id: number) => void;
     currentLink: string;
@@ -42,6 +46,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [creationModalOpen, setCreationModalOpen] = useState(false);
     const [renameModalOpen, setRenameModalOpen] = useState(false);
     const [linkChangeModalOpen, setLinkChangeModalOpen] = useState(false);
+    const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
+    const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
     const [modalContent, setModalContent] = useState("");
     const [newIdeaSwitch, setNewIdeaSwitch] = useState(false);
     const [messageBoxMessage, setMessageBoxMessage] = useState("");
@@ -69,6 +75,10 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setRenameModalOpen,
                 linkChangeModalOpen,
                 setLinkChangeModalOpen,
+                deleteConfirmModalOpen,
+                setDeleteConfirmModalOpen,
+                pendingDeleteId,
+                setPendingDeleteId,
                 currentLinkID,
                 setCurrentLinkID,
                 currentLink,

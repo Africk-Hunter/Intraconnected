@@ -23,22 +23,21 @@ import {
     getIdeasByParentID,
     signUserOut,
     IdeaType,
-    getChildrenToDelete,
-    recursivelyDeleteChildren,
-    updateIdeaParentId,
+updateIdeaParentId,
     getParentID,
     getNameFromID,
     checkIfIdeaIsLeaf,
     geLinkFromID
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
+import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [lastRootName, setLastRootName] = useState('');
 
-    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen } = useIdeaContext();
+    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId } = useIdeaContext();
 
     useEffect(() => {
         async function init() {
@@ -80,16 +79,8 @@ function Idea() {
         const overLink = geLinkFromID(overId);
 
         if (over.id === 'trash') {
-            const childrenToDelete = getChildrenToDelete(activeId);
-            recursivelyDeleteChildren(activeId);
-
-            setIdeas((prevIdeas: IdeaType[]) =>
-                prevIdeas.filter(
-                    (idea: IdeaType) =>
-                        idea.id !== activeId &&
-                        !childrenToDelete.some((child: IdeaType) => child.id === idea.id)
-                )
-            );
+            setPendingDeleteId(activeId);
+            setDeleteConfirmModalOpen(true);
         } else if (over.id === 'last-idea') {
             console.log('Moving idea with id:', activeId, 'to root with id:', rootId);
             updateIdeaParentId(activeId, getParentID(rootId));
@@ -170,6 +161,7 @@ function Idea() {
             </section>
             <RenameModal />
             <LinkChangeModal />
+            <DeleteConfirmModal />
             <CreationModal handleIdeaCreation={handleIdeaCreation} />
         </DndContext>
     );

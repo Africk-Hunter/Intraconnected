@@ -33,8 +33,9 @@ function RenameModal() {
     function handleIdeaRename(newName: string) {
         setSelectedIdeaName(newName);
         updateIdeaNameInFirebase(pickID(), newName).then(() => {
-            setRootName(newName);
+            if (editRootOrNot) setRootName(newName);
             updateIdeaName(pickID(), newName);
+            setNewIdeaSwitch(prev => !prev);
         }).catch((error) => {
             console.error("Error renaming idea: ", error);
         });
@@ -56,7 +57,7 @@ function RenameModal() {
                         ></textarea>
                         <section className="modalButtons">
                             <button className="modalButton cancel neobrutal-button" onClick={() => { setRenameModalOpen(false); setCurrentNameChangeId(-1); }}>Cancel</button>
-                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); setRenameModalOpen(false); setNewIdeaSwitch(prev => !prev); }}>Rename</button>
+                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); setRenameModalOpen(false); }}>Rename</button>
                         </section>
                     </div>
                 </section> : <></>
