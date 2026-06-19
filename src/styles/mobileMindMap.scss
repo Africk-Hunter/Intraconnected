@@ -358,9 +358,27 @@
     box-shadow: 0 5px 0 #111;
 }
 
-.mmobile-fab-spacer {
+.mmobile-navigate-btn {
     width: 64px;
     height: 64px;
+    border: 3px solid #111;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 5px 0 #111;
+    cursor: pointer;
+    font-size: 1.9rem;
+    line-height: 1;
+    color: #1a1208;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &--active {
+        background: $purple;
+        box-shadow: 0 2px 0 #111;
+        translate: 0 2px;
+        color: #fff;
+    }
 }
 
 .mmobile-fab {
@@ -574,6 +592,7 @@
     &--leaf     { background: $leaf; }
     &--link     { background: $link; }
     &--disabled { opacity: 0.4; cursor: default; }
+    &--current  { outline: 3px solid #111; outline-offset: 2px; opacity: 0.6; cursor: default; }
 }
 
 .mmobile-move-toggle {

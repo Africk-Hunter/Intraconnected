@@ -16,13 +16,15 @@ import {
 } from '../utilities';
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
+import MobileNavigateSheet from './MobileNavigateSheet';
 
 type SheetState =
     | { type: 'actions'; nodeId: number }
     | { type: 'rename'; nodeId: number; isNew?: boolean }
     | { type: 'move'; nodeId: number }
     | { type: 'link'; nodeId: number }
-    | { type: 'confirmDelete'; nodeId: number };
+    | { type: 'confirmDelete'; nodeId: number }
+    | { type: 'navigate' };
 
 function MobileMindMap() {
     const { setNewIdeaSwitch } = useIdeaContext();
@@ -160,8 +162,9 @@ function MobileMindMap() {
         closeSheet();
     }
 
-    const sheetNode = sheet ? allIdeas.find(i => i.id === sheet.nodeId) : null;
+    const sheetNode = sheet && sheet.type !== 'navigate' ? allIdeas.find(i => i.id === sheet.nodeId) : null;
     const sheetTitle =
+        sheet?.type === 'navigate' ? 'Navigate to…' :
         sheet?.type === 'move' ? 'Move under…' :
         sheet?.type === 'rename' ? (sheet.isNew ? 'Name your idea' : 'Rename idea') :
         sheet?.type === 'link' ? (sheetNode?.link ? 'Change link' : 'Add link') :
@@ -254,7 +257,12 @@ function MobileMindMap() {
             </div>
 
             <div className="mmobile-fab-area">
-                <div className="mmobile-fab-spacer" />
+                <button
+                    className={`mmobile-navigate-btn${sheet?.type === 'navigate' ? ' mmobile-navigate-btn--active' : ''}`}
+                    onClick={() => setSheet({ type: 'navigate' })}
+                >
+                    ◎
+                </button>
                 <button className="mmobile-fab" onClick={addChild}>+</button>
                 <button
                     className={`mmobile-edit-btn${editMode ? ' mmobile-edit-btn--active' : ''}`}
@@ -270,7 +278,7 @@ function MobileMindMap() {
                     <div className="mmobile-sheet">
                         <div className="mmobile-sheet-title">
                             {sheetTitle}
-                            {sheet.type === 'move' && (
+                            {(sheet.type === 'move' || sheet.type === 'navigate') && (
                                 <button className="mmobile-sheet-close" onClick={closeSheet}>✕</button>
                             )}
                         </div>
@@ -353,6 +361,14 @@ function MobileMindMap() {
                                 nodeId={sheet.nodeId}
                                 allIdeas={allIdeas}
                                 onMove={doMove}
+                            />
+                        )}
+
+                        {sheet.type === 'navigate' && (
+                            <MobileNavigateSheet
+                                currentId={currentId}
+                                allIdeas={allIdeas}
+                                onNavigate={(id) => { setCurrentId(id); closeSheet(); }}
                             />
                         )}
 
