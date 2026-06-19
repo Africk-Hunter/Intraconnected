@@ -31,6 +31,7 @@ updateIdeaParentId,
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
+import MobileMindMap from '../components/MobileMindMap';
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
@@ -159,6 +160,7 @@ function Idea() {
                     <Help showHelp={showHelp} />
                 </section>
             </section>
+            <MobileMindMap />
             <RenameModal />
             <LinkChangeModal />
             <DeleteConfirmModal />

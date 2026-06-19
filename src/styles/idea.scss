@@ -13,11 +13,7 @@
         margin: 2rem;
 
         @media (max-width: $mobile) {
-            align-items: center;
-            flex-direction: column;
-            margin: 0;
-            width: calc(100%);
-            height: calc(100vh);
+            display: none;
         }
     }
 

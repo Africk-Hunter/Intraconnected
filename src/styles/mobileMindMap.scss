@@ -1,0 +1,598 @@
+@import "./variables.scss";
+
+.mmobile {
+    display: none;
+
+    @media (max-width: $mobile) {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        inset: 0;
+        background: $background-color;
+        overflow: hidden;
+        z-index: 10;
+    }
+}
+
+.mmobile-nav {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 8px;
+}
+
+.mmobile-back {
+    flex-shrink: 0;
+    background: $back;
+    color: #111;
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding: 6px 13px;
+    border: 3px solid #111;
+    border-radius: 11px;
+    box-shadow: 0 4px 0 #111;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1;
+}
+
+.mmobile-crumbs {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.mmobile-crumb {
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    color: #7a7a72;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    white-space: nowrap;
+
+    &--active {
+        font-weight: 700;
+        color: #111;
+    }
+}
+
+.mmobile-logout {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    background: $neutral;
+    border: 3px solid #111;
+    border-radius: 10px;
+    box-shadow: 0 3px 0 #111;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+.mmobile-help {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    background: $neutral;
+    border: 3px solid #111;
+    border-radius: 10px;
+    box-shadow: 0 3px 0 #111;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+.mmobile-help-sheet {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 31;
+    background: $neutral;
+    border: 3px solid #111;
+    border-radius: 20px;
+    padding: 16px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: mmSheetUp 0.22s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+.mmobile-help-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.mmobile-help-pager {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.mmobile-help-close {
+    background: $neutral;
+    border: 2px solid #111;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.mmobile-help-content {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+}
+
+.mmobile-help-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    line-height: 1.2;
+    color: #111;
+}
+
+.mmobile-help-subtext {
+    font-size: 0.9rem;
+    color: #111;
+    margin: -8px 0 12px;
+}
+
+.mmobile-help-text {
+    font-size: 0.97rem;
+    line-height: 1.55;
+    margin: 0;
+    color: #111;
+}
+
+.mmobile-help-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px 14px;
+    align-items: center;
+}
+
+.mmobile-help-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #111;
+    border-radius: 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 9px 8px;
+    white-space: nowrap;
+    align-self: start;
+    margin-top: 2px;
+    color: #111;
+
+    &--root   { background: $roots; }
+    &--add    { background: $leaf; }
+    &--back   { background: $back; }
+    &--delete { background: $danger; }
+    &--leaf   { background: $leaf; }
+    &--parent { background: $sky; }
+    &--link   { background: $link; }
+}
+
+.mmobile-help-badge-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+
+.mmobile-help-nav {
+    flex-shrink: 0;
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.mmobile-help-nav-btn {
+    flex: 1;
+    border: 3px solid #111;
+    border-radius: 11px;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 12px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #111;
+    background: $neutral;
+
+    &--next { background: $leaf; }
+
+    &:disabled {
+        opacity: 0.3;
+        box-shadow: none;
+        cursor: default;
+    }
+}
+
+.mmobile-header {
+    flex-shrink: 0;
+    margin: 0 16px 12px;
+    background: $roots;
+    border: 3px solid #111;
+    border-radius: 14px;
+    box-shadow: 0 5px 0 #111;
+    padding: 16px 18px;
+    user-select: none;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+}
+
+.mmobile-header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a1208;
+    line-height: 1.15;
+    word-break: break-word;
+}
+
+.mmobile-header-count {
+    font-size: 0.82rem;
+    color: rgba(20, 12, 2, 0.55);
+    margin-top: 4px;
+}
+
+.mmobile-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 16px 12px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+
+.mmobile-nav-logo {
+    flex: 1;
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+    object-position: center center;
+}
+
+
+.mmobile-node {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 3px solid #111;
+    border-radius: 11px;
+    box-shadow: 0 4px 0 #111;
+    padding: 14px 15px;
+    margin-bottom: 12px;
+    user-select: none;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+
+    &--parent { background: $sky; }
+    &--leaf   { background: $leaf; }
+    &--link   { background: $link; }
+
+    &--selectable {
+        outline: 3px dashed #111;
+        outline-offset: 2px;
+    }
+}
+
+.mmobile-node-title {
+    flex: 1;
+    font-size: 1.05rem;
+    color: #1a1208;
+    word-break: break-word;
+}
+
+.mmobile-node-count {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    color: rgba(20, 12, 2, 0.55);
+}
+
+.mmobile-node-arrow {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    color: #1a1208;
+}
+
+.mmobile-empty {
+    border: 3px dashed #9a9a92;
+    border-radius: 11px;
+    padding: 26px 14px;
+    text-align: center;
+    color: #7a7a72;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-top: 8px;
+}
+
+.mmobile-fab-area {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 16px 10px;
+    padding: 12px 16px;
+    background: $neutral;
+    border: 3px solid #111;
+    border-radius: 20px;
+    box-shadow: 0 5px 0 #111;
+}
+
+.mmobile-fab-spacer {
+    width: 64px;
+    height: 64px;
+}
+
+.mmobile-fab {
+    width: 64px;
+    height: 64px;
+    border: 3px solid #111;
+    border-radius: 18px;
+    background: $leaf;
+    color: #1a1208;
+    box-shadow: 0 5px 0 #111;
+    font-size: 2.4rem;
+    font-family: inherit;
+    cursor: pointer;
+    line-height: 0;
+    padding-bottom: 4px;
+}
+
+.mmobile-edit-btn {
+    width: 64px;
+    height: 64px;
+    border: 3px solid #111;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 5px 0 #111;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+        width: 26px;
+        height: 26px;
+    }
+
+    &--active {
+        background: $sky;
+        box-shadow: 0 2px 0 #111;
+        translate: 0 2px;
+    }
+}
+
+.mmobile-select-hint {
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1a1208;
+    background: $roots;
+    border: 2px solid #111;
+    border-radius: 10px;
+    padding: 7px 16px;
+    margin: 0 16px 12px;
+}
+
+.mmobile-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.32);
+    animation: mmScrimIn 0.15s ease;
+}
+
+.mmobile-sheet {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 31;
+    background: $neutral;
+    border: 3px solid #111;
+    border-radius: 20px;
+    padding: 16px;
+    animation: mmSheetUp 0.22s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+
+.mmobile-sheet-title {
+    position: relative;
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 2px 0 14px;
+}
+
+.mmobile-sheet-close {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    color: #111;
+    line-height: 1;
+}
+
+.mmobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.mmobile-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    border: 2px solid #111;
+    border-radius: 11px;
+    background: $neutral;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111;
+    padding: 10px 13px;
+    cursor: pointer;
+    width: 100%;
+
+    &--open   { background: #fff; }
+    &--link   { background: #fff; }
+    &--rename { background: #fff; }
+    &--move   { background: #fff; }
+    &--delete { background: $danger; }
+}
+
+.mmobile-action-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.mmobile-rename-input {
+    width: 100%;
+    border: 3px solid #111;
+    border-radius: 11px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    padding: 13px 14px;
+    outline: none;
+    box-shadow: 0 3px 0 #111;
+    background: $neutral;
+    box-sizing: border-box;
+
+    &:focus {
+        background: lighten($sky, 35%);
+    }
+}
+
+.mmobile-sheet-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.mmobile-sheet-btn {
+    flex: 1;
+    border: 3px solid #111;
+    border-radius: 11px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 12px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #111;
+
+    &--cancel { background: $back; }
+    &--save   { background: $leaf; }
+    &--delete { background: $danger; }
+}
+
+.mmobile-confirm-text {
+    font-size: 1rem;
+    color: #111;
+    text-align: center;
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.mmobile-move-list {
+    max-height: 320px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.mmobile-move-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.mmobile-move-btn {
+    flex: 1;
+    text-align: left;
+    border: 2px solid #111;
+    border-radius: 10px;
+    background: $neutral;
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 11px 14px;
+    cursor: pointer;
+
+    &--parent   { background: $sky; }
+    &--leaf     { background: $leaf; }
+    &--link     { background: $link; }
+    &--disabled { opacity: 0.4; cursor: default; }
+}
+
+.mmobile-move-toggle {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border: 2px solid #111;
+    border-radius: 9px;
+    background: $neutral;
+    font-family: inherit;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes mmSheetUp {
+    from { transform: translateY(110%); }
+    to   { transform: translateY(0); }
+}
+
+@keyframes mmScrimIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}

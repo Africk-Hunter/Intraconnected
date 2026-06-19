@@ -68,6 +68,7 @@ src/
 │   └── Login.tsx             # login page wrapper
 ├── components/
 │   ├── IdeaNode.tsx          # draggable/droppable idea card
+│   ├── MobileMindMap.tsx     # mobile-only UI (shown ≤576px, hidden on desktop)
 │   ├── Navbar.tsx            # left + right sidebars
 │   ├── DepthIndicator.tsx    # breadcrumb dot in right sidebar
 │   ├── Trash.tsx             # drop zone for deletion
@@ -98,6 +99,7 @@ src/
 │   ├── variables.scss        # colors, breakpoints
 │   ├── index.scss            # global styles + imports
 │   ├── idea.scss             # main page + node styles
+│   ├── mobileMindMap.scss    # mobile UI styles
 │   ├── navbar.scss           # sidebar styles
 │   ├── depth.scss            # breadcrumb indicators
 │   ├── ideaCreationModal.scss # all modal styles (shared)
@@ -111,8 +113,8 @@ src/
 ### `ideas` state vs `fetchFullIdeaList()`
 `ideas` in context only holds the **current root's direct children** (populated via `getIdeasByParentID(rootId)`). It is NOT a full list of all ideas. To read all ideas, use `fetchFullIdeaList()` which reads from `localStorage`. Never assume `ideas` contains anything outside the current view.
 
-### `rootIdStack` is a ref
-`rootIdStack` is a `useRef<number[]>`, not state. Pushing/popping does not trigger re-renders. The stack is mutated directly (`rootIdStack.current.push(id)`). Re-renders are driven by `setRootId` / `setRootName` calls alongside stack mutations.
+### `rootIdStack` is a ref (desktop only)
+`rootIdStack` is a `useRef<number[]>`, not state. Pushing/popping does not trigger re-renders. The stack is mutated directly (`rootIdStack.current.push(id)`). Re-renders are driven by `setRootId` / `setRootName` calls alongside stack mutations. `MobileMindMap` does **not** use `rootIdStack` — it tracks navigation with a local `currentId` state instead.
 
 ### Modal `min-height` specificity
 `.neobrutal.modal` has `min-height: 18rem` (and overrides in media queries). A plain `.confirmModal {}` rule will lose the specificity battle. The correct override is `.neobrutal.modal.confirmModal { min-height: auto; }` applied at all three breakpoints.
@@ -122,6 +124,12 @@ src/
 
 ### Firebase collection path
 Ideas are stored at `users/{uid}/ideas/{ideaId}` in Firestore. The Firebase config is hardcoded in `src/firebaseConfig.ts` (no `.env` file).
+
+### `geLinkFromID` typo
+The function is named `geLinkFromID` (missing the `t` in `get`) in `helpers.tsx`. This is the real name — don't rename without updating all call sites in `Idea.tsx` and anywhere else it's imported.
+
+### `updateIdeaParentId` syncs Firebase automatically
+`updateIdeaParentId(id, newParentId)` in `storage.tsx` writes to both `localStorage` **and** calls `updateIdeaParentIdInFirebase` internally. Do not add a separate Firebase call after using it — that would double-write.
 
 ## Key Conventions
 
@@ -152,9 +160,22 @@ Add `confirmModal` class to `.modal` for modals without a textarea (overrides `m
 
 Dragging to trash sets `pendingDeleteId` and opens `DeleteConfirmModal`. The modal runs `recursivelyDeleteChildren(id)` (handles both localStorage and Firestore) then filters the `ideas` state array.
 
-### Drag and Drop
+### Mobile UI (`MobileMindMap`)
 
-Drag is disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash` (delete), `last-idea` (reparent to grandparent), `idea-{id}` (reparent). Link nodes (`link !== ""`) cannot receive drops.
+`MobileMindMap` is rendered at the bottom of `Idea.tsx` alongside all desktop components. CSS (`mobileMindMap.scss`) shows it only on `≤$mobile` (576px) and the desktop layout hides itself at the same breakpoint.
+
+Key differences from desktop:
+- **Navigation**: local `currentId` state replaces `rootIdStack`; breadcrumb bar at top replaces depth indicators
+- **Interaction**: tap navigates into a node; long-press (360ms) opens an actions bottom sheet; edit mode (pencil button) makes a single tap open the actions sheet instead
+- **Sheets**: uses a local `sheet` state (`SheetState` discriminated union) for bottom sheets — does **not** use context modal flags (`renameModalOpen`, etc.)
+- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete`
+- **Move tree**: scrollable tree of all ideas with expand/collapse; auto-scrolls to current parent; descendants and current parent are disabled as move targets
+- **Link cleaning**: `cleanLink()` auto-prepends `https://` and appends `.com` if the URL contains neither
+- **No DnD**: doesn't use `@dnd-kit` at all; touch events handle long-press detection with `touchMoved` guard to cancel on scroll
+
+### Drag and Drop (Desktop)
+
+Drag is disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash` (delete), `last-idea` (reparent to grandparent), `idea-{id}` (reparent). Link nodes (`link !== ""`) cannot receive drops. `PointerSensor` requires 10px movement before a drag starts (prevents accidental drags on clicks).
 
 ### SCSS Colors (`variables.scss`)
 
@@ -167,13 +188,24 @@ $leaf:             #41BC28;  // leaf nodes, confirm buttons
 $back:             #C84600;  // back button
 $danger:           #C80000;  // delete button
 $link:             #E8E879;  // link nodes, cancel buttons
+$neo-pink:         #DB44A4;
+$neo-green:        #2B701D;
+$purple:           #7322C3;
+$indigo:           #2049C5;
+$teal:             #1EB899;
+$orange:           #EC8A13;
 ```
 
 ### Breakpoints
 
 ```scss
-$mobile:        576px;
-$large-desktop: 1921px;
+$mobile:              576px;
+$tablet:              768px;
+$desktop:             1024px;
+$macbook-air-15:      1439px;
+$macbook-air-13:      1999px;
+$large-desktop:       1921px;
+$very-large-desktop:  3840px;
 ```
 
-Drag and drop UI is hidden on mobile. Depth indicators are hidden on mobile (`display: none`).
+Drag and drop UI is hidden on mobile. Depth indicators are hidden on mobile (`display: none`). The desktop layout and `MobileMindMap` swap at `$mobile` (576px).
