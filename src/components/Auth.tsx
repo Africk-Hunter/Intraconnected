@@ -4,9 +4,9 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersiste
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
-import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, unwrapDEKWithRecovery } from "../utilities/crypto";
+import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, unwrapDEKWithRecovery, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
-import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged } from "../utilities/firebase/firebaseHelpers";
+import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
 import { signUserOut } from "../utilities/firebase/authFirebase";
 
 const Auth: React.FC = () => {
@@ -25,7 +25,7 @@ const Auth: React.FC = () => {
     const isSigningIn = useRef(false);
     const pendingPasswordRef = useRef("");
     const pendingUidRef = useRef("");
-    const pendingEncDataRef = useRef<{ encryptedDEK: string; recoveryEncryptedDEK: string } | null>(null);
+    const pendingEncDataRef = useRef<{ encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string } | null>(null);
 
     const { setMessageBoxMessage, setMessageType, messageBoxMessage } = useIdeaContext();
 
@@ -112,8 +112,9 @@ const Auth: React.FC = () => {
                 const recoveryCode = generateRecoveryCode();
                 const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
                 const recoveryEncryptedDEK = await wrapDEKWithRecovery(dek, recoveryCode, user.uid);
+                const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
 
-                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK);
+                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
                 await setDEK(dek);
 
                 isShowingRecoveryCode.current = true;
@@ -168,12 +169,17 @@ const Auth: React.FC = () => {
                     const dek = await unwrapDEK(encData.encryptedDEK, capturedPassword, user.uid);
                     await setDEK(dek);
 
+                    // Derive email DEK — use stored one or generate fresh if account predates email recovery
+                    const emailForDEK = user.email!;
+                    const emailEncryptedDEK = encData.emailEncryptedDEK
+                        ?? await wrapDEKWithEmail(dek, emailForDEK, user.uid);
+
                     if (!encData.recoveryCodeAcknowledged) {
                         // Isolated try/catch: failures here must not fall into the unwrapDEK catch below
                         try {
                             const newRecoveryCode = generateRecoveryCode();
                             const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, user.uid);
-                            await storeEncryptedDEK(encData.encryptedDEK, newRecoveryEncryptedDEK);
+                            await storeEncryptedDEK(encData.encryptedDEK, newRecoveryEncryptedDEK, emailEncryptedDEK);
 
                             // Verify we won the concurrent-login race — another device may have written last
                             const verify = await fetchEncryptedDEK();
@@ -193,6 +199,10 @@ const Auth: React.FC = () => {
                             window.location.href = '/main';
                         }
                     } else {
+                        // Silently backfill emailEncryptedDEK for accounts that predate email recovery
+                        if (!encData.emailEncryptedDEK) {
+                            try { await addEmailEncryptedDEK(emailEncryptedDEK); } catch { /* non-critical */ }
+                        }
                         isSigningIn.current = false;
                         window.location.href = '/main';
                     }
@@ -210,7 +220,8 @@ const Auth: React.FC = () => {
                 const recoveryCode = generateRecoveryCode();
                 const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
                 const recoveryEncryptedDEK = await wrapDEKWithRecovery(dek, recoveryCode, user.uid);
-                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK);
+                const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
+                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
                 await setDEK(dek);
 
                 isShowingRecoveryCode.current = true;
@@ -247,11 +258,48 @@ const Auth: React.FC = () => {
             const newEncryptedDEK = await wrapDEK(dek, newPassword, uid);
             const newRecoveryCode = generateRecoveryCode();
             const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, uid);
-            await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK);
+            const newEmailEncryptedDEK = await wrapDEKWithEmail(dek, auth.currentUser!.email!, uid);
+            await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK, newEmailEncryptedDEK);
             await setDEK(dek);
 
             setShowRecoveryInput(false);
             setRecoveryCodeInput("");
+            isShowingRecoveryCode.current = true;
+            setRecoveryCodeContext('restore');
+            setPendingRecoveryCode(newRecoveryCode);
+        } catch {
+            displayMessage('Could not save your new keys. Please try again.', 'bad');
+        }
+    }
+
+    async function handleEmailRecovery() {
+        const encData = pendingEncDataRef.current;
+        const uid = pendingUidRef.current;
+        const newPassword = pendingPasswordRef.current;
+        const userEmail = auth.currentUser?.email;
+
+        if (!encData?.emailEncryptedDEK || !userEmail) {
+            displayMessage('Email recovery is not set up for this account. Use your recovery code.', 'bad');
+            return;
+        }
+
+        let dek: CryptoKey;
+        try {
+            dek = await unwrapDEKWithEmail(encData.emailEncryptedDEK, userEmail, uid);
+        } catch {
+            displayMessage('Email recovery failed. Your email may have changed since setup.', 'bad');
+            return;
+        }
+
+        try {
+            const newEncryptedDEK = await wrapDEK(dek, newPassword, uid);
+            const newRecoveryCode = generateRecoveryCode();
+            const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, uid);
+            const newEmailEncryptedDEK = await wrapDEKWithEmail(dek, userEmail, uid);
+            await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK, newEmailEncryptedDEK);
+            await setDEK(dek);
+
+            setShowRecoveryInput(false);
             isShowingRecoveryCode.current = true;
             setRecoveryCodeContext('restore');
             setPendingRecoveryCode(newRecoveryCode);
@@ -306,13 +354,16 @@ const Auth: React.FC = () => {
                         spellCheck={false}
                     />
                     <div className="recoveryActions">
-                        <button className="recoveryDownloadBtn neobrutal-button" onClick={signUserOut}>
+                        <button className="recoveryCopyBtn neobrutal-button" onClick={signUserOut}>
                             Sign Out
                         </button>
                         <button className="recoveryConfirmBtn neobrutal-button" onClick={handleRecoveryRestore}>
                             Restore Access
                         </button>
                     </div>
+                    <button className="recoveryEmailBtn neobrutal-button" onClick={handleEmailRecovery}>
+                        Recover via email
+                    </button>
                     <MessageBox />
                 </div>
             </div>

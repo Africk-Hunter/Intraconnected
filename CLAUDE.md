@@ -52,9 +52,10 @@ All idea `content` and `link` fields are AES-256-GCM encrypted before being writ
 
 **Two-layer key scheme** (same pattern as Bitwarden/ProtonMail):
 - Each user has a random **DEK** (Data Encryption Key) that encrypts their data. It never changes.
-- The DEK is stored encrypted in Firestore at `users/{uid}/meta/encryption`, wrapped twice:
+- The DEK is stored encrypted in Firestore at `users/{uid}/meta/encryption`, wrapped three ways:
   1. `encryptedDEK` — wrapped with a password-derived KEK (PBKDF2, 100k iterations, UID as salt)
   2. `recoveryEncryptedDEK` — wrapped with a recovery-code-derived KEK (same derivation, `-recovery` salt suffix)
+  3. `emailEncryptedDEK` — wrapped with an email-derived KEK (`-email` salt suffix); no email is sent — Firebase Auth ownership of the email is the proof of identity
 - `recoveryCodeAcknowledged: boolean` is stored alongside. While `false` (or missing), every login generates a fresh recovery code, re-wraps the DEK with it, and shows the recovery code screen before navigating to `/main`. Once the user clicks "I've saved it", it's set to `true` — no more prompts.
 
 **DEK lifecycle:**
@@ -174,6 +175,9 @@ Ideas are stored at `users/{uid}/ideas/{ideaId}` in Firestore. The Firebase conf
 
 ### `geLinkFromID` typo
 The function is named `geLinkFromID` (missing the `t` in `get`) in `helpers.tsx`. This is the real name — don't rename without updating all call sites in `Idea.tsx` and anywhere else it's imported.
+
+### Email change breaks email recovery
+`emailEncryptedDEK` is derived from the user's email address at account creation. If a user ever changes their email (not currently a feature), `emailEncryptedDEK` must be re-derived with the new address and updated in Firestore. Failing to do so means "Recover via email" will silently fail — `unwrapDEKWithEmail` will throw because the derived KEK no longer matches.
 
 ### Password change requires DEK re-wrap
 If you ever add a "change password" feature using Firebase's `updatePassword()`, you **must** also re-wrap the DEK with the new password and update `encryptedDEK` in Firestore. Failing to do so means the next login will successfully authenticate with Firebase but `unwrapDEK` will throw (wrong KEK) — which is the same code path as a password reset, incorrectly sending the user to the recovery code input screen.

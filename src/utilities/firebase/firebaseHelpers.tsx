@@ -13,11 +13,11 @@ function authCheck() {
     return user;
 }
 
-export async function storeEncryptedDEK(encryptedDEK: string, recoveryEncryptedDEK: string): Promise<void> {
+export async function storeEncryptedDEK(encryptedDEK: string, recoveryEncryptedDEK: string, emailEncryptedDEK: string): Promise<void> {
     const user = authCheck();
     if (!user) return;
     const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
-    await setDoc(metaDoc, { encryptedDEK, recoveryEncryptedDEK, recoveryCodeAcknowledged: false });
+    await setDoc(metaDoc, { encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK, recoveryCodeAcknowledged: false });
 }
 
 export async function markRecoveryCodeAcknowledged(): Promise<void> {
@@ -27,13 +27,20 @@ export async function markRecoveryCodeAcknowledged(): Promise<void> {
     await setDoc(metaDoc, { recoveryCodeAcknowledged: true }, { merge: true });
 }
 
-export async function fetchEncryptedDEK(): Promise<{ encryptedDEK: string; recoveryEncryptedDEK: string; recoveryCodeAcknowledged?: boolean } | null> {
+export async function addEmailEncryptedDEK(emailEncryptedDEK: string): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
+    await setDoc(metaDoc, { emailEncryptedDEK }, { merge: true });
+}
+
+export async function fetchEncryptedDEK(): Promise<{ encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string; recoveryCodeAcknowledged?: boolean } | null> {
     const user = authCheck();
     if (!user) return null;
     const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
     const snap = await getDoc(metaDoc);
     if (!snap.exists()) return null;
-    return snap.data() as { encryptedDEK: string; recoveryEncryptedDEK: string; recoveryCodeAcknowledged?: boolean };
+    return snap.data() as { encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string; recoveryCodeAcknowledged?: boolean };
 }
 
 export async function fetchIdeasFromFirebase() {
