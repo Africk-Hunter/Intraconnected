@@ -1,6 +1,6 @@
 import { useIdeaContext } from "../../context/IdeaContext";
-import { updateIdeaName, updateIdeaNameInFirebase } from "../../utilities";
-import { useEffect as reactUseEffect, useEffect, useState } from "react";
+import { updateIdeaName, updateIdeaNameInFirebase, fetchFullIdeaList } from "../../utilities";
+import { useEffect, useState } from "react";
 
 
 function RenameModal() {
@@ -11,7 +11,7 @@ function RenameModal() {
 
     useEffect(() => {
         if (renameModalOpen) {
-            if (currentNameChangeId == -1) {
+            if (currentNameChangeId === -1) {
                 setModalContent(rootName);
                 setEditRootOrNot(true);
             }
@@ -41,7 +41,10 @@ function RenameModal() {
         });
     }
 
-    //setModalContent(rootName) neecd to call this function on instantiation. so its set to that when the user accesses it.
+    const targetId = editRootOrNot ? rootId : currentNameChangeId;
+    const hasChildren = fetchFullIdeaList().some((idea: any) => idea.parentID === targetId);
+    const actionLabel = hasChildren ? 'Rename Idea' : 'Rewrite Idea';
+
     return (
         <>
             {renameModalOpen ?
@@ -51,13 +54,13 @@ function RenameModal() {
                             autoFocus={true}
                             maxLength={100}
                             className="ideaContent neobrutal-input"
-                            placeholder='Rename Idea...'
+                            placeholder={`${actionLabel}...`}
                             value={modalContent} //This needs to be set to something called 'ranameIdeaName.' Doing just root wont work if a rename button is to be added.
                             onChange={(e) => setModalContent(e.target.value)}
                         ></textarea>
                         <section className="modalButtons">
                             <button className="modalButton cancel neobrutal-button" onClick={() => { setRenameModalOpen(false); setCurrentNameChangeId(-1); }}>Cancel</button>
-                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); setRenameModalOpen(false); }}>Rename</button>
+                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); setRenameModalOpen(false); }}>{hasChildren ? 'Rename' : 'Rewrite'}</button>
                         </section>
                     </div>
                 </section> : <></>

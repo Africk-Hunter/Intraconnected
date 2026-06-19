@@ -11,10 +11,7 @@ export function getIdeasByParentID(parentID: number): IdeaType[] {
 
 
 export function getChildrenToDelete(ideaID: number) {
-    const ideas = fetchFullIdeaList();
-
-    const filteredStorage = ideas ? ideas.filter((idea: IdeaType) => idea.parentID === ideaID) : [];
-    return filteredStorage;
+    return getIdeasByParentID(ideaID);
 }
 
 export function recursivelyDeleteChildren(ideaId: number) {
@@ -27,5 +24,4 @@ export function recursivelyDeleteChildren(ideaId: number) {
     }
     deleteFromLocalStorage(ideaId);
     deleteIdeaFromFirebase(ideaId);
-    console.log("Deleting idea with id:", ideaId);
 }

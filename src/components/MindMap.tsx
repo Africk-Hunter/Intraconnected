@@ -19,11 +19,15 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
     const children = allIdeas.filter(i => Number(i.parentID) === ideaId);
     const hasKids = children.length > 0;
 
+    const isLink = !!idea.link;
+
     const btnClass = [
         'mm-node-btn',
         ideaId === 1 ? 'mm-node-btn--root' : '',
         ideaId === currentRootId
             ? 'mm-node-btn--current'
+            : isLink
+            ? 'mm-node-btn--link'
             : hasKids
             ? 'mm-node-btn--parent'
             : 'mm-node-btn--leaf',
@@ -31,12 +35,20 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
 
     const isRoot = ideaId === 1;
 
+    function handleClick() {
+        if (isLink) {
+            window.open(idea.link, '_blank', 'noopener,noreferrer');
+        } else {
+            onNavigate(idea);
+        }
+    }
+
     return (
         <div className="mm-node-col">
             <button
                 className={btnClass}
                 style={isRoot ? { fontSize: '1.9rem', padding: '1rem 2rem', maxWidth: '300px', fontWeight: 800 } : undefined}
-                onClick={() => onNavigate(idea)}
+                onClick={handleClick}
             >
                 {idea.content}
             </button>

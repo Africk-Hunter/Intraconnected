@@ -66,7 +66,6 @@ export function updateIdeaName(id: number, newName: string) {
 
 export function updateIdeaLink(id: number, newLink: string) {
     const ideas = fetchFullIdeaList();
-    console.log('updated ID' + id + ' changed it to: ' +  newLink)
     const updatedIdeas = ideas.map((idea: IdeaType) => {
         if (idea.id === id) {
             return { ...idea, link: newLink };

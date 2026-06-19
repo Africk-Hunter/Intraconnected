@@ -4,6 +4,7 @@ import IdeaNode from '../components/IdeaNode';
 import CreationModal from '../components/modals/CreationModal';
 import RenameModal from '../components/modals/RenameModal';
 import Help from '../components/Help';
+import PatchNotes from '../components/PatchNotes';
 import Trash from '../components/Trash';
 import LastIdea from '../components/LastIdea';
 
@@ -37,6 +38,7 @@ import MindMap from '../components/MindMap';
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
+    const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
     const [lastRootName, setLastRootName] = useState('');
 
@@ -85,23 +87,13 @@ function Idea() {
             setPendingDeleteId(activeId);
             setDeleteConfirmModalOpen(true);
         } else if (over.id === 'last-idea') {
-            console.log('Moving idea with id:', activeId, 'to root with id:', rootId);
             updateIdeaParentId(activeId, getParentID(rootId));
-
             setIdeasFromStorage();
         } else {
-            if (activeId === overId) {
-                console.log('Dropping idea on itself, no action taken.');
-                return;
-            }
-            if (overLink != ""){
-                console.log('Dropping idea into link idea, no action taken.')
-                return;
-            }
+            if (activeId === overId) return;
+            if (overLink !== '') return;
             const newParentId = Number(over.id.split('-')[1]);
             updateIdeaParentId(activeId, newParentId);
-            console.log('Moving idea with id:', activeId, 'to parent with id:', overId);
-
             setIdeasFromStorage();
         }
     };
@@ -124,7 +116,7 @@ function Idea() {
         <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
-                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
+                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowPatchNotes={setShowPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
                     {!showMindMap && <Trash />}
                 </section>
 
@@ -132,10 +124,10 @@ function Idea() {
                     <section className="mid">
                         <section className="top">
                             <section className="rootHolder">
-                                <div className="ideaRoot neobrutal-button" onClick={() => { rootId != 1 && setRenameModalOpen(true)}}>{rootName}</div>
+                                <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
                                 <section className="rootAdditionalButtons">
                                     <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /></button>
-                                    {(rootId != 1) && <LastIdea lastRootName={lastRootName} />}
+                                    {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
                                 </section>
                             </section>
                         </section>
@@ -160,8 +152,9 @@ function Idea() {
                 )}
 
                 <section className="right">
-                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
+                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowPatchNotes={setShowPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
                     <Help showHelp={showHelp} />
+                    <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>
             </section>
             <MobileMindMap />

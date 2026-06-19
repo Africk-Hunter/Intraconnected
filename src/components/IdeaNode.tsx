@@ -11,7 +11,7 @@ interface IdeaNodeProps {
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
-    const { setRootId, setRootName, rootIdStack, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName, selectedIdeaName } = useIdeaContext();
+    const { setRootId, setRootName, rootIdStack, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName } = useIdeaContext();
 
     const [nodeType, setNodeType] = React.useState('leaf');
     const [isLink, setIsLink] = React.useState(false);
@@ -55,7 +55,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
     }, []);
 
     function determineNodeType() {
-        if (link && link != '') {
+        if (link && link !== '') {
             setNodeType('link');
             setIsLink(true);
             return;
@@ -127,7 +127,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ id, title, link, isLeaf }) => {
 
         setCurrentNameChangeId(id)
         setSelectedIdeaName(title)
-        console.log(selectedIdeaName)
         setRenameModalOpen(true)
     }
 

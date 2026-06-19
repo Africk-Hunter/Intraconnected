@@ -2,6 +2,10 @@
 
 .mmobile {
     display: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
 
     @media (max-width: $mobile) {
         display: flex;
@@ -285,7 +289,7 @@
 
 .mmobile-nav-logo {
     flex: 1;
-    height: 28px;
+    height: 42px;
     width: auto;
     object-fit: contain;
     object-position: center center;
@@ -356,6 +360,48 @@
     border: 3px solid #111;
     border-radius: 20px;
     box-shadow: 0 5px 0 #111;
+}
+
+.mmobile-patchnotes-btn {
+    width: 64px;
+    height: 64px;
+    border: 3px solid #111;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 5px 0 #111;
+    cursor: pointer;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: #1a1208;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mmobile-patchnotes-entry {
+    padding-bottom: 16px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+
+    &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+}
+
+.mmobile-patchnotes-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: $sky;
+    border: 2px solid #111;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.mmobile-patchnotes-title {
+    margin: 6px 0 4px;
+    font-size: 1.05rem;
+    font-weight: 600;
 }
 
 .mmobile-navigate-btn {
@@ -525,6 +571,13 @@
 
     &:focus {
         background: lighten($sky, 35%);
+    }
+
+    &--grow {
+        resize: none;
+        overflow: hidden;
+        min-height: unset;
+        line-height: 1.4;
     }
 }
 

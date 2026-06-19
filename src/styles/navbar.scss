@@ -15,7 +15,7 @@
         height: 100vh;
         align-items: end;
         gap: 0;
-        width: 100%
+        width: 100%;
     }
 
     @media (max-width: $mobile) {
@@ -131,7 +131,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        display: none;;
+        display: none;
     }
 
     @media (min-width: $large-desktop) {
@@ -173,4 +173,42 @@
 .trashCan>.buttonImg {
     width: 70%;
     height: 70%;
+}
+
+.tooltip-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+.tooltip-highlighted {
+    outline: 3px solid $link !important;
+    outline-offset: 2px;
+}
+
+.tooltip-text {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: $link;
+    border: 2px solid #111;
+    border-radius: 6px;
+    padding: 0.35rem 0.65rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 2px 2px 0 #111;
+
+    &.tooltip-right {
+        left: calc(100% + 18px);
+    }
+
+    &.tooltip-left {
+        right: calc(100% + 18px);
+    }
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
 }

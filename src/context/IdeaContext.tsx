@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useRef, useState } from "react";
+import { IdeaType } from "../utilities/types";
 
 interface IdeaContextType {
-    ideas: { id: number; content: string; parentID: number; link: string }[];
-    setIdeas: (ideas: any) => void;
+    ideas: IdeaType[];
+    setIdeas: React.Dispatch<React.SetStateAction<IdeaType[]>>;
     rootId: number;
     setRootId: (id: number) => void;
     rootName: string;
@@ -40,7 +41,7 @@ const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
 
 export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
-    const [ideas, setIdeas] = useState<any[]>([]);
+    const [ideas, setIdeas] = useState<IdeaType[]>([]);
     const [rootId, setRootId] = useState(1);
     const [rootName, setRootName] = useState("Ideas");
     const [creationModalOpen, setCreationModalOpen] = useState(false);

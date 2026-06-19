@@ -166,6 +166,7 @@
 
     &--parent { background: $sky; }
     &--leaf   { background: $leaf; }
+    &--link   { background: $link; }
     &--current {
         background: $roots;
         color: #fff;

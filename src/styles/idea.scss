@@ -180,7 +180,15 @@
         margin-left: 9.5rem;
         padding: .5rem 2rem;
         transition: all 0.3s ease;
-        word-break: break-all;
+        word-break: break-word;
+
+        .ideaRoot-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
 
         @media (max-width: $mobile) {
             margin: 0 2rem 0 2rem;

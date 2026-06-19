@@ -17,6 +17,7 @@ import {
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileNavigateSheet from './MobileNavigateSheet';
+import MobilePatchNotesSheet from './MobilePatchNotesSheet';
 
 type SheetState =
     | { type: 'actions'; nodeId: number }
@@ -34,10 +35,12 @@ function MobileMindMap() {
     const [draft, setDraft] = useState('');
     const [editMode, setEditMode] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
+    const [showPatchNotes, setShowPatchNotes] = useState(false);
 
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressActive = useRef(false);
     const touchMoved = useRef(false);
+    const lastLongPressTime = useRef(0);
 
     const allIdeas: IdeaType[] = fetchFullIdeaList();
     const currentIdea = allIdeas.find(i => i.id === currentId);
@@ -72,6 +75,7 @@ function MobileMindMap() {
         if (pressTimer.current) clearTimeout(pressTimer.current);
         pressTimer.current = setTimeout(() => {
             longPressActive.current = true;
+            lastLongPressTime.current = Date.now();
             setSheet({ type: 'actions', nodeId });
             setEditMode(false);
         }, 360);
@@ -92,6 +96,7 @@ function MobileMindMap() {
             longPressActive.current = false;
             return;
         }
+        if (Date.now() - lastLongPressTime.current < 400) return;
         if (editMode) {
             setSheet({ type: 'actions', nodeId });
             return;
@@ -166,7 +171,7 @@ function MobileMindMap() {
     const sheetTitle =
         sheet?.type === 'navigate' ? 'Navigate to…' :
         sheet?.type === 'move' ? 'Move under…' :
-        sheet?.type === 'rename' ? (sheet.isNew ? 'Name your idea' : 'Rename idea') :
+        sheet?.type === 'rename' ? (sheet.isNew ? 'Name your idea' : (allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea')) :
         sheet?.type === 'link' ? (sheetNode?.link ? 'Change link' : 'Add link') :
         sheet?.type === 'confirmDelete' ? 'Delete idea?' :
         (sheetNode?.content ?? '');
@@ -201,6 +206,7 @@ function MobileMindMap() {
             </div>
 
             {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} />}
+            {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} />}
 
             <div
                 className="mmobile-header"
@@ -257,6 +263,7 @@ function MobileMindMap() {
             </div>
 
             <div className="mmobile-fab-area">
+                <button className="mmobile-patchnotes-btn" onClick={() => setShowPatchNotes(p => !p)}>★</button>
                 <button
                     className={`mmobile-navigate-btn${sheet?.type === 'navigate' ? ' mmobile-navigate-btn--active' : ''}`}
                     onClick={() => setSheet({ type: 'navigate' })}
@@ -274,7 +281,7 @@ function MobileMindMap() {
 
             {sheet && (
                 <>
-                    <div className="mmobile-scrim" onClick={closeSheet} />
+                    <div className="mmobile-scrim" onClick={() => { if (Date.now() - lastLongPressTime.current < 400) return; closeSheet(); }} />
                     <div className="mmobile-sheet">
                         <div className="mmobile-sheet-title">
                             {sheetTitle}
@@ -300,7 +307,7 @@ function MobileMindMap() {
                                     className="mmobile-action-btn mmobile-action-btn--rename"
                                     onClick={() => { setDraft(sheetNode.content); setSheet({ type: 'rename', nodeId: sheetNode.id }); }}
                                 >
-                                    <img src="/images/Pen.svg" alt="" className="mmobile-action-icon" />Rename
+                                    <img src="/images/Pen.svg" alt="" className="mmobile-action-icon" />{allIdeas.some(i => i.parentID === sheetNode.id) ? 'Rename Idea' : 'Rewrite Idea'}
                                 </button>
                                 <button
                                     className="mmobile-action-btn mmobile-action-btn--link"
@@ -321,6 +328,21 @@ function MobileMindMap() {
 
                         {sheet.type === 'rename' && (
                             <>
+                                {sheet.isNew ? (
+                                    <textarea
+                                        autoFocus
+                                        className="mmobile-rename-input mmobile-rename-input--grow"
+                                        value={draft}
+                                        onChange={e => {
+                                            setDraft(e.target.value);
+                                            const el = e.target;
+                                            el.style.height = 'auto';
+                                            el.style.height = el.scrollHeight + 'px';
+                                        }}
+                                        placeholder="Idea name"
+                                        rows={1}
+                                    />
+                                ) : (
                                 <input
                                     autoFocus
                                     className="mmobile-rename-input"
@@ -330,6 +352,7 @@ function MobileMindMap() {
                                     placeholder="Idea name"
                                     maxLength={100}
                                 />
+                                )}
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={commitRename}>Save</button>

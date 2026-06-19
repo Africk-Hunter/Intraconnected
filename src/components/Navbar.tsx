@@ -1,5 +1,6 @@
 import React, { JSX, useEffect, useState } from 'react';
 import DepthIndicator from './DepthIndicator';
+import TooltipButton from './TooltipButton';
 import { useIdeaContext } from '../context/IdeaContext';
 import { getNameFromID } from '../utilities/index';
 
@@ -8,13 +9,14 @@ interface NavbarProps {
     side: string;
     signUserOut: () => void;
     setShowHelp: React.Dispatch<React.SetStateAction<boolean>>;
+    setShowPatchNotes: React.Dispatch<React.SetStateAction<boolean>>;
     setShowMindMap: React.Dispatch<React.SetStateAction<boolean>>;
     showMindMap: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShowMindMap, showMindMap }) => {
+const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShowPatchNotes, setShowMindMap, showMindMap }) => {
 
-    const { rootIdStack, setCreationModalOpen } = useIdeaContext();
+    const { rootIdStack, setCreationModalOpen, rootId } = useIdeaContext();
 
     const [depthElements, setDepthElements] = useState<JSX.Element[]>([]);
 
@@ -25,16 +27,17 @@ const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShow
         ));
 
         setDepthElements(updatedDepthElements);
-    }, [rootIdStack.current.length]);
+    }, [rootIdStack.current.length, rootId]);
 
     return (
         <>
-            {side == 'right' ?
+            {side === 'right' ?
 
                 <nav className="navbar rightSide">
                     <section className="rightSideButtons">
-                        <button className="mediumSideButton neutral neobrutal-button navButton" onClick={() => signUserOut()}><img src="/images/LogOut.svg" alt="" className="buttonImg" /></button>
-                        <button className="smallSideButton neutral neobrutal-button navButton" onClick={() => setShowHelp((prev: boolean) => !prev)}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></button>
+                        <TooltipButton tooltip="Log out" tooltipSide="left" className="mediumSideButton neutral neobrutal-button navButton" onClick={() => signUserOut()}><img src="/images/LogOut.svg" alt="" className="buttonImg" /></TooltipButton>
+                        <TooltipButton tooltip="Help & instructions" tooltipSide="left" className="smallSideButton neutral neobrutal-button navButton" onClick={() => setShowHelp((prev: boolean) => !prev)}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></TooltipButton>
+                        <TooltipButton tooltip="Patch notes" tooltipSide="left" className="smallSideButton neutral neobrutal-button navButton patchNotesBtn" onClick={() => setShowPatchNotes((prev: boolean) => !prev)}>★</TooltipButton>
                     </section>
                     {!showMindMap && <section className="howDeepHolder">{depthElements}</section>}
                 </nav>
@@ -43,9 +46,9 @@ const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShow
 
                 <nav className="navbar">
                     <div className={showMindMap ? 'logo-map-box' : ''}>
-                        <button className="largeSideButton neutral neobrutal-button navButton" onClick={() => setShowMindMap(prev => !prev)}><img src="/images/Logo.svg" alt="" className="buttonImg logoButton" /></button>
+                        <TooltipButton tooltip="Toggle mind map" tooltipSide="right" className="largeSideButton neutral neobrutal-button navButton" onClick={() => setShowMindMap(prev => !prev)}><img src="/images/Logo.svg" alt="" className="buttonImg logoButton" /></TooltipButton>
                     </div>
-                    {!showMindMap && <button className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setCreationModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg" /></button>}
+                    {!showMindMap && <TooltipButton tooltip="Create new idea" tooltipSide="right" className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setCreationModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg" /></TooltipButton>}
                 </nav>
             }
         </>

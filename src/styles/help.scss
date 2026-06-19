@@ -1,5 +1,4 @@
 .howToUsePopup {
-    transition: all 0.3s ease;
     transform: translateX(-25%);
     opacity: 0;
     pointer-events: none;
@@ -12,7 +11,6 @@
     right: 10vh;
     width: 45rem;
     min-height: fit-content;
-    transition: all 0.3s ease;
 
     border-radius: 10px;
     border: 3px solid black;
@@ -255,4 +253,84 @@
 
     opacity: 1;
     pointer-events: auto;
+}
+
+.patchNotesPopup {
+    transition: all 0.3s ease;
+    transform: translateX(-25%);
+    opacity: 0;
+    pointer-events: none;
+
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    position: absolute;
+    right: 10vh;
+    width: 35rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    gap: 1rem;
+
+    border-radius: 10px;
+    border: 3px solid black;
+    box-shadow: 4px 4px 0 2px black;
+
+    &::-webkit-scrollbar { display: none; }
+
+    &.show {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 48rem;
+        border: 4px solid black;
+    }
+}
+
+.patchNotes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.patchNotes-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+
+    &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+}
+
+.patchNotes-tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background: $sky;
+    border: 2px solid black;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: fit-content;
+}
+
+.patchNotes-title {
+    margin: 0.25rem 0 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.patchNotesBtn {
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #1a1208;
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.6rem;
+    }
 }
