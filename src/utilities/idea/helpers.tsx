@@ -102,7 +102,31 @@ export function geLinkFromID(id: number): string {
 
 export function cleanLink(userLink: string): string {
     if (userLink === '') return '';
-    if (!userLink.includes('https://')) userLink = 'https://' + userLink;
-    if (!userLink.includes('.')) userLink = userLink + '.com';
+
+    userLink = userLink.trim();
+    if (userLink === '') return '';
+
+    // Normalize http → https, and strip any other protocol to re-add https
+    const protocolMatch = userLink.match(/^([a-zA-Z][a-zA-Z0-9+\-.]*):\/\//);
+    if (protocolMatch) {
+        const proto = protocolMatch[1].toLowerCase();
+        if (proto === 'http') {
+            userLink = 'https://' + userLink.slice(protocolMatch[0].length);
+        }
+        // Already has a protocol (https, ftp, etc.) — return as-is
+        return userLink;
+    }
+
+    // Strip accidental leading www-only entries so we can re-prefix cleanly
+    userLink = 'https://' + userLink;
+
+    // Append .com only when the hostname has no TLD (no dot before any / or ?)
+    const afterProtocol = userLink.slice('https://'.length);
+    const hostname = afterProtocol.split(/[/?#]/)[0].split(':')[0]; // ignore port
+    if (hostname !== 'localhost' && !hostname.includes('.')) {
+        const rest = afterProtocol.slice(hostname.length);
+        userLink = 'https://' + hostname + '.com' + rest;
+    }
+
     return userLink;
 }

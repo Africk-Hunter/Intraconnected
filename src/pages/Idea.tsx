@@ -32,10 +32,12 @@ updateIdeaParentId,
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
 import MobileMindMap from '../components/MobileMindMap';
+import MindMap from '../components/MindMap';
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
+    const [showMindMap, setShowMindMap] = useState(false);
     const [lastRootName, setLastRootName] = useState('');
 
     const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId } = useIdeaContext();
@@ -122,45 +124,48 @@ function Idea() {
         <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
-                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={setShowHelp} />
-                    <Trash />
+                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
+                    {!showMindMap && <Trash />}
                 </section>
 
-                <section className="mid">
-                    <section className="top">
-                        <section className="rootHolder">
-                            <div className="ideaRoot neobrutal-button" onClick={() => { rootId != 1 && setRenameModalOpen(true)}}>{rootName}</div>
-                            <section className="rootAdditionalButtons">
-                                <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /></button>
-                                {(rootId != 1) && <LastIdea lastRootName={lastRootName} />}
+                {!showMindMap && (
+                    <section className="mid">
+                        <section className="top">
+                            <section className="rootHolder">
+                                <div className="ideaRoot neobrutal-button" onClick={() => { rootId != 1 && setRenameModalOpen(true)}}>{rootName}</div>
+                                <section className="rootAdditionalButtons">
+                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /></button>
+                                    {(rootId != 1) && <LastIdea lastRootName={lastRootName} />}
+                                </section>
                             </section>
                         </section>
-                    </section>
 
-                    <section className="bottom">
-                        <main className="ideaSpace">
-                            <section className="ideaNodes">
-                                {ideas?.map((idea: IdeaType) => (
-                                    <IdeaNode
-                                        key={idea.id}
-                                        id={idea.id}
-                                        title={idea.content}
-                                        parentID={idea.parentID}
-                                        link={idea.link}
-                                        isLeaf={checkIfIdeaIsLeaf(idea.id)}
-                                    />
-                                ))}
-                            </section>
-                        </main>
+                        <section className="bottom">
+                            <main className="ideaSpace">
+                                <section className="ideaNodes">
+                                    {ideas?.map((idea: IdeaType) => (
+                                        <IdeaNode
+                                            key={idea.id}
+                                            id={idea.id}
+                                            title={idea.content}
+                                            parentID={idea.parentID}
+                                            link={idea.link}
+                                            isLeaf={checkIfIdeaIsLeaf(idea.id)}
+                                        />
+                                    ))}
+                                </section>
+                            </main>
+                        </section>
                     </section>
-                </section>
+                )}
 
                 <section className="right">
-                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={setShowHelp} />
+                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
                     <Help showHelp={showHelp} />
                 </section>
             </section>
             <MobileMindMap />
+            {showMindMap && <MindMap onClose={() => setShowMindMap(false)} />}
             <RenameModal />
             <LinkChangeModal />
             <DeleteConfirmModal />

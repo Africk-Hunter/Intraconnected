@@ -68,6 +68,7 @@ src/
 │   └── Login.tsx             # login page wrapper
 ├── components/
 │   ├── IdeaNode.tsx          # draggable/droppable idea card
+│   ├── MindMap.tsx           # desktop full-tree overlay; pan/zoom; clicking a node navigates to it
 │   ├── MobileMindMap.tsx     # mobile-only UI orchestrator (shown ≤576px, hidden on desktop)
 │   ├── MobileHelpSheet.tsx   # mobile help carousel (3 screens); owns helpScreen state
 │   ├── MobileMoveSheet.tsx   # mobile move-tree sheet; owns expandedMoveNodes state + auto-scroll
@@ -101,6 +102,7 @@ src/
 │   ├── variables.scss        # colors, breakpoints
 │   ├── index.scss            # global styles + imports
 │   ├── idea.scss             # main page + node styles
+│   ├── mindmap.scss          # desktop MindMap overlay styles
 │   ├── mobileMindMap.scss    # mobile UI styles
 │   ├── navbar.scss           # sidebar styles
 │   ├── depth.scss            # breadcrumb indicators
@@ -173,8 +175,21 @@ Key differences from desktop:
 - **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete`
 - **Move tree**: rendered by `MobileMoveSheet`; owns `expandedMoveNodes` state and auto-scroll logic; scrollable tree with expand/collapse; auto-scrolls to current parent on open; descendants and current parent are disabled as move targets
 - **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–3); receives only an `onClose` prop
-- **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` auto-prepends `https://` and appends `.com` if the URL contains neither
+- **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` normalizes URLs — upgrades `http://` to `https://`, passes through any other existing protocol unchanged, prepends `https://` if no protocol present, and appends `.com` only when the hostname has no TLD (no dot). Never double-adds a protocol.
 - **No DnD**: doesn't use `@dnd-kit` at all; touch events handle long-press detection with `touchMoved` guard to cancel on scroll
+
+### Desktop MindMap (`MindMap.tsx`)
+
+Toggled by the logo button in the left Navbar (`showMindMap` state in `Idea.tsx`). When open, the main grid is hidden and `MindMap` renders as a full overlay inside the `.left` column area.
+
+- **Pan**: mouse drag on the canvas background (ignored if target is a button)
+- **Zoom**: scroll wheel (non-passive listener so `preventDefault` works); clamped to 0.2–4×
+- **TreeNode**: recursive component; expand/collapse per node (`collapsed` state); highlights current `rootId` with `mm-node-btn--current`
+- **Navigation**: clicking any node rebuilds `rootIdStack` from scratch (walks up the tree to reconstruct the full path), then calls `setRootId` + `setRootName` + `onClose`
+- **Initial expand state**: ancestors of the current `rootId` start expanded; all others start collapsed
+- Styles live in `mindmap.scss`; BEM-style classes prefixed with `mm-`
+
+Navbar accepts `setShowMindMap` and `showMindMap` props. When `showMindMap` is true: the `+` (create) button and depth indicators are hidden; the logo button gets a `logo-map-box` wrapper class.
 
 ### Drag and Drop (Desktop)
 
