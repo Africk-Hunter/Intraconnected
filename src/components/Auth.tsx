@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { auth } from "../firebaseConfig";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence, sendPasswordResetEmail } from "firebase/auth";
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
+import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, unwrapDEKWithRecovery } from "../utilities/crypto";
+import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
+import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged } from "../utilities/firebase/firebaseHelpers";
+import { signUserOut } from "../utilities/firebase/authFirebase";
 
 const Auth: React.FC = () => {
 
@@ -11,6 +15,17 @@ const Auth: React.FC = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [pendingRecoveryCode, setPendingRecoveryCode] = useState("");
+    const [showRecoveryInput, setShowRecoveryInput] = useState(false);
+    const [recoveryCodeInput, setRecoveryCodeInput] = useState("");
+    const [copied, setCopied] = useState(false);
+    const [recoveryCodeContext, setRecoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
+
+    const isShowingRecoveryCode = useRef(false);
+    const isSigningIn = useRef(false);
+    const pendingPasswordRef = useRef("");
+    const pendingUidRef = useRef("");
+    const pendingEncDataRef = useRef<{ encryptedDEK: string; recoveryEncryptedDEK: string } | null>(null);
 
     const { setMessageBoxMessage, setMessageType, messageBoxMessage } = useIdeaContext();
 
@@ -19,10 +34,10 @@ const Auth: React.FC = () => {
             console.error("Error setting persistence:", error);
         });
 
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                console.log("Current user: ", auth.currentUser);
-                window.location.href = '/main';
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user && !isShowingRecoveryCode.current && !isSigningIn.current && !showRecoveryInput) {
+                const dekLoaded = await loadDEKFromSession();
+                if (dekLoaded) window.location.href = '/main';
             }
         });
         return () => unsubscribe();
@@ -46,26 +61,23 @@ const Auth: React.FC = () => {
         };
     }, [showConfirmPassword, email, password, confirmPassword]);
 
-    // Function to display messages in the message box
     function displayMessage(message: string, type: string) {
         setMessageBoxMessage(message);
         setMessageType(type);
-
         setTimeout(() => {
             setMessageBoxMessage("");
             setMessageType("");
         }, 3000);
     }
 
-    // Function to check password length and complexity
     function checkPassword(password: string) {
         if (password.length < 6) {
             displayMessage("Password must be at least 6 characters long", "bad");
-            console.log(messageBoxMessage)
+            console.log(messageBoxMessage);
             return false;
         } else if (password.length > 20) {
             displayMessage("Password must be less than 20 characters long", "bad");
-            console.log(messageBoxMessage)
+            console.log(messageBoxMessage);
             return false;
         } else if (/\s/.test(password)) {
             displayMessage("Password cannot contain spaces", "bad");
@@ -75,12 +87,11 @@ const Auth: React.FC = () => {
         return true;
     }
 
-    // Function to handle sign up
     function defaultSignUp(e: React.MouseEvent<HTMLButtonElement>): void {
         e.preventDefault();
         if (password !== confirmPassword) {
             displayMessage("Passwords do not match", "bad");
-            console.log(messageBoxMessage)
+            console.log(messageBoxMessage);
             return;
         }
         if (checkPassword(password)) {
@@ -90,47 +101,267 @@ const Auth: React.FC = () => {
         console.log('Password did not meet requirements.');
     }
 
-    // Function to handle sign up with Firebase
     function handleSignUp() {
+        isSigningIn.current = true;
         createUserWithEmailAndPassword(auth, email.trim(), password)
-            .then((userCredential) => {
+            .then(async (userCredential) => {
                 const user = userCredential.user;
-                console.log(user);
+                const capturedPassword = password;
+
+                const dek = await generateDEK();
+                const recoveryCode = generateRecoveryCode();
+                const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
+                const recoveryEncryptedDEK = await wrapDEKWithRecovery(dek, recoveryCode, user.uid);
+
+                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK);
+                await setDEK(dek);
+
+                isShowingRecoveryCode.current = true;
+                isSigningIn.current = false;
+                setRecoveryCodeContext('signup');
+                setPendingRecoveryCode(recoveryCode);
+
                 displayMessage("Successfully created account!", "good");
                 setEmail("");
                 setPassword("");
             })
             .catch((error) => {
-                const errorMessage = error.message;
-                console.log(errorMessage);
+                isSigningIn.current = false;
+                console.log(error.message);
             });
     }
 
-    // Function to handle sign in with Firebase
-    function handleSignIn(e: React.MouseEvent<HTMLButtonElement>): void {
+    async function handleForgotPassword() {
+        if (!email.trim()) {
+            displayMessage('Enter your email address first', 'bad');
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email.trim());
+            displayMessage('Password reset email sent!', 'good');
+        } catch {
+            displayMessage('Could not send reset email. Check your address.', 'bad');
+        }
+    }
+
+    async function handleSignIn(e: React.MouseEvent<HTMLButtonElement>): Promise<void> {
         e.preventDefault();
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                const user = userCredential.user;
-                window.location.href = '/main';
-            })
-            .catch((error) => {
-                const errorMessage = error.message;
-                displayMessage('Invalid email or password. Please try again', 'bad');
-                console.log('Invalid email or password. Please try again')
-                console.log(errorMessage);
-            });
+        const capturedPassword = password;
+        isSigningIn.current = true;
+
+        let userCredential;
+        try {
+            userCredential = await signInWithEmailAndPassword(auth, email, capturedPassword);
+        } catch (error) {
+            isSigningIn.current = false;
+            displayMessage('Invalid email or password. Please try again', 'bad');
+            console.log(error);
+            return;
+        }
+
+        try {
+            const user = userCredential.user;
+            const encData = await fetchEncryptedDEK();
+
+            if (encData) {
+                try {
+                    const dek = await unwrapDEK(encData.encryptedDEK, capturedPassword, user.uid);
+                    await setDEK(dek);
+
+                    if (!encData.recoveryCodeAcknowledged) {
+                        // Isolated try/catch: failures here must not fall into the unwrapDEK catch below
+                        try {
+                            const newRecoveryCode = generateRecoveryCode();
+                            const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, user.uid);
+                            await storeEncryptedDEK(encData.encryptedDEK, newRecoveryEncryptedDEK);
+
+                            // Verify we won the concurrent-login race — another device may have written last
+                            const verify = await fetchEncryptedDEK();
+                            if (verify?.recoveryEncryptedDEK !== newRecoveryEncryptedDEK) {
+                                isSigningIn.current = false;
+                                window.location.href = '/main';
+                                return;
+                            }
+
+                            isShowingRecoveryCode.current = true;
+                            isSigningIn.current = false;
+                            setRecoveryCodeContext('migration');
+                            setPendingRecoveryCode(newRecoveryCode);
+                        } catch {
+                            // Write failed — proceed to app, will prompt again next login
+                            isSigningIn.current = false;
+                            window.location.href = '/main';
+                        }
+                    } else {
+                        isSigningIn.current = false;
+                        window.location.href = '/main';
+                    }
+                } catch {
+                    // DEK decryption failed — password was reset via email, recovery code needed
+                    pendingPasswordRef.current = capturedPassword;
+                    pendingUidRef.current = user.uid;
+                    pendingEncDataRef.current = encData;
+                    isSigningIn.current = false;
+                    setShowRecoveryInput(true);
+                }
+            } else {
+                // No DEK yet — account predates encryption
+                const dek = await generateDEK();
+                const recoveryCode = generateRecoveryCode();
+                const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
+                const recoveryEncryptedDEK = await wrapDEKWithRecovery(dek, recoveryCode, user.uid);
+                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK);
+                await setDEK(dek);
+
+                isShowingRecoveryCode.current = true;
+                isSigningIn.current = false;
+                setRecoveryCodeContext('migration');
+                setPendingRecoveryCode(recoveryCode);
+            }
+        } catch (error) {
+            isSigningIn.current = false;
+            console.error('Encryption setup error:', error);
+            displayMessage('Login error — please try again.', 'bad');
+        }
+    }
+
+    async function handleRecoveryRestore() {
+        const encData = pendingEncDataRef.current;
+        const uid = pendingUidRef.current;
+        const newPassword = pendingPasswordRef.current;
+        if (!encData) return;
+
+        // Normalize: strip non-hex characters, reformat to original XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX
+        const stripped = recoveryCodeInput.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
+        const normalized = [0, 10, 20, 30].map(i => stripped.slice(i, i + 10)).join('-');
+
+        let dek: CryptoKey;
+        try {
+            dek = await unwrapDEKWithRecovery(encData.recoveryEncryptedDEK, normalized, uid);
+        } catch {
+            displayMessage('Invalid recovery code. Please try again.', 'bad');
+            return;
+        }
+
+        try {
+            const newEncryptedDEK = await wrapDEK(dek, newPassword, uid);
+            const newRecoveryCode = generateRecoveryCode();
+            const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, uid);
+            await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK);
+            await setDEK(dek);
+
+            setShowRecoveryInput(false);
+            setRecoveryCodeInput("");
+            isShowingRecoveryCode.current = true;
+            setRecoveryCodeContext('restore');
+            setPendingRecoveryCode(newRecoveryCode);
+        } catch {
+            displayMessage('Could not save your new keys. Please try again.', 'bad');
+        }
+    }
+
+    async function handleRecoveryAcknowledged() {
+        isShowingRecoveryCode.current = false;
+        setPendingRecoveryCode("");
+        try {
+            await markRecoveryCodeAcknowledged();
+        } catch {
+            // Navigate anyway — worst case they're prompted again next login
+        }
+        window.location.href = '/main';
+    }
+
+    function handleCopyRecoveryCode() {
+        navigator.clipboard.writeText(pendingRecoveryCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }
+
+    function handleDownloadRecoveryCode() {
+        const content = `Intraconnected Recovery Code\n\n${pendingRecoveryCode}\n\nKeep this file safe. It is the only way to recover your data if you lose your password.`;
+        const blob = new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'intraconnected-recovery-code.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Recovery code entry screen (after password reset)
+    if (showRecoveryInput) {
+        return (
+            <div className="recoveryOverlay">
+                <div className="recoveryModal neobrutal">
+                    <h2 className="recoveryTitle">Restore Encrypted Data</h2>
+                    <p className="recoveryWarning">
+                        Your password was reset, so your encryption key needs to be restored. Enter your recovery code to regain access to your ideas.
+                    </p>
+                    <input
+                        type="text"
+                        className="input neobrutal-input recoveryInput"
+                        placeholder="XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX"
+                        value={recoveryCodeInput}
+                        onChange={(e) => setRecoveryCodeInput(e.target.value)}
+                        spellCheck={false}
+                    />
+                    <div className="recoveryActions">
+                        <button className="recoveryDownloadBtn neobrutal-button" onClick={signUserOut}>
+                            Sign Out
+                        </button>
+                        <button className="recoveryConfirmBtn neobrutal-button" onClick={handleRecoveryRestore}>
+                            Restore Access
+                        </button>
+                    </div>
+                    <MessageBox />
+                </div>
+            </div>
+        );
+    }
+
+    // New recovery code display screen (after signup or after successful restore)
+    if (pendingRecoveryCode) {
+        return (
+            <div className="recoveryOverlay">
+                <div className="recoveryModal neobrutal">
+                    <h2 className="recoveryTitle">Save Your Recovery Code</h2>
+                    <p className="recoveryWarning">
+                        {recoveryCodeContext === 'signup' && <>Welcome to Intraconnected! Your ideas are encrypted end-to-end. Not even we can read them. Save this recovery code somewhere safe. If you ever forget your password, it's the <strong>only</strong> way to get your data back. It won't be shown again.</>}
+                        {recoveryCodeContext === 'migration' && <>We've added end-to-end encryption to Intraconnected. A recovery code has been generated for your account. Save it somewhere safe. If you ever forget your password, it's the <strong>only</strong> way to recover your ideas. It won't be shown again.</>}
+                        {recoveryCodeContext === 'restore' && <>Your encryption key has been restored and a new recovery code has been generated. Save it somewhere safe. It won't be shown again.</>}
+                    </p>
+                    <div className="recoveryCodeBox">
+                        <span className="recoveryCodeText">{pendingRecoveryCode}</span>
+                    </div>
+                    <div className="recoveryActions">
+                        <button className="recoveryCopyBtn neobrutal-button" onClick={handleCopyRecoveryCode}>
+                            {copied ? "Copied!" : "Copy"}
+                        </button>
+                        <button className="recoveryDownloadBtn neobrutal-button" onClick={handleDownloadRecoveryCode}>
+                            Download .txt
+                        </button>
+                    </div>
+                    <button className="recoveryConfirmBtn neobrutal-button" onClick={handleRecoveryAcknowledged}>
+                        I've saved my recovery code
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (
         <div className="auth">
             <MessageBox />
-
             <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
             <section className="authForm">
                 <section className="authInputs">
                     <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <div className="passwordField">
+                        <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                        <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
+                            Forgot password?
+                        </button>
+                    </div>
                     <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </section>
                 <button

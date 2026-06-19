@@ -46,6 +46,41 @@ interface IdeaType {
 }
 ```
 
+### End-to-End Encryption
+
+All idea `content` and `link` fields are AES-256-GCM encrypted before being written to Firestore. The server only ever sees ciphertext.
+
+**Two-layer key scheme** (same pattern as Bitwarden/ProtonMail):
+- Each user has a random **DEK** (Data Encryption Key) that encrypts their data. It never changes.
+- The DEK is stored encrypted in Firestore at `users/{uid}/meta/encryption`, wrapped twice:
+  1. `encryptedDEK` — wrapped with a password-derived KEK (PBKDF2, 100k iterations, UID as salt)
+  2. `recoveryEncryptedDEK` — wrapped with a recovery-code-derived KEK (same derivation, `-recovery` salt suffix)
+- `recoveryCodeAcknowledged: boolean` is stored alongside. While `false` (or missing), every login generates a fresh recovery code, re-wraps the DEK with it, and shows the recovery code screen before navigating to `/main`. Once the user clicks "I've saved it", it's set to `true` — no more prompts.
+
+**DEK lifecycle:**
+- In memory: module-level `_dek` in `dekStore.ts`
+- Across page reloads: exported raw bytes stored in `sessionStorage` under key `dek_session`; restored via `loadDEKFromSession()` on mount and on `visibilitychange`
+- On sign-out: `clearDEK()` wipes both `_dek` and `sessionStorage`
+
+**`enc:` prefix:** Encrypted ciphertext is stored as `enc:<base64>`. `decryptField` checks for the prefix — plaintext legacy values pass through unchanged, enabling backward-compatible migration.
+
+**Auth screens in `Auth.tsx`** (three mutually exclusive render paths before the normal login form):
+1. `showRecoveryInput` — enter recovery code after a password reset; "Sign Out" and "Restore Access" buttons
+2. `pendingRecoveryCode` — display new recovery code; copy, download, and "I've saved it" buttons; context message varies by `recoveryCodeContext`: `'signup'` (welcome), `'migration'` (encryption added to existing account), `'restore'` (after password-reset recovery)
+3. Normal login/signup form
+
+**Navigation guards:**
+- `isSigningIn` ref — blocks `onAuthStateChanged` auto-redirect while login async work is in flight
+- `isShowingRecoveryCode` ref — blocks auto-redirect while recovery code screen is displayed
+- `Idea.tsx` `visibilitychange` listener — when tab regains focus, checks DEK in memory/session and redirects to `/` if missing
+
+**Firestore rules required** (must be set in Firebase Console):
+```
+match /users/{userId}/meta/{document} {
+  allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+```
+
 ### Navigation Model
 
 - `rootId` — the currently displayed idea (its children fill the grid)
@@ -94,9 +129,11 @@ src/
 │   ├── index.ts              # barrel export
 │   ├── types.ts              # IdeaType interface
 │   ├── parseChangelog.ts     # parses CHANGELOG.md into ChangelogEntry[]
+│   ├── crypto.ts             # AES-256-GCM encryption primitives + DEK/KEK key scheme
+│   ├── dekStore.ts           # in-memory + sessionStorage DEK persistence
 │   ├── firebase/
-│   │   ├── firebaseHelpers.tsx   # Firestore CRUD
-│   │   └── authFirebase.tsx      # sign out
+│   │   ├── firebaseHelpers.tsx   # Firestore CRUD (encrypts/decrypts all idea fields)
+│   │   └── authFirebase.tsx      # sign out (clears DEK)
 │   └── idea/
 │       ├── helpers.tsx       # navigation helpers, name/link lookups, cleanLink()
 │       ├── storage.tsx       # localStorage CRUD
@@ -137,6 +174,9 @@ Ideas are stored at `users/{uid}/ideas/{ideaId}` in Firestore. The Firebase conf
 
 ### `geLinkFromID` typo
 The function is named `geLinkFromID` (missing the `t` in `get`) in `helpers.tsx`. This is the real name — don't rename without updating all call sites in `Idea.tsx` and anywhere else it's imported.
+
+### Password change requires DEK re-wrap
+If you ever add a "change password" feature using Firebase's `updatePassword()`, you **must** also re-wrap the DEK with the new password and update `encryptedDEK` in Firestore. Failing to do so means the next login will successfully authenticate with Firebase but `unwrapDEK` will throw (wrong KEK) — which is the same code path as a password reset, incorrectly sending the user to the recovery code input screen.
 
 ### `updateIdeaParentId` syncs Firebase automatically
 `updateIdeaParentId(id, newParentId)` in `storage.tsx` writes to both `localStorage` **and** calls `updateIdeaParentIdInFirebase` internally. Do not add a separate Firebase call after using it — that would double-write.

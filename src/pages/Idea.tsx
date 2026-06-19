@@ -16,6 +16,7 @@ import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 // Custom Libraries
 import { auth } from '../firebaseConfig';
 import { useIdeaContext } from '../context/IdeaContext';
+import { getDEK, loadDEKFromSession } from '../utilities/dekStore';
 import {
     fetchFullIdeaList,
     handleBackClick,
@@ -45,8 +46,29 @@ function Idea() {
     const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId } = useIdeaContext();
 
     useEffect(() => {
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible') {
+                try { getDEK(); return; } catch { /* not in memory — check session */ }
+                const dekLoaded = await loadDEKFromSession();
+                if (!dekLoaded) window.location.href = '/';
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, []);
+
+    useEffect(() => {
         async function init() {
             if (auth.currentUser && !initialFetch) {
+                try {
+                    getDEK();
+                } catch {
+                    const restored = await loadDEKFromSession();
+                    if (!restored) {
+                        window.location.href = '/';
+                        return;
+                    }
+                }
                 await fetchFromFirebaseAndOrganizeIdeas().then(() => {
                     setInitialFetch(true);
                 });

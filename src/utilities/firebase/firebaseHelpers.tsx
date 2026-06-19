@@ -1,6 +1,8 @@
 import { db, auth } from "../../firebaseConfig";
-import { doc, setDoc, collection, getDocs, deleteDoc} from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 import { IdeaType } from "../types";
+import { encryptField, decryptField } from "../crypto";
+import { getDEK } from "../dekStore";
 
 function authCheck() {
     const user = auth.currentUser;
@@ -11,19 +13,43 @@ function authCheck() {
     return user;
 }
 
+export async function storeEncryptedDEK(encryptedDEK: string, recoveryEncryptedDEK: string): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
+    await setDoc(metaDoc, { encryptedDEK, recoveryEncryptedDEK, recoveryCodeAcknowledged: false });
+}
+
+export async function markRecoveryCodeAcknowledged(): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
+    await setDoc(metaDoc, { recoveryCodeAcknowledged: true }, { merge: true });
+}
+
+export async function fetchEncryptedDEK(): Promise<{ encryptedDEK: string; recoveryEncryptedDEK: string; recoveryCodeAcknowledged?: boolean } | null> {
+    const user = authCheck();
+    if (!user) return null;
+    const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
+    const snap = await getDoc(metaDoc);
+    if (!snap.exists()) return null;
+    return snap.data() as { encryptedDEK: string; recoveryEncryptedDEK: string; recoveryCodeAcknowledged?: boolean };
+}
+
 export async function fetchIdeasFromFirebase() {
     const user = authCheck();
     if (!user) return;
 
     try {
+        const dek = getDEK();
         const ideasCollection = collection(db, "users", user.uid, "ideas");
         const ideasSnapshot = await getDocs(ideasCollection);
-        const ideasList = ideasSnapshot.docs.map(doc => ({ 
+        const ideasList = await Promise.all(ideasSnapshot.docs.map(async doc => ({
             id: doc.data().id as number,
-            content: doc.data().content as string,
+            content: await decryptField(doc.data().content as string, dek),
             parentID: doc.data().parentID as number,
-            link: doc.data().link as string,
-        }));
+            link: await decryptField(doc.data().link as string | null | undefined, dek),
+        })));
         return ideasList;
     } catch (error) {
         console.error("Error fetching ideas: ", error);
@@ -35,8 +61,14 @@ export async function addIdeaToFirebase(idea: IdeaType) {
     if (!user) return;
 
     try {
+        const dek = getDEK();
         const ideasCollection = collection(db, "users", user.uid, "ideas");
-        await setDoc(doc(ideasCollection, idea.id.toString()), idea);
+        const encrypted = {
+            ...idea,
+            content: await encryptField(idea.content, dek),
+            link: await encryptField(idea.link, dek),
+        };
+        await setDoc(doc(ideasCollection, idea.id.toString()), encrypted);
     } catch (error) {
         console.error("Error adding idea: ", error);
     }
@@ -73,14 +105,13 @@ export async function updateIdeaNameInFirebase(ideaId: number, newName: string) 
     if (!user) return;
 
     try {
+        const dek = getDEK();
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
-        await setDoc(ideaDoc, { content: newName }, { merge: true });
+        await setDoc(ideaDoc, { content: await encryptField(newName, dek) }, { merge: true });
         console.log("Idea name updated successfully");
-    }catch (error) {
+    } catch (error) {
         console.error("Error updating idea name: ", error);
     }
-
-
 }
 
 export async function updateIdeaLinkInFirebase(ideaId: number, newLink: string) {
@@ -88,11 +119,11 @@ export async function updateIdeaLinkInFirebase(ideaId: number, newLink: string) 
     if (!user) return;
 
     try {
+        const dek = getDEK();
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
-        await setDoc(ideaDoc, { link: newLink }, { merge: true }); // <-- update the 'link' field
+        await setDoc(ideaDoc, { link: await encryptField(newLink, dek) }, { merge: true });
         console.log("Idea link updated successfully");
     } catch (error) {
         console.error("Error updating idea link: ", error);
     }
 }
-

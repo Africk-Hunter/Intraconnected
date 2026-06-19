@@ -66,15 +66,14 @@
     margin-top: 3.5rem;
     background: $leaf;
     user-select: none;
-
     &.login{
-        transform: translateY(-6.5rem);
-        transition: all 0.3s ease;
+        transform: translateY(-8rem);
+        transition: box-shadow 0.3s ease, translate 0.3s ease, transform 0.3s ease;
     }
 
     &.register{
         transform: translateY(0);
-        transition: all 0.3s ease;
+        transition: box-shadow 0.3s ease, translate 0.3s ease, transform 0.3s ease;
     }
 
     @media (min-width: $large-desktop) {
@@ -93,7 +92,7 @@
     user-select: none;
 
     &.login{
-        transform: translateY(-6.5rem);
+        transform: translateY(-8rem);
     }
     &.register{
         transform: translateY(0);
@@ -109,6 +108,119 @@
     text-decoration: underline;
     color: $neo-green;
     cursor: pointer;
+}
+
+.recoveryOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.recoveryModal {
+    background: $background-color;
+    padding: 3rem;
+    max-width: 52rem;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    font-family: "DM Sans", sans-serif;
+}
+
+.recoveryTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: -1rem;
+}
+
+.recoveryWarning {
+    font-size: 1.25rem;
+    line-height: 1.6;
+}
+
+.recoveryCodeBox {
+    background: $neutral;
+    padding: 1.25rem 1.5rem;
+    border: 3px solid #000;
+}
+
+.recoveryCodeText {
+    font-family: monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    word-break: break-all;
+}
+
+.recoveryActions {
+    display: flex;
+    gap: 1rem;
+}
+
+.recoveryCopyBtn {
+    background: $link;
+    font-size: 1.1rem;
+    padding: 0.5rem 1.25rem;
+    flex: 1;
+}
+
+.recoveryDownloadBtn {
+    background: $sky;
+    font-size: 1.1rem;
+    padding: 0.5rem 1.25rem;
+    flex: 1;
+}
+
+.recoveryConfirmBtn {
+    background: $leaf;
+    font-size: 1.25rem;
+    padding: 0.75rem 1.5rem;
+    width: 100%;
+}
+
+.recoveryInput {
+    width: 100%;
+    font-family: monospace;
+    font-size: 1.25rem;
+    letter-spacing: 0.05em;
+    box-sizing: border-box;
+}
+
+.passwordField {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: flex-start;
+}
+
+.forgotPassword {
+    font-size: 1.1rem;
+    color: $neo-green;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 0.4rem;
+    max-height: 2rem;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+
+    &.hidden {
+        max-height: 0;
+        margin-top: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    @media (max-width: $mobile) {
+        font-size: 1rem;
+    }
 }
 
 .confirmPassword {
