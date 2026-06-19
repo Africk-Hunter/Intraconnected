@@ -116,16 +116,23 @@
     }
 
     .rootHolder {
-        display: flex;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
         align-items: flex-start;
         gap: 2rem;
         width: 80%;
 
         @media (max-width: $mobile) {
+            display: flex;
             flex-direction: column-reverse;
             align-items: center;
             gap: 1rem;
+        }
+    }
+
+    .rootSpacer {
+        @media (max-width: $mobile) {
+            display: none;
         }
     }
 
@@ -139,6 +146,10 @@
         background: $back;
         font-size: 1.25rem;
         font-weight: 500;
+
+        .backImg {
+            transform: scaleX(-1);
+        }
 
         @media (max-width: $mobile) {
             justify-self: flex-end;
@@ -177,7 +188,6 @@
         min-height: 7.25rem;
         font-size: 3.125rem;
         background: $roots;
-        margin-left: 9.5rem;
         padding: .5rem 2rem;
         transition: all 0.3s ease;
         word-break: break-word;
@@ -207,20 +217,16 @@
     .rootAdditionalButtons {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: flex-start;
+        align-items: flex-start;
         gap: 1.5rem;
-        height: 100%;
-        min-height: 8.5rem;
-
+        justify-self: end;
 
         @media (max-width: $mobile) {
             flex-direction: row-reverse;
             min-height: 2rem;
             min-width: 100%;
-        }
-
-        @media (min-width: $large-desktop) {
-            min-height: 12rem;
+            justify-self: unset;
         }
     }
 

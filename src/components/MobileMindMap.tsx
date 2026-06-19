@@ -78,6 +78,13 @@ function MobileMindMap() {
             lastLongPressTime.current = Date.now();
             setSheet({ type: 'actions', nodeId });
             setEditMode(false);
+            // Swallow the ghost click the browser fires when the finger lifts
+            const blockGhostClick = (e: MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+                document.removeEventListener('click', blockGhostClick, true);
+            };
+            document.addEventListener('click', blockGhostClick, true);
         }, 360);
     }
 

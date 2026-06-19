@@ -146,11 +146,12 @@ function Idea() {
                     <section className="mid">
                         <section className="top">
                             <section className="rootHolder">
-                                <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
                                 <section className="rootAdditionalButtons">
-                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}>Back <img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /></button>
+                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}><img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
                                     {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
                                 </section>
+                                <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
+                                <div className="rootSpacer" />
                             </section>
                         </section>
 
