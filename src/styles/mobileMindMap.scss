@@ -404,6 +404,39 @@
     font-weight: 600;
 }
 
+.mmobile-patchnotes-recommend-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    background: $link;
+    border: 2px solid #111;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.mmobile-patchnotes-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mmobile-patchnotes-textarea {
+    min-height: 100px;
+    resize: none;
+}
+
+.mmobile-patchnotes-msg {
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0;
+
+    &--error { color: $danger; }
+    &--success { color: $neo-green; }
+}
+
 .mmobile-navigate-btn {
     width: 64px;
     height: 64px;

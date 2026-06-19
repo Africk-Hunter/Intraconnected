@@ -67,18 +67,22 @@ src/
 │   ├── Idea.tsx              # main page — DnD context, navigation state, drag handler
 │   └── Login.tsx             # login page wrapper
 ├── components/
-│   ├── IdeaNode.tsx          # draggable/droppable idea card
-│   ├── MindMap.tsx           # desktop full-tree overlay; pan/zoom; clicking a node navigates to it
-│   ├── MobileMindMap.tsx     # mobile-only UI orchestrator (shown ≤576px, hidden on desktop)
-│   ├── MobileHelpSheet.tsx   # mobile help carousel (3 screens); owns helpScreen state
-│   ├── MobileMoveSheet.tsx   # mobile move-tree sheet; owns expandedMoveNodes state + auto-scroll
-│   ├── Navbar.tsx            # left + right sidebars
-│   ├── DepthIndicator.tsx    # breadcrumb dot in right sidebar
-│   ├── Trash.tsx             # drop zone for deletion
-│   ├── Help.tsx              # 3-screen help carousel
-│   ├── LastIdea.tsx          # drop zone to move idea to parent
-│   ├── MessageBox.tsx        # toast notifications
-│   ├── Auth.tsx              # login/signup form
+│   ├── IdeaNode.tsx              # draggable/droppable idea card
+│   ├── MindMap.tsx               # desktop full-tree overlay; pan/zoom; clicking a node navigates to it
+│   ├── MobileMindMap.tsx         # mobile-only UI orchestrator (shown ≤576px, hidden on desktop)
+│   ├── MobileHelpSheet.tsx       # mobile help carousel (3 screens); owns helpScreen state
+│   ├── MobileMoveSheet.tsx       # mobile move-tree sheet; owns expandedMoveNodes state + auto-scroll
+│   ├── MobileNavigateSheet.tsx   # mobile full-tree jump sheet (◎ button); navigate-only, no move
+│   ├── MobilePatchNotesSheet.tsx # mobile patch notes bottom sheet (★ button)
+│   ├── PatchNotes.tsx            # desktop "What's New" popup panel (★ button in right Navbar)
+│   ├── TooltipButton.tsx         # button wrapper with 1000ms delayed hover tooltip
+│   ├── Navbar.tsx                # left + right sidebars
+│   ├── DepthIndicator.tsx        # breadcrumb dot in right sidebar
+│   ├── Trash.tsx                 # drop zone for deletion
+│   ├── Help.tsx                  # 3-screen help carousel
+│   ├── LastIdea.tsx              # drop zone to move idea to parent
+│   ├── MessageBox.tsx            # toast notifications
+│   ├── Auth.tsx                  # login/signup form
 │   └── modals/
 │       ├── CreationModal.tsx       # create new idea
 │       ├── RenameModal.tsx         # rename idea or current root
@@ -89,6 +93,7 @@ src/
 ├── utilities/
 │   ├── index.ts              # barrel export
 │   ├── types.ts              # IdeaType interface
+│   ├── parseChangelog.ts     # parses CHANGELOG.md into ChangelogEntry[]
 │   ├── firebase/
 │   │   ├── firebaseHelpers.tsx   # Firestore CRUD
 │   │   └── authFirebase.tsx      # sign out
@@ -109,6 +114,7 @@ src/
 │   ├── ideaCreationModal.scss # all modal styles (shared)
 │   ├── auth.scss
 │   └── help.scss
+├── CHANGELOG.md              # source of truth for patch notes (parsed at build time)
 └── firebaseConfig.ts         # Firebase init
 ```
 
@@ -170,10 +176,14 @@ Dragging to trash sets `pendingDeleteId` and opens `DeleteConfirmModal`. The mod
 
 Key differences from desktop:
 - **Navigation**: local `currentId` state replaces `rootIdStack`; breadcrumb bar at top replaces depth indicators
-- **Interaction**: tap navigates into a node; long-press (360ms) opens an actions bottom sheet; edit mode (pencil button) makes a single tap open the actions sheet instead
+- **Interaction**: tap navigates into a node (or opens link if it has one); long-press (360ms) opens an actions bottom sheet; edit mode (pencil button) makes a single tap open the actions sheet instead; long-press also works on the current root header
 - **Sheets**: uses a local `sheet` state (`SheetState` discriminated union) for bottom sheets — does **not** use context modal flags (`renameModalOpen`, etc.)
-- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete`
+- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete` | `navigate`
 - **Move tree**: rendered by `MobileMoveSheet`; owns `expandedMoveNodes` state and auto-scroll logic; scrollable tree with expand/collapse; auto-scrolls to current parent on open; descendants and current parent are disabled as move targets
+- **Navigate tree**: rendered by `MobileNavigateSheet` (◎ button in FAB area); same tree UI as move but for jumping to any node; link nodes are disabled as destinations; auto-scrolls to the current node on open
+- **Patch notes**: rendered by `MobilePatchNotesSheet` (★ button in FAB area); reuses the help-sheet shell; parses `CHANGELOG.md` via `parseChangelog`
+- **FAB area**: four buttons — ★ (patch notes), ◎ (navigate), + (create), ✎ (edit mode toggle)
+- **Rename vs. rewrite**: the actions sheet and rename sheet label the action "Rename Idea" when the node has children, "Rewrite Idea" when it's a leaf; new ideas use an auto-resizing `<textarea>`, existing renames use a single-line `<input>`
 - **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–3); receives only an `onClose` prop
 - **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` normalizes URLs — upgrades `http://` to `https://`, passes through any other existing protocol unchanged, prepends `https://` if no protocol present, and appends `.com` only when the hostname has no TLD (no dot). Never double-adds a protocol.
 - **No DnD**: doesn't use `@dnd-kit` at all; touch events handle long-press detection with `touchMoved` guard to cancel on scroll
@@ -189,7 +199,32 @@ Toggled by the logo button in the left Navbar (`showMindMap` state in `Idea.tsx`
 - **Initial expand state**: ancestors of the current `rootId` start expanded; all others start collapsed
 - Styles live in `mindmap.scss`; BEM-style classes prefixed with `mm-`
 
-Navbar accepts `setShowMindMap` and `showMindMap` props. When `showMindMap` is true: the `+` (create) button and depth indicators are hidden; the logo button gets a `logo-map-box` wrapper class.
+Navbar accepts `setShowMindMap`, `showMindMap`, and `setShowPatchNotes` props. When `showMindMap` is true: the `+` (create) button and depth indicators are hidden; the logo button gets a `logo-map-box` wrapper class. All nav buttons use `TooltipButton` instead of plain `<button>`.
+
+### Patch Notes
+
+`src/CHANGELOG.md` is the single source of truth. Format — each entry is a `##` section:
+
+```md
+## TAG | Title
+Description text.
+```
+
+`parseChangelog(raw)` in `utilities/parseChangelog.ts` splits on `^## `, then splits each section's first line on `|` to extract `{ tag, title, description }`.
+
+- **Desktop**: `PatchNotes` component (right column of `Idea.tsx`); toggled by the ★ button in the right Navbar; `showPatchNotes` state lives in `Idea.tsx`
+- **Mobile**: `MobilePatchNotesSheet` bottom sheet; toggled by the ★ button in the FAB area; `showPatchNotes` state is local to `MobileMindMap`
+- Both parse `changelog` at module load (outside the component), not on each render.
+
+### TooltipButton
+
+`TooltipButton` wraps a `<button>` in a `div.tooltip-wrapper` and shows a floating label after a 1000ms hover delay.
+
+Props:
+- `tooltip: string` — the label text
+- `tooltipSide?: 'left' | 'right'` — defaults to `'right'`; controls which side the tip appears on
+
+While visible the button also receives a `tooltip-highlighted` class. All other `<button>` props pass through unchanged. Use this for every nav button; don't add raw `title` attributes alongside it.
 
 ### Drag and Drop (Desktop)
 

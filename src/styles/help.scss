@@ -334,3 +334,93 @@
         font-size: 1.6rem;
     }
 }
+
+.patchNotes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.patchNotes-recommend-btn {
+    flex-shrink: 0;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: $link;
+    white-space: nowrap;
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+.patchNotes-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.patchNotes-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    background: white;
+    box-sizing: border-box;
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.3rem;
+        padding: 0.75rem 1rem;
+    }
+}
+
+.patchNotes-textarea {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-size: 1rem;
+    font-family: inherit;
+    background: white;
+    resize: none;
+    min-height: 8rem;
+    box-sizing: border-box;
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.3rem;
+        padding: 0.75rem 1rem;
+        min-height: 10rem;
+    }
+}
+
+.patchNotes-form-btns {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.25rem;
+
+    .modalButton {
+        flex: 1;
+        height: 3rem;
+        font-size: 1rem;
+
+        @media (min-width: $large-desktop) {
+            height: 4rem;
+            font-size: 1.4rem;
+        }
+    }
+}
+
+.patchNotes-msg {
+    font-size: 0.9rem;
+    margin: 0;
+    font-weight: 500;
+
+    &--error { color: $danger; }
+    &--success { color: $neo-green; font-size: 1rem; }
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.2rem;
+    }
+}
