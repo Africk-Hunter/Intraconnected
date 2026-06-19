@@ -68,7 +68,9 @@ src/
 │   └── Login.tsx             # login page wrapper
 ├── components/
 │   ├── IdeaNode.tsx          # draggable/droppable idea card
-│   ├── MobileMindMap.tsx     # mobile-only UI (shown ≤576px, hidden on desktop)
+│   ├── MobileMindMap.tsx     # mobile-only UI orchestrator (shown ≤576px, hidden on desktop)
+│   ├── MobileHelpSheet.tsx   # mobile help carousel (3 screens); owns helpScreen state
+│   ├── MobileMoveSheet.tsx   # mobile move-tree sheet; owns expandedMoveNodes state + auto-scroll
 │   ├── Navbar.tsx            # left + right sidebars
 │   ├── DepthIndicator.tsx    # breadcrumb dot in right sidebar
 │   ├── Trash.tsx             # drop zone for deletion
@@ -90,7 +92,7 @@ src/
 │   │   ├── firebaseHelpers.tsx   # Firestore CRUD
 │   │   └── authFirebase.tsx      # sign out
 │   └── idea/
-│       ├── helpers.tsx       # navigation helpers, name/link lookups
+│       ├── helpers.tsx       # navigation helpers, name/link lookups, cleanLink()
 │       ├── storage.tsx       # localStorage CRUD
 │       ├── parsing.tsx       # getIdeasByParentID, recursive delete
 │       ├── creation.tsx      # handleIdeaCreation
@@ -169,8 +171,9 @@ Key differences from desktop:
 - **Interaction**: tap navigates into a node; long-press (360ms) opens an actions bottom sheet; edit mode (pencil button) makes a single tap open the actions sheet instead
 - **Sheets**: uses a local `sheet` state (`SheetState` discriminated union) for bottom sheets — does **not** use context modal flags (`renameModalOpen`, etc.)
 - **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete`
-- **Move tree**: scrollable tree of all ideas with expand/collapse; auto-scrolls to current parent; descendants and current parent are disabled as move targets
-- **Link cleaning**: `cleanLink()` auto-prepends `https://` and appends `.com` if the URL contains neither
+- **Move tree**: rendered by `MobileMoveSheet`; owns `expandedMoveNodes` state and auto-scroll logic; scrollable tree with expand/collapse; auto-scrolls to current parent on open; descendants and current parent are disabled as move targets
+- **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–3); receives only an `onClose` prop
+- **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` auto-prepends `https://` and appends `.com` if the URL contains neither
 - **No DnD**: doesn't use `@dnd-kit` at all; touch events handle long-press detection with `touchMoved` guard to cancel on scroll
 
 ### Drag and Drop (Desktop)

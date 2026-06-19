@@ -99,3 +99,10 @@ export function geLinkFromID(id: number): string {
     const idea = ideas.find((idea: IdeaType) => idea.id === id);
     return idea ? idea.link : '';
 }
+
+export function cleanLink(userLink: string): string {
+    if (userLink === '') return '';
+    if (!userLink.includes('https://')) userLink = 'https://' + userLink;
+    if (!userLink.includes('.')) userLink = userLink + '.com';
+    return userLink;
+}

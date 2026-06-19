@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
 import {
     IdeaType,
@@ -11,8 +11,11 @@ import {
     updateIdeaLinkInFirebase,
     updateIdeaParentId,
     recursivelyDeleteChildren,
+    cleanLink,
     signUserOut,
 } from '../utilities';
+import MobileHelpSheet from './MobileHelpSheet';
+import MobileMoveSheet from './MobileMoveSheet';
 
 type SheetState =
     | { type: 'actions'; nodeId: number }
@@ -29,39 +32,10 @@ function MobileMindMap() {
     const [draft, setDraft] = useState('');
     const [editMode, setEditMode] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
-    const [helpScreen, setHelpScreen] = useState(1);
-    const [expandedMoveNodes, setExpandedMoveNodes] = useState<Set<number>>(new Set());
 
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressActive = useRef(false);
     const touchMoved = useRef(false);
-    const moveListRef = useRef<HTMLDivElement>(null);
-    const moveParentBtnRef = useRef<HTMLButtonElement | null>(null);
-
-    const moveSheetKey = sheet?.type === 'move' ? sheet.nodeId : null;
-    useEffect(() => {
-        if (moveSheetKey === null) return;
-        const ideas: IdeaType[] = fetchFullIdeaList();
-        const movingNode = ideas.find((i: IdeaType) => i.id === moveSheetKey);
-        const expanded = new Set<number>();
-        let id: number | undefined = movingNode?.parentID;
-        while (id) {
-            expanded.add(id);
-            const parent = ideas.find((i: IdeaType) => i.id === id);
-            id = parent?.parentID || undefined;
-        }
-        setExpandedMoveNodes(expanded);
-        const timer = setTimeout(() => {
-            const container = moveListRef.current;
-            const btn = moveParentBtnRef.current;
-            if (container && btn) {
-                const containerRect = container.getBoundingClientRect();
-                const btnRect = btn.getBoundingClientRect();
-                container.scrollTop += btnRect.top - containerRect.top;
-            }
-        }, 250);
-        return () => clearTimeout(timer);
-    }, [moveSheetKey]);
 
     const allIdeas: IdeaType[] = fetchFullIdeaList();
     const currentIdea = allIdeas.find(i => i.id === currentId);
@@ -111,7 +85,7 @@ function MobileMindMap() {
     }
 
     function tapNode(nodeId: number) {
-        endPress(); // always cancel pending long-press timer
+        endPress();
         if (longPressActive.current) {
             longPressActive.current = false;
             return;
@@ -170,30 +144,10 @@ function MobileMindMap() {
         closeSheet();
     }
 
-    function getDescendants(nodeId: number): Set<number> {
-        const result = new Set<number>();
-        const walk = (id: number) => {
-            allIdeas.filter(i => i.parentID === id).forEach(child => {
-                result.add(child.id);
-                walk(child.id);
-            });
-        };
-        walk(nodeId);
-        return result;
-    }
-
-
     function doMove(nodeId: number, targetId: number) {
         updateIdeaParentId(nodeId, targetId);
         setNewIdeaSwitch(prev => !prev);
         closeSheet();
-    }
-
-    function cleanLink(userLink: string): string {
-        if (userLink === '') return '';
-        if (!userLink.includes('https://')) userLink = 'https://' + userLink;
-        if (!userLink.includes('.')) userLink = userLink + '.com';
-        return userLink;
     }
 
     function commitLink() {
@@ -204,50 +158,6 @@ function MobileMindMap() {
             setNewIdeaSwitch(prev => !prev);
         });
         closeSheet();
-    }
-
-    function renderMoveTree(parentId: number, depth: number, hidden: Set<number>, disabled: Set<number>, currentParentId: number | undefined): React.ReactNode[] {
-        return allIdeas
-            .filter(i => i.parentID === parentId && !hidden.has(i.id))
-            .flatMap(child => {
-                const visibleKids = allIdeas.filter(i => i.parentID === child.id && !hidden.has(i.id));
-                const isDisabled = disabled.has(child.id);
-                const isExpanded = expandedMoveNodes.has(child.id);
-                const isCurrentParent = child.id === currentParentId;
-                const hasKids = allIdeas.some(i => i.parentID === child.id);
-                const colorClass = child.link
-                    ? 'mmobile-move-btn--link'
-                    : hasKids ? 'mmobile-move-btn--parent'
-                    : 'mmobile-move-btn--leaf';
-                return [
-                    <div key={child.id} className="mmobile-move-row" style={{ paddingLeft: `${depth * 16}px` }}>
-                        <button
-                            ref={isCurrentParent ? (el) => { moveParentBtnRef.current = el; } : undefined}
-                            className={`mmobile-move-btn ${colorClass}${isDisabled ? ' mmobile-move-btn--disabled' : ''}`}
-                            disabled={isDisabled}
-                            onClick={isDisabled ? undefined : () => doMove(sheet!.nodeId, child.id)}
-                        >
-                            {child.content}
-                        </button>
-                        {visibleKids.length > 0 && (
-                            <button
-                                className="mmobile-move-toggle"
-                                onClick={() => setExpandedMoveNodes(prev => {
-                                    const next = new Set(prev);
-                                    if (next.has(child.id)) next.delete(child.id);
-                                    else next.add(child.id);
-                                    return next;
-                                })}
-                            >
-                                {isExpanded ? '▾' : '▸'}
-                            </button>
-                        )}
-                    </div>,
-                    ...(visibleKids.length > 0 && isExpanded
-                        ? renderMoveTree(child.id, depth + 1, hidden, disabled, currentParentId)
-                        : [])
-                ];
-            });
     }
 
     const sheetNode = sheet ? allIdeas.find(i => i.id === sheet.nodeId) : null;
@@ -286,76 +196,8 @@ function MobileMindMap() {
                     <img src="/images/LogOut.svg" alt="Sign out" />
                 </button>
             </div>
-            {showHelp && (
-                <>
-                    <div className="mmobile-scrim" onClick={() => setShowHelp(false)} />
-                    <div className="mmobile-help-sheet">
-                        <div className="mmobile-help-header">
-                            <span className="mmobile-help-pager">{helpScreen} / 3</span>
-                            <button className="mmobile-help-close" onClick={() => setShowHelp(false)}>✕</button>
-                        </div>
 
-                        <div className="mmobile-help-content">
-                            {helpScreen === 1 && (
-                                <>
-                                    <h2 className="mmobile-help-title">Welcome to<br />Intraconnected</h2>
-                                    <p className="mmobile-help-text">
-                                        Intraconnected is like a visual canvas for your ideas.
-                                        <br /><br />
-                                        Everything starts with a root idea. From there, build and explore related ideas as a growing network. Tap any node to dive in and make it the new root.
-                                        <br /><br />
-                                         It's all about building connections that you can explore intuitively, not just keeping track of scattered notes.
-                                    </p>
-                                </>
-                            )}
-
-                            {helpScreen === 2 && (
-                                <>
-                                    <h2 className="mmobile-help-title">How Do I Use This?</h2>
-                                    <div className="mmobile-help-grid">
-                                        <span className="mmobile-help-badge mmobile-help-badge--root">Root</span>
-                                        <p className="mmobile-help-text">The large card at the top is the current root. All nodes below belong to it.</p>
-                                        <span className="mmobile-help-badge mmobile-help-badge--add"><img src="/images/Plus.svg" className="mmobile-help-badge-icon" alt="+" /></span>
-                                        <p className="mmobile-help-text">Tap + at the bottom to create a new idea under the current root.</p>
-                                        <span className="mmobile-help-badge mmobile-help-badge--back"><img src="/images/LeftArrow.svg" className="mmobile-help-badge-icon" alt="Back" /></span>
-                                        <p className="mmobile-help-text">Tap Back to navigate up to the previous root.</p>
-                                        <span className="mmobile-help-badge mmobile-help-badge--delete"><img src="/images/Trash.svg" className="mmobile-help-badge-icon" alt="Delete" /></span>
-                                        <p className="mmobile-help-text">Long-press a node, then tap Delete to remove it and all its children.</p>
-                                    </div>
-                                </>
-                            )}
-
-                            {helpScreen === 3 && (
-                                <>
-                                    <h2 className="mmobile-help-title">The Nitty Gritty</h2>
-                                    <p className="mmobile-help-subtext">Node colours tell you what's inside</p>
-                                    <div className="mmobile-help-grid">
-                                        <span className="mmobile-help-badge mmobile-help-badge--leaf">Leaf</span>
-                                        <p className="mmobile-help-text">Green nodes have no children yet. Tap to dive in and add some!</p>
-                                        <span className="mmobile-help-badge mmobile-help-badge--parent">Parent</span>
-                                        <p className="mmobile-help-text">Blue nodes have related ideas inside. Tap to explore them.</p>
-                                        <span className="mmobile-help-badge mmobile-help-badge--link">Link</span>
-                                        <p className="mmobile-help-text">Yellow nodes link to external pages. They can't have child ideas.</p>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="mmobile-help-nav">
-                            <button
-                                className="mmobile-help-nav-btn"
-                                onClick={() => setHelpScreen(s => Math.max(1, s - 1))}
-                                disabled={helpScreen === 1}
-                            >‹ Prev</button>
-                            <button
-                                className="mmobile-help-nav-btn mmobile-help-nav-btn--next"
-                                onClick={() => setHelpScreen(s => Math.min(3, s + 1))}
-                                disabled={helpScreen === 3}
-                            >Next ›</button>
-                        </div>
-                    </div>
-                </>
-            )}
+            {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} />}
 
             <div
                 className="mmobile-header"
@@ -379,37 +221,36 @@ function MobileMindMap() {
                 {children.length === 0 ? (
                     <div className="mmobile-empty">No ideas here yet.<br />Tap + to plant one.</div>
                 ) : children.map(child => {
-                        const hasKids = allIdeas.some(i => i.parentID === child.id);
-                        const colorClass = child.link
-                            ? 'mmobile-node--link'
-                            : hasKids
-                            ? 'mmobile-node--parent'
-                            : 'mmobile-node--leaf';
-                        return (
-                            <div
-                                key={child.id}
-                                className={`mmobile-node ${colorClass}${editMode ? ' mmobile-node--selectable' : ''}`}
-                                onMouseDown={() => startPress(child.id)}
-                                onMouseUp={endPress}
-                                onMouseLeave={endPress}
-                                onTouchStart={() => startPress(child.id)}
-                                onTouchMove={handleTouchMove}
-                                onTouchEnd={(e) => { e.preventDefault(); if (!touchMoved.current) tapNode(child.id); }}
-                                onClick={() => tapNode(child.id)}
-                            >
-                                <span className="mmobile-node-title">{child.content}</span>
-                                {hasKids && (
-                                    <span className="mmobile-node-count">
-                                        {allIdeas.filter(i => i.parentID === child.id).length}
-                                    </span>
-                                )}
-                                <span className="mmobile-node-arrow">
-                                    {editMode ? '✎' : '›'}
+                    const hasKids = allIdeas.some(i => i.parentID === child.id);
+                    const colorClass = child.link
+                        ? 'mmobile-node--link'
+                        : hasKids
+                        ? 'mmobile-node--parent'
+                        : 'mmobile-node--leaf';
+                    return (
+                        <div
+                            key={child.id}
+                            className={`mmobile-node ${colorClass}${editMode ? ' mmobile-node--selectable' : ''}`}
+                            onMouseDown={() => startPress(child.id)}
+                            onMouseUp={endPress}
+                            onMouseLeave={endPress}
+                            onTouchStart={() => startPress(child.id)}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={(e) => { e.preventDefault(); if (!touchMoved.current) tapNode(child.id); }}
+                            onClick={() => tapNode(child.id)}
+                        >
+                            <span className="mmobile-node-title">{child.content}</span>
+                            {hasKids && (
+                                <span className="mmobile-node-count">
+                                    {allIdeas.filter(i => i.parentID === child.id).length}
                                 </span>
-                            </div>
-                        );
-                    })
-                }
+                            )}
+                            <span className="mmobile-node-arrow">
+                                {editMode ? '✎' : '›'}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="mmobile-fab-area">
@@ -507,42 +348,13 @@ function MobileMindMap() {
                             </>
                         )}
 
-                        {sheet.type === 'move' && (() => {
-                            const movingNode = allIdeas.find(i => i.id === sheet.nodeId);
-                            const descendants = getDescendants(sheet.nodeId);
-                            const hidden = new Set([sheet.nodeId, ...descendants]);
-                            const disabled = movingNode?.parentID ? new Set([movingNode.parentID]) : new Set<number>();
-                            const root = allIdeas.find(i => i.id === 1);
-                            const rootDisabled = disabled.has(1);
-                            const rootExpanded = expandedMoveNodes.has(1);
-                            return (
-                                <div className="mmobile-move-list" ref={moveListRef}>
-                                    {root && (
-                                        <div className="mmobile-move-row">
-                                            <button
-                                                ref={movingNode?.parentID === 1 ? (el) => { moveParentBtnRef.current = el; } : undefined}
-                                                className={`mmobile-move-btn mmobile-move-btn--parent${rootDisabled ? ' mmobile-move-btn--disabled' : ''}`}
-                                                disabled={rootDisabled}
-                                                onClick={rootDisabled ? undefined : () => doMove(sheet.nodeId, 1)}
-                                            >
-                                                {root.content}
-                                            </button>
-                                            <button
-                                                className="mmobile-move-toggle"
-                                                onClick={() => setExpandedMoveNodes(prev => {
-                                                    const next = new Set(prev);
-                                                    if (next.has(1)) next.delete(1); else next.add(1);
-                                                    return next;
-                                                })}
-                                            >
-                                                {rootExpanded ? '▾' : '▸'}
-                                            </button>
-                                        </div>
-                                    )}
-                                    {rootExpanded && renderMoveTree(1, 1, hidden, disabled, movingNode?.parentID)}
-                                </div>
-                            );
-                        })()}
+                        {sheet.type === 'move' && (
+                            <MobileMoveSheet
+                                nodeId={sheet.nodeId}
+                                allIdeas={allIdeas}
+                                onMove={doMove}
+                            />
+                        )}
 
                         {sheet.type === 'confirmDelete' && (
                             <>
