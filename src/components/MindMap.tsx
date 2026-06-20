@@ -63,7 +63,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
                         onClick={() => setCollapsed(c => !c)}
                         title={collapsed ? 'Expand' : 'Collapse'}
                     >
-                        {collapsed ? '+' : '−'}
+                        <span>{collapsed ? '+' : '−'}</span>
                     </button>
                     {!collapsed && (
                         <>

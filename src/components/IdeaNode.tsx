@@ -3,13 +3,14 @@ import { useIdeaContext } from '../context/IdeaContext';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems } from '../utilities';
 
+
 interface IdeaNodeProps {
     idea: IdeaType;
     isLeaf: boolean;
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
-    const { setRootId, setRootName, rootIdStack, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId } = useIdeaContext();
+    const { setRootId, setRootName, rootIdStack, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId } = useIdeaContext();
 
     const { id, content: title } = idea;
     const link = getIdeaLink(idea);
@@ -20,17 +21,48 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const [addItemDraft, setAddItemDraft] = useState('');
     const [localItems, setLocalItems] = useState<ChecklistItem[]>(isChecklist ? idea.items : []);
     const addInputRef = useRef<HTMLInputElement>(null);
+    const textRef = useRef<HTMLDivElement>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [needsExpand, setNeedsExpand] = useState(false);
 
     const [isMobile, setIsMobile] = useState<boolean>(() => {
         if (typeof window === 'undefined') return false;
         return window.matchMedia('(max-width: 768px)').matches;
     });
 
+    const [isHidden, setIsHidden] = useState(false);
+    const [isFadingIn, setIsFadingIn] = useState(false);
+    const prevPendingDeleteRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        const wasThisNodePending = prevPendingDeleteRef.current === id;
+        prevPendingDeleteRef.current = pendingDeleteId;
+
+        if (pendingDeleteId === id) {
+            setIsHidden(true);
+            setIsFadingIn(false);
+        } else if (wasThisNodePending) {
+            setIsHidden(false);
+            setIsFadingIn(true);
+            const t = setTimeout(() => setIsFadingIn(false), 1400);
+            return () => clearTimeout(t);
+        }
+    }, [pendingDeleteId, id]);
+
     useEffect(() => {
         if (isChecklist) {
             setLocalItems(idea.items);
         }
     }, [idea]);
+
+    useEffect(() => {
+        setIsExpanded(false);
+    }, [title, isLeaf]);
+
+    useEffect(() => {
+        if (!textRef.current || !isLeaf || isExpanded) return;
+        setNeedsExpand(textRef.current.scrollHeight > textRef.current.clientHeight);
+    }, [title, isLeaf, isExpanded]);
 
     function makeRoot() {
         setRootId(id);
@@ -86,7 +118,9 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         transition: isBeingDraggedOver ? 'scale 0.2s ease-in-out, border 0.2s ease-in-out' : undefined,
         scale: isBeingDraggedOver ? '1.15' : undefined,
     };
-    const combinedStyle = { ...draggableStyle, ...dropStyle };
+    const pendingStyle = isHidden ? { opacity: 0, pointerEvents: 'none' as const } : {};
+    const combinedStyle = { ...draggableStyle, ...dropStyle, ...pendingStyle };
+    const fadeInClass = isFadingIn ? ' ideaNode--fade-in' : '';
 
     function copyToClipboard(e: React.MouseEvent) {
         e.stopPropagation();
@@ -155,7 +189,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
             <div
                 ref={setNodeRef}
                 style={combinedStyle}
-                className={`neobrutal-button ideaNode checklist`}
+                className={`neobrutal-button ideaNode checklist${fadeInClass}`}
                 {...attributes}
                 {...listeners}
             >
@@ -201,15 +235,40 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
 
     return (
         link !== "" ? (
-            <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
+            <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}`} {...attributes} {...listeners}>
                 {title}
                 <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>
                 <button className="renameButtonNode copy" onClick={changeName}><img src='images/Pen.svg' alt="Rename" className="copyImg" /></button>
                 <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </a>
         ) : (
-            <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
-                {title}
+            <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}`} {...attributes} {...listeners}>
+                {isLeaf ? (
+                    <div ref={textRef} className={`leaf-wrapper${!isExpanded ? ' leaf-wrapper--collapsed' : ''}`}>
+                        {title}
+                        {needsExpand && !isExpanded && (
+                            <div
+                                className="leaf-fade-overlay"
+                                onClick={e => { e.stopPropagation(); e.preventDefault(); }}
+                            >
+                                <button
+                                    className="leaf-expand-btn"
+                                    onClick={e => { e.stopPropagation(); e.preventDefault(); setIsExpanded(true); }}
+                                >
+                                    ▾
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                ) : title}
+                {isLeaf && needsExpand && isExpanded && (
+                    <button
+                        className="leaf-expand-btn leaf-expand-btn--collapse"
+                        onClick={e => { e.stopPropagation(); e.preventDefault(); setIsExpanded(false); }}
+                    >
+                        ▴
+                    </button>
+                )}
                 {isLeaf && <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>}
                 <button className="renameButtonNode copy" onClick={changeName}><img src='images/Pen.svg' alt="Rename" className="copyImg" /></button>
                 <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>

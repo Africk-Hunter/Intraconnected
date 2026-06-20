@@ -3,7 +3,7 @@ import React from 'react';
 const HelpMenuOne: React.FC = () => {
     return (
         <section className="textSection">
-            <h1 className="header">So How Do I Use<br />This?</h1><br />
+            <h1 className="header">So... How Do I Use This?</h1><br />
             <section className="helpGrid">
                 <div className="helpGridIcon helpRoot">Ideas</div><p className="details">This is the root idea, any ideas you create here will become related to this idea.</p>
                 <div className="helpGridIcon helpPlus"><img src="images/Plus.svg" className='helpImg' alt="" /></div><p className="details">You can create a new idea by clicking this icon on the left.</p>

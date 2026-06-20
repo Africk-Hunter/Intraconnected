@@ -429,6 +429,7 @@ const Auth: React.FC = () => {
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} />
             </section>
+            <a href="/privacy" className="privacyLink">Privacy Policy</a>
         </div>
     );
 };

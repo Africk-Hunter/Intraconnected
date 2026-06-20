@@ -4,6 +4,17 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.03.2 — 2026-06-19
+- Added Privacy Policy page (`/privacy` route, link on auth screen)
+- Leaf nodes truncate long text with a fade overlay + animated expand/collapse toggle
+- Node fade-out when pending delete; fades back in if cancelled
+- Custom CSS checkboxes replace emoji checkboxes in mobile checklist (inline + sheet)
+- MindMap collapse toggle redesigned: vertical line + circle button
+- Leaf nodes in MindMap and mobile node headers get line-clamping
+- Patch notes "new" state synced to/from Firestore
+- Help and patch notes panels are now mutually exclusive (opening one closes the other)
+- `scrollbar-gutter: stable` added to prevent layout shift on scroll
+
 ## V 1.03.1 — 2026-06-19
 - Fixed checklist bug (item state / toggle behavior)
 

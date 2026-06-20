@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
 import {
     IdeaType,
@@ -24,7 +24,7 @@ import MobileNavigateSheet from './MobileNavigateSheet';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
 import changelog from '../CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
-import { isPatchNotesNew, markPatchNotesSeen } from '../utilities/patchNotesState';
+import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../utilities/patchNotesState';
 import { auth } from '../firebaseConfig';
 
 const _changelogEntries = parseChangelog(changelog);
@@ -58,6 +58,11 @@ function MobileMindMap() {
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
+
+    useEffect(() => {
+        const uid = auth.currentUser?.uid;
+        syncPatchNotesFromFirebase(uid, _changelogEntries).then(isNew => setIsNewPatchNotes(isNew));
+    }, []);
 
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressActive = useRef(false);
@@ -387,7 +392,7 @@ function MobileMindMap() {
                                                     className={`mmobile-checklist-inline-item${item.checked ? ' mmobile-checklist-inline-item--checked' : ''}`}
                                                     onClick={e => { e.stopPropagation(); toggleInlineItem(child.id, item.id, items); }}
                                                 >
-                                                    <span className="mmobile-checklist-inline-cb">{item.checked ? '☑' : '☐'}</span>
+                                                    <span className="mmobile-checklist-inline-cb" />
                                                     <span className="mmobile-checklist-inline-text">{item.text}</span>
                                                 </li>
                                             ))}
@@ -666,9 +671,7 @@ function MobileMindMap() {
                                             key={item.id}
                                             className={`mmobile-checklist-sheet-item${item.checked ? ' mmobile-checklist-sheet-item--checked' : ''}`}
                                         >
-                                            <button className="mmobile-checklist-sheet-cb" onClick={() => toggleSheetItem(item.id, sheet.nodeId)}>
-                                                {item.checked ? '☑' : '☐'}
-                                            </button>
+                                            <button className="mmobile-checklist-sheet-cb" onClick={() => toggleSheetItem(item.id, sheet.nodeId)} />
                                             <span className="mmobile-checklist-sheet-text">{item.text}</span>
                                             <button className="mmobile-checklist-sheet-del" onClick={() => deleteSheetItem(item.id, sheet.nodeId)}>
                                                 <img src="/images/Trash.svg" alt="Delete" />

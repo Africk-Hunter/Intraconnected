@@ -175,3 +175,19 @@ export async function updateIdeaLinkInFirebase(ideaId: number, newLink: string) 
         console.error("Error updating idea link: ", error);
     }
 }
+
+export async function fetchLastSeenPatchVersion(): Promise<string | null> {
+    const user = authCheck();
+    if (!user) return null;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    const snap = await getDoc(prefsDoc);
+    if (!snap.exists()) return null;
+    return (snap.data().lastSeenPatchVersion as string) ?? null;
+}
+
+export async function updateLastSeenPatchVersion(version: string): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    await setDoc(prefsDoc, { lastSeenPatchVersion: version }, { merge: true });
+}

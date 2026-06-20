@@ -1,14 +1,34 @@
 import { ChangelogEntry } from './parseChangelog';
+import { fetchLastSeenPatchVersion, updateLastSeenPatchVersion } from './firebase/firebaseHelpers';
 
 function storageKey(uid: string) {
     return `patchNotes_lastSeen_${uid}`;
 }
 
-export function isPatchNotesNew(_uid: string | undefined, _entries: ChangelogEntry[]): boolean {
-    return true;
+function latestTag(entries: ChangelogEntry[]): string {
+    return entries[0]?.tag ?? '';
+}
+
+export function isPatchNotesNew(uid: string | undefined, entries: ChangelogEntry[]): boolean {
+    if (!uid || !entries.length) return false;
+    const seen = localStorage.getItem(storageKey(uid));
+    return seen !== latestTag(entries);
 }
 
 export function markPatchNotesSeen(uid: string | undefined, entries: ChangelogEntry[]): void {
     if (!uid || !entries.length) return;
-    localStorage.setItem(storageKey(uid), entries[0].tag);
+    const tag = latestTag(entries);
+    localStorage.setItem(storageKey(uid), tag);
+    updateLastSeenPatchVersion(tag);
+}
+
+/** Fetches the authoritative version from Firebase, syncs localStorage, and returns whether there are unseen notes. */
+export async function syncPatchNotesFromFirebase(uid: string | undefined, entries: ChangelogEntry[]): Promise<boolean> {
+    if (!uid || !entries.length) return false;
+    const remoteVersion = await fetchLastSeenPatchVersion();
+    const latest = latestTag(entries);
+    if (remoteVersion !== null) {
+        localStorage.setItem(storageKey(uid), remoteVersion);
+    }
+    return remoteVersion !== latest;
 }

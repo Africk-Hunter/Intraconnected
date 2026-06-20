@@ -267,6 +267,10 @@
     color: #1a1208;
     line-height: 1.15;
     word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .mmobile-header-count {
@@ -799,9 +803,32 @@
 }
 
 .mmobile-checklist-inline-cb {
-    font-size: 1.15rem;
     flex-shrink: 0;
-    line-height: 1;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    border-radius: 3px;
+    position: relative;
+    background: transparent;
+    display: inline-block;
+
+    .mmobile-checklist-inline-item--checked & {
+        background: white;
+        border-color: white;
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 3px;
+            width: 4px;
+            height: 8px;
+            border: 2px solid $indigo;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+    }
 }
 
 .mmobile-checklist-inline-text {
@@ -866,9 +893,32 @@
 .mmobile-checklist-sheet-cb {
     all: unset;
     cursor: pointer;
-    font-size: 1.2rem;
     flex-shrink: 0;
-    color: $indigo;
+    width: 20px;
+    height: 20px;
+    border: 2px solid $indigo;
+    border-radius: 4px;
+    position: relative;
+    background: transparent;
+    box-sizing: border-box;
+
+    .mmobile-checklist-sheet-item--checked & {
+        background: $indigo;
+        border-color: $indigo;
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 2px;
+            width: 5px;
+            height: 9px;
+            border: 2px solid white;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+    }
 }
 
 .mmobile-checklist-sheet-text {

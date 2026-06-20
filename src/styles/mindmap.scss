@@ -109,25 +109,51 @@
 // ── Collapse toggle ─────────────────────────────────────────────
 
 .mm-toggle-btn {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 2.5px solid #111;
-    background: #fff;
-    font-size: 1rem;
-    font-weight: 700;
+    align-self: stretch;
+    padding: 6px 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
-    line-height: 1;
-    margin: 3px 0;
     flex-shrink: 0;
-    transition: background 0.12s ease;
-    box-shadow: 2px 2px 0 1px #111;
+    position: relative;
 
-    &:hover {
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 3px;
+        background: #111;
+        z-index: 0;
+    }
+
+    span {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2.5px solid #111;
+        background: #fff;
+        box-shadow: 2px 2px 0 1px #111;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 0;
+        padding-top: 1px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+        transition: background 0.12s ease, box-shadow 0.12s ease, translate 0.12s ease;
+    }
+
+    &:hover span {
         background: $neutral;
         box-shadow: 0 0 0 1px #111;
         translate: 2px 2px;
@@ -165,7 +191,14 @@
     }
 
     &--parent    { background: $sky; }
-    &--leaf      { background: $leaf; }
+    &--leaf {
+        background: $leaf;
+        display: -webkit-box;
+        -webkit-line-clamp: 15;
+        line-clamp: 15;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
     &--link      { background: $link; }
     &--checklist {
         background: $indigo;
