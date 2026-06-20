@@ -356,11 +356,11 @@
                 position: relative;
 
                 &--collapsed {
-                    max-height: 11.5rem;
+                    max-height: 13.9rem;
                     overflow: hidden;
 
                     @media (min-width: $large-desktop) {
-                        max-height: 16rem;
+                        max-height: 19.5rem;
                     }
                 }
             }
@@ -370,52 +370,70 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                height: 4rem;
+                height: 6rem;
                 background: linear-gradient(to bottom, rgba(65, 188, 40, 0), $leaf);
                 display: flex;
                 align-items: flex-end;
                 justify-content: center;
-                padding-bottom: 0;
+                padding-bottom: 1.25rem;
                 pointer-events: none;
 
                 @media (min-width: $large-desktop) {
-                    height: 5.5rem;
+                    height: 8rem;
                 }
             }
 
             .leaf-expand-btn {
                 all: unset;
                 cursor: pointer;
-                font-size: 1.8rem;
                 line-height: 1;
                 pointer-events: all;
                 user-select: none;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2rem;
+                height: 2rem;
+                color: black;
+                background: $background-color;
+                font-size: 1.7rem;
+                border: 2px solid black;
+                border-radius: 8px;
                 animation: leafExpandBounce 1.4s ease-in-out infinite;
 
                 @media (min-width: $large-desktop) {
-                    font-size: 2.2rem;
+                    font-size: 2.6rem;
+                    width: 3rem;
+                    height: 3rem;
                 }
 
                 &--collapse {
                     display: block;
                     text-align: right;
+                    font-size: 2rem;
                     opacity: 0.6;
                     margin-top: 0.25rem;
                     margin-bottom: -1.2rem;
+                    padding: 0.5rem 0.75rem;
+                    border: none;
+                    width: auto;
+                    height: auto;
+                    border-radius: 0;
+                    background: transparent;
                     animation: none;
 
                     &:hover { opacity: 1; }
 
                     @media (min-width: $large-desktop) {
-                        font-size: 1.5rem;
+                        font-size: 2.4rem;
                         margin-bottom: -1.3rem;
                     }
                 }
             }
 
             @keyframes leafExpandBounce {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(5px); }
+                0%, 100% { transform: translateY(4px); }
+                50% { transform: translateY(9px); }
             }
         }
 
@@ -562,6 +580,16 @@
                 visibility: visible;
                 pointer-events: all;
             }
+
+            .renameButtonNode {
+                right: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+
+                @media (min-width: $large-desktop) {
+                    right: 1rem;
+                }
+            }
         }
 
         .checklist-title-text {
@@ -569,7 +597,7 @@
             font-weight: 700;
             word-break: break-word;
             flex: 1;
-            padding-right: 3.5rem;
+            padding-right: 2.5rem;
 
             @media (min-width: $large-desktop) {
                 font-size: 1.6rem;
@@ -588,9 +616,6 @@
             display: flex;
             flex-direction: column;
             gap: 0;
-            max-height: 12rem;
-            overflow-y: auto;
-
             &::-webkit-scrollbar {
                 display: none;
             }
@@ -598,7 +623,7 @@
 
         .checklist-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.5rem;
             padding: 0.3rem 0.75rem;
             font-size: 1rem;
@@ -612,9 +637,30 @@
                 opacity: 0.5;
             }
 
-            &:hover .checklist-item-delete {
+            &:hover .checklist-item-delete,
+            &:hover .checklist-item-edit {
                 opacity: 1;
             }
+        }
+
+        .checklist-drag {
+            all: unset;
+            cursor: grab;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            padding: 6px 3px 0;
+            touch-action: none;
+            user-select: none;
+            opacity: 0.6;
+
+            img {
+                width: 8px;
+                height: 14px;
+                filter: brightness(0) invert(1);
+            }
+
+            &:active { cursor: grabbing; }
         }
 
         .checklist-checkbox {
@@ -624,11 +670,42 @@
             line-height: 1;
             flex-shrink: 0;
             color: white;
+            padding-top: 5px;
         }
 
         .checklist-item-text {
             flex: 1;
             word-break: break-word;
+        }
+
+        .checklist-item-edit {
+            all: unset;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+            padding: 2px 4px;
+
+            img { width: 12px; height: 12px; filter: invert(1); }
+
+            &:hover { opacity: 1 !important; }
+        }
+
+        .checklist-item-edit-input {
+            all: unset;
+            flex: 1;
+            font-family: inherit;
+            font-size: inherit;
+            color: white;
+            border-bottom: 1.5px solid rgba(255, 255, 255, 0.6);
+            padding-bottom: 1px;
+            word-break: break-word;
+            resize: none;
+            overflow: hidden;
+            line-height: inherit;
+            display: block;
         }
 
         .checklist-item-delete {

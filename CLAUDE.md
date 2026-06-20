@@ -257,7 +257,7 @@ Key differences from desktop:
 - **Navigate tree**: rendered by `MobileNavigateSheet` (◎ button in FAB area); same tree UI as move but for jumping to any node; link nodes are disabled as destinations; auto-scrolls to the current node on open
 - **Patch notes**: rendered by `MobilePatchNotesSheet` (patch notes button in FAB area); reuses the help-sheet shell; parses `CHANGELOG.md` via `parseChangelog`
 - **FAB area**: four buttons — patch notes, ◎ (navigate), + (create), ✎ (edit mode toggle)
-- **Checklist nodes (mobile)**: tap = toggle inline accordion (expand/collapse items in place); tap the `OpenIcon.svg` button in the header row = open the `checklist` full-view sheet. The `checklist` sheet has its own `sheetItems`/`sheetItemDraft` state initialized fresh from localStorage on open. Checklist nodes cannot be navigated into and cannot receive drops or be moved into. In the move/navigate trees they appear disabled with `mmobile-move-btn--checklist` styling.
+- **Checklist nodes (mobile)**: tap = toggle inline accordion (expand/collapse items in place); tap the `OpenIcon.svg` button in the header row = open the `checklist` full-view sheet. The `checklist` sheet has its own `sheetItems`/`sheetItemDraft` state initialized fresh from localStorage on open. Sheet items support drag-to-reorder (via `@dnd-kit/sortable`) and inline text editing (pen icon). Checklist nodes cannot be navigated into and cannot receive drops or be moved into. In the move/navigate trees they appear disabled with `mmobile-move-btn--checklist` styling.
 - **Rename vs. rewrite**: the actions sheet and rename sheet label the action "Rename Idea" when the node has children, "Rewrite Idea" when it's a leaf, "Rename Checklist" for checklist nodes; new ideas use an auto-resizing `<textarea>`, existing renames use a single-line `<input>`
 - **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–3); receives only an `onClose` prop
 - **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` normalizes URLs — upgrades `http://` to `https://`, passes through any other existing protocol unchanged, prepends `https://` if no protocol present, and appends `.com` only when the hostname has no TLD (no dot). Never double-adds a protocol.
@@ -293,7 +293,7 @@ Description text.
 
 **What belongs in CHANGELOG.md:** Only significant new features warrant a changelog entry. Bug fixes and small additions are shipped as `.x` patch version increments and do **not** get a changelog entry — they are silent updates.
 
-**Private dev log:** `DEVLOG.md` at the project root tracks every update (features, bug fixes, small additions). It is never imported or displayed — update it alongside every change, no matter how small. Make sure every update is given a name that summarizes it in a few words.
+**Private dev log:** `DEVLOG.md` at the project root tracks every update (features, bug fixes, small additions). It is never imported or displayed. Changes should only be made just before the update is pushed. Do not commit yourself, the user will commit the changes. The changes should be concise and not overly complex. Multiple issues dealing with the same feature should be collapsed into one hyphen-point. Make sure every update is given a name that summarizes it in a few words.
 
 ### TooltipButton
 
@@ -309,8 +309,8 @@ While visible the button also receives a `tooltip-highlighted` class. All other 
 
 Created via the "Checklist" tab in `CreationModal`. Uses `handleChecklistCreation` in `creation.tsx`.
 
-- **Desktop card** (`IdeaNode.tsx`): renders inline with checkboxes + hover-visible trash icon per item + add-item input. Clicking the header opens `ChecklistModal` (full-view modal). The card is not clickable-to-navigate and cannot receive DnD drops (`useDroppable` disabled for checklists).
-- **Desktop full-view** (`ChecklistModal.tsx`): opened via `checklistModalId` in context. Manages its own item state; writes to localStorage + Firestore via `updateChecklistItems` on every toggle/add/delete.
+- **Desktop card** (`IdeaNode.tsx`): renders inline with checkboxes + hover-visible trash and edit icons per item + add-item input + drag-to-reorder via `@dnd-kit/sortable`. Clicking the header opens `ChecklistModal` (full-view modal). The card is not clickable-to-navigate and cannot receive DnD drops (`useDroppable` disabled for checklists).
+- **Desktop full-view** (`ChecklistModal.tsx`): opened via `checklistModalId` in context. Manages its own item state; writes to localStorage + Firestore via `updateChecklistItems` on every toggle/add/delete/reorder. Items support drag-to-reorder and inline text editing (pen icon). Uses `overlay--scroll` class so the overlay scrolls when the list is tall.
 - **`checklistModalId`** in context: `number | null` — set to an idea's `id` to open `ChecklistModal`, `null` to close it. `IdeaNode.tsx` sets it on header click; `ChecklistModal` clears it on close.
 
 ### Drag and Drop (Desktop)

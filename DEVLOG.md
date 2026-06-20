@@ -4,6 +4,10 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.03.5 — Checklist Item Drag & Edit — 2026-06-20
+- Drag-to-reorder checklist items in desktop card, desktop modal, and mobile sheet
+- Inline checklist item text editing via pen icon (click to edit, Enter/blur to commit) in all three views
+
 ## V 1.03.4 — Icon Refresh & Help Polish — 2026-06-20
 - New skinny icon variants across mobile FAB area (MindMap, Open, PatchNotes, Plus); navigate and patch notes buttons colored teal and yellow
 - Help screens polished: checklist badge uses real CSS checkbox, patch notes shown as real button, node type order fixed

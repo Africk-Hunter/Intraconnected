@@ -1,12 +1,97 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems } from '../utilities';
 
 
 interface IdeaNodeProps {
     idea: IdeaType;
     isLeaf: boolean;
+}
+
+interface SortableNodeItemProps {
+    item: ChecklistItem;
+    onToggle: (e: React.MouseEvent, id: string) => void;
+    onDelete: (e: React.MouseEvent, id: string) => void;
+    onEdit: (id: string, newText: string) => void;
+}
+
+function SortableNodeItem({ item, onToggle, onDelete, onEdit }: SortableNodeItemProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+    const [isEditing, setIsEditing] = useState(false);
+    const [editDraft, setEditDraft] = useState('');
+    const editInputRef = useRef<HTMLTextAreaElement>(null);
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : undefined,
+        zIndex: isDragging ? 1 : undefined,
+        position: isDragging ? 'relative' as const : undefined,
+    };
+
+    useLayoutEffect(() => {
+        if (!isEditing) return;
+        const el = editInputRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+        el.focus();
+    }, [isEditing]);
+
+    function startEdit(e: React.MouseEvent) {
+        e.stopPropagation();
+        e.preventDefault();
+        setEditDraft(item.text);
+        setIsEditing(true);
+    }
+
+    function commitEdit() {
+        const text = editDraft.trim();
+        if (text && text !== item.text) onEdit(item.id, text);
+        setIsEditing(false);
+    }
+
+    return (
+        <li ref={setNodeRef} style={style} className={`checklist-item${item.checked ? ' checklist-item--checked' : ''}`}>
+            <button className="checklist-drag" {...attributes} {...listeners}>
+                <img src="images/DragHandle.svg" alt="" />
+            </button>
+            <button className="checklist-checkbox" onClick={e => onToggle(e, item.id)}>
+                {item.checked ? '☑' : '☐'}
+            </button>
+            {isEditing ? (
+                <textarea
+                    ref={editInputRef}
+                    className="checklist-item-edit-input"
+                    value={editDraft}
+                    onChange={e => {
+                        setEditDraft(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    onBlur={commitEdit}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); commitEdit(); } if (e.key === 'Escape') setIsEditing(false); }}
+                    onClick={e => e.stopPropagation()}
+                    maxLength={200}
+                />
+            ) : (
+                <span className="checklist-item-text">{item.text}</span>
+            )}
+            {!isEditing && (
+                <button className="checklist-item-edit" onClick={startEdit}>
+                    <img src="images/Pen.svg" alt="Edit" />
+                </button>
+            )}
+            <button className="checklist-item-delete" onClick={e => onDelete(e, item.id)}>
+                <img src="images/Trash.svg" alt="Delete" />
+            </button>
+        </li>
+    );
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
@@ -21,6 +106,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const [addItemDraft, setAddItemDraft] = useState('');
     const [localItems, setLocalItems] = useState<ChecklistItem[]>(isChecklist ? idea.items : []);
     const addInputRef = useRef<HTMLInputElement>(null);
+    const itemSensors = useSensors(useSensor(PointerSensor));
     const textRef = useRef<HTMLDivElement>(null);
     const [isExpanded, setIsExpanded] = useState(false);
     const [needsExpand, setNeedsExpand] = useState(false);
@@ -184,6 +270,25 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         updateChecklistItems(id, newItems);
     }
 
+    function editItem(itemId: string, newText: string) {
+        const newItems = localItems.map(item =>
+            item.id === itemId ? { ...item, text: newText } : item
+        );
+        setLocalItems(newItems);
+        updateChecklistItems(id, newItems);
+        setNewIdeaSwitch(prev => !prev);
+    }
+
+    function handleItemDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        const oldIndex = localItems.findIndex(i => i.id === active.id);
+        const newIndex = localItems.findIndex(i => i.id === over.id);
+        const newItems = arrayMove(localItems, oldIndex, newIndex);
+        setLocalItems(newItems);
+        updateChecklistItems(id, newItems);
+    }
+
     if (isChecklist) {
         return (
             <div
@@ -198,26 +303,27 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                     <button className="renameButtonNode copy" onClick={changeName}>
                         <img src='images/Pen.svg' alt="Rename" className="copyImg" />
                     </button>
-                    <button className="copy" onClick={copyToClipboard}>
-                        <img src={copyPath} alt="Copy" className="copyImg" />
-                    </button>
                 </div>
-                <ul className="checklist-items" onClick={e => e.stopPropagation()}>
-                    {localItems.map(item => (
-                        <li key={item.id} className={`checklist-item${item.checked ? ' checklist-item--checked' : ''}`}>
-                            <button
-                                className="checklist-checkbox"
-                                onClick={e => toggleItem(e, item.id)}
-                            >
-                                {item.checked ? '☑' : '☐'}
-                            </button>
-                            <span className="checklist-item-text">{item.text}</span>
-                            <button className="checklist-item-delete" onClick={e => deleteItem(e, item.id)}>
-                                <img src="images/Trash.svg" alt="Delete" />
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                <DndContext
+                    sensors={itemSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleItemDragEnd}
+                    modifiers={[restrictToVerticalAxis]}
+                >
+                    <SortableContext items={localItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                        <ul className="checklist-items" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+                            {localItems.map(item => (
+                                <SortableNodeItem
+                                    key={item.id}
+                                    item={item}
+                                    onToggle={toggleItem}
+                                    onDelete={deleteItem}
+                                    onEdit={editItem}
+                                />
+                            ))}
+                        </ul>
+                    </SortableContext>
+                </DndContext>
                 <div className="checklist-add" onClick={e => e.stopPropagation()}>
                     <input
                         ref={addInputRef}

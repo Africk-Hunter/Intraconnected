@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { useIdeaContext } from '../context/IdeaContext';
 import {
     IdeaType,
@@ -38,6 +43,75 @@ type SheetState =
     | { type: 'navigate' }
     | { type: 'checklist'; nodeId: number };
 
+interface SortableMobileItemProps {
+    item: ChecklistItem;
+    nodeId: number;
+    onToggle: (id: string, nodeId: number) => void;
+    onDelete: (id: string, nodeId: number) => void;
+    onEdit: (id: string, newText: string, nodeId: number) => void;
+}
+
+function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit }: SortableMobileItemProps) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+    const [isEditing, setIsEditing] = useState(false);
+    const [editDraft, setEditDraft] = useState('');
+    const editInputRef = useRef<HTMLInputElement>(null);
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : undefined,
+        zIndex: isDragging ? 1 : undefined,
+        position: isDragging ? 'relative' as const : undefined,
+    };
+
+    function startEdit() {
+        setEditDraft(item.text);
+        setIsEditing(true);
+        setTimeout(() => editInputRef.current?.focus(), 0);
+    }
+
+    function commitEdit() {
+        const text = editDraft.trim();
+        if (text && text !== item.text) onEdit(item.id, text, nodeId);
+        setIsEditing(false);
+    }
+
+    return (
+        <li
+            ref={setNodeRef}
+            style={style}
+            className={`mmobile-checklist-sheet-item${item.checked ? ' mmobile-checklist-sheet-item--checked' : ''}`}
+        >
+            <button className="mmobile-checklist-sheet-drag" {...attributes} {...listeners} aria-label="Drag to reorder">
+                <img src="/images/DragHandle.svg" alt="" />
+            </button>
+            <button className="mmobile-checklist-sheet-cb" onClick={() => onToggle(item.id, nodeId)} />
+            {isEditing ? (
+                <input
+                    ref={editInputRef}
+                    className="mmobile-checklist-sheet-edit-input"
+                    value={editDraft}
+                    onChange={e => setEditDraft(e.target.value)}
+                    onBlur={commitEdit}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitEdit(); } if (e.key === 'Escape') setIsEditing(false); }}
+                    maxLength={200}
+                />
+            ) : (
+                <span className="mmobile-checklist-sheet-text">{item.text}</span>
+            )}
+            {!isEditing && (
+                <button className="mmobile-checklist-sheet-edit" onClick={startEdit}>
+                    <img src="/images/Pen.svg" alt="Edit" />
+                </button>
+            )}
+            <button className="mmobile-checklist-sheet-del" onClick={() => onDelete(item.id, nodeId)}>
+                <img src="/images/Trash.svg" alt="Delete" />
+            </button>
+        </li>
+    );
+}
+
 function MobileMindMap() {
     const { setNewIdeaSwitch } = useIdeaContext();
 
@@ -58,6 +132,18 @@ function MobileMindMap() {
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
+
+    const sheetSensors = useSensors(useSensor(PointerSensor));
+
+    function handleSheetDragEnd(event: DragEndEvent, nodeId: number) {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+        const oldIndex = sheetItems.findIndex(i => i.id === active.id);
+        const newIndex = sheetItems.findIndex(i => i.id === over.id);
+        const newItems = arrayMove(sheetItems, oldIndex, newIndex);
+        setSheetItems(newItems);
+        updateChecklistItems(nodeId, newItems);
+    }
 
     useEffect(() => {
         const uid = auth.currentUser?.uid;
@@ -188,6 +274,15 @@ function MobileMindMap() {
         const newItems = sheetItems.filter(item => item.id !== itemId);
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
+    }
+
+    function editSheetItem(itemId: string, newText: string, nodeId: number) {
+        const newItems = sheetItems.map(item =>
+            item.id === itemId ? { ...item, text: newText } : item
+        );
+        setSheetItems(newItems);
+        updateChecklistItems(nodeId, newItems);
+        setNewIdeaSwitch(prev => !prev);
     }
 
     function addSheetItem(nodeId: number) {
@@ -665,23 +760,30 @@ function MobileMindMap() {
 
                         {sheet.type === 'checklist' && (
                             <div className="mmobile-checklist-sheet">
-                                <ul className="mmobile-checklist-sheet-items">
-                                    {sheetItems.map(item => (
-                                        <li
-                                            key={item.id}
-                                            className={`mmobile-checklist-sheet-item${item.checked ? ' mmobile-checklist-sheet-item--checked' : ''}`}
-                                        >
-                                            <button className="mmobile-checklist-sheet-cb" onClick={() => toggleSheetItem(item.id, sheet.nodeId)} />
-                                            <span className="mmobile-checklist-sheet-text">{item.text}</span>
-                                            <button className="mmobile-checklist-sheet-del" onClick={() => deleteSheetItem(item.id, sheet.nodeId)}>
-                                                <img src="/images/Trash.svg" alt="Delete" />
-                                            </button>
-                                        </li>
-                                    ))}
-                                    {sheetItems.length === 0 && (
-                                        <li className="mmobile-checklist-sheet-empty">No items yet.</li>
-                                    )}
-                                </ul>
+                                <DndContext
+                                    sensors={sheetSensors}
+                                    collisionDetection={closestCenter}
+                                    onDragEnd={(e) => handleSheetDragEnd(e, sheet.nodeId)}
+                                    modifiers={[restrictToVerticalAxis]}
+                                >
+                                    <SortableContext items={sheetItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                                        <ul className="mmobile-checklist-sheet-items">
+                                            {sheetItems.map(item => (
+                                                <SortableMobileChecklistItem
+                                                    key={item.id}
+                                                    item={item}
+                                                    nodeId={sheet.nodeId}
+                                                    onToggle={toggleSheetItem}
+                                                    onDelete={deleteSheetItem}
+                                                    onEdit={editSheetItem}
+                                                />
+                                            ))}
+                                            {sheetItems.length === 0 && (
+                                                <li className="mmobile-checklist-sheet-empty">No items yet.</li>
+                                            )}
+                                        </ul>
+                                    </SortableContext>
+                                </DndContext>
                                 <div className="mmobile-checklist-sheet-add">
                                     <input
                                         className="mmobile-checklist-sheet-input"
