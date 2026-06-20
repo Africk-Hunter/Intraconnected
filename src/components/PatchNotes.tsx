@@ -73,7 +73,14 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
                 <div className="patchNotes-list">
                     {entries.map((entry, i) => (
                         <div key={i} className="patchNotes-entry">
-                            <span className="patchNotes-tag">{entry.tag}</span>
+                            <div className="patchNotes-tag-row">
+                                <span className="patchNotes-tag">{entry.tag}</span>
+                                {entry.image && (
+                                    <span className="patchNotes-tag-icon-box">
+                                        <img src={entry.image} alt="" className="patchNotes-tag-icon" />
+                                    </span>
+                                )}
+                            </div>
                             <h3 className="patchNotes-title">{entry.title}</h3>
                             <p className="details">{entry.description}</p>
                         </div>

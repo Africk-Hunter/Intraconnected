@@ -65,7 +65,14 @@ function MobilePatchNotesSheet({ onClose }: { onClose: () => void }) {
                 <div className="mmobile-help-content">
                     {view === 'notes' && entries.map((entry, i) => (
                         <div key={i} className="mmobile-patchnotes-entry">
-                            <span className="mmobile-patchnotes-tag">{entry.tag}</span>
+                            <div className="mmobile-patchnotes-tag-row">
+                                <span className="mmobile-patchnotes-tag">{entry.tag}</span>
+                                {entry.image && (
+                                    <span className="mmobile-patchnotes-tag-icon-box">
+                                        <img src={entry.image} alt="" className="mmobile-patchnotes-tag-icon" />
+                                    </span>
+                                )}
+                            </div>
                             <h3 className="mmobile-patchnotes-title">{entry.title}</h3>
                             <p className="mmobile-help-text">{entry.description}</p>
                         </div>

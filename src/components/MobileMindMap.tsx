@@ -22,6 +22,12 @@ import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileNavigateSheet from './MobileNavigateSheet';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
+import changelog from '../CHANGELOG.md?raw';
+import { parseChangelog } from '../utilities/parseChangelog';
+import { isPatchNotesNew, markPatchNotesSeen } from '../utilities/patchNotesState';
+import { auth } from '../firebaseConfig';
+
+const _changelogEntries = parseChangelog(changelog);
 
 type SheetState =
     | { type: 'actions'; nodeId: number }
@@ -41,6 +47,9 @@ function MobileMindMap() {
     const [editMode, setEditMode] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
+    const [isNewPatchNotes, setIsNewPatchNotes] = useState(() =>
+        isPatchNotesNew(auth.currentUser?.uid, _changelogEntries)
+    );
     const [expandedChecklists, setExpandedChecklists] = useState<Set<number>>(new Set());
     const [inlineDrafts, setInlineDrafts] = useState<Record<number, string>>({});
     const [sheetItems, setSheetItems] = useState<ChecklistItem[]>([]);
@@ -437,7 +446,16 @@ function MobileMindMap() {
             </div>
 
             <div className="mmobile-fab-area">
-                <button className="mmobile-patchnotes-btn" onClick={() => setShowPatchNotes(p => !p)}><img src="/images/PatchNotesIcon.svg" alt="Patch notes" /></button>
+                <button
+                    className={`mmobile-patchnotes-btn${isNewPatchNotes ? ' mmobile-patchnotes-btn--new' : ''}`}
+                    onClick={() => {
+                        if (!showPatchNotes) {
+                            markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);
+                            setIsNewPatchNotes(false);
+                        }
+                        setShowPatchNotes(p => !p);
+                    }}
+                ><img src="/images/PatchNotesIcon.svg" alt="Patch notes" /></button>
                 <button
                     className={`mmobile-navigate-btn${sheet?.type === 'navigate' ? ' mmobile-navigate-btn--active' : ''}`}
                     onClick={() => setSheet({ type: 'navigate' })}

@@ -310,6 +310,12 @@
     }
 }
 
+.patchNotes-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .patchNotes-tag {
     display: inline-block;
     padding: 0.15rem 0.5rem;
@@ -319,6 +325,22 @@
     font-size: 0.75rem;
     font-weight: 700;
     width: fit-content;
+}
+
+.patchNotes-tag-icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.15rem 0.4rem;
+    background: white;
+    border: 2px solid black;
+    border-radius: 4px;
+}
+
+.patchNotes-tag-icon {
+    width: 0.85rem;
+    height: 0.85rem;
+    object-fit: contain;
 }
 
 .patchNotes-title {

@@ -16,6 +16,9 @@ import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 // Custom Libraries
 import { auth } from '../firebaseConfig';
 import { useIdeaContext } from '../context/IdeaContext';
+import changelog from '../CHANGELOG.md?raw';
+import { parseChangelog } from '../utilities/parseChangelog';
+import { isPatchNotesNew, markPatchNotesSeen } from '../utilities/patchNotesState';
 import { getDEK, loadDEKFromSession } from '../utilities/dekStore';
 import {
     fetchFullIdeaList,
@@ -38,12 +41,25 @@ import ChecklistModal from '../components/modals/ChecklistModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
 
+const _changelogEntries = parseChangelog(changelog);
+
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
     const [lastRootName, setLastRootName] = useState('');
+    const [isNewPatchNotes, setIsNewPatchNotes] = useState(() =>
+        isPatchNotesNew(auth.currentUser?.uid, _changelogEntries)
+    );
+
+    function handleTogglePatchNotes() {
+        if (!showPatchNotes) {
+            markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);
+            setIsNewPatchNotes(false);
+        }
+        setShowPatchNotes(prev => !prev);
+    }
 
     const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId } = useIdeaContext();
 
@@ -141,7 +157,7 @@ function Idea() {
         <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
-                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowPatchNotes={setShowPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
+                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowPatchNotes={handleTogglePatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
                     {!showMindMap && <Trash />}
                 </section>
 
@@ -175,7 +191,7 @@ function Idea() {
                 )}
 
                 <section className="right">
-                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowPatchNotes={setShowPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} />
+                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={setShowHelp} setShowPatchNotes={handleTogglePatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
                     <Help showHelp={showHelp} />
                     <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>

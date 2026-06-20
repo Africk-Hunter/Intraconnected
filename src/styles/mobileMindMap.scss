@@ -380,6 +380,8 @@
     justify-content: center;
 }
 
+
+
 .mmobile-patchnotes-entry {
     padding-bottom: 16px;
     border-bottom: 2px solid rgba(0, 0, 0, 0.12);
@@ -390,6 +392,12 @@
     }
 }
 
+.mmobile-patchnotes-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .mmobile-patchnotes-tag {
     display: inline-block;
     padding: 2px 8px;
@@ -398,6 +406,22 @@
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 700;
+}
+
+.mmobile-patchnotes-tag-icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    background: white;
+    border: 2px solid #111;
+    border-radius: 4px;
+}
+
+.mmobile-patchnotes-tag-icon {
+    width: 0.85rem;
+    height: 0.85rem;
+    object-fit: contain;
 }
 
 .mmobile-patchnotes-title {

@@ -3,28 +3,31 @@ import React, { useRef, useState } from 'react';
 interface TooltipButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     tooltip: string;
     tooltipSide?: 'left' | 'right';
+    alwaysVisible?: boolean;
 }
 
 const TooltipButton: React.FC<TooltipButtonProps> = ({
     tooltip,
     tooltipSide = 'right',
+    alwaysVisible = false,
     className,
     children,
     onMouseEnter,
     onMouseLeave,
     ...props
 }) => {
-    const [visible, setVisible] = useState(false);
+    const [hoverVisible, setHoverVisible] = useState(false);
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const visible = alwaysVisible || hoverVisible;
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
-        timerRef.current = setTimeout(() => setVisible(true), 1000);
+        timerRef.current = setTimeout(() => setHoverVisible(true), 1000);
         onMouseEnter?.(e);
     };
 
     const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (timerRef.current) clearTimeout(timerRef.current);
-        setVisible(false);
+        setHoverVisible(false);
         onMouseLeave?.(e);
     };
 
@@ -39,7 +42,7 @@ const TooltipButton: React.FC<TooltipButtonProps> = ({
                 {children}
             </button>
             {visible && (
-                <span className={`tooltip-text tooltip-${tooltipSide}`}>{tooltip}</span>
+                <span className={`tooltip-text tooltip-${tooltipSide}${alwaysVisible ? ' tooltip-text--bump' : ''}`}>{tooltip}</span>
             )}
         </div>
     );

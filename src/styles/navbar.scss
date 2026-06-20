@@ -151,7 +151,7 @@
 .buttonImg {
     user-select: none;
 
-    
+
     @media (max-width: $mobile) {
 
         &.logoButton {
@@ -175,6 +175,18 @@
 .trashCan>.buttonImg {
     width: 70%;
     height: 70%;
+}
+
+@keyframes tooltip-bump {
+    0%        { transform: translateY(-50%) translateX(0); }
+    8%        { transform: translateY(-50%) translateX(-14px); }
+    16%       { transform: translateY(-50%) translateX(0); }
+    22%       { transform: translateY(-50%) translateX(-7px); }
+    28%       { transform: translateY(-50%) translateX(0); }
+    32%       { transform: translateY(-50%) translateX(-3px); }
+    36%       { transform: translateY(-50%) translateX(0); }
+    39%       { transform: translateY(-50%) translateX(-1px); }
+    42%, 100% { transform: translateY(-50%) translateX(0); }
 }
 
 .tooltip-wrapper {
@@ -213,4 +225,8 @@
     @media (max-width: $mobile) {
         display: none;
     }
+}
+
+.tooltip-text--bump {
+    animation: tooltip-bump 4.5s ease-in-out infinite;
 }
