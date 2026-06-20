@@ -135,8 +135,8 @@ src/
 │   ├── MobileHelpSheet.tsx       # mobile help carousel (3 screens); owns helpScreen state
 │   ├── MobileMoveSheet.tsx       # mobile move-tree sheet; owns expandedMoveNodes state + auto-scroll
 │   ├── MobileNavigateSheet.tsx   # mobile full-tree jump sheet (◎ button); navigate-only, no move
-│   ├── MobilePatchNotesSheet.tsx # mobile patch notes bottom sheet (★ button)
-│   ├── PatchNotes.tsx            # desktop "What's New" popup panel (★ button in right Navbar)
+│   ├── MobilePatchNotesSheet.tsx # mobile patch notes bottom sheet
+│   ├── PatchNotes.tsx            # desktop "What's New" popup panel (right Navbar)
 │   ├── TooltipButton.tsx         # button wrapper with 1000ms delayed hover tooltip
 │   ├── Navbar.tsx                # left + right sidebars
 │   ├── DepthIndicator.tsx        # breadcrumb dot in right sidebar
@@ -255,8 +255,8 @@ Key differences from desktop:
 - **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete` | `navigate` | `checklist`
 - **Move tree**: rendered by `MobileMoveSheet`; owns `expandedMoveNodes` state and auto-scroll logic; scrollable tree with expand/collapse; auto-scrolls to current parent on open; descendants and current parent are disabled as move targets
 - **Navigate tree**: rendered by `MobileNavigateSheet` (◎ button in FAB area); same tree UI as move but for jumping to any node; link nodes are disabled as destinations; auto-scrolls to the current node on open
-- **Patch notes**: rendered by `MobilePatchNotesSheet` (★ button in FAB area); reuses the help-sheet shell; parses `CHANGELOG.md` via `parseChangelog`
-- **FAB area**: four buttons — ★ (patch notes), ◎ (navigate), + (create), ✎ (edit mode toggle)
+- **Patch notes**: rendered by `MobilePatchNotesSheet` (patch notes button in FAB area); reuses the help-sheet shell; parses `CHANGELOG.md` via `parseChangelog`
+- **FAB area**: four buttons — patch notes, ◎ (navigate), + (create), ✎ (edit mode toggle)
 - **Checklist nodes (mobile)**: tap = toggle inline accordion (expand/collapse items in place); tap the `OpenIcon.svg` button in the header row = open the `checklist` full-view sheet. The `checklist` sheet has its own `sheetItems`/`sheetItemDraft` state initialized fresh from localStorage on open. Checklist nodes cannot be navigated into and cannot receive drops or be moved into. In the move/navigate trees they appear disabled with `mmobile-move-btn--checklist` styling.
 - **Rename vs. rewrite**: the actions sheet and rename sheet label the action "Rename Idea" when the node has children, "Rewrite Idea" when it's a leaf, "Rename Checklist" for checklist nodes; new ideas use an auto-resizing `<textarea>`, existing renames use a single-line `<input>`
 - **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–3); receives only an `onClose` prop
@@ -287,13 +287,13 @@ Description text.
 
 `parseChangelog(raw)` in `utilities/parseChangelog.ts` splits on `^## `, then splits each section's first line on `|` to extract `{ tag, title, description }`.
 
-- **Desktop**: `PatchNotes` component (right column of `Idea.tsx`); toggled by the ★ button in the right Navbar; `showPatchNotes` state lives in `Idea.tsx`
-- **Mobile**: `MobilePatchNotesSheet` bottom sheet; toggled by the ★ button in the FAB area; `showPatchNotes` state is local to `MobileMindMap`
+- **Desktop**: `PatchNotes` component (right column of `Idea.tsx`); toggled by the patch notes button in the right Navbar; `showPatchNotes` state lives in `Idea.tsx`
+- **Mobile**: `MobilePatchNotesSheet` bottom sheet; toggled by the patch notes button in the FAB area; `showPatchNotes` state is local to `MobileMindMap`
 - Both parse `changelog` at module load (outside the component), not on each render.
 
 **What belongs in CHANGELOG.md:** Only significant new features warrant a changelog entry. Bug fixes and small additions are shipped as `.x` patch version increments and do **not** get a changelog entry — they are silent updates.
 
-**Private dev log:** `DEVLOG.md` at the project root tracks every update (features, bug fixes, small additions). It is never imported or displayed — update it alongside every change, no matter how small.
+**Private dev log:** `DEVLOG.md` at the project root tracks every update (features, bug fixes, small additions). It is never imported or displayed — update it alongside every change, no matter how small. Make sure every update is given a name that summarizes it in a few words.
 
 ### TooltipButton
 

@@ -115,6 +115,14 @@
         background: $link;
     }
 
+    &.helpChecklist {
+        background: $indigo;
+        color: white;
+        padding: .5rem 0.75rem;
+        line-height: 1.2;
+        text-align: center;
+    }
+
     &.helpTrash {
         width: 1rem;
         height: 1rem;
@@ -256,6 +264,148 @@
     opacity: 1;
     pointer-events: auto;
 }
+
+// ── Help screen 4: Mind Map demo ────────────────────────────────
+
+.help-mm-demo {
+    background-color: $background-color;
+    background-size: 20px 20px;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.22) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.22) 1px, transparent 1px);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 1rem 1.5rem 1.25rem;
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+    margin: 0.5rem 0 0.85rem;
+
+    &::-webkit-scrollbar { display: none; }
+
+    // Scale the real mm- classes down for the demo
+    .mm-node-btn {
+        font-size: 0.72rem;
+        padding: 0.28rem 0.6rem;
+        max-width: 72px;
+        border-width: 2px;
+        box-shadow: 2px 2px 0 1px #111;
+        cursor: default;
+        color: #111;
+
+        &:hover {
+            box-shadow: 2px 2px 0 1px #111;
+            translate: 0;
+        }
+
+        &.mm-node-btn--current {
+            color: #111;
+        }
+
+        &.mm-node-btn--root {
+            font-size: 0.82rem;
+            padding: 0.35rem 0.85rem;
+            max-width: 100px;
+            box-shadow: 3px 3px 0 1px #111;
+        }
+    }
+
+    .mm-connector-v {
+        height: 14px;
+        width: 2px;
+    }
+
+    .mm-child-wrap {
+        padding: 14px 7px 0;
+
+        &::before { height: 14px; }
+        &::after  { height: 2px; }
+    }
+
+    @media (min-width: $large-desktop) {
+        .mm-node-btn {
+            font-size: 1rem;
+            padding: 0.4rem 0.9rem;
+            max-width: 100px;
+
+            &.mm-node-btn--root {
+                font-size: 1.1rem;
+                max-width: 130px;
+            }
+        }
+
+        .mm-connector-v { height: 20px; }
+        .mm-child-wrap {
+            padding: 20px 10px 0;
+            &::before { height: 20px; }
+        }
+    }
+}
+
+.help-mm-current-chip {
+    background: $roots;
+    color: #111;
+}
+
+.help-logo-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem 0.4rem;
+    vertical-align: middle;
+}
+
+.help-logo-img {
+    width: 1.4rem;
+    height: 1.4rem;
+    display: block;
+
+    @media (min-width: $large-desktop) {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
+.help-patchnotes-icon {
+    padding: 0.4rem;
+    background: $neutral;
+    width: 2rem;
+    height: 2rem;
+    box-sizing: content-box;
+
+    @media (min-width: $large-desktop) {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+}
+
+// ── Help screen 5: depth dots + star ────────────────────────────
+
+.help-depth-dots {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.15rem 0;
+}
+
+.help-depth-dot {
+    width: 2rem;
+    height: 2rem;
+    background: $roots;
+    border: 2px solid black;
+    border-radius: 5px;
+    box-shadow: 2px 2px 0 1px black;
+    flex-shrink: 0;
+
+    @media (min-width: $large-desktop) {
+        width: 2.8rem;
+        height: 2.8rem;
+    }
+}
+
+
+// ────────────────────────────────────────────────────────────────
 
 .patchNotesPopup {
     transition: all 0.3s ease;

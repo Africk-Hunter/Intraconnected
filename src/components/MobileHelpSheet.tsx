@@ -12,7 +12,7 @@ function MobileHelpSheet({ onClose }: Props) {
             <div className="mmobile-scrim" onClick={onClose} />
             <div className="mmobile-help-sheet">
                 <div className="mmobile-help-header">
-                    <span className="mmobile-help-pager">{helpScreen} / 3</span>
+                    <span className="mmobile-help-pager">{helpScreen} / 5</span>
                     <button className="mmobile-help-close" onClick={onClose}>✕</button>
                 </div>
 
@@ -57,6 +57,47 @@ function MobileHelpSheet({ onClose }: Props) {
                                 <p className="mmobile-help-text">Blue nodes have related ideas inside. Tap to explore them.</p>
                                 <span className="mmobile-help-badge mmobile-help-badge--link">Link</span>
                                 <p className="mmobile-help-text">Yellow nodes link to external pages. They can't have child ideas.</p>
+                                <span className="mmobile-help-badge mmobile-help-badge--checklist-node">☑</span>
+                                <p className="mmobile-help-text">Indigo nodes are checklists. Tap to expand items inline, or tap the icon in the header to open the full view.</p>
+                            </div>
+                        </>
+                    )}
+
+                    {helpScreen === 4 && (
+                        <>
+                            <h2 className="mmobile-help-title">The Full Picture</h2>
+                            <p className="mmobile-help-subtext">Jump anywhere in your tree instantly</p>
+                            <div className="mmobile-help-mini-map">
+                                <div className="mmobile-mm-node mmobile-mm-node--current">My Ideas</div>
+                                <div className="mmobile-mm-trunk"></div>
+                                <div className="mmobile-mm-row">
+                                    <div className="mmobile-mm-branch">
+                                        <div className="mmobile-mm-v"></div>
+                                        <div className="mmobile-mm-node mmobile-mm-node--parent">Work</div>
+                                        <div className="mmobile-mm-v mmobile-mm-v--short"></div>
+                                        <div className="mmobile-mm-node mmobile-mm-node--leaf">Task A</div>
+                                    </div>
+                                    <div className="mmobile-mm-branch">
+                                        <div className="mmobile-mm-v"></div>
+                                        <div className="mmobile-mm-node mmobile-mm-node--leaf">Home</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mmobile-help-grid">
+                                <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapIcon.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
+                                <p className="mmobile-help-text">Tap this button in the bottom bar to open Navigate, a full tree of all your ideas. Tap any node to jump there.</p>
+                            </div>
+                        </>
+                    )}
+
+                    {helpScreen === 5 && (
+                        <>
+                            <h2 className="mmobile-help-title">More Tools</h2>
+                            <div className="mmobile-help-grid">
+                                <span className="mmobile-help-badge mmobile-help-badge--edit"><img src="/images/Pen.svg" className="mmobile-help-badge-icon" alt="Edit" /></span>
+                                <p className="mmobile-help-text">Tap the <strong>pencil</strong> to enter edit mode. In edit mode, tapping a node opens its action sheet instead of navigating into it.</p>
+                                <span className="mmobile-help-badge mmobile-help-badge--patchnotes"><img src="/images/PatchNotesIcon.svg" className="mmobile-help-badge-icon" alt="Patch notes" /></span>
+                                <p className="mmobile-help-text">Tap the <strong>patch notes</strong> button in the bottom bar to see what's new in the latest updates.</p>
                             </div>
                         </>
                     )}
@@ -70,8 +111,8 @@ function MobileHelpSheet({ onClose }: Props) {
                     >‹ Prev</button>
                     <button
                         className="mmobile-help-nav-btn mmobile-help-nav-btn--next"
-                        onClick={() => setHelpScreen(s => Math.min(3, s + 1))}
-                        disabled={helpScreen === 3}
+                        onClick={() => setHelpScreen(s => Math.min(5, s + 1))}
+                        disabled={helpScreen === 5}
                     >Next ›</button>
                 </div>
             </div>

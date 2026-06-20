@@ -19,7 +19,7 @@ const Auth: React.FC = () => {
     const [showRecoveryInput, setShowRecoveryInput] = useState(false);
     const [recoveryCodeInput, setRecoveryCodeInput] = useState("");
     const [copied, setCopied] = useState(false);
-    const [recoveryCodeContext, setRecoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
+    const [recoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
 
     const isShowingRecoveryCode = useRef(false);
     const isSigningIn = useRef(false);
@@ -117,14 +117,10 @@ const Auth: React.FC = () => {
                 await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
                 await setDEK(dek);
 
-                isShowingRecoveryCode.current = true;
+                sessionStorage.setItem('new_user', 'true');
                 isSigningIn.current = false;
-                setRecoveryCodeContext('signup');
-                setPendingRecoveryCode(recoveryCode);
-
-                displayMessage("Successfully created account!", "good");
-                setEmail("");
-                setPassword("");
+                try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
+                window.location.href = '/main';
             })
             .catch((error) => {
                 isSigningIn.current = false;
@@ -189,10 +185,9 @@ const Auth: React.FC = () => {
                                 return;
                             }
 
-                            isShowingRecoveryCode.current = true;
                             isSigningIn.current = false;
-                            setRecoveryCodeContext('migration');
-                            setPendingRecoveryCode(newRecoveryCode);
+                            try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
+                            window.location.href = '/main';
                         } catch {
                             // Write failed — proceed to app, will prompt again next login
                             isSigningIn.current = false;
@@ -224,10 +219,9 @@ const Auth: React.FC = () => {
                 await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
                 await setDEK(dek);
 
-                isShowingRecoveryCode.current = true;
                 isSigningIn.current = false;
-                setRecoveryCodeContext('migration');
-                setPendingRecoveryCode(recoveryCode);
+                try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
+                window.location.href = '/main';
             }
         } catch (error) {
             isSigningIn.current = false;
@@ -264,9 +258,8 @@ const Auth: React.FC = () => {
 
             setShowRecoveryInput(false);
             setRecoveryCodeInput("");
-            isShowingRecoveryCode.current = true;
-            setRecoveryCodeContext('restore');
-            setPendingRecoveryCode(newRecoveryCode);
+            try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
+            window.location.href = '/main';
         } catch {
             displayMessage('Could not save your new keys. Please try again.', 'bad');
         }
@@ -300,9 +293,8 @@ const Auth: React.FC = () => {
             await setDEK(dek);
 
             setShowRecoveryInput(false);
-            isShowingRecoveryCode.current = true;
-            setRecoveryCodeContext('restore');
-            setPendingRecoveryCode(newRecoveryCode);
+            try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
+            window.location.href = '/main';
         } catch {
             displayMessage('Could not save your new keys. Please try again.', 'bad');
         }

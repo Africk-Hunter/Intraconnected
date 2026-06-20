@@ -58,6 +58,13 @@ function Idea() {
         syncPatchNotesFromFirebase(uid, _changelogEntries).then(isNew => setIsNewPatchNotes(isNew));
     }, []);
 
+    useEffect(() => {
+        if (sessionStorage.getItem('new_user') === 'true') {
+            sessionStorage.removeItem('new_user');
+            setShowHelp(true);
+        }
+    }, []);
+
     function handleTogglePatchNotes() {
         if (!showPatchNotes) {
             markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);

@@ -206,14 +206,87 @@
     margin-top: 2px;
     color: #111;
 
-    &--root   { background: $roots; }
-    &--add    { background: $leaf; }
-    &--back   { background: $back; }
-    &--delete { background: $danger; }
-    &--leaf   { background: $leaf; }
-    &--parent { background: $sky; }
-    &--link   { background: $link; }
+    &--root            { background: $roots; }
+    &--add             { background: $leaf; }
+    &--back            { background: $back; }
+    &--delete          { background: $danger; }
+    &--leaf            { background: $leaf; }
+    &--parent          { background: $sky; }
+    &--link            { background: $link; }
+    &--checklist-node  { background: $indigo; color: white; }
+    &--nav             { background: white; }
+    &--patchnotes      { background: white; }
+    &--edit            { background: white; }
 }
+
+// ── Screen 4: mini mind-map visual ──────────────────────────────
+
+.mmobile-help-mini-map {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: $background-color;
+    background-size: 18px 18px;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    border: 2px solid rgba(0, 0, 0, 0.18);
+    border-radius: 12px;
+    padding: 14px 16px 12px;
+    margin-bottom: 14px;
+}
+
+.mmobile-mm-node {
+    border: 2px solid #111;
+    border-radius: 8px;
+    padding: 5px 11px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #111;
+    box-shadow: 2px 2px 0 1px #111;
+    white-space: nowrap;
+
+    &--current { background: $roots; color: #fff; box-shadow: 2px 2px 0 1px #111, 0 0 0 3px #6b4929; }
+    &--parent  { background: $sky; }
+    &--leaf    { background: $leaf; }
+}
+
+.mmobile-mm-trunk {
+    width: 2px;
+    height: 12px;
+    background: #111;
+}
+
+.mmobile-mm-row {
+    display: flex;
+    gap: 20px;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: calc(25% - 1px);
+        right: calc(25% - 1px);
+        height: 2px;
+        background: #111;
+    }
+}
+
+.mmobile-mm-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mmobile-mm-v {
+    width: 2px;
+    height: 12px;
+    background: #111;
+
+    &--short { height: 8px; }
+}
+
 
 .mmobile-help-badge-icon {
     width: 22px;

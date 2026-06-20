@@ -4,7 +4,14 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
-## V 1.03.2 — 2026-06-19
+## V 1.03.3 — Expanded Help & Streamlined Onboarding — 2026-06-19
+- Help carousel expanded from 3 to 5 screens (desktop + mobile)
+- Desktop screens 4–5: Mind Map overview, depth dots + patch notes
+- Mobile screens 3–5: checklist node type, Navigate button, edit mode + patch notes
+- Recovery code screen removed from signup/migration/restore flows — users go straight to `/main`
+- New users auto-shown help on first load via `sessionStorage` flag
+
+## V 1.03.2 — Polish & UX Improvements — 2026-06-19
 - Added Privacy Policy page (`/privacy` route, link on auth screen)
 - Leaf nodes truncate long text with a fade overlay + animated expand/collapse toggle
 - Node fade-out when pending delete; fades back in if cancelled
@@ -25,7 +32,7 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 - End-to-end encryption for checklist item text in Firestore
 - Code cleanup pass
 
-## V 1.02.1
+## V 1.02.1 — Minor Fixes
 - Minor changes / small fixes (unspecified)
 
 ## V 1.02 — End-to-End Encryption
@@ -36,16 +43,16 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 - DEK persisted in `sessionStorage` across page reloads; cleared on sign-out
 - `enc:` prefix on ciphertext for backward-compatible migration of legacy plaintext
 
-## V 1.01.1
+## V 1.01.1 — Recommend Features Button
 - Added "Recommend Features" button
 
 ## V 1.01 — Patch Notes & Tooltips
-- Added in-app patch notes panel (desktop right sidebar, ★ button)
-- Added mobile patch notes bottom sheet (★ button in FAB area)
+- Added in-app patch notes panel (desktop right sidebar, patch notes button)
+- Added mobile patch notes bottom sheet (patch notes button in FAB area)
 - `parseChangelog` utility reads `src/CHANGELOG.md` at build time
 - Replaced raw `<button>` nav buttons with `TooltipButton` (1000ms hover delay)
 
-## V 1.0.x — Post-Mind-Map Patches
+## V 1.0.x — Mobile, Navigation & QOL Patches
 - Mobile quick-navigate sheet (◎ button; jump to any node)
 - Mobile grid background styling
 - Mobile view overhaul + cleanup pass
