@@ -57,7 +57,7 @@ function MobilePatchNotesSheet({ onClose }: { onClose: () => void }) {
                 <div className="mmobile-help-header">
                     <span className="mmobile-help-pager">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</span>
                     {view === 'notes'
-                        ? <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>+ Recommend</button>
+                        ? <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>+ Recommend a feature</button>
                         : <button className="mmobile-help-close" onClick={view === 'submitting' ? undefined : reset}>✕</button>
                     }
                 </div>

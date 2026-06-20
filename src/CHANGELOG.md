@@ -7,7 +7,7 @@ image: /images/LinkBlack.svg
 Your ideas are now encrypted end-to-end. Not even we can read them. A recovery code is generated for your account the first time you log in.
 
 ## V 1.01 | Patch Notes & Tooltips
-image: /images/PatchNotesIcon.svg
+image: /images/PatchNotesIconSkinny.svg
 Added this patch notes panel so you can see what's new. You can also request new features with the recommend button. Yay :D
 
 ## V 1.0 | Mind Map

@@ -15,7 +15,7 @@ const HelpMenuFive: React.FC = () => {
                     These <strong>depth dots</strong> in the right sidebar appear as you navigate deeper. Each dot is one level. Hover to see the name, then click to jump back to that level instantly.
                 </p>
                 <button className="smallSideButton neutral neobrutal-button navButton" type="button" tabIndex={-1}>
-                    <img src="/images/PatchNotesIcon.svg" alt="Patch notes" className="buttonImg" />
+                    <img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" className="buttonImg" />
                 </button>
                 <p className="details">
                     This button in the top-right opens <strong>Patch Notes</strong>, a running log of new features and changes. Worth checking after any update!

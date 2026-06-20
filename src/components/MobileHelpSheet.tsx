@@ -69,25 +69,25 @@ function MobileHelpSheet({ onClose }: Props) {
                         <>
                             <h2 className="mmobile-help-title">The Full Picture</h2>
                             <p className="mmobile-help-subtext">Jump anywhere in your tree instantly</p>
-                            <div className="mmobile-help-mini-map">
-                                <div className="mmobile-mm-node mmobile-mm-node--current">My Ideas</div>
-                                <div className="mmobile-mm-trunk"></div>
-                                <div className="mmobile-mm-row">
-                                    <div className="mmobile-mm-branch">
-                                        <div className="mmobile-mm-v"></div>
-                                        <div className="mmobile-mm-node mmobile-mm-node--parent">Work</div>
-                                        <div className="mmobile-mm-v mmobile-mm-v--short"></div>
-                                        <div className="mmobile-mm-node mmobile-mm-node--leaf">Task A</div>
-                                    </div>
-                                    <div className="mmobile-mm-branch">
-                                        <div className="mmobile-mm-v"></div>
-                                        <div className="mmobile-mm-node mmobile-mm-node--leaf">Home</div>
-                                    </div>
+                            <div className="mmobile-help-vtree-demo">
+                                <div className="mmobile-help-vtree-root">My Ideas</div>
+                                <div className="mmobile-help-vtree-row">
+                                    <div className="mmobile-help-vtree-conn" />
+                                    <div className="mmobile-help-vtree-chip mmobile-help-vtree-chip--parent">Work</div>
+                                </div>
+                                <div className="mmobile-help-vtree-row">
+                                    <div className="mmobile-help-vtree-gap mmobile-help-vtree-gap--line" />
+                                    <div className="mmobile-help-vtree-conn mmobile-help-vtree-conn--last" />
+                                    <div className="mmobile-help-vtree-chip mmobile-help-vtree-chip--leaf">Task A</div>
+                                </div>
+                                <div className="mmobile-help-vtree-row">
+                                    <div className="mmobile-help-vtree-conn mmobile-help-vtree-conn--last" />
+                                    <div className="mmobile-help-vtree-chip mmobile-help-vtree-chip--leaf">Home</div>
                                 </div>
                             </div>
                             <div className="mmobile-help-grid">
                                 <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapIconSkinny.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
-                                <p className="mmobile-help-text">Tap this button in the bottom bar to open Navigate, a full tree of all your ideas. Tap any node to jump there.</p>
+                                <p className="mmobile-help-text">Tap this button in the bottom bar to open Mind Map, a full tree of all your ideas. Tap any node to jump there, or use ▸ / ▾ to expand and collapse branches.</p>
                             </div>
                         </>
                     )}

@@ -38,7 +38,7 @@ const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShow
                     <section className="rightSideButtons">
                         <TooltipButton tooltip="Log out" tooltipSide="left" className="mediumSideButton neutral neobrutal-button navButton" onClick={() => signUserOut()}><img src="/images/LogOut.svg" alt="" className="buttonImg" /></TooltipButton>
                         <TooltipButton tooltip="Help & instructions" tooltipSide="left" className="smallSideButton neutral neobrutal-button navButton" onClick={setShowHelp}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></TooltipButton>
-                        <TooltipButton tooltip="Patch notes" tooltipSide="left" alwaysVisible={isNewPatchNotes} className="smallSideButton neutral neobrutal-button navButton patchNotesBtn" onClick={setShowPatchNotes}><img src="/images/PatchNotesIcon.svg" alt="Patch notes" className="buttonImg" /></TooltipButton>
+                        <TooltipButton tooltip="Patch notes" tooltipSide="left" alwaysVisible={isNewPatchNotes} className="smallSideButton neutral neobrutal-button navButton patchNotesBtn" onClick={setShowPatchNotes}><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" className="buttonImg" /></TooltipButton>
                     </section>
                     {!showMindMap && <section className="howDeepHolder">{depthElements}</section>}
                 </nav>

@@ -64,7 +64,7 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
                 <h2 className="header">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</h2>
                 {view === 'notes' && (
                     <button className="patchNotes-recommend-btn neobrutal-button" onClick={() => setView('form')}>
-                        + Recommend
+                        + Recommend a feature
                     </button>
                 )}
             </div>

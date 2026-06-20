@@ -25,7 +25,7 @@ import {
 } from '../utilities';
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
-import MobileNavigateSheet from './MobileNavigateSheet';
+import MobileMindMapSheet from './MobileMindMapSheet';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
 import changelog from '../CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
@@ -40,7 +40,6 @@ type SheetState =
     | { type: 'move'; nodeId: number }
     | { type: 'link'; nodeId: number }
     | { type: 'confirmDelete'; nodeId: number }
-    | { type: 'navigate' }
     | { type: 'checklist'; nodeId: number };
 
 interface SortableMobileItemProps {
@@ -121,6 +120,7 @@ function MobileMindMap() {
     const [editMode, setEditMode] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
+    const [showMindMap, setShowMindMap] = useState(false);
     const [isNewPatchNotes, setIsNewPatchNotes] = useState(() =>
         isPatchNotesNew(auth.currentUser?.uid, _changelogEntries)
     );
@@ -374,10 +374,9 @@ function MobileMindMap() {
         closeSheet();
     }
 
-    const sheetNode = sheet && sheet.type !== 'navigate' ? allIdeas.find(i => i.id === sheet.nodeId) : null;
+    const sheetNode = sheet ? allIdeas.find(i => i.id === sheet.nodeId) : null;
     const sheetNodeLink = getIdeaLink(sheetNode ?? undefined);
     const sheetTitle =
-        sheet?.type === 'navigate' ? 'Navigate to…' :
         sheet?.type === 'move' ? 'Move under…' :
         sheet?.type === 'rename' ? (sheet.isNew ? (createTab === 'checklist' ? 'New checklist' : 'New idea') : sheetNode?.type === 'checklist' ? 'Rename checklist' : allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea') :
         sheet?.type === 'link' ? (sheetNodeLink ? 'Change link' : 'Add link') :
@@ -416,6 +415,14 @@ function MobileMindMap() {
 
             {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} />}
             {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} />}
+            {showMindMap && (
+                <MobileMindMapSheet
+                    currentId={currentId}
+                    allIdeas={allIdeas}
+                    onNavigate={(id) => { setCurrentId(id); setShowMindMap(false); setSheet(null); setEditMode(false); }}
+                    onClose={() => setShowMindMap(false)}
+                />
+            )}
 
             <div
                 className="mmobile-header"
@@ -557,8 +564,8 @@ function MobileMindMap() {
                     }}
                 ><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" /></button>
                 <button
-                    className={`mmobile-navigate-btn${sheet?.type === 'navigate' ? ' mmobile-navigate-btn--active' : ''}`}
-                    onClick={() => setSheet({ type: 'navigate' })}
+                    className={`mmobile-navigate-btn${showMindMap ? ' mmobile-navigate-btn--active' : ''}`}
+                    onClick={() => setShowMindMap(m => !m)}
                 >
                     <img src="/images/MindMapIconSkinny.svg" alt="Navigate" />
                 </button>
@@ -577,7 +584,7 @@ function MobileMindMap() {
                     <div className="mmobile-sheet">
                         <div className="mmobile-sheet-title">
                             {sheetTitle}
-                            {(sheet.type === 'move' || sheet.type === 'navigate' || sheet.type === 'checklist') && (
+                            {(sheet.type === 'move' || sheet.type === 'checklist') && (
                                 <button className="mmobile-sheet-close" onClick={closeSheet}>✕</button>
                             )}
                         </div>
@@ -735,14 +742,6 @@ function MobileMindMap() {
                                 nodeId={sheet.nodeId}
                                 allIdeas={allIdeas}
                                 onMove={doMove}
-                            />
-                        )}
-
-                        {sheet.type === 'navigate' && (
-                            <MobileNavigateSheet
-                                currentId={currentId}
-                                allIdeas={allIdeas}
-                                onNavigate={(id) => { setCurrentId(id); closeSheet(); }}
                             />
                         )}
 
