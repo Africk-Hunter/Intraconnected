@@ -57,7 +57,9 @@ function MobileHelpSheet({ onClose }: Props) {
                                 <p className="mmobile-help-text">Blue nodes have related ideas inside. Tap to explore them.</p>
                                 <span className="mmobile-help-badge mmobile-help-badge--link">Link</span>
                                 <p className="mmobile-help-text">Yellow nodes link to external pages. They can't have child ideas.</p>
-                                <span className="mmobile-help-badge mmobile-help-badge--checklist-node">☑</span>
+                                <span className="mmobile-help-badge mmobile-help-badge--checklist-node">
+                                    <span className="mmobile-checklist-inline-cb mmobile-checklist-inline-cb--checked" />
+                                </span>
                                 <p className="mmobile-help-text">Indigo nodes are checklists. Tap to expand items inline, or tap the icon in the header to open the full view.</p>
                             </div>
                         </>
@@ -84,7 +86,7 @@ function MobileHelpSheet({ onClose }: Props) {
                                 </div>
                             </div>
                             <div className="mmobile-help-grid">
-                                <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapIcon.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
+                                <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapIconSkinny.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
                                 <p className="mmobile-help-text">Tap this button in the bottom bar to open Navigate, a full tree of all your ideas. Tap any node to jump there.</p>
                             </div>
                         </>
@@ -96,7 +98,7 @@ function MobileHelpSheet({ onClose }: Props) {
                             <div className="mmobile-help-grid">
                                 <span className="mmobile-help-badge mmobile-help-badge--edit"><img src="/images/Pen.svg" className="mmobile-help-badge-icon" alt="Edit" /></span>
                                 <p className="mmobile-help-text">Tap the <strong>pencil</strong> to enter edit mode. In edit mode, tapping a node opens its action sheet instead of navigating into it.</p>
-                                <span className="mmobile-help-badge mmobile-help-badge--patchnotes"><img src="/images/PatchNotesIcon.svg" className="mmobile-help-badge-icon" alt="Patch notes" /></span>
+                                <span className="mmobile-help-badge mmobile-help-badge--patchnotes"><img src="/images/PatchNotesIconSkinny.svg" className="mmobile-help-badge-icon" alt="Patch notes" /></span>
                                 <p className="mmobile-help-text">Tap the <strong>patch notes</strong> button in the bottom bar to see what's new in the latest updates.</p>
                             </div>
                         </>

@@ -111,7 +111,9 @@ function Idea() {
             }
 
             const loadedIdeas = getIdeasByParentID(rootId);
-            rootIdStack.current.push(rootId);
+            if (rootIdStack.current.length === 0) {
+                rootIdStack.current.push(rootId);
+            }
             setIdeas(loadedIdeas);
         }
 

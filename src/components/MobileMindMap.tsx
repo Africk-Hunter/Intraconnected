@@ -342,7 +342,7 @@ function MobileMindMap() {
 
             <div className="mmobile-list">
                 {children.length === 0 ? (
-                    <div className="mmobile-empty">No ideas here yet.<br />Tap + to plant one.</div>
+                    <div className="mmobile-empty">No ideas here yet.<br />Tap + to create one.</div>
                 ) : children.map(child => {
                     const hasKids = allIdeas.some(i => i.parentID === child.id);
                     const childLink = getIdeaLink(child);
@@ -372,7 +372,7 @@ function MobileMindMap() {
                                         onTouchEnd={e => e.stopPropagation()}
                                         onMouseDown={e => e.stopPropagation()}
                                     >
-                                        <img src="/images/OpenIcon.svg" alt="Open full view" />
+                                        <img src="/images/OpenIconSkinny.svg" alt="Open full view" />
                                     </button>
                                     <span className="mmobile-node-arrow">{editMode ? '✎' : isExpanded ? '▾' : '▸'}</span>
                                 </div>
@@ -460,14 +460,14 @@ function MobileMindMap() {
                         }
                         setShowPatchNotes(p => !p);
                     }}
-                ><img src="/images/PatchNotesIcon.svg" alt="Patch notes" /></button>
+                ><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" /></button>
                 <button
                     className={`mmobile-navigate-btn${sheet?.type === 'navigate' ? ' mmobile-navigate-btn--active' : ''}`}
                     onClick={() => setSheet({ type: 'navigate' })}
                 >
-                    <img src="/images/MindMapIcon.svg" alt="Navigate" />
+                    <img src="/images/MindMapIconSkinny.svg" alt="Navigate" />
                 </button>
-                <button className="mmobile-fab" onClick={addChild}><img src="/images/MobileCreationArrow.svg" alt="Create" /></button>
+                <button className="mmobile-fab" onClick={addChild}><img src="/images/SkinnyPlus.svg" alt="Create" /></button>
                 <button
                     className={`mmobile-edit-btn${editMode ? ' mmobile-edit-btn--active' : ''}`}
                     onClick={() => setEditMode(e => !e)}
@@ -496,7 +496,7 @@ function MobileMindMap() {
                                         </button>
                                     ) : (
                                         <button className="mmobile-action-btn mmobile-action-btn--open" onClick={() => { setCurrentId(sheetNode.id); closeSheet(); setEditMode(false); }}>
-                                            <img src="/images/OpenIcon.svg" alt="" className="mmobile-action-icon" />Open
+                                            <img src="/images/OpenIconSkinny.svg" alt="" className="mmobile-action-icon" />Open
                                         </button>
                                     )
                                 )}

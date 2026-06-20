@@ -4,6 +4,11 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.03.4 — Icon Refresh & Help Polish — 2026-06-20
+- New skinny icon variants across mobile FAB area (MindMap, Open, PatchNotes, Plus); navigate and patch notes buttons colored teal and yellow
+- Help screens polished: checklist badge uses real CSS checkbox, patch notes shown as real button, node type order fixed
+- Bug fix: `rootIdStack` no longer double-pushes root on re-render
+
 ## V 1.03.3 — Expanded Help & Streamlined Onboarding — 2026-06-19
 - Help carousel expanded from 3 to 5 screens (desktop + mobile)
 - Desktop screens 4–5: Mind Map overview, depth dots + patch notes

@@ -118,9 +118,7 @@
     &.helpChecklist {
         background: $indigo;
         color: white;
-        padding: .5rem 0.75rem;
-        line-height: 1.2;
-        text-align: center;
+        padding: .65rem 1.25rem;
     }
 
     &.helpTrash {
@@ -363,19 +361,6 @@
     @media (min-width: $large-desktop) {
         width: 2rem;
         height: 2rem;
-    }
-}
-
-.help-patchnotes-icon {
-    padding: 0.4rem;
-    background: $neutral;
-    width: 2rem;
-    height: 2rem;
-    box-sizing: content-box;
-
-    @media (min-width: $large-desktop) {
-        width: 2.5rem;
-        height: 2.5rem;
     }
 }
 
