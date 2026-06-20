@@ -291,6 +291,10 @@ Description text.
 - **Mobile**: `MobilePatchNotesSheet` bottom sheet; toggled by the ★ button in the FAB area; `showPatchNotes` state is local to `MobileMindMap`
 - Both parse `changelog` at module load (outside the component), not on each render.
 
+**What belongs in CHANGELOG.md:** Only significant new features warrant a changelog entry. Bug fixes and small additions are shipped as `.x` patch version increments and do **not** get a changelog entry — they are silent updates.
+
+**Private dev log:** `DEVLOG.md` at the project root tracks every update (features, bug fixes, small additions). It is never imported or displayed — update it alongside every change, no matter how small.
+
 ### TooltipButton
 
 `TooltipButton` wraps a `<button>` in a `div.tooltip-wrapper` and shows a floating label after a 1000ms hover delay.
