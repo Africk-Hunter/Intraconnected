@@ -1,12 +1,12 @@
-@import "./variables.scss";
-@import "./idea.scss";
-@import "./navbar.scss";
-@import "./auth.scss";
-@import "./help.scss";
-@import "./ideaCreationModal.scss";
-@import "./depth.scss";
-@import "./mobileMindMap.scss";
-@import "./mindmap.scss";
+@use "./variables" as *;
+@use "./idea";
+@use "./navbar";
+@use "./auth";
+@use "./help";
+@use "./ideaCreationModal";
+@use "./depth";
+@use "./mobileMindMap";
+@use "./mindmap";
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 
 html {

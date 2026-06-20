@@ -1,30 +1,21 @@
 import { IdeaType } from "../types";
 
 export function fetchFullIdeaList() {
-    var ideas = localStorage.getItem("ideas");
+    const ideas = localStorage.getItem("ideas");
 
     if (!ideas) {
         console.warn("No ideas found in localStorage.");
         return [];
     }
 
-    const parsedIdeas = JSON.parse(ideas);
-    return parsedIdeas;
+    return JSON.parse(ideas);
 }
-/**
- * Checks if an idea is a leaf (i.e., has no children).
- * @param ideaID The ID of the idea to check.
- * @returns True if the idea is a leaf, false otherwise.
- */
+
 export function checkIfIdeaIsLeaf(ideaID: number): boolean {
     const ideas = fetchFullIdeaList();
     return !ideas.some((idea: IdeaType) => idea.parentID === ideaID);
 }
 
-/**
- * Handles navigating back to the previous root idea.
- * @param params The parameters for handling back navigation.
- */
 export function handleBackClick(params: {
     setRootId: (id: number) => void;
     setRootName: (name: string) => void;
@@ -39,18 +30,10 @@ export function handleBackClick(params: {
         setRootId(newRootId);
 
         const newRoot = ideas.find((idea: IdeaType) => idea.id === newRootId);
-        if (newRoot) {
-            setRootName(newRoot.content);
-        } else {
-            setRootName("Ideas");
-        }
+        setRootName(newRoot ? newRoot.content : "Ideas");
     }
 }
 
-/**
- * Resets the root idea to the default root.
- * @param params The parameters for resetting the root.
- */
 export function returnToRoot(params: {
     setRootId: (id: number) => void;
     setRootName: (name: string) => void;
@@ -78,16 +61,9 @@ export function returnToRootOfID(params: { setRootId: (id: number) => void; setR
 export function getParentID(parentID: number): number {
     const ideas = fetchFullIdeaList();
     const idea = ideas.find((idea: IdeaType) => idea.id === parentID);
-
-    const parentsParentID = idea ? idea.parentID : null;
-    return parentsParentID ? parentsParentID : 1;
+    return idea?.parentID ?? 1;
 }
 
-/**
- * Gets the name of an idea by its ID.
- * @param id The ID of the idea to check.
- * @returns The name of the idea, or null if not found.
- */
 export function getNameFromID(id: number): string {
     const ideas = fetchFullIdeaList();
     const idea = ideas.find((idea: IdeaType) => idea.id === id);
@@ -105,23 +81,19 @@ export function cleanLink(userLink: string): string {
     userLink = userLink.trim();
     if (userLink === '') return '';
 
-    // Normalize http → https, and strip any other protocol to re-add https
     const protocolMatch = userLink.match(/^([a-zA-Z][a-zA-Z0-9+\-.]*):\/\//);
     if (protocolMatch) {
         const proto = protocolMatch[1].toLowerCase();
         if (proto === 'http') {
             userLink = 'https://' + userLink.slice(protocolMatch[0].length);
         }
-        // Already has a protocol (https, ftp, etc.) — return as-is
         return userLink;
     }
 
-    // Strip accidental leading www-only entries so we can re-prefix cleanly
     userLink = 'https://' + userLink;
 
-    // Append .com only when the hostname has no TLD (no dot before any / or ?)
     const afterProtocol = userLink.slice('https://'.length);
-    const hostname = afterProtocol.split(/[/?#]/)[0].split(':')[0]; // ignore port
+    const hostname = afterProtocol.split(/[/?#]/)[0].split(':')[0];
     if (hostname !== 'localhost' && !hostname.includes('.')) {
         const rest = afterProtocol.slice(hostname.length);
         userLink = 'https://' + hostname + '.com' + rest;

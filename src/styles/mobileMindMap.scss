@@ -1,4 +1,5 @@
-@import "./variables.scss";
+@use 'sass:color';
+@use "./variables" as *;
 
 .mmobile {
     display: none;
@@ -604,7 +605,7 @@
     box-sizing: border-box;
 
     &:focus {
-        background: lighten($sky, 35%);
+        background: color.adjust($sky, $lightness: 35%);
     }
 
     &--grow {

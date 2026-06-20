@@ -55,7 +55,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
             setNodeType('checklist');
             return;
         }
-        if (link && link !== '') {
+        if (link !== '') {
             setNodeType('link');
             return;
         }
@@ -200,7 +200,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }
 
     return (
-        link && link !== "" ? (
+        link !== "" ? (
             <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
                 <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>
@@ -210,7 +210,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         ) : (
             <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}`} {...attributes} {...listeners}>
                 {title}
-                {isLeaf ? <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button> : <></>}
+                {isLeaf && <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>}
                 <button className="renameButtonNode copy" onClick={changeName}><img src='images/Pen.svg' alt="Rename" className="copyImg" /></button>
                 <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </div>

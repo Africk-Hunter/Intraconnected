@@ -2,10 +2,6 @@ import { IdeaType, ChecklistItem } from "../types";
 import { updateIdeaParentIdInFirebase, updateChecklistItemsInFirebase } from "../firebase/firebaseHelpers";
 import { fetchFullIdeaList } from "./helpers";
 
-/**
- * Deletes an idea from localStorage by its ID.
- * @param id The ID of the idea to delete.
- */
 export function deleteFromLocalStorage(id: number) {
     const ideas = localStorage.getItem("ideas");
     if (!ideas) {
@@ -18,11 +14,6 @@ export function deleteFromLocalStorage(id: number) {
     localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
 }
 
-/**
- * Updates the parent ID of an idea in localStorage.
- * @param id The ID of the idea to update.
- * @param newParentId The new parent ID.
- */
 export function updateIdeaParentId(id: number, newParentId: number) {
     const ideas = fetchFullIdeaList();
 
@@ -36,12 +27,8 @@ export function updateIdeaParentId(id: number, newParentId: number) {
     updateIdeaParentIdInFirebase(id, newParentId);
 }
 
-/**
- * Appends a new idea to localStorage.
- * @param idea The idea to append.
- */
 export function appendToLocalStorageFromFrontend(idea: IdeaType) {
-    let currentData = localStorage.getItem("ideas");
+    const currentData = localStorage.getItem("ideas");
     if (currentData === null) {
         localStorage.setItem("ideas", JSON.stringify([idea]));
     } else {

@@ -133,7 +133,6 @@ export async function deleteIdeaFromFirebase(ideaId: number) {
     try {
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await deleteDoc(ideaDoc);
-        console.log("Idea deleted successfully");
     } catch (error) {
         console.error("Error deleting idea: ", error);
     }
@@ -146,7 +145,6 @@ export async function updateIdeaParentIdInFirebase(ideaId: number, newParentId: 
     try {
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { parentID: newParentId }, { merge: true });
-        console.log("Idea parent ID updated successfully");
     } catch (error) {
         console.error("Error updating idea parent ID: ", error);
     }
@@ -160,7 +158,6 @@ export async function updateIdeaNameInFirebase(ideaId: number, newName: string) 
         const dek = getDEK();
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { content: await encryptField(newName, dek) }, { merge: true });
-        console.log("Idea name updated successfully");
     } catch (error) {
         console.error("Error updating idea name: ", error);
     }
@@ -174,7 +171,6 @@ export async function updateIdeaLinkInFirebase(ideaId: number, newLink: string) 
         const dek = getDEK();
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { link: await encryptField(newLink, dek) }, { merge: true });
-        console.log("Idea link updated successfully");
     } catch (error) {
         console.error("Error updating idea link: ", error);
     }
