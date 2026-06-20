@@ -1,4 +1,5 @@
 import { fetchIdeasFromFirebase } from "../firebase/firebaseHelpers";
+import { IdeaType } from "../types";
 
 export async function fetchFromFirebaseAndOrganizeIdeas() {
     clearLocalStorage();
@@ -13,7 +14,7 @@ function clearLocalStorage() {
     localStorage.clear();
 }
 
-function organizeIdeas(ideas: { id: number; content: string; parentID: number }[]) {
+function organizeIdeas(ideas: IdeaType[]) {
     ideas.forEach(idea => {
         appendToLocalStorageFromFirebase("ideas", idea);
     });

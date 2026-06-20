@@ -35,6 +35,8 @@ interface IdeaContextType {
     setMessageBoxMessage: (message: string) => void;
     messageType: string;
     setMessageType: (type: string) => void;
+    checklistModalId: number | null;
+    setChecklistModalId: (id: number | null) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -57,6 +59,7 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [currentLink, setCurrentLink] = useState<string>("");
     const [currentNameChangeId, setCurrentNameChangeId] = useState<number>(-1);
     const [selectedIdeaName, setSelectedIdeaName] = useState<string>("");
+    const [checklistModalId, setChecklistModalId] = useState<number | null>(null);
 
     const rootIdStack = useRef<number[]>([]);
 
@@ -96,6 +99,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setMessageBoxMessage,
                 messageType,
                 setMessageType,
+                checklistModalId,
+                setChecklistModalId,
             }}>
             {children}
         </IdeaContext.Provider>

@@ -1,5 +1,5 @@
-import { IdeaType } from "../types";
-import { updateIdeaParentIdInFirebase } from "../firebase/firebaseHelpers";
+import { IdeaType, ChecklistItem } from "../types";
+import { updateIdeaParentIdInFirebase, updateChecklistItemsInFirebase } from "../firebase/firebaseHelpers";
 import { fetchFullIdeaList } from "./helpers";
 
 /**
@@ -73,4 +73,16 @@ export function updateIdeaLink(id: number, newLink: string) {
         return idea;
     });
     localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+}
+
+export function updateChecklistItems(id: number, items: ChecklistItem[]) {
+    const ideas = fetchFullIdeaList();
+    const updatedIdeas = ideas.map((idea: IdeaType) => {
+        if (idea.id === id && idea.type === 'checklist') {
+            return { ...idea, items };
+        }
+        return idea;
+    });
+    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+    updateChecklistItemsInFirebase(id, items);
 }

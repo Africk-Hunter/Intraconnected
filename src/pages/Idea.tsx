@@ -21,18 +21,20 @@ import {
     fetchFullIdeaList,
     handleBackClick,
     handleIdeaCreation,
+    handleChecklistCreation,
     fetchFromFirebaseAndOrganizeIdeas,
     getIdeasByParentID,
     signUserOut,
     IdeaType,
-updateIdeaParentId,
+    updateIdeaParentId,
     getParentID,
     getNameFromID,
     checkIfIdeaIsLeaf,
-    geLinkFromID
+    getIdeaLink,
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
+import ChecklistModal from '../components/modals/ChecklistModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
 
@@ -103,7 +105,8 @@ function Idea() {
 
         const activeId = Number(active.id.split('-')[1]);
         const overId = Number(over.id.split('-')[1]);
-        const overLink = geLinkFromID(overId);
+        const overIdea = fetchFullIdeaList().find((i: IdeaType) => i.id === overId);
+        const overLink = getIdeaLink(overIdea);
 
         if (over.id === 'trash') {
             setPendingDeleteId(activeId);
@@ -161,10 +164,7 @@ function Idea() {
                                     {ideas?.map((idea: IdeaType) => (
                                         <IdeaNode
                                             key={idea.id}
-                                            id={idea.id}
-                                            title={idea.content}
-                                            parentID={idea.parentID}
-                                            link={idea.link}
+                                            idea={idea}
                                             isLeaf={checkIfIdeaIsLeaf(idea.id)}
                                         />
                                     ))}
@@ -185,7 +185,8 @@ function Idea() {
             <RenameModal />
             <LinkChangeModal />
             <DeleteConfirmModal />
-            <CreationModal handleIdeaCreation={handleIdeaCreation} />
+            <ChecklistModal />
+            <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} />
         </DndContext>
     );
 }

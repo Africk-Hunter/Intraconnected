@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdeaType } from '../utilities';
+import { IdeaType, getIdeaLink } from '../utilities';
 
 interface Props {
     nodeId: number;
@@ -66,11 +66,14 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
             .filter(i => i.parentID === parentId && !hidden.has(i.id))
             .flatMap(child => {
                 const visibleKids = allIdeas.filter(i => i.parentID === child.id && !hidden.has(i.id));
-                const isDisabled = disabled.has(child.id);
+                const isChecklist = child.type === 'checklist';
+                const isDisabled = disabled.has(child.id) || isChecklist;
                 const isExpanded = expandedMoveNodes.has(child.id);
                 const isCurrentParent = child.id === movingNode?.parentID;
                 const hasKids = allIdeas.some(i => i.parentID === child.id);
-                const colorClass = child.link
+                const colorClass = isChecklist
+                    ? 'mmobile-move-btn--checklist'
+                    : getIdeaLink(child)
                     ? 'mmobile-move-btn--link'
                     : hasKids ? 'mmobile-move-btn--parent'
                     : 'mmobile-move-btn--leaf';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, MouseEvent } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
-import { fetchFullIdeaList, IdeaType } from '../utilities';
+import { fetchFullIdeaList, IdeaType, getIdeaLink } from '../utilities';
 
 interface TreeNodeProps {
     ideaId: number;
@@ -19,13 +19,16 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
     const children = allIdeas.filter(i => Number(i.parentID) === ideaId);
     const hasKids = children.length > 0;
 
-    const isLink = !!idea.link;
+    const isLink = !!getIdeaLink(idea);
+    const isChecklist = idea.type === 'checklist';
 
     const btnClass = [
         'mm-node-btn',
         ideaId === 1 ? 'mm-node-btn--root' : '',
         ideaId === currentRootId
             ? 'mm-node-btn--current'
+            : isChecklist
+            ? 'mm-node-btn--checklist'
             : isLink
             ? 'mm-node-btn--link'
             : hasKids
@@ -36,8 +39,9 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
     const isRoot = ideaId === 1;
 
     function handleClick() {
+        if (isChecklist) return;
         if (isLink) {
-            window.open(idea.link, '_blank', 'noopener,noreferrer');
+            window.open(getIdeaLink(idea), '_blank', 'noopener,noreferrer');
         } else {
             onNavigate(idea);
         }

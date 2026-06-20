@@ -1,0 +1,10 @@
+<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="4" height="30" rx="2" fill="black"/>
+<rect width="4" height="30" rx="2" transform="matrix(0 -1 -1 0 30 31)" fill="black"/>
+<rect x="30" y="31" width="4" height="30" rx="2" transform="rotate(180 30 31)" fill="black"/>
+<rect width="4" height="30" rx="2" transform="matrix(0 1 1 0 0 0)" fill="black"/>
+<rect width="4" height="18" rx="2" transform="matrix(0 1 1 0 6 6)" fill="black"/>
+<rect width="4" height="18" rx="2" transform="matrix(0 1 1 0 6 11)" fill="black"/>
+<rect width="4" height="18" rx="2" transform="matrix(0 1 1 0 6 16)" fill="black"/>
+<rect width="4" height="18" rx="2" transform="matrix(0 1 1 0 6 21)" fill="black"/>
+</svg>

@@ -309,9 +309,10 @@
     cursor: pointer;
     -webkit-touch-callout: none;
 
-    &--parent { background: $sky; }
-    &--leaf   { background: $leaf; }
-    &--link   { background: $link; }
+    &--parent    { background: $sky; }
+    &--leaf      { background: $leaf; }
+    &--link      { background: $link; }
+    &--checklist { background: $indigo; color: white; }
 
     &--selectable {
         outline: 3px dashed #111;
@@ -674,11 +675,12 @@
     padding: 11px 14px;
     cursor: pointer;
 
-    &--parent   { background: $sky; }
-    &--leaf     { background: $leaf; }
-    &--link     { background: $link; }
-    &--disabled { opacity: 0.4; cursor: default; }
-    &--current  { outline: 3px solid #111; outline-offset: 2px; opacity: 0.6; cursor: default; }
+    &--parent     { background: $sky; }
+    &--leaf       { background: $leaf; }
+    &--link       { background: $link; }
+    &--checklist  { background: $indigo; color: white; }
+    &--disabled   { opacity: 0.4; cursor: default; }
+    &--current    { outline: 3px solid #111; outline-offset: 2px; opacity: 0.6; cursor: default; }
 }
 
 .mmobile-move-toggle {
@@ -694,6 +696,216 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+// Mobile checklist node — inline accordion
+.mmobile-node--checklist {
+    background: $indigo;
+    .mmobile-node-title { color: white; }
+    .mmobile-node-count { color: rgba(255, 255, 255, 0.65); }
+    .mmobile-node-arrow { color: white; }
+}
+
+.mmobile-node--expanded {
+    flex-direction: column;
+    align-items: stretch;
+    cursor: default;
+}
+
+.mmobile-node-header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.mmobile-checklist-open-btn {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    opacity: 0.7;
+
+    img { width: 16px; height: 16px; filter: invert(1); }
+
+    &:active { opacity: 1; }
+}
+
+.mmobile-checklist-inline {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.mmobile-checklist-inline-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 45vh;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { display: none; }
+}
+
+.mmobile-checklist-inline-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 2px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+    user-select: none;
+    color: white;
+
+    &--checked .mmobile-checklist-inline-text {
+        text-decoration: line-through;
+        opacity: 0.45;
+    }
+
+    &:last-child { border-bottom: none; }
+}
+
+.mmobile-checklist-inline-cb {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.mmobile-checklist-inline-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+.mmobile-checklist-inline-empty {
+    padding: 8px 2px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.9rem;
+}
+
+.mmobile-checklist-inline-input {
+    all: unset;
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px 0;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.7);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-sizing: border-box;
+
+    &::placeholder { color: rgba(255, 255, 255, 0.35); }
+}
+
+// Checklist bottom sheet
+.mmobile-checklist-sheet {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+.mmobile-checklist-sheet-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { display: none; }
+}
+
+.mmobile-checklist-sheet-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid $neutral;
+    font-size: 1rem;
+
+    &:last-child { border-bottom: none; }
+
+    &--checked .mmobile-checklist-sheet-text {
+        text-decoration: line-through;
+        opacity: 0.4;
+    }
+}
+
+.mmobile-checklist-sheet-cb {
+    all: unset;
+    cursor: pointer;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    color: $indigo;
+}
+
+.mmobile-checklist-sheet-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+.mmobile-checklist-sheet-del {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 4px 6px;
+    opacity: 0.4;
+
+    img { width: 16px; height: 16px; }
+
+    &:active { opacity: 1; }
+}
+
+.mmobile-checklist-sheet-empty {
+    padding: 20px;
+    color: #aaa;
+    font-size: 0.95rem;
+}
+
+.mmobile-checklist-sheet-add {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-top: 2px solid $neutral;
+}
+
+.mmobile-checklist-sheet-input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 2px solid #ccc;
+    background: $neutral;
+
+    &:focus { outline: none; border-color: $indigo; }
+}
+
+.mmobile-checklist-sheet-add-btn {
+    all: unset;
+    cursor: pointer;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $indigo;
+    color: white;
+    font-size: 1.4rem;
+    border-radius: 8px;
+    border: 2px solid #111;
+    flex-shrink: 0;
 }
 
 @keyframes mmSheetUp {

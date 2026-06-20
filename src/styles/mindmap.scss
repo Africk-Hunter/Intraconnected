@@ -164,9 +164,19 @@
         box-shadow: 6px 6px 0 2px #111;
     }
 
-    &--parent { background: $sky; }
-    &--leaf   { background: $leaf; }
-    &--link   { background: $link; }
+    &--parent    { background: $sky; }
+    &--leaf      { background: $leaf; }
+    &--link      { background: $link; }
+    &--checklist {
+        background: $indigo;
+        color: white;
+        cursor: default;
+
+        &:hover {
+            box-shadow: 4px 4px 0 2px #111;
+            translate: 0;
+        }
+    }
     &--current {
         background: $roots;
         color: #fff;

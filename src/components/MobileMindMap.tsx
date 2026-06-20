@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
 import {
     IdeaType,
+    ChecklistItem,
     fetchFullIdeaList,
     appendToLocalStorageFromFrontend,
     addIdeaToFirebase,
@@ -10,9 +11,11 @@ import {
     updateIdeaLink,
     updateIdeaLinkInFirebase,
     updateIdeaParentId,
+    updateChecklistItems,
     recursivelyDeleteChildren,
     cleanLink,
     signUserOut,
+    getIdeaLink,
 } from '../utilities';
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
@@ -25,7 +28,8 @@ type SheetState =
     | { type: 'move'; nodeId: number }
     | { type: 'link'; nodeId: number }
     | { type: 'confirmDelete'; nodeId: number }
-    | { type: 'navigate' };
+    | { type: 'navigate' }
+    | { type: 'checklist'; nodeId: number };
 
 function MobileMindMap() {
     const { setNewIdeaSwitch } = useIdeaContext();
@@ -36,6 +40,10 @@ function MobileMindMap() {
     const [editMode, setEditMode] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
+    const [expandedChecklists, setExpandedChecklists] = useState<Set<number>>(new Set());
+    const [inlineDrafts, setInlineDrafts] = useState<Record<number, string>>({});
+    const [sheetItems, setSheetItems] = useState<ChecklistItem[]>([]);
+    const [sheetItemDraft, setSheetItemDraft] = useState('');
 
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressActive = useRef(false);
@@ -78,7 +86,6 @@ function MobileMindMap() {
             lastLongPressTime.current = Date.now();
             setSheet({ type: 'actions', nodeId });
             setEditMode(false);
-            // Swallow the ghost click the browser fires when the finger lifts
             const blockGhostClick = (e: MouseEvent) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -109,12 +116,68 @@ function MobileMindMap() {
             return;
         }
         const node = allIdeas.find(i => i.id === nodeId);
-        if (node?.link) {
-            window.open(node.link, '_blank', 'noopener,noreferrer');
+        if (node?.type === 'checklist') {
+            setExpandedChecklists(prev => {
+                const next = new Set(prev);
+                if (next.has(nodeId)) next.delete(nodeId); else next.add(nodeId);
+                return next;
+            });
+            return;
+        }
+        const nodeLink = getIdeaLink(node);
+        if (nodeLink) {
+            window.open(nodeLink, '_blank', 'noopener,noreferrer');
             return;
         }
         setCurrentId(nodeId);
         setSheet(null);
+    }
+
+    function openChecklistSheet(nodeId: number) {
+        const fresh = fetchFullIdeaList().find(i => i.id === nodeId);
+        setSheetItems(fresh?.type === 'checklist' ? fresh.items : []);
+        setSheetItemDraft('');
+        setSheet({ type: 'checklist', nodeId });
+    }
+
+    function toggleInlineItem(nodeId: number, itemId: string, currentItems: ChecklistItem[]) {
+        const newItems = currentItems.map(item =>
+            item.id === itemId ? { ...item, checked: !item.checked } : item
+        );
+        updateChecklistItems(nodeId, newItems);
+        setNewIdeaSwitch(prev => !prev);
+    }
+
+    function addInlineItem(nodeId: number, currentItems: ChecklistItem[]) {
+        const text = (inlineDrafts[nodeId] ?? '').trim();
+        if (!text) return;
+        const newItems = [...currentItems, { id: String(Date.now()), text, checked: false }];
+        updateChecklistItems(nodeId, newItems);
+        setInlineDrafts(prev => ({ ...prev, [nodeId]: '' }));
+        setNewIdeaSwitch(prev => !prev);
+    }
+
+    function toggleSheetItem(itemId: string, nodeId: number) {
+        const newItems = sheetItems.map(item =>
+            item.id === itemId ? { ...item, checked: !item.checked } : item
+        );
+        setSheetItems(newItems);
+        updateChecklistItems(nodeId, newItems);
+    }
+
+    function deleteSheetItem(itemId: string, nodeId: number) {
+        const newItems = sheetItems.filter(item => item.id !== itemId);
+        setSheetItems(newItems);
+        updateChecklistItems(nodeId, newItems);
+    }
+
+    function addSheetItem(nodeId: number) {
+        const text = sheetItemDraft.trim();
+        if (!text) return;
+        const newItems = [...sheetItems, { id: String(Date.now()), text, checked: false }];
+        setSheetItems(newItems);
+        setSheetItemDraft('');
+        updateChecklistItems(nodeId, newItems);
     }
 
     function goBack() {
@@ -175,12 +238,14 @@ function MobileMindMap() {
     }
 
     const sheetNode = sheet && sheet.type !== 'navigate' ? allIdeas.find(i => i.id === sheet.nodeId) : null;
+    const sheetNodeLink = getIdeaLink(sheetNode ?? undefined);
     const sheetTitle =
         sheet?.type === 'navigate' ? 'Navigate to…' :
         sheet?.type === 'move' ? 'Move under…' :
-        sheet?.type === 'rename' ? (sheet.isNew ? 'Name your idea' : (allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea')) :
-        sheet?.type === 'link' ? (sheetNode?.link ? 'Change link' : 'Add link') :
+        sheet?.type === 'rename' ? (sheet.isNew ? 'Name your idea' : sheetNode?.type === 'checklist' ? 'Rename checklist' : allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea') :
+        sheet?.type === 'link' ? (sheetNodeLink ? 'Change link' : 'Add link') :
         sheet?.type === 'confirmDelete' ? 'Delete idea?' :
+        sheet?.type === 'checklist' ? (sheetNode?.content ?? '') :
         (sheetNode?.content ?? '');
 
     return (
@@ -238,7 +303,81 @@ function MobileMindMap() {
                     <div className="mmobile-empty">No ideas here yet.<br />Tap + to plant one.</div>
                 ) : children.map(child => {
                     const hasKids = allIdeas.some(i => i.parentID === child.id);
-                    const colorClass = child.link
+                    const childLink = getIdeaLink(child);
+
+                    if (child.type === 'checklist') {
+                        const isExpanded = expandedChecklists.has(child.id);
+                        const items = child.items;
+                        const checkedCount = items.filter(i => i.checked).length;
+                        return (
+                            <div
+                                key={child.id}
+                                className={`mmobile-node mmobile-node--checklist${isExpanded ? ' mmobile-node--expanded' : ''}${editMode ? ' mmobile-node--selectable' : ''}`}
+                                onMouseDown={() => startPress(child.id)}
+                                onMouseUp={endPress}
+                                onMouseLeave={endPress}
+                                onTouchStart={() => startPress(child.id)}
+                                onTouchMove={handleTouchMove}
+                                onTouchEnd={(e) => { e.preventDefault(); if (!touchMoved.current) tapNode(child.id); }}
+                                onClick={() => tapNode(child.id)}
+                            >
+                                <div className="mmobile-node-header-row">
+                                    <span className="mmobile-node-title">{child.content}</span>
+                                    <span className="mmobile-node-count">{checkedCount}/{items.length}</span>
+                                    <button
+                                        className="mmobile-checklist-open-btn"
+                                        onClick={e => { e.stopPropagation(); openChecklistSheet(child.id); }}
+                                        onTouchEnd={e => e.stopPropagation()}
+                                        onMouseDown={e => e.stopPropagation()}
+                                    >
+                                        <img src="/images/OpenIcon.svg" alt="Open full view" />
+                                    </button>
+                                    <span className="mmobile-node-arrow">{editMode ? '✎' : isExpanded ? '▾' : '▸'}</span>
+                                </div>
+                                {isExpanded && (
+                                    <div
+                                        className="mmobile-checklist-inline"
+                                        onClick={e => e.stopPropagation()}
+                                        onTouchStart={e => e.stopPropagation()}
+                                        onTouchEnd={e => e.stopPropagation()}
+                                        onMouseDown={e => e.stopPropagation()}
+                                        onMouseUp={e => e.stopPropagation()}
+                                    >
+                                        <ul className="mmobile-checklist-inline-items">
+                                            {items.map(item => (
+                                                <li
+                                                    key={item.id}
+                                                    className={`mmobile-checklist-inline-item${item.checked ? ' mmobile-checklist-inline-item--checked' : ''}`}
+                                                    onClick={e => { e.stopPropagation(); toggleInlineItem(child.id, item.id, items); }}
+                                                >
+                                                    <span className="mmobile-checklist-inline-cb">{item.checked ? '☑' : '☐'}</span>
+                                                    <span className="mmobile-checklist-inline-text">{item.text}</span>
+                                                </li>
+                                            ))}
+                                            {items.length === 0 && (
+                                                <li className="mmobile-checklist-inline-empty">No items yet</li>
+                                            )}
+                                        </ul>
+                                        <input
+                                            className="mmobile-checklist-inline-input"
+                                            placeholder="+ Add item"
+                                            value={inlineDrafts[child.id] ?? ''}
+                                            onChange={e => setInlineDrafts(prev => ({ ...prev, [child.id]: e.target.value }))}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.stopPropagation();
+                                                    addInlineItem(child.id, items);
+                                                }
+                                            }}
+                                            maxLength={200}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+
+                    const colorClass = childLink
                         ? 'mmobile-node--link'
                         : hasKids
                         ? 'mmobile-node--parent'
@@ -270,14 +409,14 @@ function MobileMindMap() {
             </div>
 
             <div className="mmobile-fab-area">
-                <button className="mmobile-patchnotes-btn" onClick={() => setShowPatchNotes(p => !p)}>★</button>
+                <button className="mmobile-patchnotes-btn" onClick={() => setShowPatchNotes(p => !p)}><img src="/images/PatchNotesIcon.svg" alt="Patch notes" /></button>
                 <button
                     className={`mmobile-navigate-btn${sheet?.type === 'navigate' ? ' mmobile-navigate-btn--active' : ''}`}
                     onClick={() => setSheet({ type: 'navigate' })}
                 >
-                    ◎
+                    <img src="/images/MindMapIcon.svg" alt="Navigate" />
                 </button>
-                <button className="mmobile-fab" onClick={addChild}>+</button>
+                <button className="mmobile-fab" onClick={addChild}><img src="/images/MobileCreationArrow.svg" alt="Create" /></button>
                 <button
                     className={`mmobile-edit-btn${editMode ? ' mmobile-edit-btn--active' : ''}`}
                     onClick={() => setEditMode(e => !e)}
@@ -292,21 +431,21 @@ function MobileMindMap() {
                     <div className="mmobile-sheet">
                         <div className="mmobile-sheet-title">
                             {sheetTitle}
-                            {(sheet.type === 'move' || sheet.type === 'navigate') && (
+                            {(sheet.type === 'move' || sheet.type === 'navigate' || sheet.type === 'checklist') && (
                                 <button className="mmobile-sheet-close" onClick={closeSheet}>✕</button>
                             )}
                         </div>
 
                         {sheet.type === 'actions' && sheetNode && (
                             <div className="mmobile-actions">
-                                {!editMode && sheetNode.id !== currentId && (
-                                    sheetNode.link ? (
-                                        <button className="mmobile-action-btn mmobile-action-btn--open" onClick={() => { window.open(sheetNode.link, '_blank', 'noopener,noreferrer'); closeSheet(); }}>
+                                {!editMode && sheetNode.id !== currentId && sheetNode.type !== 'checklist' && (
+                                    sheetNodeLink ? (
+                                        <button className="mmobile-action-btn mmobile-action-btn--open" onClick={() => { window.open(sheetNodeLink, '_blank', 'noopener,noreferrer'); closeSheet(); }}>
                                             <img src="/images/LinkBlack.svg" alt="" className="mmobile-action-icon" />Visit Link
                                         </button>
                                     ) : (
-                                        <button className="mmobile-action-btn mmobile-action-btn--open" onClick={() => tapNode(sheetNode.id)}>
-                                            <img src="/images/RightArrow.svg" alt="" className="mmobile-action-icon" />Open
+                                        <button className="mmobile-action-btn mmobile-action-btn--open" onClick={() => { setCurrentId(sheetNode.id); closeSheet(); setEditMode(false); }}>
+                                            <img src="/images/OpenIcon.svg" alt="" className="mmobile-action-icon" />Open
                                         </button>
                                     )
                                 )}
@@ -314,14 +453,16 @@ function MobileMindMap() {
                                     className="mmobile-action-btn mmobile-action-btn--rename"
                                     onClick={() => { setDraft(sheetNode.content); setSheet({ type: 'rename', nodeId: sheetNode.id }); }}
                                 >
-                                    <img src="/images/Pen.svg" alt="" className="mmobile-action-icon" />{allIdeas.some(i => i.parentID === sheetNode.id) ? 'Rename Idea' : 'Rewrite Idea'}
+                                    <img src="/images/Pen.svg" alt="" className="mmobile-action-icon" />{sheetNode.type === 'checklist' ? 'Rename Checklist' : allIdeas.some(i => i.parentID === sheetNode.id) ? 'Rename Idea' : 'Rewrite Idea'}
                                 </button>
-                                <button
-                                    className="mmobile-action-btn mmobile-action-btn--link"
-                                    onClick={() => { setDraft(sheetNode.link ?? ''); setSheet({ type: 'link', nodeId: sheetNode.id }); }}
-                                >
-                                    <img src="/images/LinkBlack.svg" alt="" className="mmobile-action-icon" />{sheetNode.link ? 'Change link' : 'Add link'}
-                                </button>
+                                {sheetNode.type !== 'checklist' && (
+                                    <button
+                                        className="mmobile-action-btn mmobile-action-btn--link"
+                                        onClick={() => { setDraft(sheetNodeLink); setSheet({ type: 'link', nodeId: sheetNode.id }); }}
+                                    >
+                                        <img src="/images/LinkBlack.svg" alt="" className="mmobile-action-icon" />{sheetNodeLink ? 'Change link' : 'Add link'}
+                                    </button>
+                                )}
                                 <button className="mmobile-action-btn mmobile-action-btn--move" onClick={() => setSheet({ type: 'move', nodeId: sheetNode.id })}>
                                     <img src="/images/Arrow.svg" alt="" className="mmobile-action-icon" />Move under…
                                 </button>
@@ -350,15 +491,15 @@ function MobileMindMap() {
                                         rows={1}
                                     />
                                 ) : (
-                                <input
-                                    autoFocus
-                                    className="mmobile-rename-input"
-                                    value={draft}
-                                    onChange={e => setDraft(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && commitRename()}
-                                    placeholder="Idea name"
-                                    maxLength={100}
-                                />
+                                    <input
+                                        autoFocus
+                                        className="mmobile-rename-input"
+                                        value={draft}
+                                        onChange={e => setDraft(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && commitRename()}
+                                        placeholder="Idea name"
+                                        maxLength={100}
+                                    />
                                 )}
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
@@ -412,6 +553,41 @@ function MobileMindMap() {
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--delete" onClick={() => deleteNode(sheet.nodeId)}>Delete</button>
                                 </div>
                             </>
+                        )}
+
+                        {sheet.type === 'checklist' && (
+                            <div className="mmobile-checklist-sheet">
+                                <ul className="mmobile-checklist-sheet-items">
+                                    {sheetItems.map(item => (
+                                        <li
+                                            key={item.id}
+                                            className={`mmobile-checklist-sheet-item${item.checked ? ' mmobile-checklist-sheet-item--checked' : ''}`}
+                                        >
+                                            <button className="mmobile-checklist-sheet-cb" onClick={() => toggleSheetItem(item.id, sheet.nodeId)}>
+                                                {item.checked ? '☑' : '☐'}
+                                            </button>
+                                            <span className="mmobile-checklist-sheet-text">{item.text}</span>
+                                            <button className="mmobile-checklist-sheet-del" onClick={() => deleteSheetItem(item.id, sheet.nodeId)}>
+                                                <img src="/images/Trash.svg" alt="Delete" />
+                                            </button>
+                                        </li>
+                                    ))}
+                                    {sheetItems.length === 0 && (
+                                        <li className="mmobile-checklist-sheet-empty">No items yet.</li>
+                                    )}
+                                </ul>
+                                <div className="mmobile-checklist-sheet-add">
+                                    <input
+                                        className="mmobile-checklist-sheet-input"
+                                        placeholder="Add item…"
+                                        value={sheetItemDraft}
+                                        onChange={e => setSheetItemDraft(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); addSheetItem(sheet.nodeId); } }}
+                                        maxLength={200}
+                                    />
+                                    <button className="mmobile-checklist-sheet-add-btn" onClick={() => addSheetItem(sheet.nodeId)}>+</button>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </>

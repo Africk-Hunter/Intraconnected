@@ -94,10 +94,9 @@ export function getNameFromID(id: number): string {
     return idea ? idea.content : 'Idea';
 }
 
-export function geLinkFromID(id: number): string {
-    const ideas = fetchFullIdeaList();
-    const idea = ideas.find((idea: IdeaType) => idea.id === id);
-    return idea ? idea.link : '';
+export function getIdeaLink(idea: IdeaType | undefined): string {
+    if (!idea || idea.type === 'checklist') return '';
+    return idea.link ?? '';
 }
 
 export function cleanLink(userLink: string): string {

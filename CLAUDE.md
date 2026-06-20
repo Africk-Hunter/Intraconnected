@@ -35,16 +35,41 @@ npm run preview   # preview production build
 
 Global state lives in `src/context/IdeaContext.tsx` via React Context. All components consume it via `useIdeaContext()`. No Redux or Zustand.
 
+Notable context fields beyond the obvious modal flags:
+- `checklistModalId: number | null` — which checklist is open in `ChecklistModal`; `null` = closed
+- `newIdeaSwitch: boolean` — toggled after any write to force re-reads from localStorage; always toggle **after** the write
+
 ### Idea Data Shape
 
+`IdeaType` is a **discriminated union** in `src/utilities/types.ts`:
+
 ```ts
-interface IdeaType {
+interface ChecklistItem {
+  id: string;        // String(Date.now()) at creation
+  text: string;
+  checked: boolean;
+}
+
+interface StandardIdea {
+  type?: 'standard'; // optional — undefined means standard (backward-compat)
   id: number;        // Date.now() for new ideas, 1 for the root
   content: string;
   parentID: number;
   link: string;      // external URL or empty string
 }
+
+interface ChecklistIdea {
+  type: 'checklist';
+  id: number;
+  content: string;   // the checklist title — used by all name helpers unchanged
+  parentID: number;
+  items: ChecklistItem[];
+}
+
+type IdeaType = StandardIdea | ChecklistIdea;
 ```
+
+Both types share `content` as the primary label so all existing name-display helpers (`getNameFromID`, rename flow, tree views) work without change. Checklist ideas have no `link` field — always use `getIdeaLink(idea)` instead of accessing `.link` directly.
 
 ### End-to-End Encryption
 
@@ -91,9 +116,10 @@ match /users/{userId}/meta/{document} {
 ### Node Types
 
 Determined at render time in `IdeaNode.tsx`:
-- **leaf** — no children, no link → green
+- **leaf** — no children, no link → green (`$leaf`)
 - **parent** — has children → blue (`$sky`)
 - **link** — has a URL → yellow (`$link`)
+- **checklist** — `type === 'checklist'` → indigo (`$indigo`); not navigable, cannot receive DnD drops; clicking the header opens `ChecklistModal`
 
 ## Directory Structure
 
@@ -120,15 +146,16 @@ src/
 │   ├── MessageBox.tsx            # toast notifications
 │   ├── Auth.tsx                  # login/signup form
 │   └── modals/
-│       ├── CreationModal.tsx       # create new idea
-│       ├── RenameModal.tsx         # rename idea or current root
+│       ├── CreationModal.tsx       # create new idea (tabs: Idea | Checklist)
+│       ├── ChecklistModal.tsx      # full-view checklist modal (desktop); opened via checklistModalId context
+│       ├── RenameModal.tsx         # rename idea or current root; says "Rename Checklist" for checklist nodes
 │       ├── LinkChangeModal.tsx     # add/change external link
 │       └── DeleteConfirmModal.tsx  # confirm before deleting
 ├── context/
 │   └── IdeaContext.tsx       # all global state
 ├── utilities/
 │   ├── index.ts              # barrel export
-│   ├── types.ts              # IdeaType interface
+│   ├── types.ts              # IdeaType discriminated union (StandardIdea | ChecklistIdea) + ChecklistItem
 │   ├── parseChangelog.ts     # parses CHANGELOG.md into ChangelogEntry[]
 │   ├── crypto.ts             # AES-256-GCM encryption primitives + DEK/KEK key scheme
 │   ├── dekStore.ts           # in-memory + sessionStorage DEK persistence
@@ -136,10 +163,10 @@ src/
 │   │   ├── firebaseHelpers.tsx   # Firestore CRUD (encrypts/decrypts all idea fields)
 │   │   └── authFirebase.tsx      # sign out (clears DEK)
 │   └── idea/
-│       ├── helpers.tsx       # navigation helpers, name/link lookups, cleanLink()
-│       ├── storage.tsx       # localStorage CRUD
+│       ├── helpers.tsx       # navigation helpers, name/link lookups, cleanLink(), getIdeaLink()
+│       ├── storage.tsx       # localStorage CRUD; updateChecklistItems() for checklist item writes
 │       ├── parsing.tsx       # getIdeasByParentID, recursive delete
-│       ├── creation.tsx      # handleIdeaCreation
+│       ├── creation.tsx      # handleIdeaCreation, handleChecklistCreation
 │       └── organizers.tsx    # fetchFromFirebaseAndOrganizeIdeas
 ├── styles/
 │   ├── variables.scss        # colors, breakpoints
@@ -173,8 +200,11 @@ src/
 ### Firebase collection path
 Ideas are stored at `users/{uid}/ideas/{ideaId}` in Firestore. The Firebase config is hardcoded in `src/firebaseConfig.ts` (no `.env` file).
 
-### `geLinkFromID` typo
-The function is named `geLinkFromID` (missing the `t` in `get`) in `helpers.tsx`. This is the real name — don't rename without updating all call sites in `Idea.tsx` and anywhere else it's imported.
+### Always use `getIdeaLink()` — never access `.link` directly
+`ChecklistIdea` has no `link` field. Accessing `idea.link` directly on an `IdeaType` will cause a TypeScript error (and a runtime `undefined`). Always use `getIdeaLink(idea)` from `utilities/idea/helpers.tsx`, which returns `''` for checklists and unknown ideas.
+
+### Checklist items are encrypted in Firestore
+`firebaseHelpers.tsx` branches on `data.type === 'checklist'`: for checklists it encrypts/decrypts `items[].text` instead of `link`. `updateChecklistItemsInFirebase` encrypts each item's text before writing. Never write raw item text to Firestore directly.
 
 ### Email change breaks email recovery
 `emailEncryptedDEK` is derived from the user's email address at account creation. If a user ever changes their email (not currently a feature), `emailEncryptedDEK` must be re-derived with the new address and updated in Firestore. Failing to do so means "Recover via email" will silently fail — `unwrapDEKWithEmail` will throw because the derived KEK no longer matches.
@@ -222,12 +252,13 @@ Key differences from desktop:
 - **Navigation**: local `currentId` state replaces `rootIdStack`; breadcrumb bar at top replaces depth indicators
 - **Interaction**: tap navigates into a node (or opens link if it has one); long-press (360ms) opens an actions bottom sheet; edit mode (pencil button) makes a single tap open the actions sheet instead; long-press also works on the current root header
 - **Sheets**: uses a local `sheet` state (`SheetState` discriminated union) for bottom sheets — does **not** use context modal flags (`renameModalOpen`, etc.)
-- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete` | `navigate`
+- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete` | `navigate` | `checklist`
 - **Move tree**: rendered by `MobileMoveSheet`; owns `expandedMoveNodes` state and auto-scroll logic; scrollable tree with expand/collapse; auto-scrolls to current parent on open; descendants and current parent are disabled as move targets
 - **Navigate tree**: rendered by `MobileNavigateSheet` (◎ button in FAB area); same tree UI as move but for jumping to any node; link nodes are disabled as destinations; auto-scrolls to the current node on open
 - **Patch notes**: rendered by `MobilePatchNotesSheet` (★ button in FAB area); reuses the help-sheet shell; parses `CHANGELOG.md` via `parseChangelog`
 - **FAB area**: four buttons — ★ (patch notes), ◎ (navigate), + (create), ✎ (edit mode toggle)
-- **Rename vs. rewrite**: the actions sheet and rename sheet label the action "Rename Idea" when the node has children, "Rewrite Idea" when it's a leaf; new ideas use an auto-resizing `<textarea>`, existing renames use a single-line `<input>`
+- **Checklist nodes (mobile)**: tap = toggle inline accordion (expand/collapse items in place); tap the `OpenIcon.svg` button in the header row = open the `checklist` full-view sheet. The `checklist` sheet has its own `sheetItems`/`sheetItemDraft` state initialized fresh from localStorage on open. Checklist nodes cannot be navigated into and cannot receive drops or be moved into. In the move/navigate trees they appear disabled with `mmobile-move-btn--checklist` styling.
+- **Rename vs. rewrite**: the actions sheet and rename sheet label the action "Rename Idea" when the node has children, "Rewrite Idea" when it's a leaf, "Rename Checklist" for checklist nodes; new ideas use an auto-resizing `<textarea>`, existing renames use a single-line `<input>`
 - **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–3); receives only an `onClose` prop
 - **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` normalizes URLs — upgrades `http://` to `https://`, passes through any other existing protocol unchanged, prepends `https://` if no protocol present, and appends `.com` only when the hostname has no TLD (no dot). Never double-adds a protocol.
 - **No DnD**: doesn't use `@dnd-kit` at all; touch events handle long-press detection with `touchMoved` guard to cancel on scroll
@@ -270,9 +301,17 @@ Props:
 
 While visible the button also receives a `tooltip-highlighted` class. All other `<button>` props pass through unchanged. Use this for every nav button; don't add raw `title` attributes alongside it.
 
+### Checklist Ideas
+
+Created via the "Checklist" tab in `CreationModal`. Uses `handleChecklistCreation` in `creation.tsx`.
+
+- **Desktop card** (`IdeaNode.tsx`): renders inline with checkboxes + hover-visible trash icon per item + add-item input. Clicking the header opens `ChecklistModal` (full-view modal). The card is not clickable-to-navigate and cannot receive DnD drops (`useDroppable` disabled for checklists).
+- **Desktop full-view** (`ChecklistModal.tsx`): opened via `checklistModalId` in context. Manages its own item state; writes to localStorage + Firestore via `updateChecklistItems` on every toggle/add/delete.
+- **`checklistModalId`** in context: `number | null` — set to an idea's `id` to open `ChecklistModal`, `null` to close it. `IdeaNode.tsx` sets it on header click; `ChecklistModal` clears it on close.
+
 ### Drag and Drop (Desktop)
 
-Drag is disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash` (delete), `last-idea` (reparent to grandparent), `idea-{id}` (reparent). Link nodes (`link !== ""`) cannot receive drops. `PointerSensor` requires 10px movement before a drag starts (prevents accidental drags on clicks).
+Drag is disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash` (delete), `last-idea` (reparent to grandparent), `idea-{id}` (reparent). Link nodes and **checklist nodes** cannot receive drops (`useDroppable` `disabled: isMobile || isChecklist`). `PointerSensor` requires 10px movement before a drag starts (prevents accidental drags on clicks).
 
 ### SCSS Colors (`variables.scss`)
 

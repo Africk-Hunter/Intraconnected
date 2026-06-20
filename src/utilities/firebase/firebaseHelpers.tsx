@@ -1,6 +1,6 @@
 import { db, auth } from "../../firebaseConfig";
 import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
-import { IdeaType } from "../types";
+import { IdeaType, ChecklistItem } from "../types";
 import { encryptField, decryptField } from "../crypto";
 import { getDEK } from "../dekStore";
 
@@ -51,12 +51,28 @@ export async function fetchIdeasFromFirebase() {
         const dek = getDEK();
         const ideasCollection = collection(db, "users", user.uid, "ideas");
         const ideasSnapshot = await getDocs(ideasCollection);
-        const ideasList = await Promise.all(ideasSnapshot.docs.map(async doc => ({
-            id: doc.data().id as number,
-            content: await decryptField(doc.data().content as string, dek),
-            parentID: doc.data().parentID as number,
-            link: await decryptField(doc.data().link as string | null | undefined, dek),
-        })));
+        const ideasList = await Promise.all(ideasSnapshot.docs.map(async snap => {
+            const data = snap.data();
+            if (data.type === 'checklist') {
+                return {
+                    id: data.id as number,
+                    type: 'checklist' as const,
+                    content: await decryptField(data.content as string, dek),
+                    parentID: data.parentID as number,
+                    items: await Promise.all(((data.items ?? []) as ChecklistItem[]).map(async item => ({
+                        id: item.id,
+                        text: await decryptField(item.text, dek),
+                        checked: item.checked,
+                    }))),
+                };
+            }
+            return {
+                id: data.id as number,
+                content: await decryptField(data.content as string, dek),
+                parentID: data.parentID as number,
+                link: await decryptField(data.link as string | null | undefined, dek),
+            };
+        }));
         return ideasList;
     } catch (error) {
         console.error("Error fetching ideas: ", error);
@@ -70,14 +86,43 @@ export async function addIdeaToFirebase(idea: IdeaType) {
     try {
         const dek = getDEK();
         const ideasCollection = collection(db, "users", user.uid, "ideas");
-        const encrypted = {
-            ...idea,
-            content: await encryptField(idea.content, dek),
-            link: await encryptField(idea.link, dek),
-        };
+        let encrypted: object;
+        if (idea.type === 'checklist') {
+            encrypted = {
+                ...idea,
+                content: await encryptField(idea.content, dek),
+                items: await Promise.all(idea.items.map(async item => ({
+                    ...item,
+                    text: await encryptField(item.text, dek),
+                }))),
+            };
+        } else {
+            encrypted = {
+                ...idea,
+                content: await encryptField(idea.content, dek),
+                link: await encryptField(idea.link, dek),
+            };
+        }
         await setDoc(doc(ideasCollection, idea.id.toString()), encrypted);
     } catch (error) {
         console.error("Error adding idea: ", error);
+    }
+}
+
+export async function updateChecklistItemsInFirebase(ideaId: number, items: ChecklistItem[]) {
+    const user = authCheck();
+    if (!user) return;
+
+    try {
+        const dek = getDEK();
+        const encryptedItems = await Promise.all(items.map(async item => ({
+            ...item,
+            text: await encryptField(item.text, dek),
+        })));
+        const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
+        await setDoc(ideaDoc, { items: encryptedItems }, { merge: true });
+    } catch (error) {
+        console.error("Error updating checklist items: ", error);
     }
 }
 

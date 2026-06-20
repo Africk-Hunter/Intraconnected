@@ -42,8 +42,11 @@ function RenameModal() {
     }
 
     const targetId = editRootOrNot ? rootId : currentNameChangeId;
-    const hasChildren = fetchFullIdeaList().some((idea: any) => idea.parentID === targetId);
-    const actionLabel = hasChildren ? 'Rename Idea' : 'Rewrite Idea';
+    const allIdeas = fetchFullIdeaList();
+    const targetIdea = allIdeas.find((idea: any) => idea.id === targetId);
+    const isChecklist = targetIdea?.type === 'checklist';
+    const hasChildren = allIdeas.some((idea: any) => idea.parentID === targetId);
+    const actionLabel = isChecklist ? 'Rename Checklist' : hasChildren ? 'Rename Idea' : 'Rewrite Idea';
 
     return (
         <>
@@ -60,7 +63,7 @@ function RenameModal() {
                         ></textarea>
                         <section className="modalButtons">
                             <button className="modalButton cancel neobrutal-button" onClick={() => { setRenameModalOpen(false); setCurrentNameChangeId(-1); }}>Cancel</button>
-                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); setRenameModalOpen(false); }}>{hasChildren ? 'Rename' : 'Rewrite'}</button>
+                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); setRenameModalOpen(false); }}>{isChecklist ? 'Rename' : hasChildren ? 'Rename' : 'Rewrite'}</button>
                         </section>
                     </div>
                 </section> : <></>

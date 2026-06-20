@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdeaType } from '../utilities';
+import { IdeaType, getIdeaLink } from '../utilities';
 
 interface Props {
     currentId: number;
@@ -48,9 +48,12 @@ function MobileNavigateSheet({ currentId, allIdeas, onNavigate }: Props) {
                 const hasKids = allIdeas.some(i => i.parentID === child.id);
                 const isExpanded = expandedNodes.has(child.id);
                 const isCurrent = child.id === currentId;
-                const isLink = !!child.link;
-                const isDisabled = isCurrent || isLink;
-                const colorClass = isLink
+                const isLink = !!getIdeaLink(child);
+                const isChecklist = child.type === 'checklist';
+                const isDisabled = isCurrent || isLink || isChecklist;
+                const colorClass = isChecklist
+                    ? 'mmobile-move-btn--checklist'
+                    : isLink
                     ? 'mmobile-move-btn--link'
                     : hasKids
                     ? 'mmobile-move-btn--parent'
@@ -59,7 +62,7 @@ function MobileNavigateSheet({ currentId, allIdeas, onNavigate }: Props) {
                     <div key={child.id} className="mmobile-move-row" style={{ paddingLeft: `${depth * 16}px` }}>
                         <button
                             ref={isCurrent ? el => { currentBtnRef.current = el; } : undefined}
-                            className={`mmobile-move-btn ${colorClass}${isCurrent ? ' mmobile-move-btn--current' : ''}${isLink ? ' mmobile-move-btn--disabled' : ''}`}
+                            className={`mmobile-move-btn ${colorClass}${isCurrent ? ' mmobile-move-btn--current' : ''}${isLink || isChecklist ? ' mmobile-move-btn--disabled' : ''}`}
                             disabled={isDisabled}
                             onClick={isDisabled ? undefined : () => onNavigate(child.id)}
                         >
