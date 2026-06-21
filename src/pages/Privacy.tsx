@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Privacy: React.FC = () => {
     const navigate = useNavigate();
+
+    useEffect(() => {
+        document.title = 'Privacy Policy — Intraconnected';
+    }, []);
 
     return (
         <div className="privacyPage">

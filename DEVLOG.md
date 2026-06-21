@@ -4,11 +4,13 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.03.7 — SEO & Polish — 2026-06-20
+- SEO Optimization
+- Mobile create sheet: optional link input added to new-idea sheet.
+- Bottom bar and sheets use env(safe-area-inset-bottom) to clear iPhone home indicator
+
 ## V 1.03.6 — Mobile Mind Map — 2026-06-20
 - Replaced Navigate bottom sheet with full-screen Mind Map overlay (`MobileMindMapSheet`) with entry animation and styled vertical tree
-- Help screen 4 tree demo redesigned as a CSS vertical tree layout
-- Patch notes icon updated to skinny variant across Navbar, Help screens, and CHANGELOG
-- "Recommend" button label expanded to "Recommend a feature" on both desktop and mobile
 
 ## V 1.03.5 — Checklist Item Drag & Edit — 2026-06-20
 - Drag-to-reorder checklist items in desktop card, desktop modal, and mobile sheet

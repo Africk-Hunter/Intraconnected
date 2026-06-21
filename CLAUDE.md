@@ -1,5 +1,8 @@
 # Intraconnected — CLAUDE.md
 
+## CRITICAL: Git Commits
+**NEVER create a git commit unless the user explicitly tells you to commit.** This applies unconditionally — no exceptions for "commit all changes", "save this", "push", or any ambiguous phrasing. If in doubt, do not commit. Ask first.
+
 ## Project Overview
 
 A node-based mind-mapping / idea-tracking web app. Users create a hierarchical tree of ideas, navigate into any node to treat it as the current root, drag nodes to reparent or delete them, and rename/link nodes via modals.

@@ -132,6 +132,7 @@ function MobileMindMap() {
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
+    const [newIdeaLink, setNewIdeaLink] = useState('');
 
     const sheetSensors = useSensors(useSensor(PointerSensor));
 
@@ -180,6 +181,7 @@ function MobileMindMap() {
     function closeSheet() {
         setSheet(null);
         setEditMode(false);
+        setNewIdeaLink('');
     }
 
     function startPress(nodeId: number) {
@@ -336,7 +338,7 @@ function MobileMindMap() {
         const name = draft.trim() || 'Untitled';
         if (sheet.isNew) {
             const newId = Date.now();
-            const newIdea: IdeaType = { id: newId, content: name, parentID: currentId, link: '' };
+            const newIdea: IdeaType = { id: newId, content: name, parentID: currentId, link: cleanLink(newIdeaLink.trim()) };
             appendToLocalStorageFromFrontend(newIdea);
             addIdeaToFirebase(newIdea);
             setNewIdeaSwitch(prev => !prev);
@@ -672,6 +674,17 @@ function MobileMindMap() {
                                             maxLength={100}
                                         />
                                     )
+                                )}
+
+                                {sheet.isNew && createTab === 'idea' && (
+                                    <input
+                                        className="mmobile-rename-input mmobile-link-input"
+                                        placeholder="Link (optional)"
+                                        value={newIdeaLink}
+                                        onChange={e => setNewIdeaLink(e.target.value)}
+                                        type="url"
+                                        maxLength={500}
+                                    />
                                 )}
 
                                 {sheet.isNew && createTab === 'checklist' && (

@@ -1,0 +1,16 @@
+{
+  "name": "Intraconnected",
+  "short_name": "Intraconnected",
+  "description": "Private end-to-end encrypted mind mapping",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E9F9E5",
+  "theme_color": "#E9F9E5",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

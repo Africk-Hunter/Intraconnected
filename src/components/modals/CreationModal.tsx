@@ -32,6 +32,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
         setActiveTab('idea');
         setisLinkBoxShown(false);
         setLink('');
+        setModalContent('');
         setChecklistTitle('');
         setChecklistItems([]);
         setItemDraft('');
@@ -45,9 +46,8 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
     function handleCreateIdea() {
         handleIdeaCreation(modalContent, rootId, cleanLink(link));
         setCreationModalOpen(false);
-        setisLinkBoxShown(false);
-        setLink('');
         setNewIdeaSwitch(prev => !prev);
+        reset();
     }
 
     function handleCreateChecklist() {
@@ -85,13 +85,13 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
                         <div className="creation-tabs">
                             <button
                                 className={`creation-tab${activeTab === 'idea' ? ' creation-tab--active' : ''}`}
-                                onClick={() => setActiveTab('idea')}
+                                onClick={() => { setModalContent(checklistTitle); setActiveTab('idea'); }}
                             >
                                 Idea
                             </button>
                             <button
                                 className={`creation-tab${activeTab === 'checklist' ? ' creation-tab--active' : ''}`}
-                                onClick={() => setActiveTab('checklist')}
+                                onClick={() => { setChecklistTitle(modalContent); setActiveTab('checklist'); }}
                             >
                                 Checklist
                             </button>
@@ -99,11 +99,13 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
 
                         {activeTab === 'idea' && (
                             <section className="contentHolder">
-                                <textarea ref={textareaRef} autoFocus={true} maxLength={200} className="ideaContent" placeholder='Whats your idea?' onChange={(e) => { setModalContent(e.target.value); autoResize(); }}></textarea>
-                                <button className="linkButton" onClick={() => setisLinkBoxShown(prev => !prev)}>
-                                    <img src="/images/Link.svg" alt="Add Link" />
-                                    <input type="text" className={`linkInput neobrutal-input ${isLinkBoxShown && 'show'}`} placeholder='Add a link' onClick={(e) => e.stopPropagation()} onChange={(e) => setLink(e.target.value)} />
-                                </button>
+                                <textarea ref={textareaRef} autoFocus={true} maxLength={200} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => { setModalContent(e.target.value); autoResize(); }}></textarea>
+                                <div className="linkArea">
+                                    <button className="linkButton neobrutal-button" onClick={() => setisLinkBoxShown(prev => !prev)}>
+                                        Add Link
+                                    </button>
+                                    <input type="text" className={`linkInput neobrutal-input${isLinkBoxShown ? ' show' : ''}`} placeholder='Add a link' onClick={(e) => e.stopPropagation()} onChange={(e) => setLink(e.target.value)} />
+                                </div>
                             </section>
                         )}
 

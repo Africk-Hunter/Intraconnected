@@ -67,11 +67,6 @@ function MobilePatchNotesSheet({ onClose }: { onClose: () => void }) {
                         <div key={i} className="mmobile-patchnotes-entry">
                             <div className="mmobile-patchnotes-tag-row">
                                 <span className="mmobile-patchnotes-tag">{entry.tag}</span>
-                                {entry.image && (
-                                    <span className="mmobile-patchnotes-tag-icon-box">
-                                        <img src={entry.image} alt="" className="mmobile-patchnotes-tag-icon" />
-                                    </span>
-                                )}
                             </div>
                             <h3 className="mmobile-patchnotes-title">{entry.title}</h3>
                             <p className="mmobile-help-text">{entry.description}</p>

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Allow: /privacy
+Disallow: /main
+
+Sitemap: https://intraconnected.app/sitemap.xml

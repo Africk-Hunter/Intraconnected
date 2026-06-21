@@ -87,7 +87,7 @@ function MobileHelpSheet({ onClose }: Props) {
                             </div>
                             <div className="mmobile-help-grid">
                                 <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapIconSkinny.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
-                                <p className="mmobile-help-text">Tap this button in the bottom bar to open Mind Map, a full tree of all your ideas. Tap any node to jump there, or use ▸ / ▾ to expand and collapse branches.</p>
+                                <p className="mmobile-help-text">The <strong>Mind Map</strong> button opens a full tree of all your ideas. Tap any node to jump there, or use ▸ / ▾ to expand and collapse branches.</p>
                             </div>
                         </>
                     )}
@@ -97,9 +97,9 @@ function MobileHelpSheet({ onClose }: Props) {
                             <h2 className="mmobile-help-title">More Tools</h2>
                             <div className="mmobile-help-grid">
                                 <span className="mmobile-help-badge mmobile-help-badge--edit"><img src="/images/Pen.svg" className="mmobile-help-badge-icon" alt="Edit" /></span>
-                                <p className="mmobile-help-text">Tap the <strong>pencil</strong> to enter edit mode. In edit mode, tapping a node opens its action sheet instead of navigating into it.</p>
+                                <p className="mmobile-help-text">The pencil icon enters <strong>edit mode</strong>. In edit mode, tapping a node opens its action sheet instead of navigating into it.</p>
                                 <span className="mmobile-help-badge mmobile-help-badge--patchnotes"><img src="/images/PatchNotesIconSkinny.svg" className="mmobile-help-badge-icon" alt="Patch notes" /></span>
-                                <p className="mmobile-help-text">Tap the <strong>patch notes</strong> button in the bottom bar to see what's new in the latest updates.</p>
+                                <p className="mmobile-help-text">The <strong>Patch Notes</strong> are a running log of new features and changes. Want to see a new feature? Recommend it using the button in the patch notes!</p>
                             </div>
                         </>
                     )}
