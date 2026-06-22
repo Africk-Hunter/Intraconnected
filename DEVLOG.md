@@ -4,6 +4,12 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.03.11 — Mobile Fixes — 2026-06-22
+- All mobile FAB buttons (help, patch notes, navigate, create, edit) animate their icon on active state (scale up + lift); patch notes and navigate buttons also change background color
+- Mind map sheet entry animation now radial-pops from click origin (same as help/patch notes sheets)
+- Mind map sheet and help sheet bottom edge repositioned to clear the FAB bar instead of overlapping it
+- Sass `lighten()` → `color.adjust()` deprecation fix in `idea.scss` and `mobileMindMap.scss`; overlay uses `100dvh` fallback
+
 ## V 1.03.10 — EVEN MORE POLISH (I guess?) — 2026-06-22
 - Checklist items can now have individual links (optional `link` field on `ChecklistItem`); link button in hover controls on desktop card, desktop modal, and mobile sheet; linked items render as `<a>` tags; Firebase encryption/decryption updated to handle item links
 - Delete confirm modal pop animation now originates from the trash can position instead of cursor; idea name clamped to 4 lines to prevent oversized names from breaking the modal

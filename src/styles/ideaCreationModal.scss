@@ -39,11 +39,13 @@
     align-items: center;
 
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
     position: fixed;
     top: 0;
     left: 0;
     background: rgb(0, 0, 0, 0.5);
+
 }
 
 .overlay--scroll {

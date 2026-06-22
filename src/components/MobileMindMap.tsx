@@ -221,6 +221,7 @@ function MobileMindMap() {
     const [headerDraft, setHeaderDraft] = useState('');
     const [sheetOrigin, setSheetOrigin] = useState({ dx: 0, dy: 0 });
     const [helpOrigin, setHelpOrigin] = useState({ dx: 0, dy: 0 });
+    const [mindMapOrigin, setMindMapOrigin] = useState({ dx: 0, dy: 0 });
 
     const headerTextareaRef = useRef<HTMLTextAreaElement>(null);
     const sheetWasNullRef = useRef(true);
@@ -521,7 +522,7 @@ function MobileMindMap() {
     return (
         <div className="mmobile">
             <div className="mmobile-nav">
-                <button className="mmobile-help" onClick={() => {
+                <button className={`mmobile-help${showHelp ? ' mmobile-help--active' : ''}`} onClick={() => {
                     if (!showHelp) setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
                     setShowHelp(h => !h);
                 }}>
@@ -558,6 +559,7 @@ function MobileMindMap() {
                     allIdeas={allIdeas}
                     onNavigate={(id) => { setCurrentId(id); setShowMindMap(false); setSheet(null); setEditMode(false); }}
                     onClose={() => setShowMindMap(false)}
+                    style={{ '--origin-dx': `${mindMapOrigin.dx}px`, '--origin-dy': `${mindMapOrigin.dy}px` } as React.CSSProperties}
                 />
             )}
 
@@ -711,7 +713,7 @@ function MobileMindMap() {
 
             <div className="mmobile-fab-area">
                 <button
-                    className={`mmobile-patchnotes-btn${isNewPatchNotes ? ' mmobile-patchnotes-btn--new' : ''}`}
+                    className={`mmobile-patchnotes-btn${isNewPatchNotes ? ' mmobile-patchnotes-btn--new' : ''}${showPatchNotes ? ' mmobile-patchnotes-btn--active' : ''}`}
                     onClick={() => {
                         if (!showPatchNotes) {
                             setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
@@ -723,11 +725,17 @@ function MobileMindMap() {
                 ><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" /></button>
                 <button
                     className={`mmobile-navigate-btn${showMindMap ? ' mmobile-navigate-btn--active' : ''}`}
-                    onClick={() => setShowMindMap(m => !m)}
+                    onClick={() => {
+                        if (!showMindMap) setMindMapOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
+                        setShowMindMap(m => !m);
+                    }}
                 >
                     <img src="/images/MindMapIconSkinny.svg" alt="Navigate" />
                 </button>
-                <button className="mmobile-fab" onClick={addChild}><img src="/images/SkinnyPlus.svg" alt="Create" /></button>
+                <button
+                    className={`mmobile-fab${sheet?.type === 'rename' && sheet.isNew ? ' mmobile-fab--active' : ''}`}
+                    onClick={addChild}
+                ><img src="/images/SkinnyPlus.svg" alt="Create" /></button>
                 <button
                     className={`mmobile-edit-btn${editMode ? ' mmobile-edit-btn--active' : ''}`}
                     onClick={() => setEditMode(e => !e)}

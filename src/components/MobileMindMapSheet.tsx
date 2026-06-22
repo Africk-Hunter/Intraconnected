@@ -6,9 +6,10 @@ interface Props {
     allIdeas: IdeaType[];
     onNavigate: (id: number) => void;
     onClose: () => void;
+    style?: React.CSSProperties;
 }
 
-function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose }: Props) {
+function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }: Props) {
     const ideasWithRoot = (() => {
         const hasRoot = allIdeas.some(i => Number(i.id) === 1);
         return hasRoot
@@ -121,7 +122,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose }: Props)
     return (
         <>
             <div className="mmobile-scrim" onClick={onClose} />
-            <div className="mmobile-mindmap-sheet">
+            <div className="mmobile-mindmap-sheet" style={style}>
                 <div className="mmobile-mindmap-header">
                     <span className="mmobile-mindmap-title">Mind Map</span>
                     <button className="mmobile-mindmap-close" onClick={onClose}>✕</button>
