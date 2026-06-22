@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -34,6 +34,14 @@ import { auth } from '../firebaseConfig';
 
 const _changelogEntries = parseChangelog(changelog);
 
+const lastPointer = { x: 0, y: 0 };
+if (typeof window !== 'undefined') {
+    window.addEventListener('pointerdown', (e) => {
+        lastPointer.x = e.clientX;
+        lastPointer.y = e.clientY;
+    }, { passive: true });
+}
+
 type SheetState =
     | { type: 'actions'; nodeId: number }
     | { type: 'rename'; nodeId: number; isNew?: boolean }
@@ -54,7 +62,7 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
-    const editInputRef = useRef<HTMLInputElement>(null);
+    const editInputRef = useRef<HTMLTextAreaElement>(null);
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -64,10 +72,18 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit 
         position: isDragging ? 'relative' as const : undefined,
     };
 
+    useLayoutEffect(() => {
+        if (!isEditing) return;
+        const el = editInputRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+        el.focus();
+    }, [isEditing]);
+
     function startEdit() {
         setEditDraft(item.text);
         setIsEditing(true);
-        setTimeout(() => editInputRef.current?.focus(), 0);
     }
 
     function commitEdit() {
@@ -87,11 +103,17 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit 
             </button>
             <button className="mmobile-checklist-sheet-cb" onClick={() => onToggle(item.id, nodeId)} />
             {isEditing ? (
-                <input
+                <textarea
                     ref={editInputRef}
                     className="mmobile-checklist-sheet-edit-input"
                     value={editDraft}
-                    onChange={e => setEditDraft(e.target.value)}
+                    rows={1}
+                    onChange={e => {
+                        setEditDraft(e.target.value);
+                        const el = e.target;
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 'px';
+                    }}
                     onBlur={commitEdit}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitEdit(); } if (e.key === 'Escape') setIsEditing(false); }}
                     maxLength={200}
@@ -133,6 +155,12 @@ function MobileMindMap() {
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
     const [newIdeaLink, setNewIdeaLink] = useState('');
+    const [headerDraft, setHeaderDraft] = useState('');
+    const [sheetOrigin, setSheetOrigin] = useState({ dx: 0, dy: 0 });
+    const [helpOrigin, setHelpOrigin] = useState({ dx: 0, dy: 0 });
+
+    const headerTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const sheetWasNullRef = useRef(true);
 
     const sheetSensors = useSensors(useSensor(PointerSensor));
 
@@ -150,6 +178,29 @@ function MobileMindMap() {
         const uid = auth.currentUser?.uid;
         syncPatchNotesFromFirebase(uid, _changelogEntries).then(isNew => setIsNewPatchNotes(isNew));
     }, []);
+
+    useEffect(() => {
+        const isOpen = sheet !== null;
+        if (isOpen && sheetWasNullRef.current) {
+            setSheetOrigin({
+                dx: lastPointer.x - window.innerWidth / 2,
+                dy: lastPointer.y - (window.innerHeight - 10),
+            });
+        }
+        sheetWasNullRef.current = !isOpen;
+    }, [sheet]);
+
+    useEffect(() => {
+        const idea = fetchFullIdeaList().find(i => i.id === currentId);
+        setHeaderDraft(idea?.content ?? 'Ideas');
+    }, [currentId]);
+
+    useLayoutEffect(() => {
+        const el = headerTextareaRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    }, [headerDraft]);
 
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressActive = useRef(false);
@@ -324,6 +375,16 @@ function MobileMindMap() {
         setChecklistItems(prev => prev.filter(i => i.id !== itemId));
     }
 
+    function saveHeaderDraft() {
+        const trimmed = headerDraft.trim() || 'Untitled';
+        const currentIdea = fetchFullIdeaList().find(i => i.id === currentId);
+        if (trimmed === currentIdea?.content) return;
+        updateIdeaName(currentId, trimmed);
+        updateIdeaNameInFirebase(currentId, trimmed).then(() => {
+            setNewIdeaSwitch(prev => !prev);
+        });
+    }
+
     function commitRename() {
         if (!sheet || sheet.type !== 'rename') return;
 
@@ -389,7 +450,10 @@ function MobileMindMap() {
     return (
         <div className="mmobile">
             <div className="mmobile-nav">
-                <button className="mmobile-help" onClick={() => setShowHelp(h => !h)}>
+                <button className="mmobile-help" onClick={() => {
+                    if (!showHelp) setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
+                    setShowHelp(h => !h);
+                }}>
                     <img src="/images/QuestionMark.svg" alt="Help" />
                 </button>
                 {canGoBack && (
@@ -405,7 +469,7 @@ function MobileMindMap() {
                                 className={`mmobile-crumb${idea.id === currentId ? ' mmobile-crumb--active' : ''}`}
                                 onClick={() => { setCurrentId(idea.id); setSheet(null); setEditMode(false); }}
                             >
-                                {i > 0 ? '› ' : ''}{idea.content}
+                                {i > 0 ? '› ' : ''}{idea.content.split('\n')[0]}
                             </button>
                         ))}
                     </div>
@@ -415,8 +479,8 @@ function MobileMindMap() {
                 </button>
             </div>
 
-            {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} />}
-            {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} />}
+            {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
+            {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
             {showMindMap && (
                 <MobileMindMapSheet
                     currentId={currentId}
@@ -434,7 +498,21 @@ function MobileMindMap() {
                 onTouchStart={() => startPress(currentId)}
                 onTouchEnd={endPress}
             >
-                <div className="mmobile-header-title">{currentIdea?.content ?? 'Ideas'}</div>
+                <textarea
+                    ref={headerTextareaRef}
+                    className="mmobile-header-title"
+                    value={headerDraft}
+                    rows={1}
+                    onChange={e => {
+                        setHeaderDraft(e.target.value);
+                        const el = e.target;
+                        el.style.height = 'auto';
+                        el.style.height = el.scrollHeight + 'px';
+                    }}
+                    onBlur={saveHeaderDraft}
+                    onMouseDown={e => e.stopPropagation()}
+                    onTouchStart={e => e.stopPropagation()}
+                />
                 <div className="mmobile-header-count">
                     {children.length} {children.length === 1 ? 'idea' : 'ideas'}
                 </div>
@@ -559,6 +637,7 @@ function MobileMindMap() {
                     className={`mmobile-patchnotes-btn${isNewPatchNotes ? ' mmobile-patchnotes-btn--new' : ''}`}
                     onClick={() => {
                         if (!showPatchNotes) {
+                            setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
                             markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);
                             setIsNewPatchNotes(false);
                         }
@@ -583,7 +662,7 @@ function MobileMindMap() {
             {sheet && (
                 <>
                     <div className="mmobile-scrim" onClick={() => { if (Date.now() - lastLongPressTime.current < 400) return; closeSheet(); }} />
-                    <div className="mmobile-sheet">
+                    <div className="mmobile-sheet" style={{ '--origin-dx': `${sheetOrigin.dx}px`, '--origin-dy': `${sheetOrigin.dy}px` } as React.CSSProperties}>
                         <div className="mmobile-sheet-title">
                             {sheetTitle}
                             {(sheet.type === 'move' || sheet.type === 'checklist') && (
@@ -664,14 +743,21 @@ function MobileMindMap() {
                                             rows={1}
                                         />
                                     ) : (
-                                        <input
+                                        <textarea
                                             autoFocus
-                                            className="mmobile-rename-input"
+                                            className="mmobile-rename-input mmobile-rename-input--grow"
                                             value={draft}
-                                            onChange={e => setDraft(e.target.value)}
-                                            onKeyDown={e => e.key === 'Enter' && commitRename()}
+                                            onChange={e => {
+                                                setDraft(e.target.value);
+                                                const el = e.target;
+                                                el.style.height = 'auto';
+                                                el.style.height = el.scrollHeight + 'px';
+                                            }}
+                                            onFocus={e => { const el = e.target; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }}
+                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitRename(); } }}
                                             placeholder="Idea name"
                                             maxLength={100}
+                                            rows={1}
                                         />
                                     )
                                 )}

@@ -1,6 +1,39 @@
 @use './variables' as *;
 
+@keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes overlayOut {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+@keyframes modalPop {
+    from {
+        transform: translate(var(--origin-dx, 0px), var(--origin-dy, 0px)) scale(0.05);
+        opacity: 0;
+    }
+    to {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes modalPopOut {
+    from {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(calc(var(--origin-dx, 0px) * 0.3), calc(var(--origin-dy, 0px) * 0.3)) scale(0.05);
+        opacity: 0;
+    }
+}
+
 .overlay {
+    animation: overlayIn 0.15s ease;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -24,7 +57,13 @@
     }
 }
 
+.overlay--closing {
+    animation: overlayOut 0.15s ease forwards;
+    pointer-events: none;
+}
+
 .neobrutal.modal{
+    animation: modalPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -47,6 +86,10 @@
         width: 42.5rem;
         min-height:24rem;
     }
+}
+
+.overlay--closing .neobrutal.modal {
+    animation: modalPopOut 0.15s ease forwards;
 }
 
 .confirmModal .cancel {
@@ -113,6 +156,33 @@
     box-sizing: border-box;
 }
 
+
+@keyframes linkInputRise {
+    from {
+        opacity: 0;
+        translate: 0 4px;
+        box-shadow: 0px 0px 0 2px black;
+    }
+    to {
+        opacity: 1;
+        translate: 0 0;
+        box-shadow: 4px 4px 0 2px black;
+    }
+}
+
+@keyframes linkInputSink {
+    from {
+        opacity: 1;
+        translate: 0 0;
+        box-shadow: 4px 4px 0 2px black;
+    }
+    to {
+        opacity: 0;
+        translate: 0 4px;
+        box-shadow: 0px 0px 0 2px black;
+    }
+}
+
 .linkButton {
     background: $link;
     font-size: 0.85rem;
@@ -128,23 +198,23 @@
 }
 
 .linkInput {
-    all: unset;
     background: $background-color;
     padding: 0.3rem 0.75rem;
     font-size: 0.85rem;
     font-family: inherit;
     flex: 1;
-    border-radius: 5px;
-    border: 2px solid black;
-    display: none;
+    min-width: 0;
+    box-sizing: border-box;
+    box-shadow: 4px 4px 0 2px black;
+    animation: linkInputRise 0.2s ease forwards;
+
+    &.closing {
+        animation: linkInputSink 0.2s ease forwards;
+    }
 
     &::selection {
         background: $link;
         color: black;
-    }
-
-    &.show {
-        display: block;
     }
 
     @media (min-width: $large-desktop) {

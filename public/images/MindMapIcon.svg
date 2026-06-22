@@ -1,8 +1,5 @@
 <svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="4" height="30" rx="2" fill="black"/>
-<rect width="4" height="30" rx="2" transform="matrix(0 -1 -1 0 30 31)" fill="black"/>
-<rect x="30" y="31" width="4" height="30" rx="2" transform="rotate(180 30 31)" fill="black"/>
-<rect width="4" height="30" rx="2" transform="matrix(0 1 1 0 0 0)" fill="black"/>
+<rect x="2" y="2" width="26" height="27" rx="5" stroke="black" stroke-width="4" fill="none"/>
 <rect width="6" height="10" rx="3" transform="matrix(0 -1 -1 0 20 12)" fill="black"/>
 <rect width="4" height="9" rx="2" transform="matrix(0 -1 -1 0 14 24)" fill="black"/>
 <rect width="4" height="9" rx="2" transform="matrix(0 -1 -1 0 25 24)" fill="black"/>

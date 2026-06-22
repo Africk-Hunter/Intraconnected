@@ -1,11 +1,18 @@
 import { useIdeaContext } from "../../context/IdeaContext";
 import { updateIdeaName, updateIdeaNameInFirebase, fetchFullIdeaList } from "../../utilities";
 import { useEffect, useState } from "react";
+import AnimatedOverlay from "../AnimatedOverlay";
 
 
 function RenameModal() {
 
     const { rootId, rootName, setRootName, renameModalOpen, setRenameModalOpen, modalContent, setModalContent, setNewIdeaSwitch, setCurrentNameChangeId, currentNameChangeId, selectedIdeaName, setSelectedIdeaName } = useIdeaContext();
+
+    function closeModal() {
+        setRenameModalOpen(false);
+        setCurrentNameChangeId(-1);
+        setModalContent('');
+    }
 
     const [editRootOrNot, setEditRootOrNot] = useState(true);
 
@@ -49,26 +56,22 @@ function RenameModal() {
     const actionLabel = isChecklist ? 'Rename Checklist' : hasChildren ? 'Rename Idea' : 'Rewrite Idea';
 
     return (
-        <>
-            {renameModalOpen ?
-                <section className="overlay">
-                    <div className="modal neobrutal">
-                        <textarea
-                            autoFocus={true}
-                            maxLength={100}
-                            className="ideaContent neobrutal-input"
-                            placeholder={`${actionLabel}...`}
-                            value={modalContent} //This needs to be set to something called 'ranameIdeaName.' Doing just root wont work if a rename button is to be added.
-                            onChange={(e) => setModalContent(e.target.value)}
-                        ></textarea>
-                        <section className="modalButtons">
-                            <button className="modalButton cancel neobrutal-button" onClick={() => { setRenameModalOpen(false); setCurrentNameChangeId(-1); }}>Cancel</button>
-                            <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); setRenameModalOpen(false); }}>{isChecklist ? 'Rename' : hasChildren ? 'Rename' : 'Rewrite'}</button>
-                        </section>
-                    </div>
-                </section> : <></>
-            }
-        </>
+        <AnimatedOverlay open={renameModalOpen}>
+            <div className="modal neobrutal">
+                <textarea
+                    autoFocus={true}
+                    maxLength={100}
+                    className="ideaContent neobrutal-input"
+                    placeholder={`${actionLabel}...`}
+                    value={modalContent}
+                    onChange={(e) => setModalContent(e.target.value)}
+                ></textarea>
+                <section className="modalButtons">
+                    <button className="modalButton cancel neobrutal-button" onClick={closeModal}>Cancel</button>
+                    <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); closeModal(); }}>{isChecklist ? 'Rename' : hasChildren ? 'Rename' : 'Rewrite'}</button>
+                </section>
+            </div>
+        </AnimatedOverlay>
     );
 }
 

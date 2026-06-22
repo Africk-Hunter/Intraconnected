@@ -4,12 +4,14 @@ interface TooltipButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
     tooltip: string;
     tooltipSide?: 'left' | 'right';
     alwaysVisible?: boolean;
+    wrapperClassName?: string;
 }
 
 const TooltipButton: React.FC<TooltipButtonProps> = ({
     tooltip,
     tooltipSide = 'right',
     alwaysVisible = false,
+    wrapperClassName,
     className,
     children,
     onMouseEnter,
@@ -32,7 +34,7 @@ const TooltipButton: React.FC<TooltipButtonProps> = ({
     };
 
     return (
-        <div className="tooltip-wrapper">
+        <div className={`tooltip-wrapper${wrapperClassName ? ` ${wrapperClassName}` : ''}`}>
             <button
                 {...props}
                 className={`${className ?? ''}${visible ? ' tooltip-highlighted' : ''}`}

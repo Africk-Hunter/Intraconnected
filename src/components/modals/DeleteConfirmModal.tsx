@@ -1,6 +1,7 @@
 import { useIdeaContext } from "../../context/IdeaContext";
 import { getChildrenToDelete, recursivelyDeleteChildren, getNameFromID, getIdeasByParentID } from "../../utilities";
 import { IdeaType } from "../../utilities";
+import AnimatedOverlay from "../AnimatedOverlay";
 
 function DeleteConfirmModal() {
     const { deleteConfirmModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setIdeas } = useIdeaContext();
@@ -29,19 +30,15 @@ function DeleteConfirmModal() {
     const hasChildren = pendingDeleteId !== null && getIdeasByParentID(pendingDeleteId).length > 0;
 
     return (
-        <>
-            {deleteConfirmModalOpen &&
-                <section className="overlay">
-                    <div className="modal neobrutal confirmModal">
-                        <p className="confirmText">Delete "<strong>{ideaName}</strong>"{hasChildren ? ' and all of its children' : ''}?</p>
-                        <section className="modalButtons">
-                            <button className="modalButton cancel neobrutal-button" onClick={handleCancel}>Cancel</button>
-                            <button className="modalButton delete neobrutal-button" onClick={handleConfirm}>Delete</button>
-                        </section>
-                    </div>
+        <AnimatedOverlay open={deleteConfirmModalOpen}>
+            <div className="modal neobrutal confirmModal">
+                <p className="confirmText">Delete "<strong>{ideaName}</strong>"{hasChildren ? ' and all of its children' : ''}?</p>
+                <section className="modalButtons">
+                    <button className="modalButton cancel neobrutal-button" onClick={handleCancel}>Cancel</button>
+                    <button className="modalButton delete neobrutal-button" onClick={handleConfirm}>Delete</button>
                 </section>
-            }
-        </>
+            </div>
+        </AnimatedOverlay>
     );
 }
 

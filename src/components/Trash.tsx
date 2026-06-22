@@ -1,9 +1,10 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 
-const Trash: React.FC = () => {
+const Trash: React.FC<{ hidden?: boolean }> = ({ hidden }) => {
     const { isOver, setNodeRef } = useDroppable({
         id: 'trash',
+        disabled: hidden,
     });
 
     const style = {
@@ -13,7 +14,7 @@ const Trash: React.FC = () => {
     };
 
     return (
-        <div ref={setNodeRef} style={style} className="largeSideButton neobrutal-button danger trashCan">
+        <div ref={setNodeRef} style={style} className={`largeSideButton neobrutal-button danger trashCan${hidden ? ' trashCan--hidden' : ''}`}>
             <img src="/images/Trash.svg" alt="Trash Can" className="buttonImg" />
         </div>
     );

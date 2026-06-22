@@ -4,6 +4,24 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.03.9 — POLISHING DIS SHII — 2026-06-21
+- All desktop modals (Rename, Delete, Link, Checklist, Creation) now use `AnimatedOverlay` for pop-in/out animations keyed from click origin
+- Mind map always rendered in DOM (opacity/pointer-events toggle); auto-centers on current idea node on open; zoom now pivots around cursor position
+- Checklist nodes display inline as read-only cards in the desktop mind map
+- Desktop mid-section fades out (opacity transition) instead of unmounting when mind map opens; navbar create button and depth holder fade similarly
+- Mobile header title converted to editable textarea (inline rename, saves on blur)
+- Mobile sheet and help/patch notes pop animations changed from slide-up to radial-pop from click origin
+- Mobile rename sheet input upgraded from `<input>` to auto-growing `<textarea>`
+- Mobile checklist sheet edit input upgraded from `<input>` to auto-growing `<textarea>`
+- Mobile navigate button animation: icon scales up and inverts on active state
+- Help badge colors corrected: nav badge → teal, edit badge → yellow
+- Help sheet back button styled consistently (orange, reduced padding)
+- `TooltipButton` accepts `wrapperClassName` prop for hiding the wrapper div
+
+## V 1.03.8 — Mind Map Line Fix — 2026-06-21
+- Fixed collapse toggle line extending past '+' circle when children are hidden
+- Consistent vertical line centering across all mind map connectors
+
 ## V 1.03.7 — SEO & Polish — 2026-06-20
 - SEO Optimization
 - Mobile create sheet: optional link input added to new-idea sheet.

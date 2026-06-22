@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useIdeaContext } from "../../context/IdeaContext";
 import { cleanLink } from "../../utilities";
 import { ChecklistItem } from "../../utilities/types";
+import AnimatedOverlay from "../AnimatedOverlay";
 
 interface CreationModalProps {
     handleIdeaCreation: (content: string, parentId: number, link: string) => void;
@@ -13,6 +14,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
 
     const [activeTab, setActiveTab] = useState<'idea' | 'checklist'>('idea');
     const [isLinkBoxShown, setisLinkBoxShown] = useState(false);
+    const [isLinkClosing, setIsLinkClosing] = useState(false);
     const [link, setLink] = useState('');
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
@@ -28,9 +30,22 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
         el.style.height = el.scrollHeight + 'px';
     }
 
+    function toggleLinkBox() {
+        if (isLinkBoxShown) {
+            setIsLinkClosing(true);
+            setTimeout(() => {
+                setisLinkBoxShown(false);
+                setIsLinkClosing(false);
+            }, 200);
+        } else {
+            setisLinkBoxShown(true);
+        }
+    }
+
     function reset() {
         setActiveTab('idea');
         setisLinkBoxShown(false);
+        setIsLinkClosing(false);
         setLink('');
         setModalContent('');
         setChecklistTitle('');
@@ -78,10 +93,8 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
     }
 
     return (
-        <>
-            {creationModalOpen &&
-                <section className="overlay">
-                    <div className="modal neobrutal">
+        <AnimatedOverlay open={creationModalOpen}>
+            <div className="modal neobrutal">
                         <div className="creation-tabs">
                             <button
                                 className={`creation-tab${activeTab === 'idea' ? ' creation-tab--active' : ''}`}
@@ -101,10 +114,12 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
                             <section className="contentHolder">
                                 <textarea ref={textareaRef} autoFocus={true} maxLength={200} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => { setModalContent(e.target.value); autoResize(); }}></textarea>
                                 <div className="linkArea">
-                                    <button className="linkButton neobrutal-button" onClick={() => setisLinkBoxShown(prev => !prev)}>
+                                    <button className="linkButton neobrutal-button" onClick={toggleLinkBox}>
                                         Add Link
                                     </button>
-                                    <input type="text" className={`linkInput neobrutal-input${isLinkBoxShown ? ' show' : ''}`} placeholder='Add a link' onClick={(e) => e.stopPropagation()} onChange={(e) => setLink(e.target.value)} />
+                                    {isLinkBoxShown && (
+                                        <input type="text" className={`linkInput neobrutal-input${isLinkClosing ? ' closing' : ''}`} placeholder='Add a link...' onClick={(e) => e.stopPropagation()} onChange={(e) => setLink(e.target.value)} value={link} />
+                                    )}
                                 </div>
                             </section>
                         )}
@@ -157,9 +172,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
                             )}
                         </section>
                     </div>
-                </section>
-            }
-        </>
+        </AnimatedOverlay>
     );
 }
 

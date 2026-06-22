@@ -40,16 +40,16 @@ const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShow
                         <TooltipButton tooltip="Help & instructions" tooltipSide="left" className="smallSideButton neutral neobrutal-button navButton" onClick={setShowHelp}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></TooltipButton>
                         <TooltipButton tooltip="Patch notes" tooltipSide="left" alwaysVisible={isNewPatchNotes} className="smallSideButton neutral neobrutal-button navButton patchNotesBtn" onClick={setShowPatchNotes}><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" className="buttonImg" /></TooltipButton>
                     </section>
-                    {!showMindMap && <section className="howDeepHolder">{depthElements}</section>}
+                    <section className={`howDeepHolder${showMindMap ? ' howDeepHolder--hidden' : ''}`}>{depthElements}</section>
                 </nav>
 
                 :
 
                 <nav className="navbar">
-                    <div className={showMindMap ? 'logo-map-box' : ''}>
+                    <div className={`logo-box-wrapper${showMindMap ? ' logo-map-box' : ''}`}>
                         <TooltipButton tooltip="Toggle mind map" tooltipSide="right" className="largeSideButton neutral neobrutal-button navButton" onClick={() => setShowMindMap(prev => !prev)}><img src="/images/Logo.svg" alt="" className="buttonImg logoButton" /></TooltipButton>
                     </div>
-                    {!showMindMap && <TooltipButton tooltip="Create new idea" tooltipSide="right" className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setCreationModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg" /></TooltipButton>}
+                    <TooltipButton tooltip="Create new idea" tooltipSide="right" wrapperClassName={showMindMap ? 'nav-btn--hidden' : ''} className="mediumSideButton leaf neobrutal-button navButton" onClick={() => setCreationModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg" /></TooltipButton>
                 </nav>
             }
         </>

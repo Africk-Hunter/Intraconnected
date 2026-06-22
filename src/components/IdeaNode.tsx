@@ -181,7 +181,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }
 
     // Drag and Drop
-    const { attributes, listeners, setNodeRef: setDraggableRef, transform } = useDraggable({
+    const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
         id: `idea-${id}`,
         disabled: isMobile,
     });
@@ -197,7 +197,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const draggableStyle = {
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         transition: 'none',
-        cursor: 'grabbing',
+        cursor: isChecklist && !isDragging ? undefined : 'grabbing',
     };
     const dropStyle = {
         border: isBeingDraggedOver ? '3px dashed #000' : undefined,

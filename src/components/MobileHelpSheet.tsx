@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 interface Props {
     onClose: () => void;
+    style?: React.CSSProperties;
 }
 
-function MobileHelpSheet({ onClose }: Props) {
+function MobileHelpSheet({ onClose, style }: Props) {
     const [helpScreen, setHelpScreen] = useState(1);
 
     return (
         <>
             <div className="mmobile-scrim" onClick={onClose} />
-            <div className="mmobile-help-sheet">
+            <div className="mmobile-help-sheet" style={style}>
                 <div className="mmobile-help-header">
                     <span className="mmobile-help-pager">{helpScreen} / 5</span>
                     <button className="mmobile-help-close" onClick={onClose}>✕</button>

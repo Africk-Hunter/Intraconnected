@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import changelog from '../CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { containsProfanity } from '../utilities/profanityFilter';
@@ -7,7 +7,7 @@ const entries = parseChangelog(changelog);
 
 type View = 'notes' | 'form' | 'submitting' | 'success' | 'error';
 
-function MobilePatchNotesSheet({ onClose }: { onClose: () => void }) {
+function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?: React.CSSProperties }) {
     const [view, setView] = useState<View>('notes');
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
@@ -53,7 +53,7 @@ function MobilePatchNotesSheet({ onClose }: { onClose: () => void }) {
     return (
         <>
             <div className="mmobile-scrim" onClick={onClose} />
-            <div className="mmobile-help-sheet">
+            <div className="mmobile-help-sheet" style={style}>
                 <div className="mmobile-help-header">
                     <span className="mmobile-help-pager">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</span>
                     {view === 'notes'

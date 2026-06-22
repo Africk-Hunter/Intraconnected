@@ -4,6 +4,14 @@
     position: fixed;
     inset: 0;
     z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+
+    &--visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 
 .mm-body {
@@ -14,9 +22,6 @@
     inset: 0;
     cursor: grab;
     user-select: none;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
 
     background: $background-color;
     background-size: 40px 40px;
@@ -30,8 +35,8 @@
 }
 
 .mm-canvas {
-    flex-shrink: 0;
     padding: 3rem 4rem;
+    display: inline-block;
 }
 
 .mm-empty-msg {
@@ -73,7 +78,8 @@
         content: '';
         position: absolute;
         top: 0;
-        left: calc(50% - 1.5px);
+        left: 50%;
+        transform: translateX(-50%);
         width: 3px;
         height: 28px;
         background: #111;
@@ -131,6 +137,10 @@
         width: 3px;
         background: #111;
         z-index: 0;
+    }
+
+    &--collapsed::before {
+        bottom: 50%;
     }
 
     span {
@@ -220,5 +230,77 @@
     @media (min-width: $large-desktop) {
         font-size: 1.15rem;
         padding: 0.7rem 1.4rem;
+    }
+}
+
+// ── Checklist card (MindMap inline display) ─────────────────────
+
+.mm-checklist-card {
+    border: 3px solid #111;
+    border-radius: 8px;
+    box-shadow: 4px 4px 0 2px #111;
+    background: $indigo;
+    color: #fff;
+    max-width: 200px;
+    min-width: 120px;
+    padding: 0.55rem 0.9rem 0.65rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+
+    &__title {
+        display: block;
+        font-weight: 700;
+        font-size: 0.88rem;
+        line-height: 1.3;
+        word-break: break-word;
+        margin-bottom: 0.45rem;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+        padding-bottom: 0.35rem;
+    }
+
+    &__items {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    &__item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        line-height: 1.3;
+
+        &--checked {
+            opacity: 0.55;
+
+            .mm-checklist-card__text {
+                text-decoration: line-through;
+            }
+        }
+    }
+
+    &__check {
+        flex-shrink: 0;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        width: 1em;
+        text-align: center;
+    }
+
+    &__text {
+        word-break: break-word;
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.1rem;
+        max-width: 250px;
+
+        &__title { font-size: 1.05rem; }
+        &__item  { font-size: 0.95rem; }
     }
 }

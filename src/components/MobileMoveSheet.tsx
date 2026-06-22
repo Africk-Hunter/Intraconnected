@@ -85,7 +85,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                             disabled={isDisabled}
                             onClick={isDisabled ? undefined : () => onMove(nodeId, child.id)}
                         >
-                            {child.content}
+                            {child.content.split('\n')[0]}
                         </button>
                         {visibleKids.length > 0 && (
                             <button className="mmobile-move-toggle" onClick={() => toggleExpanded(child.id)}>
@@ -108,7 +108,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                         disabled={rootDisabled}
                         onClick={rootDisabled ? undefined : () => onMove(nodeId, 1)}
                     >
-                        {root.content}
+                        {root.content.split('\n')[0]}
                     </button>
                     <button className="mmobile-move-toggle" onClick={() => toggleExpanded(1)}>
                         {rootExpanded ? '▾' : '▸'}

@@ -95,7 +95,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose }: Props)
                         className={nodeClass}
                         onClick={handleClick}
                     >
-                        {child.content}
+                        {child.content.split('\n')[0]}
                     </button>
                     {hasKids && (
                         <button className="vtree-toggle" onClick={() => toggleExpanded(id)}>
@@ -134,7 +134,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose }: Props)
                                 className={`vtree-root-btn${rootIsCurrent ? ' vtree-root-btn--current' : ''}`}
                                 onClick={() => { if (!rootIsCurrent) onNavigate(1); }}
                             >
-                                {root.content}
+                                {root.content.split('\n')[0]}
                             </button>
                             {rootHasKids && (
                                 <button className="vtree-toggle" onClick={() => toggleExpanded(1)}>
@@ -144,6 +144,9 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose }: Props)
                         </div>
                     )}
                     {rootExpanded && renderTree(1, [])}
+                </div>
+                <div className="mmobile-mindmap-footer">
+                    <button className="mmobile-mindmap-close-btn" onClick={onClose}>Close</button>
                 </div>
             </div>
         </>

@@ -172,17 +172,15 @@ function Idea() {
         })
     );
 
-
     return (
         <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
                     <Navbar side="left" signUserOut={signUserOut} setShowHelp={handleToggleHelp} setShowPatchNotes={handleTogglePatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
-                    {!showMindMap && <Trash />}
+                    <Trash hidden={showMindMap} />
                 </section>
 
-                {!showMindMap && (
-                    <section className="mid">
+                    <section className={`mid${showMindMap ? ' mid--map-open' : ''}`}>
                         <section className="top">
                             <section className="rootHolder">
                                 <section className="rootAdditionalButtons">
@@ -208,7 +206,6 @@ function Idea() {
                             </main>
                         </section>
                     </section>
-                )}
 
                 <section className="right">
                     <Navbar side="right" signUserOut={signUserOut} setShowHelp={handleToggleHelp} setShowPatchNotes={handleTogglePatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
@@ -217,7 +214,7 @@ function Idea() {
                 </section>
             </section>
             <MobileMindMap />
-            {showMindMap && <MindMap onClose={() => setShowMindMap(false)} />}
+            <MindMap onClose={() => setShowMindMap(false)} visible={showMindMap} />
             <RenameModal />
             <LinkChangeModal />
             <DeleteConfirmModal />

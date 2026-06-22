@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import AnimatedOverlay from '../AnimatedOverlay';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -109,8 +110,6 @@ function ChecklistModal() {
         setTimeout(() => addInputRef.current?.focus(), 50);
     }, [checklistModalId]);
 
-    if (checklistModalId === null) return null;
-
     function close() { setChecklistModalId(null); }
 
     function toggleItem(itemId: string) {
@@ -170,7 +169,7 @@ function ChecklistModal() {
     const checkedCount = items.filter(i => i.checked).length;
 
     return (
-        <section className="overlay overlay--scroll" onClick={close}>
+        <AnimatedOverlay open={checklistModalId !== null} scrollable onClick={close}>
             <div className="modal neobrutal checklistModal" onClick={e => e.stopPropagation()}>
                 <div className="checklistModal-title-row">
                     <span className="checklistModal-title">{title}</span>
@@ -218,7 +217,7 @@ function ChecklistModal() {
                     <button className="modalButton continue neobrutal-button" onClick={addItem} disabled={!draft.trim()}>Add</button>
                 </section>
             </div>
-        </section>
+        </AnimatedOverlay>
     );
 }
 

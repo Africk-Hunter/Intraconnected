@@ -47,17 +47,36 @@
 }
 
 
+.logo-box-wrapper {
+    display: inline-flex;
+    border: 3px solid transparent;
+    border-radius: 14px;
+    padding: 0;
+    box-shadow: 4px 4px 0 2px transparent;
+    background: transparent;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, padding 0.3s ease;
+}
+
 .logo-map-box {
     background: $background-color;
-    border: 3px solid #111;
-    border-radius: 14px;
+    border-color: #111;
     padding: 10px 18px 18px 10px;
-    display: inline-flex;
     box-shadow: 4px 4px 0 2px #111;
+}
 
-    .neobrutal-button {
-        box-shadow: none;
+.howDeepHolder {
+    transition: opacity 0.3s ease;
+
+    &--hidden {
+        opacity: 0;
+        pointer-events: none;
     }
+}
+
+.nav-btn--hidden {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 }
 
 .navButton {
@@ -151,11 +170,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: opacity 0.3s ease;
+
+    &--hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
 }
 
 .buttonImg {
     user-select: none;
-
 
     @media (max-width: $mobile) {
 
