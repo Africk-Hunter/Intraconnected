@@ -13,20 +13,22 @@ interface Props {
     scrollable?: boolean;
     onClick?: () => void;
     children: ReactNode;
+    origin?: { x: number; y: number };
 }
 
-export default function AnimatedOverlay({ open, scrollable, onClick, children }: Props) {
+export default function AnimatedOverlay({ open, scrollable, onClick, children, origin }: Props) {
     const [show, setShow] = useState(open);
     const [closing, setClosing] = useState(false);
-    const [origin, setOrigin] = useState({ x: 0, y: 0 });
+    const [animOrigin, setAnimOrigin] = useState({ x: 0, y: 0 });
     const everOpenedRef = useRef(open);
 
     useEffect(() => {
         if (open) {
             everOpenedRef.current = true;
-            setOrigin({
-                x: lastPointer.x - window.innerWidth / 2,
-                y: lastPointer.y - window.innerHeight / 2,
+            const src = origin ?? lastPointer;
+            setAnimOrigin({
+                x: src.x - window.innerWidth / 2,
+                y: src.y - window.innerHeight / 2,
             });
             setShow(true);
             setClosing(false);
@@ -53,8 +55,8 @@ export default function AnimatedOverlay({ open, scrollable, onClick, children }:
             className={cls}
             onClick={onClick}
             style={{
-                '--origin-dx': `${origin.x}px`,
-                '--origin-dy': `${origin.y}px`,
+                '--origin-dx': `${animOrigin.x}px`,
+                '--origin-dy': `${animOrigin.y}px`,
             } as React.CSSProperties}
         >
             {children}

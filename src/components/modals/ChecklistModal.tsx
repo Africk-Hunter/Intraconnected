@@ -6,20 +6,25 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { ChecklistItem, fetchFullIdeaList, updateChecklistItems } from '../../utilities';
+import { ChecklistItem, fetchFullIdeaList, updateChecklistItems, cleanLink } from '../../utilities';
 
 interface SortableItemProps {
     item: ChecklistItem;
     onToggle: (id: string) => void;
     onDelete: (id: string) => void;
     onEdit: (id: string, newText: string) => void;
+    onLinkChange: (id: string, link: string) => void;
 }
 
-function SortableChecklistItem({ item, onToggle, onDelete, onEdit }: SortableItemProps) {
+function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange }: SortableItemProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
     const editInputRef = useRef<HTMLTextAreaElement>(null);
+    const [isLinking, setIsLinking] = useState(false);
+    const [linkDraft, setLinkDraft] = useState('');
+    const linkInputRef = useRef<HTMLInputElement>(null);
+    const cancelLinkRef = useRef(false);
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -38,6 +43,11 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit }: SortableIte
         el.focus();
     }, [isEditing]);
 
+    useLayoutEffect(() => {
+        if (!isLinking) return;
+        linkInputRef.current?.focus();
+    }, [isLinking]);
+
     function startEdit() {
         setEditDraft(item.text);
         setIsEditing(true);
@@ -47,6 +57,18 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit }: SortableIte
         const text = editDraft.trim();
         if (text && text !== item.text) onEdit(item.id, text);
         setIsEditing(false);
+    }
+
+    function openLink() {
+        setLinkDraft(item.link ?? '');
+        setIsLinking(true);
+    }
+
+    function commitLink() {
+        if (cancelLinkRef.current) { cancelLinkRef.current = false; return; }
+        const url = linkDraft.trim() ? cleanLink(linkDraft.trim()) : '';
+        if (url !== (item.link ?? '')) onLinkChange(item.id, url);
+        setIsLinking(false);
     }
 
     return (
@@ -72,16 +94,57 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit }: SortableIte
                     maxLength={200}
                 />
             ) : (
-                <span className="checklistModal-item-text">{item.text}</span>
+                item.link ? (
+                    <a href={item.link} target="_blank" rel="noreferrer" className="checklistModal-item-text checklistModal-item-text--linked">
+                        {item.text}
+                    </a>
+                ) : (
+                    <span className="checklistModal-item-text">{item.text}</span>
+                )
             )}
             {!isEditing && (
-                <button className="checklistModal-edit-item" onClick={startEdit}>
-                    <img src="images/Pen.svg" alt="Edit" />
-                </button>
+                <>
+                    <button
+                        className={`checklistModal-link-btn${item.link ? ' checklistModal-link-btn--active' : ''}`}
+                        onClick={() => isLinking ? setIsLinking(false) : openLink()}
+                        title={item.link ? 'Edit link' : 'Add link'}
+                    >
+                        <img src="images/LinkBlack.svg" alt="Link" />
+                    </button>
+                    <button className="checklistModal-edit-item" onClick={startEdit}>
+                        <img src="images/Pen.svg" alt="Edit" />
+                    </button>
+                </>
             )}
             <button className="checklistModal-del" onClick={() => onDelete(item.id)}>
                 <img src="images/Trash.svg" alt="Delete" />
             </button>
+            {isLinking && (
+                <div className="checklistModal-item-link-row">
+                    <input
+                        ref={linkInputRef}
+                        className="checklistModal-item-link-input"
+                        value={linkDraft}
+                        onChange={e => setLinkDraft(e.target.value)}
+                        onBlur={commitLink}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitLink(); }
+                            if (e.key === 'Escape') { cancelLinkRef.current = true; setIsLinking(false); }
+                        }}
+                        placeholder="Paste URL, press Enter"
+                        maxLength={500}
+                    />
+                    {item.link && (
+                        <button
+                            className="checklistModal-item-link-clear"
+                            onMouseDown={e => { e.preventDefault(); onLinkChange(item.id, ''); setIsLinking(false); }}
+                            title="Remove link"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+            )}
         </li>
     );
 }
@@ -148,6 +211,14 @@ function ChecklistModal() {
         setNewIdeaSwitch(prev => !prev);
     }
 
+    function linkChangeItem(itemId: string, link: string) {
+        const newItems = items.map(item =>
+            item.id === itemId ? { ...item, link: link || undefined } : item
+        );
+        setItems(newItems);
+        updateChecklistItems(checklistModalId!, newItems);
+    }
+
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
@@ -194,6 +265,7 @@ function ChecklistModal() {
                                         onToggle={toggleItem}
                                         onDelete={deleteItem}
                                         onEdit={editItem}
+                                        onLinkChange={linkChangeItem}
                                     />
                                 ))}
                                 {items.length === 0 && (

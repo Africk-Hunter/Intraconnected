@@ -118,6 +118,15 @@
         font-weight: 800;
     }
 
+    .confirmName {
+        display: -webkit-inline-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        overflow: hidden;
+        vertical-align: bottom;
+        word-break: break-all;
+    }
+
     @media (min-width: $large-desktop) {
         font-size: 2.75rem;
     }
@@ -546,6 +555,7 @@
 
 .checklistModal-item {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: 0.6rem;
     padding: 0.55rem 1rem;
@@ -560,6 +570,7 @@
     }
 
     &:hover .checklistModal-del { opacity: 1; }
+    &:hover .checklistModal-link-btn { opacity: 1; }
 
     @media (min-width: $large-desktop) { font-size: 1.4rem; }
 }
@@ -593,6 +604,12 @@
 .checklistModal-item-text {
     flex: 1;
     word-break: break-word;
+
+    &--linked {
+        color: $indigo;
+        text-decoration: underline;
+        cursor: pointer;
+    }
 }
 
 .checklistModal-edit-item {
@@ -609,6 +626,62 @@
 }
 
 .checklistModal-item:hover .checklistModal-edit-item { opacity: 1; }
+
+.checklistModal-link-btn {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    opacity: 0;
+    padding: 2px 4px;
+    transition: opacity 0.12s ease;
+    border-radius: 3px;
+
+    img { width: 14px; height: 14px; }
+
+    &--active {
+        opacity: 1 !important;
+        background: rgba($link, 0.5);
+    }
+
+    @media (min-width: $large-desktop) { img { width: 18px; height: 18px; } }
+}
+
+.checklistModal-item-link-row {
+    width: 100%;
+    padding: 0.15rem 0 0.25rem 2.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-sizing: border-box;
+}
+
+.checklistModal-item-link-input {
+    all: unset;
+    flex: 1;
+    font-family: inherit;
+    font-size: 0.9rem;
+    border-bottom: 1.5px solid $indigo;
+    padding-bottom: 2px;
+    color: #333;
+    min-width: 0;
+
+    &::placeholder { color: #aaa; }
+
+    @media (min-width: $large-desktop) { font-size: 1.15rem; }
+}
+
+.checklistModal-item-link-clear {
+    all: unset;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #999;
+    padding: 2px 5px;
+    flex-shrink: 0;
+
+    &:hover { color: #333; }
+}
 
 .checklistModal-item-edit-input {
     all: unset;

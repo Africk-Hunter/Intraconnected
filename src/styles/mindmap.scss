@@ -181,8 +181,10 @@
     font-family: inherit;
     cursor: pointer;
     white-space: normal;
-    word-break: break-word;
-    max-width: 160px;
+    word-break: normal;
+    overflow-wrap: normal;
+    max-width: 240px;
+    overflow: hidden;
     text-align: center;
     font-weight: 600;
     line-height: 1.3;

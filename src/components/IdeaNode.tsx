@@ -5,7 +5,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems } from '../utilities';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, cleanLink } from '../utilities';
 
 
 interface IdeaNodeProps {
@@ -18,13 +18,18 @@ interface SortableNodeItemProps {
     onToggle: (e: React.MouseEvent, id: string) => void;
     onDelete: (e: React.MouseEvent, id: string) => void;
     onEdit: (id: string, newText: string) => void;
+    onLinkChange: (id: string, link: string) => void;
 }
 
-function SortableNodeItem({ item, onToggle, onDelete, onEdit }: SortableNodeItemProps) {
+function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange }: SortableNodeItemProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
     const editInputRef = useRef<HTMLTextAreaElement>(null);
+    const [isLinking, setIsLinking] = useState(false);
+    const [linkDraft, setLinkDraft] = useState('');
+    const linkInputRef = useRef<HTMLInputElement>(null);
+    const cancelLinkRef = useRef(false);
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -43,6 +48,11 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit }: SortableNodeItem
         el.focus();
     }, [isEditing]);
 
+    useLayoutEffect(() => {
+        if (!isLinking) return;
+        linkInputRef.current?.focus();
+    }, [isLinking]);
+
     function startEdit(e: React.MouseEvent) {
         e.stopPropagation();
         e.preventDefault();
@@ -54,6 +64,20 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit }: SortableNodeItem
         const text = editDraft.trim();
         if (text && text !== item.text) onEdit(item.id, text);
         setIsEditing(false);
+    }
+
+    function openLink(e: React.MouseEvent) {
+        e.stopPropagation();
+        e.preventDefault();
+        setLinkDraft(item.link ?? '');
+        setIsLinking(true);
+    }
+
+    function commitLink() {
+        if (cancelLinkRef.current) { cancelLinkRef.current = false; return; }
+        const url = linkDraft.trim() ? cleanLink(linkDraft.trim()) : '';
+        if (url !== (item.link ?? '')) onLinkChange(item.id, url);
+        setIsLinking(false);
     }
 
     return (
@@ -80,16 +104,64 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit }: SortableNodeItem
                     maxLength={200}
                 />
             ) : (
-                <span className="checklist-item-text">{item.text}</span>
+                item.link ? (
+                    <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="checklist-item-text checklist-item-text--linked"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {item.text}
+                    </a>
+                ) : (
+                    <span className="checklist-item-text">{item.text}</span>
+                )
             )}
             {!isEditing && (
-                <button className="checklist-item-edit" onClick={startEdit}>
-                    <img src="images/Pen.svg" alt="Edit" />
-                </button>
+                <>
+                    <button
+                        className={`checklist-item-link${item.link ? ' checklist-item-link--active' : ''}`}
+                        onClick={e => { e.stopPropagation(); e.preventDefault(); isLinking ? setIsLinking(false) : openLink(e); }}
+                        title={item.link ? 'Edit link' : 'Add link'}
+                    >
+                        <img src="images/LinkBlack.svg" alt="Link" />
+                    </button>
+                    <button className="checklist-item-edit" onClick={startEdit}>
+                        <img src="images/Pen.svg" alt="Edit" />
+                    </button>
+                </>
             )}
             <button className="checklist-item-delete" onClick={e => onDelete(e, item.id)}>
                 <img src="images/Trash.svg" alt="Delete" />
             </button>
+            {isLinking && (
+                <div className="checklist-item-link-row" onClick={e => { e.stopPropagation(); e.preventDefault(); }}>
+                    <input
+                        ref={linkInputRef}
+                        className="checklist-item-link-input"
+                        value={linkDraft}
+                        onChange={e => setLinkDraft(e.target.value)}
+                        onBlur={commitLink}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitLink(); }
+                            if (e.key === 'Escape') { cancelLinkRef.current = true; setIsLinking(false); }
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        placeholder="Paste URL, press Enter"
+                        maxLength={500}
+                    />
+                    {item.link && (
+                        <button
+                            className="checklist-item-link-clear"
+                            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onLinkChange(item.id, ''); setIsLinking(false); }}
+                            title="Remove link"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+            )}
         </li>
     );
 }
@@ -116,7 +188,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         return window.matchMedia('(max-width: 768px)').matches;
     });
 
-    const [isHidden, setIsHidden] = useState(false);
     const [isFadingIn, setIsFadingIn] = useState(false);
     const prevPendingDeleteRef = useRef<number | null>(null);
 
@@ -124,16 +195,14 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         const wasThisNodePending = prevPendingDeleteRef.current === id;
         prevPendingDeleteRef.current = pendingDeleteId;
 
-        if (pendingDeleteId === id) {
-            setIsHidden(true);
-            setIsFadingIn(false);
-        } else if (wasThisNodePending) {
-            setIsHidden(false);
+        if (wasThisNodePending && pendingDeleteId !== id) {
             setIsFadingIn(true);
             const t = setTimeout(() => setIsFadingIn(false), 1400);
             return () => clearTimeout(t);
         }
     }, [pendingDeleteId, id]);
+
+    const isHidden = pendingDeleteId === id;
 
     useEffect(() => {
         if (isChecklist) {
@@ -279,6 +348,14 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         setNewIdeaSwitch(prev => !prev);
     }
 
+    function linkChangeItem(itemId: string, link: string) {
+        const newItems = localItems.map(item =>
+            item.id === itemId ? { ...item, link: link || undefined } : item
+        );
+        setLocalItems(newItems);
+        updateChecklistItems(id, newItems);
+    }
+
     function handleItemDragEnd(event: DragEndEvent) {
         const { active, over } = event;
         if (!over || active.id === over.id) return;
@@ -319,6 +396,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                                     onToggle={toggleItem}
                                     onDelete={deleteItem}
                                     onEdit={editItem}
+                                    onLinkChange={linkChangeItem}
                                 />
                             ))}
                         </ul>

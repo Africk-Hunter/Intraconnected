@@ -79,7 +79,7 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId } = useIdeaContext();
+    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin } = useIdeaContext();
 
     useEffect(() => {
         const handleVisibilityChange = async () => {
@@ -145,6 +145,11 @@ function Idea() {
         const overLink = getIdeaLink(overIdea);
 
         if (over.id === 'trash') {
+            const trashEl = document.querySelector('.trashCan');
+            if (trashEl) {
+                const rect = trashEl.getBoundingClientRect();
+                setDeleteModalOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+            }
             setPendingDeleteId(activeId);
             setDeleteConfirmModalOpen(true);
         } else if (over.id === 'last-idea') {

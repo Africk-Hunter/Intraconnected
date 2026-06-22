@@ -59,11 +59,15 @@ export async function fetchIdeasFromFirebase() {
                     type: 'checklist' as const,
                     content: await decryptField(data.content as string, dek),
                     parentID: data.parentID as number,
-                    items: await Promise.all(((data.items ?? []) as ChecklistItem[]).map(async item => ({
-                        id: item.id,
-                        text: await decryptField(item.text, dek),
-                        checked: item.checked,
-                    }))),
+                    items: await Promise.all(((data.items ?? []) as ChecklistItem[]).map(async item => {
+                        const result: ChecklistItem = {
+                            id: item.id,
+                            text: await decryptField(item.text, dek),
+                            checked: item.checked,
+                        };
+                        if (item.link) result.link = await decryptField(item.link, dek);
+                        return result;
+                    })),
                 };
             }
             return {
@@ -91,10 +95,11 @@ export async function addIdeaToFirebase(idea: IdeaType) {
             encrypted = {
                 ...idea,
                 content: await encryptField(idea.content, dek),
-                items: await Promise.all(idea.items.map(async item => ({
-                    ...item,
-                    text: await encryptField(item.text, dek),
-                }))),
+                items: await Promise.all(idea.items.map(async item => {
+                    const enc: ChecklistItem = { ...item, text: await encryptField(item.text, dek) };
+                    if (item.link) enc.link = await encryptField(item.link, dek);
+                    return enc;
+                })),
             };
         } else {
             encrypted = {
@@ -115,10 +120,11 @@ export async function updateChecklistItemsInFirebase(ideaId: number, items: Chec
 
     try {
         const dek = getDEK();
-        const encryptedItems = await Promise.all(items.map(async item => ({
-            ...item,
-            text: await encryptField(item.text, dek),
-        })));
+        const encryptedItems = await Promise.all(items.map(async item => {
+            const enc: ChecklistItem = { ...item, text: await encryptField(item.text, dek) };
+            if (item.link) enc.link = await encryptField(item.link, dek);
+            return enc;
+        }));
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { items: encryptedItems }, { merge: true });
     } catch (error) {

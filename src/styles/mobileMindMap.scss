@@ -121,13 +121,14 @@
     top: 0;
     bottom: 0;
     margin: auto;
-    height: fit-content;
     z-index: 31;
     background: $neutral;
     border: 3px solid #111;
     border-radius: 20px;
     padding: 16px;
     max-height: 80vh;
+    max-height: 80dvh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     animation: mmSheetPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -160,6 +161,7 @@
 
 .mmobile-help-content {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     scrollbar-width: none;
 
@@ -1044,6 +1046,11 @@
 .mmobile-checklist-inline-text {
     flex: 1;
     word-break: break-word;
+
+    &--linked {
+        color: lighten($sky, 20%);
+        text-decoration: underline;
+    }
 }
 
 .mmobile-checklist-inline-empty {
@@ -1086,6 +1093,7 @@
 
 .mmobile-checklist-sheet-item {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 12px;
     padding: 12px 20px;
@@ -1150,6 +1158,12 @@
 .mmobile-checklist-sheet-text {
     flex: 1;
     word-break: break-word;
+
+    &--linked {
+        color: $indigo;
+        text-decoration: underline;
+        cursor: pointer;
+    }
 }
 
 .mmobile-checklist-sheet-edit {
@@ -1192,6 +1206,59 @@
     img { width: 16px; height: 16px; }
 
     &:active { opacity: 1; }
+}
+
+.mmobile-checklist-sheet-link {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 4px 6px;
+    opacity: 0.4;
+    border-radius: 4px;
+
+    img { width: 16px; height: 16px; }
+
+    &--active { opacity: 0.9; background: rgba($link, 0.4); }
+    &:active { opacity: 1; }
+}
+
+.mmobile-checklist-sheet-item-link-row {
+    width: 100%;
+    padding: 4px 0 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+.mmobile-checklist-sheet-item-link-input {
+    flex: 1;
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 2px solid #ccc;
+    background: $neutral;
+    min-width: 0;
+
+    &:focus { outline: none; border-color: $indigo; }
+}
+
+.mmobile-checklist-sheet-item-link-clear {
+    all: unset;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #999;
+    flex-shrink: 0;
+
+    &:active { color: #333; }
 }
 
 .mmobile-checklist-sheet-empty {

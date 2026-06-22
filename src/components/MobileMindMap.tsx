@@ -56,13 +56,18 @@ interface SortableMobileItemProps {
     onToggle: (id: string, nodeId: number) => void;
     onDelete: (id: string, nodeId: number) => void;
     onEdit: (id: string, newText: string, nodeId: number) => void;
+    onLinkChange: (id: string, link: string, nodeId: number) => void;
 }
 
-function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit }: SortableMobileItemProps) {
+function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit, onLinkChange }: SortableMobileItemProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
     const editInputRef = useRef<HTMLTextAreaElement>(null);
+    const [isLinking, setIsLinking] = useState(false);
+    const [linkDraft, setLinkDraft] = useState('');
+    const linkInputRef = useRef<HTMLInputElement>(null);
+    const cancelLinkRef = useRef(false);
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -81,6 +86,11 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit 
         el.focus();
     }, [isEditing]);
 
+    useLayoutEffect(() => {
+        if (!isLinking) return;
+        linkInputRef.current?.focus();
+    }, [isLinking]);
+
     function startEdit() {
         setEditDraft(item.text);
         setIsEditing(true);
@@ -90,6 +100,18 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit 
         const text = editDraft.trim();
         if (text && text !== item.text) onEdit(item.id, text, nodeId);
         setIsEditing(false);
+    }
+
+    function openLink() {
+        setLinkDraft(item.link ?? '');
+        setIsLinking(true);
+    }
+
+    function commitLink() {
+        if (cancelLinkRef.current) { cancelLinkRef.current = false; return; }
+        const url = linkDraft.trim() ? cleanLink(linkDraft.trim()) : '';
+        if (url !== (item.link ?? '')) onLinkChange(item.id, url, nodeId);
+        setIsLinking(false);
     }
 
     return (
@@ -119,16 +141,57 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit 
                     maxLength={200}
                 />
             ) : (
-                <span className="mmobile-checklist-sheet-text">{item.text}</span>
+                item.link ? (
+                    <a href={item.link} target="_blank" rel="noreferrer" className="mmobile-checklist-sheet-text mmobile-checklist-sheet-text--linked">
+                        {item.text}
+                    </a>
+                ) : (
+                    <span className="mmobile-checklist-sheet-text">{item.text}</span>
+                )
             )}
             {!isEditing && (
-                <button className="mmobile-checklist-sheet-edit" onClick={startEdit}>
-                    <img src="/images/Pen.svg" alt="Edit" />
-                </button>
+                <>
+                    <button
+                        className={`mmobile-checklist-sheet-link${item.link ? ' mmobile-checklist-sheet-link--active' : ''}`}
+                        onClick={() => isLinking ? setIsLinking(false) : openLink()}
+                        title={item.link ? 'Edit link' : 'Add link'}
+                    >
+                        <img src="/images/LinkBlack.svg" alt="Link" />
+                    </button>
+                    <button className="mmobile-checklist-sheet-edit" onClick={startEdit}>
+                        <img src="/images/Pen.svg" alt="Edit" />
+                    </button>
+                </>
             )}
             <button className="mmobile-checklist-sheet-del" onClick={() => onDelete(item.id, nodeId)}>
                 <img src="/images/Trash.svg" alt="Delete" />
             </button>
+            {isLinking && (
+                <div className="mmobile-checklist-sheet-item-link-row">
+                    <input
+                        ref={linkInputRef}
+                        className="mmobile-checklist-sheet-item-link-input"
+                        value={linkDraft}
+                        onChange={e => setLinkDraft(e.target.value)}
+                        onBlur={commitLink}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitLink(); }
+                            if (e.key === 'Escape') { cancelLinkRef.current = true; setIsLinking(false); }
+                        }}
+                        placeholder="Paste URL, press Enter"
+                        maxLength={500}
+                    />
+                    {item.link && (
+                        <button
+                            className="mmobile-checklist-sheet-item-link-clear"
+                            onMouseDown={e => { e.preventDefault(); onLinkChange(item.id, '', nodeId); setIsLinking(false); }}
+                            title="Remove link"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+            )}
         </li>
     );
 }
@@ -336,6 +399,14 @@ function MobileMindMap() {
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
         setNewIdeaSwitch(prev => !prev);
+    }
+
+    function linkChangeSheetItem(itemId: string, link: string, nodeId: number) {
+        const newItems = sheetItems.map(item =>
+            item.id === itemId ? { ...item, link: link || undefined } : item
+        );
+        setSheetItems(newItems);
+        updateChecklistItems(nodeId, newItems);
     }
 
     function addSheetItem(nodeId: number) {
@@ -575,7 +646,13 @@ function MobileMindMap() {
                                                     onClick={e => { e.stopPropagation(); toggleInlineItem(child.id, item.id, items); }}
                                                 >
                                                     <span className="mmobile-checklist-inline-cb" />
-                                                    <span className="mmobile-checklist-inline-text">{item.text}</span>
+                                                    {item.link ? (
+                                                        <a href={item.link} target="_blank" rel="noreferrer" className="mmobile-checklist-inline-text mmobile-checklist-inline-text--linked" onClick={e => e.stopPropagation()}>
+                                                            {item.text}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="mmobile-checklist-inline-text">{item.text}</span>
+                                                    )}
                                                 </li>
                                             ))}
                                             {items.length === 0 && (
@@ -874,6 +951,7 @@ function MobileMindMap() {
                                                     onToggle={toggleSheetItem}
                                                     onDelete={deleteSheetItem}
                                                     onEdit={editSheetItem}
+                                                    onLinkChange={linkChangeSheetItem}
                                                 />
                                             ))}
                                             {sheetItems.length === 0 && (

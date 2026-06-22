@@ -4,6 +4,13 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.03.10 — EVEN MORE POLISH (I guess?) — 2026-06-22
+- Checklist items can now have individual links (optional `link` field on `ChecklistItem`); link button in hover controls on desktop card, desktop modal, and mobile sheet; linked items render as `<a>` tags; Firebase encryption/decryption updated to handle item links
+- Delete confirm modal pop animation now originates from the trash can position instead of cursor; idea name clamped to 4 lines to prevent oversized names from breaking the modal
+- Mind map tree resets collapse state on close (remounted via `treeKey`); node button max-width increased 160→240px with overflow clipping
+- Mobile sheet container uses `max-height: 80dvh` + `overflow: hidden` to fix content bleed on dynamic viewport heights
+- `IdeaNode` `isHidden` simplified from `useState` to a derived value
+
 ## V 1.03.9 — POLISHING DIS SHII — 2026-06-21
 - All desktop modals (Rename, Delete, Link, Checklist, Creation) now use `AnimatedOverlay` for pop-in/out animations keyed from click origin
 - Mind map always rendered in DOM (opacity/pointer-events toggle); auto-centers on current idea node on open; zoom now pivots around cursor position

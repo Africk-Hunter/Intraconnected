@@ -37,6 +37,8 @@ interface IdeaContextType {
     setMessageType: (type: string) => void;
     checklistModalId: number | null;
     setChecklistModalId: (id: number | null) => void;
+    deleteModalOrigin: { x: number; y: number } | null;
+    setDeleteModalOrigin: (origin: { x: number; y: number } | null) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -60,6 +62,7 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [currentNameChangeId, setCurrentNameChangeId] = useState<number>(-1);
     const [selectedIdeaName, setSelectedIdeaName] = useState<string>("");
     const [checklistModalId, setChecklistModalId] = useState<number | null>(null);
+    const [deleteModalOrigin, setDeleteModalOrigin] = useState<{ x: number; y: number } | null>(null);
 
     const rootIdStack = useRef<number[]>([]);
 
@@ -101,6 +104,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setMessageType,
                 checklistModalId,
                 setChecklistModalId,
+                deleteModalOrigin,
+                setDeleteModalOrigin,
             }}>
             {children}
         </IdeaContext.Provider>

@@ -147,6 +147,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
         return ids;
     }, [allIdeas, rootId]);
 
+    const [treeKey, setTreeKey] = useState(0);
     const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
     const [dragging, setDragging] = useState(false);
     const isDragging = useRef(false);
@@ -162,6 +163,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
     useEffect(() => {
         if (!visible) {
             hasCenteredRef.current = false;
+            setTreeKey(k => k + 1);
             return;
         }
         if (hasCenteredRef.current || allIdeas.length === 0) return;
@@ -284,6 +286,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
                         <p className="mm-empty-msg">Loading ideas…</p>
                     ) : (
                         <TreeNode
+                            key={treeKey}
                             ideaId={1}
                             allIdeas={allIdeas}
                             currentRootId={rootId}
