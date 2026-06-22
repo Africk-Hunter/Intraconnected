@@ -1,8 +1,28 @@
 import { db, auth } from "../../firebaseConfig";
-import { doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch } from "firebase/firestore";
 import { IdeaType, ChecklistItem } from "../types";
 import { encryptField, decryptField } from "../crypto";
 import { getDEK } from "../dekStore";
+
+const SYNC_LS_KEY = 'sync_lastModified';
+
+export async function updateSyncTimestamp(): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const ts = Date.now();
+    const syncDoc = doc(db, "users", user.uid, "meta", "sync");
+    await setDoc(syncDoc, { lastModified: ts }, { merge: true });
+    localStorage.setItem(SYNC_LS_KEY, String(ts));
+}
+
+export async function fetchSyncTimestamp(): Promise<number | null> {
+    const user = authCheck();
+    if (!user) return null;
+    const syncDoc = doc(db, "users", user.uid, "meta", "sync");
+    const snap = await getDoc(syncDoc);
+    if (!snap.exists()) return null;
+    return (snap.data().lastModified as number) ?? null;
+}
 
 function authCheck() {
     const user = auth.currentUser;
@@ -109,6 +129,7 @@ export async function addIdeaToFirebase(idea: IdeaType) {
             };
         }
         await setDoc(doc(ideasCollection, idea.id.toString()), encrypted);
+        await updateSyncTimestamp();
     } catch (error) {
         console.error("Error adding idea: ", error);
     }
@@ -127,6 +148,7 @@ export async function updateChecklistItemsInFirebase(ideaId: number, items: Chec
         }));
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { items: encryptedItems }, { merge: true });
+        await updateSyncTimestamp();
     } catch (error) {
         console.error("Error updating checklist items: ", error);
     }
@@ -139,8 +161,24 @@ export async function deleteIdeaFromFirebase(ideaId: number) {
     try {
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await deleteDoc(ideaDoc);
+        await updateSyncTimestamp();
     } catch (error) {
         console.error("Error deleting idea: ", error);
+    }
+}
+
+export async function batchDeleteIdeasFromFirebase(ids: number[]): Promise<void> {
+    const user = authCheck();
+    if (!user || ids.length === 0) return;
+    try {
+        const batch = writeBatch(db);
+        ids.forEach(id => {
+            batch.delete(doc(db, "users", user.uid, "ideas", id.toString()));
+        });
+        await batch.commit();
+        await updateSyncTimestamp();
+    } catch (error) {
+        console.error("Error batch deleting ideas: ", error);
     }
 }
 
@@ -151,6 +189,7 @@ export async function updateIdeaParentIdInFirebase(ideaId: number, newParentId: 
     try {
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { parentID: newParentId }, { merge: true });
+        await updateSyncTimestamp();
     } catch (error) {
         console.error("Error updating idea parent ID: ", error);
     }
@@ -164,6 +203,7 @@ export async function updateIdeaNameInFirebase(ideaId: number, newName: string) 
         const dek = getDEK();
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { content: await encryptField(newName, dek) }, { merge: true });
+        await updateSyncTimestamp();
     } catch (error) {
         console.error("Error updating idea name: ", error);
     }
@@ -177,6 +217,7 @@ export async function updateIdeaLinkInFirebase(ideaId: number, newLink: string) 
         const dek = getDEK();
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await setDoc(ideaDoc, { link: await encryptField(newLink, dek) }, { merge: true });
+        await updateSyncTimestamp();
     } catch (error) {
         console.error("Error updating idea link: ", error);
     }

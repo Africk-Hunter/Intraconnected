@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { ChecklistItem, fetchFullIdeaList, updateChecklistItems, cleanLink } from '../../utilities';
+import { ChecklistItem, fetchFullIdeaList, updateChecklistItems, scheduleChecklistFirebaseWrite, cleanLink } from '../../utilities';
 
 interface SortableItemProps {
     item: ChecklistItem;
@@ -181,6 +181,7 @@ function ChecklistModal() {
         );
         setItems(newItems);
         updateChecklistItems(checklistModalId!, newItems);
+        scheduleChecklistFirebaseWrite(checklistModalId!, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -188,6 +189,7 @@ function ChecklistModal() {
         const newItems = items.filter(item => item.id !== itemId);
         setItems(newItems);
         updateChecklistItems(checklistModalId!, newItems);
+        scheduleChecklistFirebaseWrite(checklistModalId!, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -198,6 +200,7 @@ function ChecklistModal() {
         setItems(newItems);
         setDraft('');
         updateChecklistItems(checklistModalId!, newItems);
+        scheduleChecklistFirebaseWrite(checklistModalId!, newItems);
         setNewIdeaSwitch(prev => !prev);
         addInputRef.current?.focus();
     }
@@ -208,6 +211,7 @@ function ChecklistModal() {
         );
         setItems(newItems);
         updateChecklistItems(checklistModalId!, newItems);
+        scheduleChecklistFirebaseWrite(checklistModalId!, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -217,6 +221,7 @@ function ChecklistModal() {
         );
         setItems(newItems);
         updateChecklistItems(checklistModalId!, newItems);
+        scheduleChecklistFirebaseWrite(checklistModalId!, newItems);
     }
 
     function handleDragEnd(event: DragEndEvent) {
@@ -227,6 +232,7 @@ function ChecklistModal() {
         const newItems = arrayMove(items, oldIndex, newIndex);
         setItems(newItems);
         updateChecklistItems(checklistModalId!, newItems);
+        scheduleChecklistFirebaseWrite(checklistModalId!, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 

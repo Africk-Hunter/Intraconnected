@@ -25,6 +25,10 @@ export function markPatchNotesSeen(uid: string | undefined, entries: ChangelogEn
 /** Fetches the authoritative version from Firebase, syncs localStorage, and returns whether there are unseen notes. */
 export async function syncPatchNotesFromFirebase(uid: string | undefined, entries: ChangelogEntry[]): Promise<boolean> {
     if (!uid || !entries.length) return false;
+    const cached = localStorage.getItem(storageKey(uid));
+    if (cached !== null) {
+        return cached !== latestTag(entries);
+    }
     const remoteVersion = await fetchLastSeenPatchVersion();
     const latest = latestTag(entries);
     if (remoteVersion !== null) {

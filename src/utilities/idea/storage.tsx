@@ -2,6 +2,17 @@ import { IdeaType, ChecklistItem } from "../types";
 import { updateIdeaParentIdInFirebase, updateChecklistItemsInFirebase } from "../firebase/firebaseHelpers";
 import { fetchFullIdeaList } from "./helpers";
 
+const _checklistTimers = new Map<number, ReturnType<typeof setTimeout>>();
+
+export function scheduleChecklistFirebaseWrite(id: number, items: ChecklistItem[]) {
+    const existing = _checklistTimers.get(id);
+    if (existing) clearTimeout(existing);
+    _checklistTimers.set(id, setTimeout(() => {
+        _checklistTimers.delete(id);
+        updateChecklistItemsInFirebase(id, items);
+    }, 1500));
+}
+
 export function deleteFromLocalStorage(id: number) {
     const ideas = localStorage.getItem("ideas");
     if (!ideas) {
@@ -71,5 +82,4 @@ export function updateChecklistItems(id: number, items: ChecklistItem[]) {
         return idea;
     });
     localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
-    updateChecklistItemsInFirebase(id, items);
 }

@@ -1,17 +1,32 @@
-import { fetchIdeasFromFirebase } from "../firebase/firebaseHelpers";
+import { fetchIdeasFromFirebase, fetchSyncTimestamp, updateSyncTimestamp } from "../firebase/firebaseHelpers";
 import { IdeaType } from "../types";
 
+const SYNC_LS_KEY = 'sync_lastModified';
+
 export async function fetchFromFirebaseAndOrganizeIdeas() {
+    const remoteTs = await fetchSyncTimestamp();
+    const localTs = localStorage.getItem(SYNC_LS_KEY);
+
+    if (remoteTs !== null && localTs !== null && String(remoteTs) === localTs) {
+        return;
+    }
+
     clearLocalStorage();
     const ideas = await fetchIdeasFromFirebase();
-
     if (ideas) {
         organizeIdeas(ideas);
+    }
+
+    if (remoteTs !== null) {
+        localStorage.setItem(SYNC_LS_KEY, String(remoteTs));
+    } else {
+        // No sync doc exists yet — stamp one so subsequent loads can skip the fetch
+        await updateSyncTimestamp();
     }
 }
 
 function clearLocalStorage() {
-    localStorage.clear();
+    localStorage.removeItem('ideas');
 }
 
 function organizeIdeas(ideas: IdeaType[]) {

@@ -5,7 +5,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, cleanLink } from '../utilities';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, scheduleChecklistFirebaseWrite, cleanLink } from '../utilities';
 
 
 interface IdeaNodeProps {
@@ -310,6 +310,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         );
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
+        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     function commitAddItem() {
@@ -320,6 +321,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         setLocalItems(newItems);
         setAddItemDraft('');
         updateChecklistItems(id, newItems);
+        scheduleChecklistFirebaseWrite(id, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -337,6 +339,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         const newItems = localItems.filter(item => item.id !== itemId);
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
+        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     function editItem(itemId: string, newText: string) {
@@ -345,6 +348,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         );
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
+        scheduleChecklistFirebaseWrite(id, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -354,6 +358,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         );
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
+        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     function handleItemDragEnd(event: DragEndEvent) {
@@ -364,6 +369,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         const newItems = arrayMove(localItems, oldIndex, newIndex);
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
+        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     if (isChecklist) {

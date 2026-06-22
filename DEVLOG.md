@@ -4,6 +4,14 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.04 — Firebase Optimization — 2026-06-22
+- Timestamp-based sync guard: on page load, read one `meta/sync` doc instead of the full ideas collection; full fetch only runs when the remote timestamp differs from the locally cached one (cross-device sync, first login, cleared storage)
+- Every Firebase idea write now also updates `meta/sync.lastModified` and mirrors the value to `localStorage`, keeping both sides in lockstep
+- Checklist item writes decoupled from localStorage writes; Firebase write debounced 1.5s per checklist ID so rapid toggling/editing collapses to a single write
+- Subtree deletion replaced with a single `writeBatch` commit across all deleted node IDs instead of one `deleteDoc` call per node
+- Patch notes Firebase read skipped when `localStorage` already has a cached value for the current user; only fetched on first visit per device
+- `clearLocalStorage()` changed from `localStorage.clear()` to `localStorage.removeItem('ideas')` to preserve patch notes and sync timestamp keys across full re-fetches
+
 ## V 1.03.11 — Mobile Fixes — 2026-06-22
 - All mobile FAB buttons (help, patch notes, navigate, create, edit) animate their icon on active state (scale up + lift); patch notes and navigate buttons also change background color
 - Mind map sheet entry animation now radial-pops from click origin (same as help/patch notes sheets)

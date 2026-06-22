@@ -17,6 +17,7 @@ import {
     updateIdeaLinkInFirebase,
     updateIdeaParentId,
     updateChecklistItems,
+    scheduleChecklistFirebaseWrite,
     handleChecklistCreation,
     recursivelyDeleteChildren,
     cleanLink,
@@ -236,6 +237,7 @@ function MobileMindMap() {
         const newItems = arrayMove(sheetItems, oldIndex, newIndex);
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     useEffect(() => {
@@ -367,6 +369,7 @@ function MobileMindMap() {
             item.id === itemId ? { ...item, checked: !item.checked } : item
         );
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -375,6 +378,7 @@ function MobileMindMap() {
         if (!text) return;
         const newItems = [...currentItems, { id: String(Date.now()), text, checked: false }];
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
         setInlineDrafts(prev => ({ ...prev, [nodeId]: '' }));
         setNewIdeaSwitch(prev => !prev);
     }
@@ -385,12 +389,14 @@ function MobileMindMap() {
         );
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function deleteSheetItem(itemId: string, nodeId: number) {
         const newItems = sheetItems.filter(item => item.id !== itemId);
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function editSheetItem(itemId: string, newText: string, nodeId: number) {
@@ -399,6 +405,7 @@ function MobileMindMap() {
         );
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -408,6 +415,7 @@ function MobileMindMap() {
         );
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function addSheetItem(nodeId: number) {
@@ -417,6 +425,7 @@ function MobileMindMap() {
         setSheetItems(newItems);
         setSheetItemDraft('');
         updateChecklistItems(nodeId, newItems);
+        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function goBack() {
