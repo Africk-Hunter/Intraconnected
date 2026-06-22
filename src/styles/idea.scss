@@ -15,7 +15,7 @@
         height: calc(100vh - 5rem);
         margin: 2rem;
 
-        @media (max-width: $mobile) {
+        @media (max-width: 1023px) {
             display: none;
         }
     }
@@ -325,7 +325,7 @@
             font-size: 1.875rem;
             text-align: center;
             justify-content: center;
-            padding: 2.5rem 1rem;
+            padding: 1.875rem 1.125rem;
             gap: 1rem;
 
             @media (min-width: $large-desktop) {
@@ -345,7 +345,7 @@
             text-align: left;
             min-height: 2.625rem;
             width: 14rem;
-            padding: 2.25rem 1.5rem 2rem 1.5rem;
+            padding: 1.75rem 1rem 1.4rem 1rem;
 
             @media (min-width: $large-desktop) {
                 width: 21rem;
@@ -450,7 +450,7 @@
             font-size: 1.875rem;
             text-align: center;
             justify-content: center;
-            padding: 2.25rem 1rem 2.25rem 1rem;
+            padding: 1.5rem 1rem;
             text-decoration: none;
             color: black;
 

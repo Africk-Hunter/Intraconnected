@@ -38,8 +38,10 @@ import {
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
 import ChecklistModal from '../components/modals/ChecklistModal';
+import FeatureImplementedModal from '../components/modals/FeatureImplementedModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
+import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRequests';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -52,10 +54,22 @@ function Idea() {
     const [isNewPatchNotes, setIsNewPatchNotes] = useState(() =>
         isPatchNotesNew(auth.currentUser?.uid, _changelogEntries)
     );
+    const [implementedTitles, setImplementedTitles] = useState<string[] | null>(null);
 
     useEffect(() => {
         const uid = auth.currentUser?.uid;
         syncPatchNotesFromFirebase(uid, _changelogEntries).then(isNew => setIsNewPatchNotes(isNew));
+    }, []);
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (!user) return;
+            unsubscribe();
+            checkAndMarkImplementedFeatures().then(titles => {
+                if (titles) setImplementedTitles(titles);
+            });
+        });
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -225,6 +239,9 @@ function Idea() {
             <DeleteConfirmModal />
             <ChecklistModal />
             <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} />
+            {implementedTitles && (
+                <FeatureImplementedModal titles={implementedTitles} onClose={() => setImplementedTitles(null)} />
+            )}
         </DndContext>
     );
 }

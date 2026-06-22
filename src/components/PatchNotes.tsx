@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import changelog from '../CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { containsProfanity } from '../utilities/profanityFilter';
+import { saveTrackedIssue } from '../utilities/firebase/featureRequests';
 
 interface PatchNotesProps {
     showPatchNotes: boolean;
@@ -52,6 +53,8 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
                 }),
             });
             if (!res.ok) throw new Error();
+            const data = await res.json();
+            saveTrackedIssue(data.number, title.trim());
             setView('success');
         } catch {
             setView('error');

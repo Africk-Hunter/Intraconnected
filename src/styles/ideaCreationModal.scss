@@ -733,3 +733,35 @@
 
     @media (min-width: $large-desktop) { font-size: 1.35rem; }
 }
+
+// Feature implemented celebration modal
+.feature-impl-overlay {
+    z-index: 200;
+}
+
+.confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 201;
+}
+
+.feature-impl-modal {
+    position: relative;
+    z-index: 202;
+    gap: 1.5rem;
+    text-align: center;
+}
+
+.feature-impl-trophy {
+    font-size: 4rem;
+    margin: 0;
+    line-height: 1;
+    animation: trophyBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes trophyBounce {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}

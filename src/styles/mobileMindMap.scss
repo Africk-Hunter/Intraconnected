@@ -8,7 +8,7 @@
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
 
-    @media (max-width: $mobile) {
+    @media (max-width: 1023px) {
         display: flex;
         flex-direction: column;
         position: fixed;
@@ -124,18 +124,17 @@
     position: fixed;
     left: 10px;
     right: 10px;
-    bottom: calc(max(10px, env(safe-area-inset-bottom, 10px)) + 102px);
+    top: 68px;
     z-index: 31;
     background: $neutral;
     border: 3px solid #111;
     border-radius: 20px;
     padding: 16px;
-    max-height: 80vh;
-    max-height: 80dvh;
+    max-height: calc(100dvh - 82px);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transform-origin: 50% 100%;
+    transform-origin: 50% 0%;
     animation: mmHelpSheetPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -1663,4 +1662,313 @@
 @keyframes mmScrimIn {
     from { opacity: 0; }
     to   { opacity: 1; }
+}
+
+// ── Tablet scaling (640px – 1023px) ─────────────────────────────
+@media (min-width: 640px) {
+
+    .mmobile-nav {
+        padding: 22px 28px 14px;
+        gap: 14px;
+    }
+
+    .mmobile-back {
+        font-size: 1.65rem;
+        padding: 10px 20px;
+        border-radius: 15px;
+        box-shadow: 0 5px 0 #111;
+    }
+
+    .mmobile-crumb {
+        font-size: 1.1rem;
+    }
+
+    .mmobile-nav-logo {
+        height: 56px;
+    }
+
+    .mmobile-logout,
+    .mmobile-help {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+
+        img {
+            width: 30px;
+            height: 30px;
+        }
+    }
+
+    .mmobile-header {
+        margin: 0 24px 18px;
+        padding: 22px 26px;
+        border-radius: 18px;
+        box-shadow: 0 7px 0 #111;
+    }
+
+    .mmobile-header-title {
+        font-size: 2.3rem;
+    }
+
+    .mmobile-header-count {
+        font-size: 1rem;
+        margin-top: 6px;
+    }
+
+    .mmobile-list {
+        padding: 0 24px 18px;
+    }
+
+    .mmobile-node {
+        padding: 20px 22px;
+        margin-bottom: 16px;
+        border-radius: 15px;
+        gap: 16px;
+        border-width: 4px;
+        box-shadow: 0 5px 0 #111;
+    }
+
+    .mmobile-node-title {
+        font-size: 1.35rem;
+    }
+
+    .mmobile-node-count {
+        font-size: 1rem;
+    }
+
+    .mmobile-node-arrow {
+        font-size: 1.4rem;
+    }
+
+    .mmobile-empty {
+        font-size: 1.2rem;
+        padding: 40px 24px;
+        border-radius: 15px;
+    }
+
+    .mmobile-select-hint {
+        font-size: 1rem;
+        margin: 0 24px 14px;
+    }
+
+    .mmobile-fab-area {
+        margin: 0 24px max(14px, env(safe-area-inset-bottom, 14px));
+        padding: 18px 24px;
+        border-radius: 28px;
+        border-width: 4px;
+        box-shadow: 0 6px 0 #111;
+    }
+
+    .mmobile-fab,
+    .mmobile-navigate-btn,
+    .mmobile-patchnotes-btn,
+    .mmobile-edit-btn {
+        width: 84px;
+        height: 84px;
+        border-radius: 24px;
+        border-width: 4px;
+        box-shadow: 0 6px 0 #111;
+
+        img {
+            width: 38px;
+            height: 38px;
+        }
+    }
+
+    .mmobile-fab {
+        font-size: 3.1rem;
+    }
+
+    .mmobile-navigate-btn {
+        font-size: 2.5rem;
+    }
+
+    .mmobile-sheet {
+        left: 14px;
+        right: 14px;
+        bottom: calc(max(14px, env(safe-area-inset-bottom, 14px)) + 132px);
+        padding: 22px;
+        border-radius: 26px;
+        border-width: 4px;
+    }
+
+    .mmobile-help-sheet {
+        left: 14px;
+        right: 14px;
+        top: 100px;
+        max-height: calc(100dvh - 114px);
+        padding: 22px;
+        border-radius: 26px;
+        border-width: 4px;
+    }
+
+    .mmobile-sheet-title {
+        font-size: 1.45rem;
+        margin: 4px 0 18px;
+    }
+
+    .mmobile-sheet-close {
+        font-size: 1.35rem;
+    }
+
+    .mmobile-actions {
+        gap: 10px;
+    }
+
+    .mmobile-action-btn {
+        font-size: 1.2rem;
+        padding: 16px 18px;
+        border-radius: 14px;
+        gap: 14px;
+    }
+
+    .mmobile-action-icon {
+        width: 26px;
+        height: 26px;
+    }
+
+    .mmobile-rename-input {
+        font-size: 1.35rem;
+        padding: 18px 20px;
+        border-radius: 14px;
+    }
+
+    .mmobile-sheet-btns {
+        margin-top: 20px;
+        gap: 14px;
+    }
+
+    .mmobile-sheet-btn {
+        font-size: 1.2rem;
+        padding: 17px;
+        border-radius: 14px;
+        box-shadow: 0 4px 0 #111;
+    }
+
+    .mmobile-confirm-text {
+        font-size: 1.2rem;
+        margin: 0 0 22px;
+    }
+
+    .mmobile-move-list {
+        max-height: 480px;
+    }
+
+    .mmobile-move-row {
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+
+    .mmobile-move-btn {
+        font-size: 1.15rem;
+        padding: 16px 20px;
+        border-radius: 13px;
+    }
+
+    .mmobile-move-toggle {
+        width: 50px;
+        height: 50px;
+        font-size: 1.35rem;
+        border-radius: 13px;
+    }
+
+    .vtree-scroll {
+        padding: 20px 18px 28px;
+    }
+
+    .vtree-root-btn {
+        font-size: 1.35rem;
+        padding: 20px 22px;
+        border-radius: 16px;
+    }
+
+    .vtree-node {
+        font-size: 1.15rem;
+        padding: 14px 18px;
+        border-radius: 13px;
+    }
+
+    .vtree-toggle {
+        width: 48px;
+        height: 48px;
+        font-size: 1.35rem;
+        border-radius: 13px;
+    }
+
+    .mmobile-mindmap-sheet {
+        bottom: calc(max(14px, env(safe-area-inset-bottom, 14px)) + 132px);
+    }
+
+    .mmobile-checklist-open-btn {
+        width: 32px;
+        height: 32px;
+
+        img { width: 20px; height: 20px; }
+    }
+
+    .mmobile-checklist-inline-item {
+        font-size: 1.15rem;
+        padding: 12px 4px;
+        gap: 14px;
+    }
+
+    .mmobile-checklist-inline-cb {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mmobile-checklist-sheet-item {
+        font-size: 1.15rem;
+        padding: 16px 24px;
+    }
+
+    .mmobile-checklist-sheet-cb {
+        width: 26px;
+        height: 26px;
+    }
+
+    .mmobile-checklist-sheet-add {
+        padding: 16px 24px;
+        gap: 14px;
+    }
+
+    .mmobile-checklist-sheet-input {
+        font-size: 1.15rem;
+        padding: 12px 16px;
+        border-radius: 10px;
+    }
+
+    .mmobile-checklist-sheet-add-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 1.7rem;
+        border-radius: 10px;
+    }
+
+    .mmobile-help-title {
+        font-size: 1.9rem;
+        margin-bottom: 16px;
+    }
+
+    .mmobile-help-text {
+        font-size: 1.2rem;
+    }
+
+    .mmobile-help-badge {
+        font-size: 1.4rem;
+        padding: 12px 10px;
+    }
+
+    .mmobile-help-badge-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .mmobile-help-nav-btn {
+        font-size: 1.2rem;
+        padding: 8px 16px;
+        border-radius: 14px;
+
+        &--next { padding: 16px; }
+    }
 }

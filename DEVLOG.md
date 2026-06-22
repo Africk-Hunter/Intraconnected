@@ -4,6 +4,13 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.04.1 — Feature Request Tracking & Tablet Layout — 2026-06-22
+- Feature request tracking: submitted GitHub issues are saved to Firestore (`meta/featureRequests`); on login, closed+completed issues are detected and a celebration modal fires with confetti and a sound effect
+- Mobile UI breakpoint widened from 576px to 1023px so the mobile layout serves tablets; full tablet scaling pass added for all mobile UI elements (nav, FAB buttons, sheets, nodes, checklists, help screens)
+- Help/navigate sheet repositioned from bottom-anchored (above FAB) to top-anchored (`top: 68px`) with `max-height: calc(100dvh - 82px)` and pop animation origin flipped to top
+- Node card padding reduced slightly across leaf, parent, and link node types
+- V 1.0 Mind Map entry removed from the public CHANGELOG
+
 ## V 1.04 — Firebase Optimization — 2026-06-22
 - Timestamp-based sync guard: on page load, read one `meta/sync` doc instead of the full ideas collection; full fetch only runs when the remote timestamp differs from the locally cached one (cross-device sync, first login, cleared storage)
 - Every Firebase idea write now also updates `meta/sync.lastModified` and mirrors the value to `localStorage`, keeping both sides in lockstep
