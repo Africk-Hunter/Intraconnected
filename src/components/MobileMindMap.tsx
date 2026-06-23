@@ -16,6 +16,8 @@ import {
     updateIdeaLink,
     updateIdeaLinkInFirebase,
     updateIdeaParentId,
+    updateIdeaPriority,
+    schedulePriorityFirebaseWrite,
     updateChecklistItems,
     scheduleChecklistFirebaseWrite,
     handleChecklistCreation,
@@ -23,6 +25,7 @@ import {
     cleanLink,
     signUserOut,
     getIdeaLink,
+    sortIdeas,
 } from '../utilities';
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
@@ -198,15 +201,21 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
 }
 
 function MobileMindMap() {
-    const { setNewIdeaSwitch } = useIdeaContext();
+    const { setNewIdeaSwitch, newIdeaSwitch } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
+    const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
+        (localStorage.getItem('idea_sort_mode') as 'priority' | 'recent') ?? 'priority'
+    );
     const [sheet, setSheet] = useState<SheetState | null>(null);
     const [draft, setDraft] = useState('');
     const [editMode, setEditMode] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
+    const [animatingRibbonId, setAnimatingRibbonId] = useState<number | null>(null);
+    const frozenOrderRef = useRef<number[] | null>(null);
+    const reorderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [isNewPatchNotes, setIsNewPatchNotes] = useState(() =>
         isPatchNotesNew(auth.currentUser?.uid, _changelogEntries)
     );
@@ -219,6 +228,7 @@ function MobileMindMap() {
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
     const [newIdeaLink, setNewIdeaLink] = useState('');
+    const [newIdeaPriority, setNewIdeaPriority] = useState<1 | 2 | 3 | undefined>(undefined);
     const [headerDraft, setHeaderDraft] = useState('');
     const [sheetOrigin, setSheetOrigin] = useState({ dx: 0, dy: 0 });
     const [helpOrigin, setHelpOrigin] = useState({ dx: 0, dy: 0 });
@@ -226,6 +236,9 @@ function MobileMindMap() {
 
     const headerTextareaRef = useRef<HTMLTextAreaElement>(null);
     const sheetWasNullRef = useRef(true);
+    const mobileListRef = useRef<HTMLDivElement>(null);
+    const mobileFlipSnapshot = useRef<Map<number, number>>(new Map());
+    const mobilePrevFlipIds = useRef<number[]>([]);
 
     const sheetSensors = useSensors(useSensor(PointerSensor));
 
@@ -275,7 +288,114 @@ function MobileMindMap() {
 
     const allIdeas: IdeaType[] = fetchFullIdeaList();
     const currentIdea = allIdeas.find(i => i.id === currentId);
-    const children = allIdeas.filter(i => i.parentID === currentId);
+    const naturalChildren = sortIdeas(allIdeas.filter(i => i.parentID === currentId), sortMode);
+    const children = frozenOrderRef.current
+        ? [...naturalChildren].sort((a, b) => {
+            const ai = frozenOrderRef.current!.indexOf(a.id);
+            const bi = frozenOrderRef.current!.indexOf(b.id);
+            return (ai === -1 ? Infinity : ai) - (bi === -1 ? Infinity : bi);
+        })
+        : naturalChildren;
+
+    function captureMobileSnapshot() {
+        if (!mobileListRef.current) return;
+        const nodes = mobileListRef.current.querySelectorAll<HTMLElement>('[data-flip-id]');
+        const snap = new Map<number, number>();
+        const ids: number[] = [];
+        nodes.forEach(el => {
+            const flipId = Number(el.dataset.flipId);
+            snap.set(flipId, el.getBoundingClientRect().top);
+            ids.push(flipId);
+        });
+        mobileFlipSnapshot.current = snap;
+        mobilePrevFlipIds.current = ids;
+    }
+
+    useEffect(() => {
+        if (!mobileListRef.current) return;
+        const hasActiveFlip = Array.from(
+            mobileListRef.current.querySelectorAll<HTMLElement>('[data-flip-id]')
+        ).some(el => el.style.transform !== '');
+        if (hasActiveFlip) return;
+        captureMobileSnapshot();
+    }, [sortMode, currentId, newIdeaSwitch]);
+
+    useLayoutEffect(() => {
+        if (!mobileListRef.current || mobileFlipSnapshot.current.size === 0) return;
+        const prevSet = new Set(mobilePrevFlipIds.current);
+
+        const nodes = mobileListRef.current.querySelectorAll<HTMLElement>('[data-flip-id]');
+        const nextSnap = new Map<number, number>();
+        const nextIds: number[] = [];
+        nodes.forEach(el => {
+            const flipId = Number(el.dataset.flipId);
+            nextSnap.set(flipId, el.getBoundingClientRect().top);
+            nextIds.push(flipId);
+        });
+
+        // Skip if no IDs in common (full list replacement — e.g. navigation to a new node).
+        const hasCommon = nextIds.some(id => prevSet.has(id));
+        if (!hasCommon) {
+            mobileFlipSnapshot.current = nextSnap;
+            mobilePrevFlipIds.current = nextIds;
+            return;
+        }
+
+        const toAnimate: HTMLElement[] = [];
+        nodes.forEach(el => {
+            const flipId = Number(el.dataset.flipId);
+            if (!prevSet.has(flipId)) return; // new node — skip
+            const prevTop = mobileFlipSnapshot.current.get(flipId);
+            const currTop = nextSnap.get(flipId);
+            if (prevTop === undefined || currTop === undefined) return;
+            const dy = prevTop - currTop;
+            if (Math.abs(dy) > 0.5) {
+                el.style.transform = `translateY(${dy}px)`;
+                el.style.transition = 'none';
+                toAnimate.push(el);
+            }
+        });
+
+        mobileFlipSnapshot.current = nextSnap;
+        mobilePrevFlipIds.current = nextIds;
+
+        if (toAnimate.length === 0) return;
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toAnimate.forEach(el => {
+                    el.style.transition = 'transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    el.style.transform = '';
+                });
+                setTimeout(() => {
+                    toAnimate.forEach(el => { el.style.transition = ''; });
+                }, 420);
+            });
+        });
+    }, [sortMode, currentId, newIdeaSwitch]);
+
+    function toggleSortMode() {
+        const next = sortMode === 'priority' ? 'recent' : 'priority';
+        setSortMode(next);
+        localStorage.setItem('idea_sort_mode', next);
+    }
+
+    function cyclePriority(id: number, current: 1 | 2 | 3 | undefined) {
+        const next = current === undefined ? 3 : current === 3 ? 2 : current === 2 ? 1 : undefined;
+        updateIdeaPriority(id, next);
+        schedulePriorityFirebaseWrite(id, next);
+        setAnimatingRibbonId(id);
+        setTimeout(() => setAnimatingRibbonId(null), 200);
+        if (!frozenOrderRef.current) {
+            frozenOrderRef.current = naturalChildren.map(c => c.id);
+        }
+        if (reorderTimerRef.current) clearTimeout(reorderTimerRef.current);
+        reorderTimerRef.current = setTimeout(() => {
+            reorderTimerRef.current = null;
+            frozenOrderRef.current = null;
+            setNewIdeaSwitch(prev => !prev);
+        }, 1500);
+    }
 
     function getBreadcrumbs(): IdeaType[] {
         const path: IdeaType[] = [];
@@ -299,6 +419,7 @@ function MobileMindMap() {
         setSheet(null);
         setEditMode(false);
         setNewIdeaLink('');
+        setNewIdeaPriority(undefined);
     }
 
     function startPress(nodeId: number) {
@@ -441,6 +562,7 @@ function MobileMindMap() {
         setChecklistTitle('');
         setChecklistItems([]);
         setChecklistItemDraft('');
+        setNewIdeaPriority(undefined);
         setSheet({ type: 'rename', nodeId: -1, isNew: true });
         setEditMode(false);
     }
@@ -471,7 +593,7 @@ function MobileMindMap() {
 
         if (sheet.isNew && createTab === 'checklist') {
             const title = checklistTitle.trim() || 'Untitled';
-            handleChecklistCreation(title, currentId, checklistItems);
+            handleChecklistCreation(title, currentId, checklistItems, newIdeaPriority);
             setNewIdeaSwitch(prev => !prev);
             closeSheet();
             return;
@@ -480,7 +602,7 @@ function MobileMindMap() {
         const name = draft.trim() || 'Untitled';
         if (sheet.isNew) {
             const newId = Date.now();
-            const newIdea: IdeaType = { id: newId, content: name, parentID: currentId, link: cleanLink(newIdeaLink.trim()) };
+            const newIdea: IdeaType = { id: newId, content: name, parentID: currentId, link: cleanLink(newIdeaLink.trim()), ...(newIdeaPriority ? { priority: newIdeaPriority } : {}) };
             appendToLocalStorageFromFrontend(newIdea);
             addIdeaToFirebase(newIdea);
             setNewIdeaSwitch(prev => !prev);
@@ -596,7 +718,16 @@ function MobileMindMap() {
                     onTouchStart={e => e.stopPropagation()}
                 />
                 <div className="mmobile-header-count">
-                    {children.length} {children.length === 1 ? 'idea' : 'ideas'}
+                    <span>{children.length} {children.length === 1 ? 'idea' : 'ideas'}</span>
+                    <button
+                        className={`mmobile-sort-btn${sortMode === 'recent' ? ' mmobile-sort-btn--recent' : ''}`}
+                        onClick={e => { e.stopPropagation(); toggleSortMode(); }}
+                        onMouseDown={e => e.stopPropagation()}
+                        onTouchStart={e => e.stopPropagation()}
+                    >
+                        <img src="/images/sort.svg" alt="" />
+                        {sortMode === 'priority' ? 'Priority' : 'Age'}
+                    </button>
                 </div>
             </div>
 
@@ -604,7 +735,7 @@ function MobileMindMap() {
                 <div className="mmobile-select-hint">Tap a node to edit it</div>
             )}
 
-            <div className="mmobile-list">
+            <div className="mmobile-list" ref={mobileListRef}>
                 {children.length === 0 ? (
                     <div className="mmobile-empty">No ideas here yet.<br />Tap + to create one.</div>
                 ) : children.map(child => {
@@ -618,6 +749,7 @@ function MobileMindMap() {
                         return (
                             <div
                                 key={child.id}
+                                data-flip-id={child.id}
                                 className={`mmobile-node mmobile-node--checklist${isExpanded ? ' mmobile-node--expanded' : ''}${editMode ? ' mmobile-node--selectable' : ''}`}
                                 onMouseDown={() => startPress(child.id)}
                                 onMouseUp={endPress}
@@ -629,6 +761,12 @@ function MobileMindMap() {
                             >
                                 <div className="mmobile-node-header-row">
                                     <span className="mmobile-node-title">{child.content}</span>
+                                    <button
+                                        className={`mmobile-node-priority-ribbon mmobile-node-priority-ribbon--${child.priority ? `p${child.priority}` : 'none'}${animatingRibbonId === child.id ? ' mmobile-node-priority-ribbon--animating' : ''}`}
+                                        onClick={e => { e.stopPropagation(); cyclePriority(child.id, child.priority); }}
+                                        onTouchEnd={e => e.stopPropagation()}
+                                        onMouseDown={e => e.stopPropagation()}
+                                    />
                                     <span className="mmobile-node-count">{checkedCount}/{items.length}</span>
                                     <button
                                         className="mmobile-checklist-open-btn"
@@ -697,6 +835,7 @@ function MobileMindMap() {
                     return (
                         <div
                             key={child.id}
+                            data-flip-id={child.id}
                             className={`mmobile-node ${colorClass}${editMode ? ' mmobile-node--selectable' : ''}`}
                             onMouseDown={() => startPress(child.id)}
                             onMouseUp={endPress}
@@ -707,11 +846,12 @@ function MobileMindMap() {
                             onClick={() => tapNode(child.id)}
                         >
                             <span className="mmobile-node-title">{child.content}</span>
-                            {hasKids && (
-                                <span className="mmobile-node-count">
-                                    {allIdeas.filter(i => i.parentID === child.id).length}
-                                </span>
-                            )}
+                            <button
+                                className={`mmobile-node-priority-ribbon mmobile-node-priority-ribbon--${child.priority ? `p${child.priority}` : 'none'}${animatingRibbonId === child.id ? ' mmobile-node-priority-ribbon--animating' : ''}`}
+                                onClick={e => { e.stopPropagation(); cyclePriority(child.id, child.priority); }}
+                                onTouchEnd={e => e.stopPropagation()}
+                                onMouseDown={e => e.stopPropagation()}
+                            />
                             <span className="mmobile-node-arrow">
                                 {editMode ? '✎' : '›'}
                             </span>
@@ -739,7 +879,7 @@ function MobileMindMap() {
                         setShowMindMap(m => !m);
                     }}
                 >
-                    <img src="/images/MindMapIconSkinny.svg" alt="Navigate" />
+                    <img src="/images/NewMindMap.svg" alt="Navigate" />
                 </button>
                 <button
                     className={`mmobile-fab${sheet?.type === 'rename' && sheet.isNew ? ' mmobile-fab--active' : ''}`}
@@ -794,6 +934,26 @@ function MobileMindMap() {
                                 <button className="mmobile-action-btn mmobile-action-btn--move" onClick={() => setSheet({ type: 'move', nodeId: sheetNode.id })}>
                                     <img src="/images/Arrow.svg" alt="" className="mmobile-action-icon" />Move under…
                                 </button>
+                                <div className="mmobile-priority-row">
+                                    <span className="mmobile-priority-label">Priority</span>
+                                    <div className="mmobile-priority-btns">
+                                        {([1, 2, 3] as const).map(p => (
+                                            <button
+                                                key={p}
+                                                className={`mmobile-priority-btn${sheetNode.priority === p ? ' mmobile-priority-btn--active' : ''}`}
+                                                onClick={() => {
+                                                    const next = sheetNode.priority === p ? undefined : p;
+                                                    updateIdeaPriority(sheetNode.id, next);
+                                                    schedulePriorityFirebaseWrite(sheetNode.id, next);
+                                                    setNewIdeaSwitch(prev => !prev);
+                                                    closeSheet();
+                                                }}
+                                            >
+                                                P{p}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                                 {sheetNode.id !== 1 && (
                                     <button className="mmobile-action-btn mmobile-action-btn--delete" onClick={() => setSheet({ type: 'confirmDelete', nodeId: sheetNode.id })}>
                                         <img src="/images/Trash.svg" alt="" className="mmobile-action-icon" />Delete
@@ -895,6 +1055,24 @@ function MobileMindMap() {
                                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChecklistItem(); } }}
                                             maxLength={200}
                                         />
+                                    </div>
+                                )}
+
+                                {sheet.isNew && (
+                                    <div className="mmobile-priority-row mmobile-priority-row--create">
+                                        <span className="mmobile-priority-label">Priority</span>
+                                        <div className="mmobile-priority-btns">
+                                            {([1, 2, 3] as const).map(p => (
+                                                <button
+                                                    key={p}
+                                                    className={`mmobile-priority-btn${newIdeaPriority === p ? ' mmobile-priority-btn--active' : ''}`}
+                                                    onClick={() => setNewIdeaPriority(prev => prev === p ? undefined : p)}
+                                                    type="button"
+                                                >
+                                                    P{p}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
 

@@ -5,8 +5,8 @@ import { ChecklistItem } from "../../utilities/types";
 import AnimatedOverlay from "../AnimatedOverlay";
 
 interface CreationModalProps {
-    handleIdeaCreation: (content: string, parentId: number, link: string) => void;
-    handleChecklistCreation: (title: string, parentId: number, items: ChecklistItem[]) => void;
+    handleIdeaCreation: (content: string, parentId: number, link: string, priority?: 1 | 2 | 3) => void;
+    handleChecklistCreation: (title: string, parentId: number, items: ChecklistItem[], priority?: 1 | 2 | 3) => void;
 }
 
 function CreationModal({ handleIdeaCreation, handleChecklistCreation }: CreationModalProps) {
@@ -19,6 +19,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [itemDraft, setItemDraft] = useState('');
+    const [priority, setPriority] = useState<1 | 2 | 3 | undefined>(undefined);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const itemInputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +52,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
         setChecklistTitle('');
         setChecklistItems([]);
         setItemDraft('');
+        setPriority(undefined);
     }
 
     function handleClose() {
@@ -59,7 +61,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
     }
 
     function handleCreateIdea() {
-        handleIdeaCreation(modalContent, rootId, cleanLink(link));
+        handleIdeaCreation(modalContent, rootId, cleanLink(link), priority);
         setCreationModalOpen(false);
         setNewIdeaSwitch(prev => !prev);
         reset();
@@ -67,7 +69,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
 
     function handleCreateChecklist() {
         if (!checklistTitle.trim()) return;
-        handleChecklistCreation(checklistTitle.trim(), rootId, checklistItems);
+        handleChecklistCreation(checklistTitle.trim(), rootId, checklistItems, priority);
         setCreationModalOpen(false);
         setNewIdeaSwitch(prev => !prev);
         reset();
@@ -156,6 +158,22 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
                                 </div>
                             </section>
                         )}
+
+                        <div className="priority-picker">
+                            <span className="priority-picker-label">Priority</span>
+                            <div className="priority-picker-btns">
+                                {([1, 2, 3] as const).map(p => (
+                                    <button
+                                        key={p}
+                                        className={`priority-picker-btn neobrutal-button${priority === p ? ' priority-picker-btn--active' : ''}`}
+                                        onClick={() => setPriority(prev => prev === p ? undefined : p)}
+                                        type="button"
+                                    >
+                                        P{p}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         <section className="modalButtons">
                             <button className="modalButton cancel neobrutal-button" onClick={handleClose}>Cancel</button>

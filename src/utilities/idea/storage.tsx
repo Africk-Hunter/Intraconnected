@@ -1,8 +1,9 @@
 import { IdeaType, ChecklistItem } from "../types";
-import { updateIdeaParentIdInFirebase, updateChecklistItemsInFirebase } from "../firebase/firebaseHelpers";
+import { updateIdeaParentIdInFirebase, updateChecklistItemsInFirebase, updateIdeaPriorityInFirebase } from "../firebase/firebaseHelpers";
 import { fetchFullIdeaList } from "./helpers";
 
 const _checklistTimers = new Map<number, ReturnType<typeof setTimeout>>();
+const _priorityTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
 export function scheduleChecklistFirebaseWrite(id: number, items: ChecklistItem[]) {
     const existing = _checklistTimers.get(id);
@@ -71,6 +72,28 @@ export function updateIdeaLink(id: number, newLink: string) {
         return idea;
     });
     localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+}
+
+export function updateIdeaPriority(id: number, priority: 1 | 2 | 3 | undefined) {
+    const ideas = fetchFullIdeaList();
+    const updatedIdeas = ideas.map((idea: IdeaType) => {
+        if (idea.id !== id) return idea;
+        if (priority === undefined) {
+            const { priority: _p, ...rest } = idea as IdeaType & { priority?: number };
+            return rest as IdeaType;
+        }
+        return { ...idea, priority };
+    });
+    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+}
+
+export function schedulePriorityFirebaseWrite(id: number, priority: 1 | 2 | 3 | undefined) {
+    const existing = _priorityTimers.get(id);
+    if (existing) clearTimeout(existing);
+    _priorityTimers.set(id, setTimeout(() => {
+        _priorityTimers.delete(id);
+        updateIdeaPriorityInFirebase(id, priority);
+    }, 1500));
 }
 
 export function updateChecklistItems(id: number, items: ChecklistItem[]) {

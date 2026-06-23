@@ -11,6 +11,7 @@ export interface StandardIdea {
     content: string;
     parentID: number;
     link: string;
+    priority?: 1 | 2 | 3;
 }
 
 export interface ChecklistIdea {
@@ -19,6 +20,7 @@ export interface ChecklistIdea {
     content: string;
     parentID: number;
     items: ChecklistItem[];
+    priority?: 1 | 2 | 3;
 }
 
 export type IdeaType = StandardIdea | ChecklistIdea;

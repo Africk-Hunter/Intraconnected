@@ -44,6 +44,7 @@
     position: fixed;
     top: 0;
     left: 0;
+    z-index: 10;
     background: rgb(0, 0, 0, 0.5);
 
 }
@@ -477,6 +478,60 @@
 
     @media (min-width: $large-desktop) {
         font-size: 1.4rem;
+    }
+}
+
+// Priority picker in creation modal
+.priority-picker {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 28.125rem;
+
+    @media (max-width: $mobile) {
+        width: 20rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 37rem;
+    }
+}
+
+.priority-picker-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111;
+    flex-shrink: 0;
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.3rem;
+    }
+}
+
+.priority-picker-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.priority-picker-btn {
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.3rem 0.8rem;
+    background: $neutral;
+    color: #111;
+    border: 2px solid black;
+    box-shadow: 2px 2px 0 1px black;
+    cursor: pointer;
+    transition: background 0.1s ease;
+
+    &--active {
+        background: $purple;
+        color: white;
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.2rem;
+        padding: 0.4rem 1rem;
     }
 }
 

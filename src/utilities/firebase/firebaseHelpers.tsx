@@ -1,5 +1,5 @@
 import { db, auth } from "../../firebaseConfig";
-import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, deleteField } from "firebase/firestore";
 import { IdeaType, ChecklistItem } from "../types";
 import { encryptField, decryptField } from "../crypto";
 import { getDEK } from "../dekStore";
@@ -88,6 +88,7 @@ export async function fetchIdeasFromFirebase() {
                         if (item.link) result.link = await decryptField(item.link, dek);
                         return result;
                     })),
+                    ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
                 };
             }
             return {
@@ -95,6 +96,7 @@ export async function fetchIdeasFromFirebase() {
                 content: await decryptField(data.content as string, dek),
                 parentID: data.parentID as number,
                 link: await decryptField(data.link as string | null | undefined, dek),
+                ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
             };
         }));
         return ideasList;
@@ -237,4 +239,16 @@ export async function updateLastSeenPatchVersion(version: string): Promise<void>
     if (!user) return;
     const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
     await setDoc(prefsDoc, { lastSeenPatchVersion: version }, { merge: true });
+}
+
+export async function updateIdeaPriorityInFirebase(ideaId: number, priority: 1 | 2 | 3 | undefined): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    try {
+        const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
+        await setDoc(ideaDoc, { priority: priority ?? deleteField() }, { merge: true });
+        await updateSyncTimestamp();
+    } catch (error) {
+        console.error("Error updating idea priority: ", error);
+    }
 }

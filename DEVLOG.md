@@ -4,6 +4,13 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.05 — Priority & Sorting — 2026-06-23
+- Priority system: ideas can be marked P1 (red), P2 (orange), or P3 (yellow) via a ribbon button in the top-left corner of each card; ribbon height conveys urgency at a glance
+- Sort mode: toggle button below Back switches between Priority order (P1 first) and Age order (creation order); persisted to `localStorage`; FLIP animation smoothly reorders the grid on sort change
+- Root priority: 1/2/3 buttons appear in the sidebar when navigated into a child node to mark the current root's priority
+- Mobile: ribbon on every node in the list; action sheet exposes P1/P2/P3 priority buttons; priority option added to the creation sheet; sort toggle in the idea-count header row
+- Help screens: new screen 6 "Priority & Sorting" added to both desktop (animated ribbon cycling + sort reorder demo) and mobile (animated node ribbon demo + grid explanation); pager updated from 5 to 6
+
 ## V 1.04.1 — Feature Request Tracking & Tablet Layout — 2026-06-22
 - Feature request tracking: submitted GitHub issues are saved to Firestore (`meta/featureRequests`); on login, closed+completed issues are detected and a celebration modal fires with confetti and a sound effect
 - Mobile UI breakpoint widened from 576px to 1023px so the mobile layout serves tablets; full tablet scaling pass added for all mobile UI elements (nav, FAB buttons, sheets, nodes, checklists, help screens)

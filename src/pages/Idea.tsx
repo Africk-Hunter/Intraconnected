@@ -9,7 +9,7 @@ import Trash from '../components/Trash';
 import LastIdea from '../components/LastIdea';
 
 // 3rd Party Libraries
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
@@ -30,10 +30,13 @@ import {
     signUserOut,
     IdeaType,
     updateIdeaParentId,
+    updateIdeaPriority,
+    schedulePriorityFirebaseWrite,
     getParentID,
     getNameFromID,
     checkIfIdeaIsLeaf,
     getIdeaLink,
+    sortIdeas,
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
@@ -55,6 +58,14 @@ function Idea() {
         isPatchNotesNew(auth.currentUser?.uid, _changelogEntries)
     );
     const [implementedTitles, setImplementedTitles] = useState<string[] | null>(null);
+    const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
+        (localStorage.getItem('idea_sort_mode') as 'priority' | 'recent') ?? 'priority'
+    );
+    const [rootPriority, setRootPriority] = useState<1 | 2 | 3 | undefined>(undefined);
+
+    const ideaNodesRef = useRef<HTMLDivElement>(null);
+    const flipSnapshot = useRef<Map<number, { top: number; left: number }>>(new Map());
+    const prevFlipIds = useRef<number[]>([]);
 
     useEffect(() => {
         const uid = auth.currentUser?.uid;
@@ -142,7 +153,10 @@ function Idea() {
             setIdeasFromStorage();
 
             const currentRoot = fetchFullIdeaList().find((idea: IdeaType) => idea.id === rootId);
-            if (currentRoot) setRootName(currentRoot.content);
+            if (currentRoot) {
+                setRootName(currentRoot.content);
+                setRootPriority(currentRoot.priority);
+            }
         };
 
         loadIdeas();
@@ -183,6 +197,108 @@ function Idea() {
         setIdeas(loadedIdeas);
     }
 
+    function toggleSortMode() {
+        const next = sortMode === 'priority' ? 'recent' : 'priority';
+        setSortMode(next);
+        localStorage.setItem('idea_sort_mode', next);
+    }
+
+    function handleRootPriority(p: 1 | 2 | 3) {
+        const next: 1 | 2 | 3 | undefined = rootPriority === p ? undefined : p;
+        setRootPriority(next);
+        updateIdeaPriority(rootId, next);
+        schedulePriorityFirebaseWrite(rootId, next);
+    }
+
+    const displayedIdeas = sortIdeas(ideas, sortMode);
+
+    function captureFlipSnapshot() {
+        if (!ideaNodesRef.current) return;
+        const nodes = ideaNodesRef.current.querySelectorAll<HTMLElement>('[data-flip-id]');
+        const snap = new Map<number, { top: number; left: number }>();
+        nodes.forEach(el => {
+            const flipId = Number(el.dataset.flipId);
+            const rect = el.getBoundingClientRect();
+            snap.set(flipId, { top: rect.top, left: rect.left });
+        });
+        flipSnapshot.current = snap;
+        prevFlipIds.current = Array.from(snap.keys());
+    }
+
+    // Initial snapshot capture — runs when ideas load or change outside of a reorder.
+    useEffect(() => {
+        if (!ideaNodesRef.current) return;
+        const hasActiveFlip = Array.from(
+            ideaNodesRef.current.querySelectorAll<HTMLElement>('[data-flip-id]')
+        ).some(el => el.style.transform !== '');
+        if (hasActiveFlip) return;
+        captureFlipSnapshot();
+    }, [ideas, sortMode]);
+
+    // Before browser paint: FLIP surviving nodes into place after any add, delete, or reorder.
+    // New positions are captured HERE (before the FLIP transform is applied) so the
+    // snapshot always holds the true final positions — not the CSS-transition FROM value
+    // that getBoundingClientRect returns when called mid-transition inside the rAF.
+    useLayoutEffect(() => {
+        if (!ideaNodesRef.current || flipSnapshot.current.size === 0) return;
+        const prevSet = new Set(prevFlipIds.current);
+
+        const nodes = ideaNodesRef.current.querySelectorAll<HTMLElement>('[data-flip-id]');
+
+        // Read final positions now, before any transform is applied.
+        const nextSnap = new Map<number, { top: number; left: number }>();
+        const nextIds: number[] = [];
+        nodes.forEach(el => {
+            const flipId = Number(el.dataset.flipId);
+            const rect = el.getBoundingClientRect();
+            nextSnap.set(flipId, { top: rect.top, left: rect.left });
+            nextIds.push(flipId);
+        });
+
+        // Skip if no IDs in common (full list replacement — e.g. navigation to a new root).
+        const hasCommon = nextIds.some(id => prevSet.has(id));
+        if (!hasCommon) {
+            flipSnapshot.current = nextSnap;
+            prevFlipIds.current = nextIds;
+            return;
+        }
+
+        const toAnimate: HTMLElement[] = [];
+
+        nodes.forEach(el => {
+            const flipId = Number(el.dataset.flipId);
+            if (!prevSet.has(flipId)) return; // new node — let its fade-in play instead
+            const prev = flipSnapshot.current.get(flipId);
+            const curr = nextSnap.get(flipId);
+            if (!prev || !curr) return;
+            const dx = prev.left - curr.left;
+            const dy = prev.top - curr.top;
+            if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                el.style.transform = `translate(${dx}px, ${dy}px)`;
+                el.style.transition = 'none';
+                toAnimate.push(el);
+            }
+        });
+
+        // Commit the new snapshot before the animation starts.
+        flipSnapshot.current = nextSnap;
+        prevFlipIds.current = nextIds;
+
+        if (toAnimate.length === 0) return;
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                toAnimate.forEach(el => {
+                    el.style.transition = 'transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    el.style.transform = '';
+                });
+                setTimeout(() => {
+                    toAnimate.forEach(el => { el.style.transition = ''; });
+                }, 420);
+            });
+        });
+    }, [ideas, sortMode]);
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -204,6 +320,21 @@ function Idea() {
                             <section className="rootHolder">
                                 <section className="rootAdditionalButtons">
                                     <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}><img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
+                                    <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Age'}</button>
+                                    {rootId !== 1 && (
+                                        <section className="rootPriorityButtons">
+                                            {([1, 2, 3] as const).map(p => (
+                                                <button
+                                                    key={p}
+                                                    className={`root-priority-btn neobrutal-button${rootPriority === p ? ' root-priority-btn--active' : ''}`}
+                                                    onClick={() => handleRootPriority(p)}
+                                                    title={rootPriority === p ? `Priority ${p} — click to remove` : `Set priority ${p}`}
+                                                >
+                                                    {p}
+                                                </button>
+                                            ))}
+                                        </section>
+                                    )}
                                     {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
                                 </section>
                                 <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
@@ -213,13 +344,14 @@ function Idea() {
 
                         <section className="bottom">
                             <main className="ideaSpace">
-                                <section className="ideaNodes">
-                                    {ideas?.map((idea: IdeaType) => (
-                                        <IdeaNode
-                                            key={idea.id}
-                                            idea={idea}
-                                            isLeaf={checkIfIdeaIsLeaf(idea.id)}
-                                        />
+                                <section className="ideaNodes" ref={ideaNodesRef}>
+                                    {displayedIdeas?.map((idea: IdeaType) => (
+                                        <div key={idea.id} data-flip-id={idea.id}>
+                                            <IdeaNode
+                                                idea={idea}
+                                                isLeaf={checkIfIdeaIsLeaf(idea.id)}
+                                            />
+                                        </div>
                                     ))}
                                 </section>
                             </main>

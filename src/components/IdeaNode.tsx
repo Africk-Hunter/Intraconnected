@@ -5,7 +5,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, scheduleChecklistFirebaseWrite, cleanLink } from '../utilities';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, scheduleChecklistFirebaseWrite, cleanLink, updateIdeaPriority, schedulePriorityFirebaseWrite } from '../utilities';
 
 
 interface IdeaNodeProps {
@@ -188,6 +188,9 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         return window.matchMedia('(max-width: 768px)').matches;
     });
 
+    const [priority, setPriority] = useState<1 | 2 | 3 | undefined>(idea.priority);
+    const [isRibbonAnimating, setIsRibbonAnimating] = useState(false);
+    const pendingResort = useRef(false);
     const [isFadingIn, setIsFadingIn] = useState(false);
     const prevPendingDeleteRef = useRef<number | null>(null);
 
@@ -205,9 +208,8 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const isHidden = pendingDeleteId === id;
 
     useEffect(() => {
-        if (isChecklist) {
-            setLocalItems(idea.items);
-        }
+        setPriority(idea.priority);
+        if (isChecklist) setLocalItems(idea.items);
     }, [idea]);
 
     useEffect(() => {
@@ -276,6 +278,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const pendingStyle = isHidden ? { opacity: 0, pointerEvents: 'none' as const } : {};
     const combinedStyle = { ...draggableStyle, ...dropStyle, ...pendingStyle };
     const fadeInClass = isFadingIn ? ' ideaNode--fade-in' : '';
+    const priorityClass = priority ? ' ideaNode--has-priority' : '';
 
     function copyToClipboard(e: React.MouseEvent) {
         e.stopPropagation();
@@ -300,6 +303,27 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         setCurrentNameChangeId(id);
         setSelectedIdeaName(title);
         setRenameModalOpen(true);
+    }
+
+    function cyclePriority(e: React.MouseEvent) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (isRibbonAnimating) return;
+        const next = priority === undefined ? 3 : priority === 3 ? 2 : priority === 2 ? 1 : undefined;
+        updateIdeaPriority(id, next);
+        schedulePriorityFirebaseWrite(id, next);
+        pendingResort.current = true;
+        setIsRibbonAnimating(true);
+        setTimeout(() => {
+            setIsRibbonAnimating(false);
+            setPriority(next);
+        }, 180);
+    }
+
+    function flushResort() {
+        if (!pendingResort.current) return;
+        pendingResort.current = false;
+        setNewIdeaSwitch(prev => !prev);
     }
 
     function toggleItem(e: React.MouseEvent, itemId: string) {
@@ -377,10 +401,12 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
             <div
                 ref={setNodeRef}
                 style={combinedStyle}
-                className={`neobrutal-button ideaNode checklist${fadeInClass}`}
+                className={`neobrutal-button ideaNode checklist${fadeInClass}${priorityClass}`}
+                onMouseLeave={flushResort}
                 {...attributes}
                 {...listeners}
             >
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority} — click to change` : 'Click to set priority'} />
                 <div className="checklist-header" onClick={() => setChecklistModalId(id)}>
                     <span className="checklist-title-text">{title}</span>
                     <button className="renameButtonNode copy" onClick={changeName}>
@@ -425,14 +451,16 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
 
     return (
         link !== "" ? (
-            <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}`} {...attributes} {...listeners}>
+            <a href={link} target='_blank' ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} onMouseLeave={flushResort} {...attributes} {...listeners}>
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} title={priority ? `Priority ${priority} — click to change` : 'Click to set priority'} />
                 {title}
                 <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>
                 <button className="renameButtonNode copy" onClick={changeName}><img src='images/Pen.svg' alt="Rename" className="copyImg" /></button>
                 <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
             </a>
         ) : (
-            <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}`} {...attributes} {...listeners}>
+            <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} onMouseLeave={flushResort} {...attributes} {...listeners}>
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} title={priority ? `Priority ${priority} — click to change` : 'Click to set priority'} />
                 {isLeaf ? (
                     <div ref={textRef} className={`leaf-wrapper${!isExpanded ? ' leaf-wrapper--collapsed' : ''}`}>
                         {title}

@@ -4,6 +4,7 @@ import HelpMenuTwo from './helpMenus/HelpMenuTwo';
 import HelpMenuThree from './helpMenus/HelpMenuThree';
 import HelpMenuFour from './helpMenus/HelpMenuFour';
 import HelpMenuFive from './helpMenus/HelpMenuFive';
+import HelpMenuSix from './helpMenus/HelpMenuSix';
 
 interface HelpProps {
     showHelp: boolean;
@@ -20,7 +21,7 @@ const Help: React.FC<HelpProps> = ({ showHelp }) => {
     }
 
     function incrementHelpScreen() {
-        if (helpScreen < 5) {
+        if (helpScreen < 6) {
             setHelpScreen(helpScreen + 1);
         }
     }
@@ -34,8 +35,10 @@ const Help: React.FC<HelpProps> = ({ showHelp }) => {
             case 3:
                 return <HelpMenuThree />;
             case 4:
-                return <HelpMenuFour />;
+                return <HelpMenuSix />;
             case 5:
+                return <HelpMenuFour />;
+            case 6:
                 return <HelpMenuFive />;
             default:
                 return <HelpMenuOne />;
@@ -49,7 +52,7 @@ const Help: React.FC<HelpProps> = ({ showHelp }) => {
 
                 {chooseHelpScreen()}
 
-                <div className={`moveArrow ${helpScreen != 5 && 'show'}`} onClick={incrementHelpScreen}><img src="images/RightArrow.svg" alt="" /></div>
+                <div className={`moveArrow ${helpScreen != 6 && 'show'}`} onClick={incrementHelpScreen}><img src="images/RightArrow.svg" alt="" /></div>
             </section>
         </>
     );
