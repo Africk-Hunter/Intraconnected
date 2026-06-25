@@ -42,6 +42,7 @@ import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
 import ChecklistModal from '../components/modals/ChecklistModal';
 import FeatureImplementedModal from '../components/modals/FeatureImplementedModal';
+import OnboardingModal from '../components/modals/OnboardingModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
 import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRequests';
@@ -104,7 +105,7 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin } = useIdeaContext();
+    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, setNodesVisible } = useIdeaContext();
 
     useEffect(() => {
         const handleVisibilityChange = async () => {
@@ -195,6 +196,14 @@ function Idea() {
     function setIdeasFromStorage() {
         const loadedIdeas = getIdeasByParentID(rootId);
         setIdeas(loadedIdeas);
+    }
+
+    function handleBackWithFade() {
+        setNodesVisible(false);
+        setTimeout(() => {
+            handleBackClick({ setRootId, setRootName, rootIdStack, ideas });
+        }, 65);
+        setTimeout(() => setNodesVisible(true), 90);
     }
 
     function toggleSortMode() {
@@ -311,7 +320,7 @@ function Idea() {
         <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
-                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={handleToggleHelp} setShowPatchNotes={handleTogglePatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
+                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
                     <Trash hidden={showMindMap} />
                 </section>
 
@@ -319,7 +328,7 @@ function Idea() {
                         <section className="top">
                             <section className="rootHolder">
                                 <section className="rootAdditionalButtons">
-                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => handleBackClick({ setRootId, setRootName, rootIdStack, ideas })}><img src="/images/Arrow.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
+                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={handleBackWithFade}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
                                     <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Age'}</button>
                                     {rootId !== 1 && (
                                         <section className="rootPriorityButtons">
@@ -335,16 +344,17 @@ function Idea() {
                                             ))}
                                         </section>
                                     )}
-                                    {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
                                 </section>
                                 <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
-                                <div className="rootSpacer" />
+                                <div className="rootSpacer">
+                                    {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
+                                </div>
                             </section>
                         </section>
 
                         <section className="bottom">
                             <main className="ideaSpace">
-                                <section className="ideaNodes" ref={ideaNodesRef}>
+                                <section className={`ideaNodes${!nodesVisible ? ' ideaNodes--fade' : ''}`} ref={ideaNodesRef}>
                                     {displayedIdeas?.map((idea: IdeaType) => (
                                         <div key={idea.id} data-flip-id={idea.id}>
                                             <IdeaNode
@@ -359,7 +369,7 @@ function Idea() {
                     </section>
 
                 <section className="right">
-                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={handleToggleHelp} setShowPatchNotes={handleTogglePatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
+                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
                     <Help showHelp={showHelp} />
                     <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>
@@ -371,6 +381,7 @@ function Idea() {
             <DeleteConfirmModal />
             <ChecklistModal />
             <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} />
+            <OnboardingModal />
             {implementedTitles && (
                 <FeatureImplementedModal titles={implementedTitles} onClose={() => setImplementedTitles(null)} />
             )}

@@ -35,15 +35,26 @@
     flex-shrink: 0;
     background: $back;
     color: #111;
-    font-size: 1.3rem;
-    font-weight: 700;
     padding: 6px 13px;
     border: 3px solid #111;
     border-radius: 11px;
     box-shadow: 0 4px 0 #111;
     cursor: pointer;
-    font-family: inherit;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: box-shadow 0.12s ease, translate 0.12s ease;
+
+    &:active {
+        box-shadow: 0 1px 0 #111;
+        translate: 0 3px;
+    }
+}
+
+.mmobile-back-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
 }
 
 .mmobile-crumbs {
@@ -88,6 +99,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: box-shadow 0.12s ease, translate 0.12s ease;
+
+    &:active {
+        box-shadow: 0 0px 0 #111;
+        translate: 0 3px;
+    }
 
     img {
         width: 22px;
@@ -108,6 +125,12 @@
     align-items: center;
     justify-content: center;
     overflow: visible;
+    transition: box-shadow 0.12s ease, translate 0.12s ease;
+
+    &:active {
+        box-shadow: 0 0px 0 #111;
+        translate: 0 3px;
+    }
 
     img {
         width: 22px;
@@ -115,8 +138,10 @@
         transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    &--active img {
-        transform: scale(1.35) translateY(-3px);
+    &--active {
+        background: $sky;
+        box-shadow: 0 0px 0 #111;
+        translate: 0 3px;
     }
 }
 
@@ -480,11 +505,16 @@
     }
 }
 
+.mmobile-content--fade {
+    opacity: 0;
+}
+
 .mmobile-header {
     flex-shrink: 0;
     margin: 0 16px 12px;
     background: $roots;
     border: 3px solid #111;
+    transition: opacity 0.06s ease;
     border-radius: 14px;
     box-shadow: 0 5px 0 #111;
     padding: 16px 18px;
@@ -550,6 +580,8 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    touch-action: pan-y;
+    transition: opacity 0.06s ease;
     padding: 8px 16px 12px;
     scrollbar-width: none;
 
@@ -574,7 +606,7 @@
     gap: 12px;
     border: 3px solid #111;
     border-radius: 11px;
-    box-shadow: 0 4px 0 #111;
+    box-shadow: 4px 4px 0 #111;
     padding: 14px 15px;
     margin-bottom: 12px;
     user-select: none;
@@ -669,6 +701,8 @@
 }
 
 .mmobile-fab-area {
+    position: relative;
+    z-index: 32;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -681,7 +715,7 @@
     box-shadow: 0 5px 0 #111;
 }
 
-.mmobile-patchnotes-btn {
+%mmobile-btn {
     width: 64px;
     height: 64px;
     border: 3px solid #111;
@@ -689,26 +723,35 @@
     background: #fff;
     box-shadow: 0 5px 0 #111;
     cursor: pointer;
-    font-size: 1.6rem;
-    line-height: 1;
     color: #1a1208;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: visible;
+    transition: box-shadow 0.12s ease, translate 0.12s ease, opacity 0.12s ease;
 
     img {
-        width: 28px;
-        height: 28px;
         transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    &:active {
+        box-shadow: 0 2px 0 #111;
+        translate: 0 3px;
+    }
+}
+
+.mmobile-patchnotes-btn {
+    @extend %mmobile-btn;
+    font-size: 1.6rem;
+    line-height: 1;
+
+    img { width: 28px; height: 28px; }
+
     &--active {
         background: $sky;
-        img {
-            transform: scale(1.4) translateY(-4px);
-            filter: invert(1);
-        }
+        box-shadow: 0 2px 0 #111;
+        translate: 0 3px;
+        img { transform: scale(1.4) translateY(-4px); filter: invert(1); }
     }
 }
 
@@ -801,98 +844,48 @@
 }
 
 .mmobile-navigate-btn {
-    width: 64px;
-    height: 64px;
-    border: 3px solid #111;
-    border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 5px 0 #111;
-    cursor: pointer;
+    @extend %mmobile-btn;
     font-size: 1.9rem;
     line-height: 1;
-    color: #1a1208;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
 
-    img {
-        width: 32px;
-        height: 32px;
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    &--active {
-        background: $sky;
-        box-shadow: 0 5px 0 #111;
-        color: #fff;
-
-        img {
-            transform: scale(1.4) translateY(-4px);
-            filter: invert(1);
-        }
-    }
-}
-
-.mmobile-fab {
-    width: 64px;
-    height: 64px;
-    border: 3px solid #111;
-    border-radius: 18px;
-    background: $leaf;
-    color: #1a1208;
-    box-shadow: 0 5px 0 #111;
-    font-size: 2.4rem;
-    font-family: inherit;
-    cursor: pointer;
-    line-height: 0;
-    overflow: visible;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    img {
-        width: 28px;
-        height: 28px;
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    &--active {
-        background: $sky;
-        img {
-            transform: scale(1.4) translateY(-4px);
-            filter: invert(1);
-        }
-    }
-}
-
-.mmobile-edit-btn {
-    width: 64px;
-    height: 64px;
-    border: 3px solid #111;
-    border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 5px 0 #111;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: visible;
-
-    img {
-        width: 26px;
-        height: 26px;
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    img { width: 32px; height: 32px; }
 
     &--active {
         background: $sky;
         box-shadow: 0 2px 0 #111;
+        translate: 0 3px;
+        color: #fff;
+        img { transform: scale(1.4) translateY(-4px); filter: invert(1); }
+    }
+}
 
-        img {
-            transform: scale(1.4) translateY(-4px);
-            filter: invert(1);
-        }
+.mmobile-fab {
+    @extend %mmobile-btn;
+    background: $leaf;
+    font-size: 2.4rem;
+    font-family: inherit;
+    line-height: 0;
+
+    img { width: 28px; height: 28px; }
+
+    &--active {
+        background: $sky;
+        box-shadow: 0 2px 0 #111;
+        translate: 0 3px;
+        img { transform: scale(1.4) translateY(-4px); filter: invert(1); }
+    }
+}
+
+.mmobile-edit-btn {
+    @extend %mmobile-btn;
+
+    img { width: 26px; height: 26px; }
+
+    &--active {
+        background: $sky;
+        box-shadow: 0 2px 0 #111;
+        translate: 0 3px;
+        img { transform: scale(1.4) translateY(-4px); filter: invert(1); }
     }
 }
 
@@ -1693,7 +1686,7 @@
     font-weight: 700;
     padding: 14px 16px;
     cursor: pointer;
-    box-shadow: 0 4px 0 #111;
+    box-shadow: 4px 4px 0 #111;
     word-break: break-word;
 
     &--current {
@@ -1774,6 +1767,7 @@
     padding: 10px 12px;
     cursor: pointer;
     word-break: break-word;
+    box-shadow: 3px 3px 0 #111;
 
     &--current   { background: $roots; color: white; cursor: default; }
     &--parent    { background: $sky; }
@@ -1844,10 +1838,14 @@
     }
 
     .mmobile-back {
-        font-size: 1.65rem;
         padding: 10px 20px;
         border-radius: 15px;
         box-shadow: 0 5px 0 #111;
+    }
+
+    .mmobile-back-icon {
+        width: 26px;
+        height: 26px;
     }
 
     .mmobile-crumb {
@@ -1896,7 +1894,7 @@
         border-radius: 15px;
         gap: 16px;
         border-width: 4px;
-        box-shadow: 0 5px 0 #111;
+        box-shadow: 5px 5px 0 #111;
     }
 
     .mmobile-node-priority-ribbon {
@@ -2061,12 +2059,14 @@
         font-size: 1.35rem;
         padding: 20px 22px;
         border-radius: 16px;
+        box-shadow: 5px 5px 0 #111;
     }
 
     .vtree-node {
         font-size: 1.15rem;
         padding: 14px 18px;
         border-radius: 13px;
+        box-shadow: 4px 4px 0 #111;
     }
 
     .vtree-toggle {

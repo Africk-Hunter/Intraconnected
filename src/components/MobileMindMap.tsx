@@ -204,6 +204,8 @@ function MobileMindMap() {
     const { setNewIdeaSwitch, newIdeaSwitch } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
+    const [nodesVisible, setNodesVisible] = useState(true);
+    const mobileNavTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
     const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
         (localStorage.getItem('idea_sort_mode') as 'priority' | 'recent') ?? 'priority'
     );
@@ -422,6 +424,26 @@ function MobileMindMap() {
         setNewIdeaPriority(undefined);
     }
 
+    function navigateMobile(id: number) {
+        mobileNavTimeouts.current.forEach(clearTimeout);
+        const hasChildren = allIdeas.some(i => i.parentID === id);
+        if (!hasChildren) {
+            setCurrentId(id);
+            setSheet(null);
+            setEditMode(false);
+            return;
+        }
+        setNodesVisible(false);
+        mobileNavTimeouts.current = [
+            setTimeout(() => {
+                setCurrentId(id);
+                setSheet(null);
+                setEditMode(false);
+            }, 65),
+            setTimeout(() => setNodesVisible(true), 90),
+        ];
+    }
+
     function startPress(nodeId: number) {
         longPressActive.current = false;
         touchMoved.current = false;
@@ -474,8 +496,7 @@ function MobileMindMap() {
             window.open(nodeLink, '_blank', 'noopener,noreferrer');
             return;
         }
-        setCurrentId(nodeId);
-        setSheet(null);
+        navigateMobile(nodeId);
     }
 
     function openChecklistSheet(nodeId: number) {
@@ -551,9 +572,7 @@ function MobileMindMap() {
 
     function goBack() {
         if (!currentIdea?.parentID) return;
-        setCurrentId(currentIdea.parentID);
-        setSheet(null);
-        setEditMode(false);
+        navigateMobile(currentIdea.parentID);
     }
 
     function addChild() {
@@ -660,7 +679,7 @@ function MobileMindMap() {
                     <img src="/images/QuestionMark.svg" alt="Help" />
                 </button>
                 {canGoBack && (
-                    <button className="mmobile-back" onClick={goBack}>‹</button>
+                    <button className="mmobile-back" onClick={goBack}><img src="/images/ArrowBack.svg" alt="Back" className="mmobile-back-icon" /></button>
                 )}
                 {currentId === 1 ? (
                     <img src="/images/MainLargerLogo.svg" alt="Intraconnected" className="mmobile-nav-logo" />
@@ -670,7 +689,7 @@ function MobileMindMap() {
                             <button
                                 key={idea.id}
                                 className={`mmobile-crumb${idea.id === currentId ? ' mmobile-crumb--active' : ''}`}
-                                onClick={() => { setCurrentId(idea.id); setSheet(null); setEditMode(false); }}
+                                onClick={() => { if (idea.id !== currentId) navigateMobile(idea.id); }}
                             >
                                 {i > 0 ? '› ' : ''}{idea.content.split('\n')[0]}
                             </button>
@@ -688,14 +707,14 @@ function MobileMindMap() {
                 <MobileMindMapSheet
                     currentId={currentId}
                     allIdeas={allIdeas}
-                    onNavigate={(id) => { setCurrentId(id); setShowMindMap(false); setSheet(null); setEditMode(false); }}
+                    onNavigate={(id) => { setShowMindMap(false); navigateMobile(id); }}
                     onClose={() => setShowMindMap(false)}
                     style={{ '--origin-dx': `${mindMapOrigin.dx}px`, '--origin-dy': `${mindMapOrigin.dy}px` } as React.CSSProperties}
                 />
             )}
 
             <div
-                className="mmobile-header"
+                className={`mmobile-header${!nodesVisible ? ' mmobile-content--fade' : ''}`}
                 onMouseDown={() => startPress(currentId)}
                 onMouseUp={endPress}
                 onMouseLeave={endPress}
@@ -735,7 +754,7 @@ function MobileMindMap() {
                 <div className="mmobile-select-hint">Tap a node to edit it</div>
             )}
 
-            <div className="mmobile-list" ref={mobileListRef}>
+            <div className={`mmobile-list${!nodesVisible ? ' mmobile-content--fade' : ''}`} ref={mobileListRef}>
                 {children.length === 0 ? (
                     <div className="mmobile-empty">No ideas here yet.<br />Tap + to create one.</div>
                 ) : children.map(child => {
@@ -756,7 +775,7 @@ function MobileMindMap() {
                                 onMouseLeave={endPress}
                                 onTouchStart={() => startPress(child.id)}
                                 onTouchMove={handleTouchMove}
-                                onTouchEnd={(e) => { e.preventDefault(); if (!touchMoved.current) tapNode(child.id); }}
+                                onTouchEnd={(e) => { if (!touchMoved.current) { e.preventDefault(); tapNode(child.id); } }}
                                 onClick={() => tapNode(child.id)}
                             >
                                 <div className="mmobile-node-header-row">
@@ -842,7 +861,7 @@ function MobileMindMap() {
                             onMouseLeave={endPress}
                             onTouchStart={() => startPress(child.id)}
                             onTouchMove={handleTouchMove}
-                            onTouchEnd={(e) => { e.preventDefault(); if (!touchMoved.current) tapNode(child.id); }}
+                            onTouchEnd={(e) => { if (!touchMoved.current) { e.preventDefault(); tapNode(child.id); } }}
                             onClick={() => tapNode(child.id)}
                         >
                             <span className="mmobile-node-title">{child.content}</span>

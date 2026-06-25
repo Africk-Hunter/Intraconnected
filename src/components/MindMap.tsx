@@ -229,23 +229,27 @@ function MindMap({ onClose, visible }: MindMapProps) {
         setDragging(true);
         startPos.current = { x: e.clientX, y: e.clientY };
         startOffset.current = { x: view.x, y: view.y };
-    }
 
-    function onMouseMove(e: MouseEvent<HTMLDivElement>) {
-        if (!isDragging.current) return;
-        const dx = e.clientX - startPos.current.x;
-        const dy = e.clientY - startPos.current.y;
-        setView(prev => ({
-            ...prev,
-            x: startOffset.current.x + dx,
-            y: startOffset.current.y + dy,
-        }));
-    }
+        // Attach document-level listeners so drag continues over fixed navbars (z-index > mm-wrap)
+        function handleMove(ev: globalThis.MouseEvent) {
+            const dx = ev.clientX - startPos.current.x;
+            const dy = ev.clientY - startPos.current.y;
+            setView(prev => ({
+                ...prev,
+                x: startOffset.current.x + dx,
+                y: startOffset.current.y + dy,
+            }));
+        }
 
-    function stopDragging() {
-        if (!isDragging.current) return;
-        isDragging.current = false;
-        setDragging(false);
+        function handleUp() {
+            isDragging.current = false;
+            setDragging(false);
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('mouseup', handleUp);
+        }
+
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleUp);
     }
 
     function navigateTo(idea: IdeaType) {
@@ -270,9 +274,6 @@ function MindMap({ onClose, visible }: MindMapProps) {
                 ref={bodyRef}
                 className={`mm-body${dragging ? ' mm-body--dragging' : ''}`}
                 onMouseDown={onMouseDown}
-                onMouseMove={onMouseMove}
-                onMouseUp={stopDragging}
-                onMouseLeave={stopDragging}
             >
                 <div
                     ref={canvasRef}

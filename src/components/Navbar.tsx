@@ -9,13 +9,15 @@ interface NavbarProps {
     side: string;
     signUserOut: () => void;
     setShowHelp: () => void;
+    showHelp: boolean;
     setShowPatchNotes: () => void;
+    showPatchNotes: boolean;
     setShowMindMap: React.Dispatch<React.SetStateAction<boolean>>;
     showMindMap: boolean;
     isNewPatchNotes?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShowPatchNotes, setShowMindMap, showMindMap, isNewPatchNotes }) => {
+const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, setShowMindMap, showMindMap, isNewPatchNotes }) => {
 
     const { rootIdStack, setCreationModalOpen, rootId } = useIdeaContext();
 
@@ -37,8 +39,8 @@ const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, setShow
                 <nav className="navbar rightSide">
                     <section className="rightSideButtons">
                         <TooltipButton tooltip="Log out" tooltipSide="left" className="mediumSideButton neutral neobrutal-button navButton" onClick={() => signUserOut()}><img src="/images/LogOut.svg" alt="" className="buttonImg" /></TooltipButton>
-                        <TooltipButton tooltip="Help & instructions" tooltipSide="left" className="smallSideButton neutral neobrutal-button navButton" onClick={setShowHelp}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></TooltipButton>
-                        <TooltipButton tooltip="Patch notes" tooltipSide="left" alwaysVisible={isNewPatchNotes} className="smallSideButton neutral neobrutal-button navButton patchNotesBtn" onClick={setShowPatchNotes}><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" className="buttonImg" /></TooltipButton>
+                        <TooltipButton tooltip="Help & instructions" tooltipSide="left" className={`smallSideButton neobrutal-button navButton${showHelp ? ' navButton--active' : ' neutral'}`} onClick={setShowHelp}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></TooltipButton>
+                        <TooltipButton tooltip="Patch notes" tooltipSide="left" alwaysVisible={isNewPatchNotes} className={`smallSideButton neobrutal-button navButton patchNotesBtn${showPatchNotes ? ' navButton--active' : ' neutral'}`} onClick={setShowPatchNotes}><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" className="buttonImg" /></TooltipButton>
                     </section>
                     <section className={`howDeepHolder${showMindMap ? ' howDeepHolder--hidden' : ''}`}>{depthElements}</section>
                 </nav>

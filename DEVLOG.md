@@ -4,6 +4,16 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.06 — SCRUBBIN' DA FLOORS (POLISH) — 2026-06-24
+- Onboarding modal: shown once on first visit (`onboarding_v1_seen` in localStorage); three cards with animated CSS mini-illustrations (tree structure, click-to-navigate, drag on desktop / long-press on mobile)
+- Navigation fade transition: nodes briefly fade out (60ms) before the root changes and fade back in; applied to both desktop (`nodesVisible` / `ideaNodes--fade`) and mobile (`mmobile-content--fade`) via `navigateToIdea()` in context
+- New `ArrowBack.svg` replaces the CSS-flipped arrow on the back button; back and sort button heights reduced from 2.8rem → 2rem; mobile back button updated from `‹` text to the SVG icon
+- Mind map drag fix: mouse move/up handlers moved to document-level listeners so panning continues when the cursor passes over fixed navbars
+- Navbar active state: help and patch notes buttons gain `navButton--active` highlight when their panels are open
+- `LastIdea` drop zone text wrapped in a 3-line clamped `<span>`; element moved from `rootAdditionalButtons` into `rootSpacer`
+- iOS/touch fixes: passive `touchstart` on document enables CSS `:active` on iOS Safari; `.neobrutal-button:active` now mirrors `:hover` pressed style; `e.preventDefault()` moved inside `!touchMoved.current` guard to prevent scroll blocking
+- Help screen 6 animation fix: P1/P3 ribbon keyframes swapped so the high-priority (tall/red) ribbon animates last; mobile `.overlay` gets `overflow-y: auto` so tall modals scroll on small screens
+
 ## V 1.05 — Priority & Sorting — 2026-06-23
 - Priority system: ideas can be marked P1 (red), P2 (orange), or P3 (yellow) via a ribbon button in the top-left corner of each card; ribbon height conveys urgency at a glance
 - Sort mode: toggle button below Back switches between Priority order (P1 first) and Age order (creation order); persisted to `localStorage`; FLIP animation smoothly reorders the grid on sort change

@@ -51,6 +51,7 @@ interface ChecklistItem {
   id: string;        // String(Date.now()) at creation
   text: string;
   checked: boolean;
+  link?: string;     // optional URL on a checklist item
 }
 
 interface StandardIdea {
@@ -59,6 +60,7 @@ interface StandardIdea {
   content: string;
   parentID: number;
   link: string;      // external URL or empty string
+  priority?: 1 | 2 | 3;  // 1 = High, 2 = Medium, 3 = Low; undefined = none
 }
 
 interface ChecklistIdea {
@@ -67,6 +69,7 @@ interface ChecklistIdea {
   content: string;   // the checklist title — used by all name helpers unchanged
   parentID: number;
   items: ChecklistItem[];
+  priority?: 1 | 2 | 3;
 }
 
 type IdeaType = StandardIdea | ChecklistIdea;
@@ -132,25 +135,30 @@ src/
 │   ├── Idea.tsx              # main page — DnD context, navigation state, drag handler
 │   └── Login.tsx             # login page wrapper
 ├── components/
-│   ├── IdeaNode.tsx              # draggable/droppable idea card
+│   ├── IdeaNode.tsx              # draggable/droppable idea card; priority ribbon in top-left corner
+│   ├── AnimatedOverlay.tsx       # overlay wrapper with CSS scale-in animation from click origin
 │   ├── MindMap.tsx               # desktop full-tree overlay; pan/zoom; clicking a node navigates to it
 │   ├── MobileMindMap.tsx         # mobile-only UI orchestrator (shown ≤576px, hidden on desktop)
-│   ├── MobileHelpSheet.tsx       # mobile help carousel (3 screens); owns helpScreen state
+│   ├── MobileHelpSheet.tsx       # mobile help carousel (6 screens); owns helpScreen state
+│   ├── MobileMindMapSheet.tsx    # mobile mind map / navigate sheet (◎ button); full vtree view; replaces MobileNavigateSheet
 │   ├── MobileMoveSheet.tsx       # mobile move-tree sheet; owns expandedMoveNodes state + auto-scroll
-│   ├── MobileNavigateSheet.tsx   # mobile full-tree jump sheet (◎ button); navigate-only, no move
+│   ├── MobileNavigateSheet.tsx   # UNUSED — superseded by MobileMindMapSheet; do not import
 │   ├── MobilePatchNotesSheet.tsx # mobile patch notes bottom sheet
-│   ├── PatchNotes.tsx            # desktop "What's New" popup panel (right Navbar)
+│   ├── PatchNotes.tsx            # desktop "What's New" popup panel (right Navbar); feature request submission
 │   ├── TooltipButton.tsx         # button wrapper with 1000ms delayed hover tooltip
-│   ├── Navbar.tsx                # left + right sidebars
+│   ├── Navbar.tsx                # left + right sidebars; accepts isNewPatchNotes prop for badge
 │   ├── DepthIndicator.tsx        # breadcrumb dot in right sidebar
 │   ├── Trash.tsx                 # drop zone for deletion
-│   ├── Help.tsx                  # 3-screen help carousel
+│   ├── Help.tsx                  # 6-screen help carousel (desktop)
 │   ├── LastIdea.tsx              # drop zone to move idea to parent
 │   ├── MessageBox.tsx            # toast notifications
 │   ├── Auth.tsx                  # login/signup form
+│   ├── AuthOptionMessage.tsx     # "Sign In / Sign Up" toggle message below auth form
+│   ├── helpMenus/                # individual help screen components (HelpMenuOne–HelpMenuSix)
 │   └── modals/
-│       ├── CreationModal.tsx       # create new idea (tabs: Idea | Checklist)
+│       ├── CreationModal.tsx       # create new idea (tabs: Idea | Checklist); priority selector
 │       ├── ChecklistModal.tsx      # full-view checklist modal (desktop); opened via checklistModalId context
+│       ├── FeatureImplementedModal.tsx  # confetti modal shown when a tracked feature request is implemented
 │       ├── RenameModal.tsx         # rename idea or current root; says "Rename Checklist" for checklist nodes
 │       ├── LinkChangeModal.tsx     # add/change external link
 │       └── DeleteConfirmModal.tsx  # confirm before deleting
@@ -160,15 +168,18 @@ src/
 │   ├── index.ts              # barrel export
 │   ├── types.ts              # IdeaType discriminated union (StandardIdea | ChecklistIdea) + ChecklistItem
 │   ├── parseChangelog.ts     # parses CHANGELOG.md into ChangelogEntry[]
+│   ├── patchNotesState.ts    # patch notes "new" badge — isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase
+│   ├── profanityFilter.ts    # containsProfanity() — used to validate feature request text
 │   ├── crypto.ts             # AES-256-GCM encryption primitives + DEK/KEK key scheme
 │   ├── dekStore.ts           # in-memory + sessionStorage DEK persistence
 │   ├── firebase/
 │   │   ├── firebaseHelpers.tsx   # Firestore CRUD (encrypts/decrypts all idea fields)
-│   │   └── authFirebase.tsx      # sign out (clears DEK)
+│   │   ├── authFirebase.tsx      # sign out (clears DEK)
+│   │   └── featureRequests.ts    # GitHub issue tracking: saveTrackedIssue, checkAndMarkImplementedFeatures
 │   └── idea/
 │       ├── helpers.tsx       # navigation helpers, name/link lookups, cleanLink(), getIdeaLink()
-│       ├── storage.tsx       # localStorage CRUD; updateChecklistItems() for checklist item writes
-│       ├── parsing.tsx       # getIdeasByParentID, recursive delete
+│       ├── storage.tsx       # localStorage CRUD; updateChecklistItems(); updateIdeaPriority(); schedulePriorityFirebaseWrite()
+│       ├── parsing.tsx       # getIdeasByParentID, sortIdeas(), recursive delete
 │       ├── creation.tsx      # handleIdeaCreation, handleChecklistCreation
 │       └── organizers.tsx    # fetchFromFirebaseAndOrganizeIdeas
 ├── styles/
@@ -218,6 +229,12 @@ If you ever add a "change password" feature using Firebase's `updatePassword()`,
 ### `updateIdeaParentId` syncs Firebase automatically
 `updateIdeaParentId(id, newParentId)` in `storage.tsx` writes to both `localStorage` **and** calls `updateIdeaParentIdInFirebase` internally. Do not add a separate Firebase call after using it — that would double-write.
 
+### Priority writes are debounced — use `schedulePriorityFirebaseWrite`
+`updateIdeaPriority(id, priority)` writes to `localStorage` only. Always follow it with `schedulePriorityFirebaseWrite(id, priority)` to sync Firestore — it's debounced (same pattern as `scheduleChecklistFirebaseWrite`). Never call `updateIdeaPriorityInFirebase` directly from a component.
+
+### Checklist item `link` field is encrypted in Firestore
+`ChecklistItem` now has `link?: string`. When writing checklist items to Firestore, `updateChecklistItemsInFirebase` encrypts both `items[].text` and `items[].link`. Never write raw item link text to Firestore directly.
+
 ## Key Conventions
 
 ### Modals
@@ -255,14 +272,16 @@ Key differences from desktop:
 - **Navigation**: local `currentId` state replaces `rootIdStack`; breadcrumb bar at top replaces depth indicators
 - **Interaction**: tap navigates into a node (or opens link if it has one); long-press (360ms) opens an actions bottom sheet; edit mode (pencil button) makes a single tap open the actions sheet instead; long-press also works on the current root header
 - **Sheets**: uses a local `sheet` state (`SheetState` discriminated union) for bottom sheets — does **not** use context modal flags (`renameModalOpen`, etc.)
-- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete` | `navigate` | `checklist`
+- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete` | `checklist` (no `navigate` — the mind map is handled separately via `showMindMap` state, not as a sheet)
 - **Move tree**: rendered by `MobileMoveSheet`; owns `expandedMoveNodes` state and auto-scroll logic; scrollable tree with expand/collapse; auto-scrolls to current parent on open; descendants and current parent are disabled as move targets
-- **Navigate tree**: rendered by `MobileNavigateSheet` (◎ button in FAB area); same tree UI as move but for jumping to any node; link nodes are disabled as destinations; auto-scrolls to the current node on open
+- **Mind map / navigate**: rendered by `MobileMindMapSheet` (◎ button in FAB area); toggled via local `showMindMap` boolean (not a SheetState); full vtree showing the entire idea tree; clicking a node navigates to it; link nodes open in new tab; checklist nodes are disabled; auto-scrolls to the current node on open
 - **Patch notes**: rendered by `MobilePatchNotesSheet` (patch notes button in FAB area); reuses the help-sheet shell; parses `CHANGELOG.md` via `parseChangelog`
-- **FAB area**: four buttons — patch notes, ◎ (navigate), + (create), ✎ (edit mode toggle)
-- **Checklist nodes (mobile)**: tap = toggle inline accordion (expand/collapse items in place); tap the `OpenIcon.svg` button in the header row = open the `checklist` full-view sheet. The `checklist` sheet has its own `sheetItems`/`sheetItemDraft` state initialized fresh from localStorage on open. Sheet items support drag-to-reorder (via `@dnd-kit/sortable`) and inline text editing (pen icon). Checklist nodes cannot be navigated into and cannot receive drops or be moved into. In the move/navigate trees they appear disabled with `mmobile-move-btn--checklist` styling.
+- **FAB area**: four buttons — patch notes, ◎ (mind map), + (create), ✎ (edit mode toggle)
+- **Priority ribbons**: each node card has a corner ribbon in its top-left that cycles through High (red) → Medium (orange) → Low (yellow) → none on tap; calls `updateIdeaPriority` + `schedulePriorityFirebaseWrite`; animating state (`animatingRibbonId`) drives a CSS animation class
+- **Sort mode**: `sortMode` state (`'priority' | 'recent'`); persisted to `localStorage` as `idea_sort_mode`; sort button in header cycles the mode; `sortIdeas()` in `parsing.tsx` handles ordering
+- **Checklist nodes (mobile)**: tap = toggle inline accordion (expand/collapse items in place); tap the `OpenIcon.svg` button in the header row = open the `checklist` full-view sheet. The `checklist` sheet has its own `sheetItems`/`sheetItemDraft` state initialized fresh from localStorage on open. Sheet items support drag-to-reorder (via `@dnd-kit/sortable`) and inline text editing (pen icon). Checklist nodes cannot be navigated into and cannot receive drops or be moved into. In the move/mind-map trees they appear disabled with `mmobile-move-btn--checklist` styling.
 - **Rename vs. rewrite**: the actions sheet and rename sheet label the action "Rename Idea" when the node has children, "Rewrite Idea" when it's a leaf, "Rename Checklist" for checklist nodes; new ideas use an auto-resizing `<textarea>`, existing renames use a single-line `<input>`
-- **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–3); receives only an `onClose` prop
+- **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–6); receives only an `onClose` prop
 - **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` normalizes URLs — upgrades `http://` to `https://`, passes through any other existing protocol unchanged, prepends `https://` if no protocol present, and appends `.com` only when the hostname has no TLD (no dot). Never double-adds a protocol.
 - **No DnD**: doesn't use `@dnd-kit` at all; touch events handle long-press detection with `touchMoved` guard to cancel on scroll
 
@@ -277,7 +296,7 @@ Toggled by the logo button in the left Navbar (`showMindMap` state in `Idea.tsx`
 - **Initial expand state**: ancestors of the current `rootId` start expanded; all others start collapsed
 - Styles live in `mindmap.scss`; BEM-style classes prefixed with `mm-`
 
-Navbar accepts `setShowMindMap`, `showMindMap`, and `setShowPatchNotes` props. When `showMindMap` is true: the `+` (create) button and depth indicators are hidden; the logo button gets a `logo-map-box` wrapper class. All nav buttons use `TooltipButton` instead of plain `<button>`.
+Navbar accepts `setShowMindMap`, `showMindMap`, `setShowPatchNotes`, and `isNewPatchNotes` props. When `showMindMap` is true: the `+` (create) button and depth indicators are hidden; the logo button gets a `logo-map-box` wrapper class. All nav buttons use `TooltipButton` instead of plain `<button>`. `isNewPatchNotes` drives a badge dot on the patch notes button.
 
 ### Patch Notes
 
@@ -290,9 +309,15 @@ Description text.
 
 `parseChangelog(raw)` in `utilities/parseChangelog.ts` splits on `^## `, then splits each section's first line on `|` to extract `{ tag, title, description }`.
 
-- **Desktop**: `PatchNotes` component (right column of `Idea.tsx`); toggled by the patch notes button in the right Navbar; `showPatchNotes` state lives in `Idea.tsx`
+- **Desktop**: `PatchNotes` component (right column of `Idea.tsx`); toggled by the patch notes button in the right Navbar; `showPatchNotes` state lives in `Idea.tsx`; includes feature request submission form (uses `saveTrackedIssue`)
 - **Mobile**: `MobilePatchNotesSheet` bottom sheet; toggled by the patch notes button in the FAB area; `showPatchNotes` state is local to `MobileMindMap`
 - Both parse `changelog` at module load (outside the component), not on each render.
+
+**"New" badge:** `patchNotesState.ts` manages whether the patch notes button shows a badge:
+- `isPatchNotesNew(uid, entries)` — checks `localStorage` key `patchNotes_lastSeen_{uid}` against the latest tag
+- `markPatchNotesSeen(uid, entries)` — writes localStorage + calls `updateLastSeenPatchVersion` in Firestore
+- `syncPatchNotesFromFirebase(uid, entries)` — on first visit (no localStorage), fetches the authoritative version from Firestore, writes to localStorage, and returns whether there are unseen notes
+- `isNewPatchNotes` state in `Idea.tsx` is initialized via `isPatchNotesNew`, then synced on mount via `syncPatchNotesFromFirebase`
 
 **What belongs in CHANGELOG.md:** Only significant new features warrant a changelog entry. Bug fixes and small additions are shipped as `.x` patch version increments and do **not** get a changelog entry — they are silent updates.
 
@@ -319,6 +344,32 @@ Created via the "Checklist" tab in `CreationModal`. Uses `handleChecklistCreatio
 ### Drag and Drop (Desktop)
 
 Drag is disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash` (delete), `last-idea` (reparent to grandparent), `idea-{id}` (reparent). Link nodes and **checklist nodes** cannot receive drops (`useDroppable` `disabled: isMobile || isChecklist`). `PointerSensor` requires 10px movement before a drag starts (prevents accidental drags on clicks).
+
+### Priority System
+
+Ideas have an optional `priority?: 1 | 2 | 3` field (1 = High/red, 2 = Medium/orange, 3 = Low/yellow; `undefined` = none). A corner ribbon in the top-left of each node card visualizes priority.
+
+**Writes:** Always call both functions together:
+1. `updateIdeaPriority(id, priority)` — writes to `localStorage` only
+2. `schedulePriorityFirebaseWrite(id, priority)` — debounced Firestore sync
+
+**Sorting:** `sortIdeas(ideas, mode)` in `parsing.tsx` handles two modes:
+- `'priority'` — P1 first, then P2, P3, then unprioritized (all ties broken by creation order)
+- `'recent'` — creation order (ascending `id`)
+
+Sort mode is persisted to `localStorage` as `idea_sort_mode` and initialized from there.
+
+### Feature Request Tracking
+
+Users can submit GitHub issues as feature requests from the `PatchNotes` panel. Submissions are stored in Firestore at `users/{uid}/meta/featureRequests` as a `TrackedIssue[]`.
+
+On each login, `checkAndMarkImplementedFeatures()` polls the GitHub API (using `VITE_GITHUB_TOKEN` and `VITE_GITHUB_REPO` env vars) for any tracked issues that are now `closed` + `completed`. If found, it marks them `seenClosed: true` in Firestore and returns their titles — which triggers `FeatureImplementedModal` (confetti + sound).
+
+Feature request text is validated through `containsProfanity()` in `profanityFilter.ts` before submission.
+
+### `AnimatedOverlay`
+
+`AnimatedOverlay` is an overlay wrapper that animates in from the pointer position (CSS `--origin-dx` / `--origin-dy` custom properties drive a scale transform). Props: `open: boolean`, `scrollable?: boolean`, `onClick?: () => void`, `children`, `origin?: { x, y }`. Closing triggers a 150ms exit animation before unmounting. Use it for modals that should feel like they "pop out" of a button.
 
 ### SCSS Colors (`variables.scss`)
 

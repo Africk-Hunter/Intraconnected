@@ -61,7 +61,7 @@ function MobileHelpSheet({ onClose, style }: Props) {
                                 <p className="mmobile-help-text">The large card at the top is the current root. All nodes below belong to it.</p>
                                 <span className="mmobile-help-badge mmobile-help-badge--add"><img src="/images/Plus.svg" className="mmobile-help-badge-icon" alt="+" /></span>
                                 <p className="mmobile-help-text">Tap + at the bottom to create a new idea under the current root.</p>
-                                <span className="mmobile-help-badge mmobile-help-badge--back"><img src="/images/LeftArrow.svg" className="mmobile-help-badge-icon" alt="Back" /></span>
+                                <span className="mmobile-help-badge mmobile-help-badge--back"><img src="/images/ArrowBack.svg" className="mmobile-help-badge-icon" alt="Back" /></span>
                                 <p className="mmobile-help-text">Tap Back to navigate up to the previous root.</p>
                                 <span className="mmobile-help-badge mmobile-help-badge--delete"><img src="/images/Trash.svg" className="mmobile-help-badge-icon" alt="Delete" /></span>
                                 <p className="mmobile-help-text">Long-press a node, then tap Delete to remove it and all its children.</p>

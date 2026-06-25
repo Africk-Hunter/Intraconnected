@@ -53,7 +53,8 @@ button {
     }
 }
 
-.neobrutal-button:hover {
+.neobrutal-button:hover,
+.neobrutal-button:active {
     box-shadow: 0px 0px 0 2px black;
     translate: 4px 4px;
 }

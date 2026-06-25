@@ -9,6 +9,9 @@ interface IdeaContextType {
     rootName: string;
     setRootName: (name: string) => void;
     rootIdStack: React.RefObject<number[]>;
+    nodesVisible: boolean;
+    setNodesVisible: (visible: boolean) => void;
+    navigateToIdea: (id: number, name: string) => void;
     creationModalOpen: boolean;
     setCreationModalOpen: (open: boolean) => void;
     renameModalOpen: boolean;
@@ -48,6 +51,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [ideas, setIdeas] = useState<IdeaType[]>([]);
     const [rootId, setRootId] = useState(1);
     const [rootName, setRootName] = useState("Ideas");
+    const [nodesVisible, setNodesVisible] = useState(true);
+    const navTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
     const [creationModalOpen, setCreationModalOpen] = useState(false);
     const [renameModalOpen, setRenameModalOpen] = useState(false);
     const [linkChangeModalOpen, setLinkChangeModalOpen] = useState(false);
@@ -66,6 +71,27 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const rootIdStack = useRef<number[]>([]);
 
+    function navigateToIdea(id: number, name: string) {
+        navTimeouts.current.forEach(clearTimeout);
+        const allIdeas: IdeaType[] = JSON.parse(localStorage.getItem('ideas') || '[]');
+        const hasChildren = allIdeas.some(i => i.parentID === id);
+        if (!hasChildren) {
+            setRootId(id);
+            setRootName(name);
+            rootIdStack.current.push(id);
+            return;
+        }
+        setNodesVisible(false);
+        navTimeouts.current = [
+            setTimeout(() => {
+                setRootId(id);
+                setRootName(name);
+                rootIdStack.current.push(id);
+            }, 65),
+            setTimeout(() => setNodesVisible(true), 90),
+        ];
+    }
+
     return (
         <IdeaContext.Provider
             value={{
@@ -76,6 +102,9 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 rootName,
                 setRootName,
                 rootIdStack,
+                nodesVisible,
+                setNodesVisible,
+                navigateToIdea,
                 creationModalOpen,
                 setCreationModalOpen,
                 renameModalOpen,

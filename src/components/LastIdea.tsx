@@ -27,7 +27,7 @@ const LastIdea: React.FC<LastIdeaProps> = ({ lastRootName }) => {
 
     return (
         <div ref={setNodeRef} className="moveBack roots" style={style}>
-            {lastRootName}
+            <span className="moveBack-text">{lastRootName}</span>
         </div>
     );
 };

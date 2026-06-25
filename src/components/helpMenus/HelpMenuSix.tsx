@@ -47,7 +47,7 @@ const HelpMenuSix: React.FC = () => {
                     <span className="help-chip-lbl help-chip-lbl--p3">P3</span>
                 </div>
                 <p className="details">
-                    Each idea has a <strong>priority ribbon</strong> in its top-left corner. Click it to cycle: <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong>, then none. The ribbon height shows urgency at a glance.
+                    Each idea has a <strong>priority ribbon</strong> in its top-left corner. Click it to cycle: <strong>Low (yellow)</strong>, <strong>Medium (orange)</strong>, <strong>High (red)</strong>, then none. The ribbon grows taller with each click to show urgency at a glance.
                 </p>
                 <div className="helpGridIcon helpSort">
                     <img src="/images/sort.svg" className="helpSortImg" alt="" />

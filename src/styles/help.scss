@@ -396,7 +396,7 @@
 
     20%,
     32% {
-        background: #D62000;
+        background: #C8A200;
     }
 
     44%,
@@ -406,7 +406,7 @@
 
     68%,
     80% {
-        background: #C8A200;
+        background: #D62000;
     }
 
     92%,
@@ -436,16 +436,16 @@
 @keyframes help-chip-p1 {
 
     0%,
-    15% {
+    64% {
         opacity: 0;
     }
 
-    20%,
-    32% {
+    68%,
+    80% {
         opacity: 1;
     }
 
-    44%,
+    92%,
     100% {
         opacity: 0;
     }
@@ -472,16 +472,16 @@
 @keyframes help-chip-p3 {
 
     0%,
-    64% {
+    15% {
         opacity: 0;
     }
 
-    68%,
-    80% {
+    20%,
+    32% {
         opacity: 1;
     }
 
-    92%,
+    44%,
     100% {
         opacity: 0;
     }
@@ -499,8 +499,8 @@
 
     20%,
     32% {
-        height: 2rem;
-        background: #D62000;
+        height: 0.85rem;
+        background: #C8A200;
         border-color: #111;
         box-shadow: 1px 1px 0 1px #111;
     }
@@ -515,8 +515,8 @@
 
     68%,
     80% {
-        height: 0.85rem;
-        background: #C8A200;
+        height: 2rem;
+        background: #D62000;
         border-color: #111;
         box-shadow: 1px 1px 0 1px #111;
     }

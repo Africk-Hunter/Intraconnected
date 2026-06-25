@@ -21,15 +21,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
     const [itemDraft, setItemDraft] = useState('');
     const [priority, setPriority] = useState<1 | 2 | 3 | undefined>(undefined);
 
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const itemInputRef = useRef<HTMLInputElement>(null);
-
-    function autoResize() {
-        const el = textareaRef.current;
-        if (!el) return;
-        el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
-    }
 
     function toggleLinkBox() {
         if (isLinkBoxShown) {
@@ -114,7 +106,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
 
                         {activeTab === 'idea' && (
                             <section className="contentHolder">
-                                <textarea ref={textareaRef} autoFocus={true} maxLength={200} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => { setModalContent(e.target.value); autoResize(); }}></textarea>
+                                <textarea autoFocus={true} maxLength={200} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => setModalContent(e.target.value)}></textarea>
                                 <div className="linkArea">
                                     <button className="linkButton neobrutal-button" onClick={toggleLinkBox}>
                                         Add Link

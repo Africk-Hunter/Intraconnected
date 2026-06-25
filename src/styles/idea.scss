@@ -151,13 +151,14 @@
         align-items: center;
         gap: 0.75rem;
         width: 7rem;
-        height: 2.8rem;
+        height: 2rem;
         background: $back;
         font-size: 1.25rem;
         font-weight: 500;
 
         .backImg {
-            transform: scaleX(-1);
+            width: 22px;
+            height: auto;
         }
 
         @media (max-width: $mobile) {
@@ -238,7 +239,7 @@
         justify-content: center;
         align-items: center;
         flex: 1;
-        height: 2.8rem;
+        height: 2rem;
         font-size: 1.2rem;
         font-weight: 700;
         background: $background-color;
@@ -260,8 +261,12 @@
         flex-direction: column;
         justify-content: flex-start;
         align-items: flex-start;
-        gap: 1.5rem;
+        gap: 1rem;
         justify-self: end;
+
+        @media (min-width: $large-desktop) {
+            gap: 1rem;
+        }
 
         @media (max-width: $mobile) {
             flex-direction: row-reverse;
@@ -282,9 +287,17 @@
         border-radius: 5px;
         box-shadow: 2px 2px 0 2px black;
         flex-grow: 1;
-        padding: 0rem 1rem;
-        white-space: normal;
-        word-break: break-word;
+        padding: 0rem 0.5rem;
+        overflow: hidden;
+
+        .moveBack-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+        }
 
         @media (max-width: $mobile) {
             min-height: 2.8rem;
@@ -296,7 +309,7 @@
             border-radius: 10px;
             box-shadow: 4px 4px 0 2px black;
             border: 4px dashed black;
-            padding: 0rem 1rem;
+            padding: 0rem 0.5rem;
         }
     }
 
@@ -305,6 +318,11 @@
         justify-content: space-between;
         row-gap: 5rem;
         margin-bottom: 10rem;
+        transition: opacity 0.06s ease;
+
+        &--fade {
+            opacity: 0;
+        }
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         justify-items: center;
@@ -618,7 +636,7 @@
         align-items: center;
         gap: 0.5rem;
         width: 7rem;
-        height: 2.8rem;
+        height: 2rem;
         background: $deep-yellow;
         font-size: 1.1rem;
         font-weight: 600;
@@ -632,7 +650,7 @@
         }
 
         &--at-root {
-            transform: translateY(-4.3rem);
+            transform: translateY(-2.5rem);
         }
 
         transition: transform 0.3s ease-in-out;
