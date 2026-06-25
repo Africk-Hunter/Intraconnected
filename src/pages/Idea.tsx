@@ -330,20 +330,6 @@ function Idea() {
                                 <section className="rootAdditionalButtons">
                                     <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={handleBackWithFade}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
                                     <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Age'}</button>
-                                    {rootId !== 1 && (
-                                        <section className="rootPriorityButtons">
-                                            {([1, 2, 3] as const).map(p => (
-                                                <button
-                                                    key={p}
-                                                    className={`root-priority-btn neobrutal-button${rootPriority === p ? ' root-priority-btn--active' : ''}`}
-                                                    onClick={() => handleRootPriority(p)}
-                                                    title={rootPriority === p ? `Priority ${p} — click to remove` : `Set priority ${p}`}
-                                                >
-                                                    {p}
-                                                </button>
-                                            ))}
-                                        </section>
-                                    )}
                                 </section>
                                 <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
                                 <div className="rootSpacer">

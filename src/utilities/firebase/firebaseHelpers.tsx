@@ -241,6 +241,22 @@ export async function updateLastSeenPatchVersion(version: string): Promise<void>
     await setDoc(prefsDoc, { lastSeenPatchVersion: version }, { merge: true });
 }
 
+export async function fetchOnboardingSeen(): Promise<boolean> {
+    const user = authCheck();
+    if (!user) return false;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    const snap = await getDoc(prefsDoc);
+    if (!snap.exists()) return false;
+    return (snap.data().onboardingSeen as boolean) ?? false;
+}
+
+export async function markOnboardingSeen(): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    await setDoc(prefsDoc, { onboardingSeen: true }, { merge: true });
+}
+
 export async function updateIdeaPriorityInFirebase(ideaId: number, priority: 1 | 2 | 3 | undefined): Promise<void> {
     const user = authCheck();
     if (!user) return;

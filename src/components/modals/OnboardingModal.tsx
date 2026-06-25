@@ -1,15 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchOnboardingSeen, markOnboardingSeen } from '../../utilities/firebase/firebaseHelpers';
 
 const STORAGE_KEY = 'onboarding_v1_seen';
 
 function OnboardingModal() {
-    const [open, setOpen] = useState(() => localStorage.getItem(STORAGE_KEY) !== 'true');
+    const [open, setOpen] = useState(false);
+
+    useEffect(() => {
+        if (localStorage.getItem(STORAGE_KEY) === 'true') return;
+        fetchOnboardingSeen().then(seen => {
+            if (seen) {
+                localStorage.setItem(STORAGE_KEY, 'true');
+            } else {
+                setOpen(true);
+            }
+        }).catch(() => setOpen(true));
+    }, []);
 
     if (!open) return null;
 
     function dismiss() {
         localStorage.setItem(STORAGE_KEY, 'true');
         setOpen(false);
+        markOnboardingSeen().catch(() => { /* non-critical */ });
     }
 
     return (

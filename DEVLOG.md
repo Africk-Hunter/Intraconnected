@@ -4,7 +4,12 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
-## V 1.06 — SCRUBBIN' DA FLOORS (POLISH) — 2026-06-24
+## V 1.05.02 — Minor Fixes — 2026-06-25
+- Onboarding modal: seen-state now synced to Firestore (`preferences.onboardingSeen`) so dismissing on one device suppresses it on all others.
+- Root priority buttons (inline 1/2/3 in sidebar) removed because it wasn't obvious what they did.
+- Logo button sizing fixed on desktop (width/height 100% now applied outside the mobile-only media query).
+
+## V 1.05.01 — SCRUBBIN' DA FLOORS (POLISH) — 2026-06-24
 - Onboarding modal: shown once on first visit (`onboarding_v1_seen` in localStorage); three cards with animated CSS mini-illustrations (tree structure, click-to-navigate, drag on desktop / long-press on mobile)
 - Navigation fade transition: nodes briefly fade out (60ms) before the root changes and fade back in; applied to both desktop (`nodesVisible` / `ideaNodes--fade`) and mobile (`mmobile-content--fade`) via `navigateToIdea()` in context
 - New `ArrowBack.svg` replaces the CSS-flipped arrow on the back button; back and sort button heights reduced from 2.8rem → 2rem; mobile back button updated from `‹` text to the SVG icon
@@ -14,7 +19,7 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 - iOS/touch fixes: passive `touchstart` on document enables CSS `:active` on iOS Safari; `.neobrutal-button:active` now mirrors `:hover` pressed style; `e.preventDefault()` moved inside `!touchMoved.current` guard to prevent scroll blocking
 - Help screen 6 animation fix: P1/P3 ribbon keyframes swapped so the high-priority (tall/red) ribbon animates last; mobile `.overlay` gets `overflow-y: auto` so tall modals scroll on small screens
 
-## V 1.05 — Priority & Sorting — 2026-06-23
+## V 1.05 — GETTING MY PRIORITIES STRAIGHT — 2026-06-23
 - Priority system: ideas can be marked P1 (red), P2 (orange), or P3 (yellow) via a ribbon button in the top-left corner of each card; ribbon height conveys urgency at a glance
 - Sort mode: toggle button below Back switches between Priority order (P1 first) and Age order (creation order); persisted to `localStorage`; FLIP animation smoothly reorders the grid on sort change
 - Root priority: 1/2/3 buttons appear in the sidebar when navigated into a child node to mark the current root's priority
