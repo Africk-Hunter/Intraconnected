@@ -237,16 +237,21 @@ function MobileMindMap() {
     const [sheetOrigin, setSheetOrigin] = useState({ dx: 0, dy: 0 });
     const [helpOrigin, setHelpOrigin] = useState({ dx: 0, dy: 0 });
     const [mindMapOrigin, setMindMapOrigin] = useState({ dx: 0, dy: 0 });
+    const [keyboardInset, setKeyboardInset] = useState(0);
 
     // Drag-and-drop
     const isDraggingRef = useRef(false);
     const [isDragging, setIsDragging] = useState(false);
     const [dragNodeId, setDragNodeId] = useState<number | null>(null);
     const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+    const dragPosRef = useRef({ x: 0, y: 0 });
     const _dropTargetId = useRef<number | null>(null);
     const [dropTargetId, _setDropTargetId] = useState<number | null>(null);
     const parentZoneRef = useRef<HTMLDivElement | null>(null);
     function setDropTargetId(id: number | null) { _dropTargetId.current = id; _setDropTargetId(id); }
+    const edgeScrollDirRef = useRef<'up' | 'down' | null>(null);
+    const edgeZoneEnterTimeRef = useRef<number | null>(null);
+    const edgeScrollRafRef = useRef<number | null>(null);
 
     const headerTextareaRef = useRef<HTMLTextAreaElement>(null);
     const sheetWasNullRef = useRef(true);
@@ -287,6 +292,17 @@ function MobileMindMap() {
             });
         }
         sheetWasNullRef.current = !isOpen;
+    }, [sheet]);
+
+    useEffect(() => {
+        const vv = window.visualViewport;
+        if (!vv || !sheet) { setKeyboardInset(0); return; }
+        function update() {
+            setKeyboardInset(Math.max(0, window.innerHeight - vv!.height - vv!.offsetTop));
+        }
+        update();
+        vv.addEventListener('resize', update);
+        return () => { vv.removeEventListener('resize', update); setKeyboardInset(0); };
     }, [sheet]);
 
     useEffect(() => {
@@ -445,11 +461,37 @@ function MobileMindMap() {
         }, 360);
     }
 
+    function stopEdgeScroll() {
+        if (edgeScrollRafRef.current !== null) {
+            cancelAnimationFrame(edgeScrollRafRef.current);
+            edgeScrollRafRef.current = null;
+        }
+        edgeScrollDirRef.current = null;
+        edgeZoneEnterTimeRef.current = null;
+    }
+
+    function startEdgeScroll(dir: 'up' | 'down', draggingId: number) {
+        if (edgeScrollRafRef.current !== null) return;
+        function tick() {
+            if (!isDraggingRef.current || edgeScrollDirRef.current !== dir) {
+                edgeScrollRafRef.current = null;
+                return;
+            }
+            if (mobileListRef.current) {
+                mobileListRef.current.scrollTop += dir === 'down' ? 4 : -4;
+            }
+            updateDropTarget(dragPosRef.current.x, dragPosRef.current.y, draggingId);
+            edgeScrollRafRef.current = requestAnimationFrame(tick);
+        }
+        edgeScrollRafRef.current = requestAnimationFrame(tick);
+    }
+
     function clearDrag() {
         isDraggingRef.current = false;
         setIsDragging(false);
         setDragNodeId(null);
         setDropTargetId(null);
+        stopEdgeScroll();
     }
 
     function updateDropTarget(x: number, y: number, draggingId: number) {
@@ -497,8 +539,28 @@ function MobileMindMap() {
                 setDragNodeId(nodeId);
                 if (swipeRevealedId === nodeId) resetSwipeNode(nodeId);
             }
+            dragPosRef.current = { x: t.clientX, y: t.clientY };
             setDragPos({ x: t.clientX, y: t.clientY });
             updateDropTarget(t.clientX, t.clientY, nodeId);
+
+            const listEl = mobileListRef.current;
+            if (listEl) {
+                const rect = listEl.getBoundingClientRect();
+                const inTop = t.clientY < rect.top + 80;
+                const inBottom = t.clientY > rect.bottom - 80;
+                const dir: 'up' | 'down' | null = inTop ? 'up' : inBottom ? 'down' : null;
+                if (dir !== edgeScrollDirRef.current) {
+                    stopEdgeScroll();
+                    if (dir) {
+                        edgeScrollDirRef.current = dir;
+                        edgeZoneEnterTimeRef.current = Date.now();
+                    }
+                } else if (dir && edgeZoneEnterTimeRef.current !== null) {
+                    if (Date.now() - edgeZoneEnterTimeRef.current >= 250) {
+                        startEdgeScroll(dir, nodeId);
+                    }
+                }
+            }
             return;
         }
 
@@ -866,6 +928,7 @@ function MobileMindMap() {
             {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
             {showMindMap && (
                 <MobileMindMapSheet
+                    key={currentId}
                     currentId={currentId}
                     allIdeas={allIdeas}
                     onNavigate={(id) => { setCurrentId(id); setShowMindMap(false); setSheet(null); }}
@@ -1084,7 +1147,7 @@ function MobileMindMap() {
                 })}
             </div>
 
-            <div className="mmobile-fab-area">
+            <div className={`mmobile-fab-area${sheet ? ' mmobile-fab-area--hidden' : ''}`}>
                 <button
                     className={`mmobile-patchnotes-btn${isNewPatchNotes ? ' mmobile-patchnotes-btn--new' : ''}${showPatchNotes ? ' mmobile-patchnotes-btn--active' : ''}`}
                     onClick={() => {
@@ -1133,7 +1196,7 @@ function MobileMindMap() {
             {sheet && (
                 <>
                     <div className="mmobile-scrim" onClick={() => { if (Date.now() - lastLongPressTime.current < 400) return; closeSheet(); }} />
-                    <div className="mmobile-sheet" style={{ '--origin-dx': `${sheetOrigin.dx}px`, '--origin-dy': `${sheetOrigin.dy}px` } as React.CSSProperties}>
+                    <div className="mmobile-sheet" style={{ '--origin-dx': `${sheetOrigin.dx}px`, '--origin-dy': `${sheetOrigin.dy}px`, ...(keyboardInset > 0 ? { bottom: `${keyboardInset + 8}px` } : {}) } as React.CSSProperties}>
                         <div className="mmobile-sheet-title">
                             {sheetTitle}
                             {(sheet.type === 'move' || sheet.type === 'checklist') && (

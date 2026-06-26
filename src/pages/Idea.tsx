@@ -10,8 +10,8 @@ import LastIdea from '../components/LastIdea';
 
 // 3rd Party Libraries
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { Modifier, CollisionDetection } from '@dnd-kit/core';
+import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } from '@dnd-kit/core';
 
 // Custom Libraries
 import { auth } from '../firebaseConfig';
@@ -48,6 +48,15 @@ import MindMap from '../components/MindMap';
 import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRequests';
 
 const _changelogEntries = parseChangelog(changelog);
+
+const restrictToTopLeftRight: Modifier = ({ transform, draggingNodeRect, windowRect }) => {
+    if (!draggingNodeRect || !windowRect) return transform;
+    const value = { ...transform };
+    if (draggingNodeRect.left + transform.x < windowRect.left) value.x = windowRect.left - draggingNodeRect.left;
+    if (draggingNodeRect.right + transform.x > windowRect.right) value.x = windowRect.right - draggingNodeRect.right;
+    if (draggingNodeRect.top + transform.y < windowRect.top) value.y = windowRect.top - draggingNodeRect.top;
+    return value;
+};
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
@@ -163,6 +172,32 @@ function Idea() {
         loadIdeas();
         setLastRootName(getNameFromID(getParentID(rootId)));
     }, [rootId, newIdeaSwitch, rootName]);
+
+    const nodePointerCollision: CollisionDetection = (args) => {
+        const { droppableContainers, droppableRects, pointerCoordinates } = args;
+
+        const specialContainers = droppableContainers.filter(c => c.id === 'trash' || c.id === 'last-idea');
+        const specialHits = rectIntersection({ ...args, droppableContainers: specialContainers });
+        if (specialHits.length > 0) return specialHits;
+
+        if (!pointerCoordinates) return [];
+        const { x, y } = pointerCoordinates;
+        const BUFFER = 10;
+
+        const ideaContainers = droppableContainers.filter(c => String(c.id).startsWith('idea-'));
+        const collisions: { id: string | number; dist: number }[] = [];
+        for (const container of ideaContainers) {
+            const rect = droppableRects.get(container.id);
+            if (!rect) continue;
+            if (x >= rect.left - BUFFER && x <= rect.right + BUFFER && y >= rect.top - BUFFER && y <= rect.bottom + BUFFER) {
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                collisions.push({ id: container.id, dist: Math.hypot(x - cx, y - cy) });
+            }
+        }
+        collisions.sort((a, b) => a.dist - b.dist);
+        return collisions.map(c => ({ id: c.id }));
+    };
 
     const handleDragEnd = (event: any) => {
         const { active, over } = event;
@@ -317,7 +352,7 @@ function Idea() {
     );
 
     return (
-        <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]} sensors={sensors}>
+        <DndContext onDragEnd={handleDragEnd} collisionDetection={nodePointerCollision} modifiers={[restrictToTopLeftRight]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
                     <Navbar side="left" signUserOut={signUserOut} setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />

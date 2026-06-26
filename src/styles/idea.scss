@@ -1,1004 +1,1178 @@
 @use 'sass:color';
 @use './variables' as *;
 
+@media (max-width: $mobile) {
+    body {
+        margin: 0;
+    }
+}
+
+.ideaPage {
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    width: calc(100% - 4rem);
+    height: calc(100vh - 5rem);
+    margin: 2rem;
+
+    @media (max-width: 1023px) {
+        display: none;
+    }
+}
+
+.left,
+.right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: calc(100% - 4rem);
+    width: 15%;
+    position: fixed;
+    top: 2rem;
+    z-index: 5;
+
     @media (max-width: $mobile) {
-        body {
-            margin: 0;
-        }
-    }
-
-    .ideaPage {
-        display: flex;
-        justify-content: start;
-        align-items: start;
-        width: calc(100% - 4rem);
-        height: calc(100vh - 5rem);
-        margin: 2rem;
-
-        @media (max-width: 1023px) {
-            display: none;
-        }
-    }
-
-    .left,
-    .right {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: calc(100% - 4rem);
-        width: 15%;
-        position: fixed;
-        top: 2rem;
-        z-index: 5;
-
-        @media (max-width: $mobile) {
-            flex-direction: row;
-            width: calc(100% - 2rem);
-            height: 20%;
-            top: 1rem;
-        }
-
-        @media (min-width: $large-desktop) {
-            width: 10%;
-        }
-    }
-
-    .mid {
-        display: flex;
-        width: 70%;
-        margin: 0 15%;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: opacity 0.3s ease;
-
-        &--map-open {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        @media (max-width: $mobile) {
-            margin: 5% 0;
-            width: 100%;
-        }
-
-        @media (min-width: $large-desktop) {
-            width: 80%;
-            margin: 0 15%;
-        }
-    }
-
-    .right {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        justify-content: space-between;
-        right: 2rem;
-
-        @media (max-width: $mobile) {
-            display: none;
-            flex-direction: row;
-            justify-content: center;
-            width: calc(100% - 3rem);
-            height: 10%;
-            top: unset;
-            right: unset;
-            bottom: 1rem;
-        }
-    }
-
-    .top {
-        display: flex;
-        justify-content: center;
-        align-items: end;
-        width: 100%;
-        min-height: 25vh;
-        margin-bottom: 5rem;
-
-        @media (max-width: $mobile) {
-            min-height: 19%;
-            align-items: start;
-            margin: 5rem 0 2rem 0;
-        }
-
-        @media (min-width: $large-desktop) {
-            margin-bottom: 12rem;
-        }
-    }
-
-
-    .bottom {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-
-        @media (max-width: $mobile) {
-            height: 60vh;
-            overflow-y: scroll;
-            scrollbar-width: 0;
-        }
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
-    }
-
-    .rootHolder {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: flex-start;
-        gap: 2rem;
-        width: 80%;
-
-        @media (max-width: $mobile) {
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: center;
-            gap: 1rem;
-        }
-    }
-
-    .rootSpacer {
-        @media (max-width: $mobile) {
-            display: none;
-        }
-    }
-
-    .back {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.75rem;
-        width: 7rem;
-        height: 2rem;
-        background: $back;
-        font-size: 1.25rem;
-        font-weight: 500;
-
-        .backImg {
-            width: 22px;
-            height: auto;
-        }
-
-        @media (max-width: $mobile) {
-            justify-self: flex-end;
-        }
-
-        @media (min-width: $large-desktop) {
-            width: 9rem;
-            height: 3.2rem;
-            font-size: 1.55rem;
-        }
-
-        &.layerZero {
-            opacity: 0;
-            pointer-events: none;
-        }
-    }
-
-    .ideaSpace {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-
-        height: 100%;
-        gap: 3.5rem;
-
-    }
-
-    .ideaRoot {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        min-width: 14.75rem;
-        min-height: 7.25rem;
-        font-size: 3.125rem;
-        background: $roots;
-        padding: .5rem 2rem;
-        transition: all 0.3s ease;
-        word-break: break-word;
-
-        .ideaRoot-text {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        @media (max-width: $mobile) {
-            margin: 0 2rem 0 2rem;
-            font-size: 2rem;
-            min-height: 6rem;
-        }
-
-        @media (min-width: $large-desktop) {
-            min-width: 20rem;
-            min-height: 10rem;
-            font-size: 4.72rem;
-            padding: 1rem 2rem;
-        }
-    }
-
-    .rootPriorityButtons {
-        display: flex;
         flex-direction: row;
-        gap: 0.4rem;
-        width: 7rem;
-
-        @media (min-width: $large-desktop) {
-            width: 9rem;
-        }
+        width: calc(100% - 2rem);
+        height: 20%;
+        top: 1rem;
     }
 
-    .root-priority-btn {
+    @media (min-width: $large-desktop) {
+        width: 10%;
+    }
+}
+
+.mid {
+    display: flex;
+    width: 70%;
+    margin: 0 15%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+
+    &--map-open {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    @media (max-width: $mobile) {
+        margin: 5% 0;
+        width: 100%;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 80%;
+        margin: 0 15%;
+    }
+}
+
+.right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    right: 2rem;
+
+    @media (max-width: $mobile) {
+        display: none;
+        flex-direction: row;
+        justify-content: center;
+        width: calc(100% - 3rem);
+        height: 10%;
+        top: unset;
+        right: unset;
+        bottom: 1rem;
+    }
+}
+
+.top {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    width: 100%;
+    min-height: 25vh;
+    margin-bottom: 5rem;
+
+    @media (max-width: $mobile) {
+        min-height: 19%;
+        align-items: start;
+        margin: 5rem 0 2rem 0;
+    }
+
+    @media (min-width: $large-desktop) {
+        margin-bottom: 12rem;
+    }
+}
+
+
+.bottom {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+
+    @media (max-width: $mobile) {
+        height: 60vh;
+        overflow-y: scroll;
+        scrollbar-width: 0;
+    }
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.rootHolder {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: flex-start;
+    gap: 2rem;
+    width: 80%;
+
+    @media (max-width: $mobile) {
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        gap: 1rem;
+    }
+}
+
+.rootSpacer {
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.back {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    width: 7rem;
+    height: 2rem;
+    background: $back;
+    font-size: 1.25rem;
+    font-weight: 500;
+
+    .backImg {
+        width: 22px;
+        height: auto;
+    }
+
+    @media (max-width: $mobile) {
+        justify-self: flex-end;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 9rem;
+        height: 3.2rem;
+        font-size: 1.55rem;
+    }
+
+    &.layerZero {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+.ideaSpace {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+
+    height: 100%;
+    gap: 3.5rem;
+
+}
+
+.ideaRoot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 14.75rem;
+    min-height: 7.25rem;
+    font-size: 3.125rem;
+    background: $roots;
+    padding: .5rem 2rem;
+    transition: all 0.3s ease;
+    word-break: break-word;
+
+    .ideaRoot-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    @media (max-width: $mobile) {
+        margin: 0 2rem 0 2rem;
+        font-size: 2rem;
+        min-height: 6rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        min-width: 20rem;
+        min-height: 10rem;
+        font-size: 4.72rem;
+        padding: 1rem 2rem;
+    }
+}
+
+.rootPriorityButtons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.4rem;
+    width: 7rem;
+
+    @media (min-width: $large-desktop) {
+        width: 9rem;
+    }
+}
+
+.root-priority-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    height: 2rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    background: $background-color;
+    color: $purple;
+
+    &--active {
+        background: $purple;
+        color: white;
+    }
+
+    @media (min-width: $large-desktop) {
+        height: 3.2rem;
+        font-size: 1.6rem;
+    }
+}
+
+.rootAdditionalButtons {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 1rem;
+    justify-self: end;
+
+    @media (min-width: $large-desktop) {
+        gap: 1rem;
+    }
+
+    @media (max-width: $mobile) {
+        flex-direction: row-reverse;
+        min-height: 2rem;
+        min-width: 100%;
+        justify-self: unset;
+    }
+}
+
+.moveBack {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.25rem;
+    min-width: 8rem;
+    opacity: 0.5;
+    border: 2px dashed black;
+    border-radius: 5px;
+    box-shadow: 2px 2px 0 2px black;
+    flex-grow: 1;
+    padding: 0.75rem 0.5rem;
+    overflow: hidden;
+
+    .moveBack-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+    }
+
+    @media (max-width: $mobile) {
+        min-height: 2.8rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 2.5rem;
+        min-width: 20rem;
+        border-radius: 10px;
+        box-shadow: 4px 4px 0 2px black;
+        border: 4px dashed black;
+        padding: 1.5rem 1rem;
+    }
+}
+
+.ideaNodes {
+    width: 100%;
+    justify-content: space-between;
+    row-gap: 5rem;
+    margin-bottom: 10rem;
+    transition: opacity 0.06s ease;
+
+    &--fade {
+        opacity: 0;
+    }
+
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    justify-items: center;
+
+    // FLIP wrapper — keeps DnD transforms isolated from reorder animation
+    &>[data-flip-id] {
         display: flex;
         justify-content: center;
-        align-items: center;
-        flex: 1;
-        height: 2rem;
-        font-size: 1.2rem;
-        font-weight: 700;
-        background: $background-color;
-        color: $purple;
-
-        &--active {
-            background: $purple;
-            color: white;
-        }
-
-        @media (min-width: $large-desktop) {
-            height: 3.2rem;
-            font-size: 1.6rem;
-        }
     }
 
-    .rootAdditionalButtons {
+    @media (max-width: $mobile) {
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
-        align-items: flex-start;
-        gap: 1rem;
-        justify-self: end;
-
-        @media (min-width: $large-desktop) {
-            gap: 1rem;
-        }
-
-        @media (max-width: $mobile) {
-            flex-direction: row-reverse;
-            min-height: 2rem;
-            min-width: 100%;
-            justify-self: unset;
-        }
-    }
-
-    .moveBack {
-        display: flex;
+        flex-wrap: wrap;
         justify-content: center;
         align-items: center;
-        font-size: 1.25rem;
-        min-width: 8rem;
-        opacity: 0.5;
-        border: 2px dashed black;
-        border-radius: 5px;
-        box-shadow: 2px 2px 0 2px black;
-        flex-grow: 1;
-        padding: 0rem 0.5rem;
-        overflow: hidden;
+        row-gap: 2rem;
+    }
 
-        .moveBack-text {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            word-break: break-word;
-        }
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 
-        @media (max-width: $mobile) {
-            min-height: 2.8rem;
-        }
+@keyframes ideaNodeFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(18px);
+        filter: blur(7px);
+    }
+
+    60% {
+        opacity: 0.85;
+        transform: translateY(-5px);
+        filter: blur(0.5px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+.ideaNode--fade-in {
+    animation: ideaNodeFadeIn 1.1s cubic-bezier(0.2, 0.6, 0.35, 1) forwards;
+}
+
+.ideaNode {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    background: $leaf;
+    width: 15rem;
+    min-height: 4.625rem;
+    height: fit-content;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    word-break: break-word;
+    white-space: pre-wrap;
+    position: relative;
+
+
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+
+    &.parent {
+        background: $sky;
+        font-size: 1.875rem;
+        text-align: center;
+        justify-content: center;
+        padding: 1.875rem 1.125rem;
+        gap: 1rem;
 
         @media (min-width: $large-desktop) {
+            width: 20.5rem;
             font-size: 2.5rem;
-            min-width: 13rem;
-            border-radius: 10px;
-            box-shadow: 4px 4px 0 2px black;
-            border: 4px dashed black;
-            padding: 0rem 0.5rem;
+            padding: 2.5rem 1.5rem 2.5rem 1.5rem;
+        }
+
+        @media screen and (max-width: $mobile) {
+            padding: 1.75rem 1rem 1.25rem 1rem;
         }
     }
 
-    .ideaNodes {
-        width: 100%;
-        justify-content: space-between;
-        row-gap: 5rem;
-        margin-bottom: 10rem;
-        transition: opacity 0.06s ease;
-
-        &--fade {
-            opacity: 0;
-        }
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        justify-items: center;
-
-        // FLIP wrapper — keeps DnD transforms isolated from reorder animation
-        & > [data-flip-id] {
-            display: flex;
-            justify-content: center;
-        }
-
-        @media (max-width: $mobile) {
-            display: flex;
-            flex-direction: column;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            row-gap: 2rem;
-        }
-
-        @media screen and (min-width: $mobile) and (max-width: 1438px) {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    @keyframes ideaNodeFadeIn {
-        0%   { opacity: 0;    transform: translateY(18px); filter: blur(7px);   }
-        60%  { opacity: 0.85; transform: translateY(-5px); filter: blur(0.5px); }
-        100% { opacity: 1;    transform: translateY(0);    filter: blur(0);     }
-    }
-
-    .ideaNode--fade-in {
-        animation: ideaNodeFadeIn 1.1s cubic-bezier(0.2, 0.6, 0.35, 1) forwards;
-    }
-
-    .ideaNode {
-        display: grid;
-        grid-template-columns: 1fr;
-        align-items: center;
+    &.leaf {
         background: $leaf;
-        width: 15rem;
-        min-height: 4.625rem;
-        height: fit-content;
-        font-weight: 500;
-        padding: 0.5rem 1rem;
-        word-break: break-word;
-        white-space: pre-wrap;
-        position: relative;
-
-
-        -webkit-user-select: none;
-        user-select: none;
-        -webkit-touch-callout: none;
-        touch-action: manipulation;
-
-        &.parent {
-            background: $sky;
-            font-size: 1.875rem;
-            text-align: center;
-            justify-content: center;
-            padding: 1.875rem 1.125rem;
-            gap: 1rem;
-
-            @media (min-width: $large-desktop) {
-                width: 20.5rem;
-                font-size: 2.5rem;
-                padding: 2.5rem 1.5rem 2.5rem 1.5rem;
-            }
-
-            @media screen and (max-width: $mobile) {
-                padding: 1.75rem 1rem 1.25rem 1rem;
-            }
-        }
-
-        &.leaf {
-            background: $leaf;
-            font-size: 1.6rem;
-            text-align: left;
-            min-height: 2.625rem;
-            width: 14rem;
-            padding: 1.75rem 1rem 1.4rem 1rem;
-
-            @media (min-width: $large-desktop) {
-                width: 21rem;
-                font-size: 2.25rem;
-                padding: 2.5rem 1.5rem 2rem 1.5rem;
-            }
-
-            @media screen and (min-width: $mobile) and (max-width: 1438px) {
-                width: 10rem;
-                padding: 2rem 1.5rem 1.5rem 1.5rem;
-            }
-
-            .leaf-wrapper {
-                display: block;
-                word-break: break-word;
-                position: relative;
-                transition: padding-left 0.2s ease;
-
-                &--collapsed {
-                    max-height: 13.9rem;
-                    overflow: hidden;
-
-                    @media (min-width: $large-desktop) {
-                        max-height: 19.5rem;
-                    }
-                }
-            }
-
-            .leaf-fade-overlay {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 6rem;
-                background: linear-gradient(to bottom, rgba(65, 188, 40, 0), $leaf);
-                display: flex;
-                align-items: flex-end;
-                justify-content: center;
-                padding-bottom: 1.25rem;
-                pointer-events: none;
-
-                @media (min-width: $large-desktop) {
-                    height: 8rem;
-                }
-            }
-
-            .leaf-expand-btn {
-                all: unset;
-                cursor: pointer;
-                line-height: 1;
-                pointer-events: all;
-                user-select: none;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 2rem;
-                height: 2rem;
-                color: black;
-                background: $background-color;
-                font-size: 1.7rem;
-                border: 2px solid black;
-                border-radius: 8px;
-                animation: leafExpandBounce 1.4s ease-in-out infinite;
-
-                @media (min-width: $large-desktop) {
-                    font-size: 2.6rem;
-                    width: 3rem;
-                    height: 3rem;
-                }
-
-                &--collapse {
-                    display: block;
-                    text-align: right;
-                    font-size: 2rem;
-                    opacity: 0.6;
-                    margin-top: 0.25rem;
-                    margin-bottom: -1.2rem;
-                    padding: 0.5rem 0.75rem;
-                    border: none;
-                    width: auto;
-                    height: auto;
-                    border-radius: 0;
-                    background: transparent;
-                    animation: none;
-
-                    &:hover { opacity: 1; }
-
-                    @media (min-width: $large-desktop) {
-                        font-size: 2.4rem;
-                        margin-bottom: -1.3rem;
-                    }
-                }
-            }
-
-            @keyframes leafExpandBounce {
-                0%, 100% { transform: translateY(4px); }
-                50% { transform: translateY(9px); }
-            }
-        }
-
-        &.link {
-            background: $link;
-            font-size: 1.875rem;
-            text-align: center;
-            justify-content: center;
-            padding: 1.5rem 1rem;
-            text-decoration: none;
-            color: black;
-
-            @media (min-width: $large-desktop) {
-                width: 20rem;
-                font-size: 2.75rem;
-            }
-        }
-
-        @media (max-width: $mobile) {
-            position: relative;
-            width: 15rem;
-        }
+        font-size: 1.6rem;
+        text-align: left;
+        min-height: 2.625rem;
+        width: 14rem;
+        padding: 1.75rem 1rem 1.4rem 1rem;
 
         @media (min-width: $large-desktop) {
-            width: 16rem;
-            padding: 1rem 1rem;
+            width: 21rem;
+            font-size: 2.25rem;
+            padding: 2.5rem 1.5rem 2rem 1.5rem;
         }
 
         @media screen and (min-width: $mobile) and (max-width: 1438px) {
             width: 10rem;
+            padding: 2rem 1.5rem 1.5rem 1.5rem;
         }
 
-        &:hover .copy {
-            opacity: 0.5;
-            visibility: visible;
-            pointer-events: all;
-        }
-
-    }
-
-    @keyframes ribbon-drop {
-        0%   { transform: scaleY(1); }
-        45%  { transform: scaleY(1.2); }
-        100% { transform: scaleY(1); }
-    }
-
-    // Priority ribbon — hangs over the top edge of the card like a draped towel
-    .priority-ribbon {
-        all: unset;
-        position: absolute;
-        top: -0.5rem;
-        left: 0.8rem;
-        width: 0.875rem;
-        border: 2px solid black;
-        border-radius: 4px 0 5px 5px;
-        box-shadow: 2px 2px 0 1px black;
-        cursor: pointer;
-        z-index: 4;
-        display: block;
-        transform-origin: top center;
-        transition: filter 0.15s ease, background-color 0.35s ease, height 0.22s ease;
-
-        &:hover { filter: brightness(1.2); }
-
-        // No priority — faint stub, appears on node hover to invite interaction
-        &--none {
-            height: 0.75rem;
-            opacity: 0;
-            background: rgba(190, 90, 0, 0.3);
-            box-shadow: none;
-            transition: opacity 0.2s ease, filter 0.15s ease;
-        }
-
-        &--p1 { height: 3rem;   background: #D62000; }
-        &--p2 { height: 2rem;   background: #E07800; }
-        &--p3 { height: 1.25rem; background: #C8A200; }
-
-        // Droop animation — suppress height/color transitions so only the keyframe plays
-        &--animating {
-            animation: ribbon-drop 0.18s ease-out;
-            transition: filter 0.15s ease;
-        }
-
-        @media (min-width: $large-desktop) {
-            width: 1.2rem;
-            top: -0.6rem;
-
-            &--none { height: 1rem; }
-            &--p1   { height: 4rem; }
-            &--p2   { height: 2.75rem; }
-            &--p3   { height: 1.6rem; }
-        }
-    }
-
-    .ideaNode:hover .priority-ribbon--none { opacity: 1; }
-
-    // Extra left padding when a ribbon is present so text clears the ribbon
-    .ideaNode--has-priority {
-        &.parent { padding-left: 1.8rem; }
-        &.link   { padding-left: 1.8rem; }
-
-        @media (min-width: $large-desktop) {
-            &.parent { padding-left: 2.4rem; }
-            &.link   { padding-left: 2.4rem; }
-        }
-    }
-
-    // Leaf nodes: push text via wrapper so the card width stays fixed
-    .ideaNode--has-priority.leaf .leaf-wrapper {
-        padding-left: 1.475rem;
-
-        @media screen and (min-width: $mobile) and (max-width: 1438px) {
-            padding-left: 0.975rem;
-        }
-
-        @media (min-width: $large-desktop) {
-            padding-left: 1.3rem;
-        }
-    }
-
-    .ideaNode--has-priority.checklist .checklist-header {
-        padding-left: 1.8rem;
-
-        @media (min-width: $large-desktop) {
-            padding-left: 2.4rem;
-        }
-    }
-
-
-    // Sort button — below Back button in rootAdditionalButtons
-    .sort-btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.5rem;
-        width: 7rem;
-        height: 2rem;
-        background: $deep-yellow;
-        font-size: 1.1rem;
-        font-weight: 600;
-        &-img {
-            width: 1.1rem;
-            height: 1.1rem;
-        }
-
-        &--recent {
-            opacity: 0.75;
-        }
-
-        &--at-root {
-            transform: translateY(-2.5rem);
-        }
-
-        transition: transform 0.3s ease-in-out;
-
-        @media (min-width: $large-desktop) {
-            width: 9rem;
-            height: 3.2rem;
-            font-size: 1.4rem;
-
-            .sort-btn-img {
-                width: 1.4rem;
-                height: 1.4rem;
-            }
-
-            &--at-root {
-                transform: translateY(-4.7rem);
-            }
-        }
-
-        @media (max-width: $mobile) {
-            display: none;
-        }
-    }
-
-    .copy {
-        all: unset;
-        display: flex;
-        justify-self: end;
-        align-self: start;
-        cursor: pointer;
-        width: 1.2rem;
-        height: 1.2rem;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-
-        @media (max-width: $mobile) {
-            opacity: .5;
-            width: 1rem;
-            height: 1rem;
-        }
-
-        @media (min-width: $large-desktop) {
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-
-        &:hover {
-            opacity: 1;
-        }
-    }
-
-    .editLink {
-        right: 4rem;
-
-        @media (max-width: $mobile) {
-            right: 4rem;
-        }
-
-        @media (min-width: $large-desktop) {
-            right: 5rem;
-        }
-    }
-
-    .copyImg {
-        width: fit-content;
-
-    }
-
-    .changeLinkImg {
-        width: fit-content;
-    }
-
-    .renameButtonNode {
-        right: 2.5rem;
-
-        @media (max-width: $mobile) {
-            right: 2.5rem;
-        }
-
-        @media (min-width: $large-desktop) {
-            right: 3rem;
-        }
-
-    }
-
-    // Checklist node
-    .ideaNode.checklist {
-        background: $indigo;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-        padding: 0;
-        min-height: 7rem;
-        width: 15rem;
-        cursor: default;
-
-        @media screen and (min-width: $mobile) and (max-width: 1438px) {
-            width: 11rem;
-        }
-
-        @media (min-width: $large-desktop) {
-            width: 20rem;
-        }
-
-        .checklist-header {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 0.75rem 1rem 0.5rem 1rem;
-            cursor: pointer;
+        .leaf-wrapper {
+            display: block;
+            word-break: break-word;
             position: relative;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.25);
-            min-height: 3rem;
-            border-radius: 8px 8px 0 0;
+            transition: padding-left 0.2s ease;
 
-            &:hover {
-                background: rgba(255, 255, 255, 0.08);
-            }
-
-            &:hover .copy {
-                opacity: 0.7;
-                visibility: visible;
-                pointer-events: all;
-            }
-
-            .renameButtonNode {
-                right: 1rem;
-                top: 50%;
-                transform: translateY(-50%);
+            &--collapsed {
+                max-height: 13.9rem;
+                overflow: hidden;
 
                 @media (min-width: $large-desktop) {
-                    right: 1rem;
+                    max-height: 19.5rem;
                 }
             }
         }
 
-        .checklist-title-text {
-            font-size: 1.2rem;
-            font-weight: 700;
-            word-break: break-word;
-            flex: 1;
-            padding-right: 2.5rem;
+        .leaf-fade-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6rem;
+            background: linear-gradient(to bottom, rgba(65, 188, 40, 0), $leaf);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 1.25rem;
+            pointer-events: none;
 
             @media (min-width: $large-desktop) {
-                font-size: 1.6rem;
+                height: 8rem;
             }
         }
 
-        .copy {
-            color: white;
-            filter: invert(1);
-        }
-
-        .checklist-items {
-            list-style: none;
-            margin: 0;
-            padding: 0.5rem 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            &::-webkit-scrollbar {
-                display: none;
-            }
-        }
-
-        .checklist-item {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-start;
-            gap: 0.5rem;
-            padding: 0.3rem 0.75rem;
-            font-size: 1rem;
-
-            @media (min-width: $large-desktop) {
-                font-size: 1.3rem;
-            }
-
-            &--checked .checklist-item-text {
-                text-decoration: line-through;
-                opacity: 0.5;
-            }
-
-            &:hover .checklist-item-delete,
-            &:hover .checklist-item-edit,
-            &:hover .checklist-item-link {
-                opacity: 1;
-            }
-        }
-
-        .checklist-drag {
+        .leaf-expand-btn {
             all: unset;
-            cursor: grab;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            padding: 6px 3px 0;
-            touch-action: none;
+            cursor: pointer;
+            pointer-events: all;
             user-select: none;
-            opacity: 0.6;
+            line-height: 1.4;
+            font-size: 1rem;
+            color: black;
+            background: $background-color;
+            border: 2px solid black;
+            border-radius: 5px;
+            padding: 0.3rem 0.75rem;
+            animation: leafExpandBounce 1.4s ease-in-out infinite;
 
-            img {
-                width: 8px;
-                height: 14px;
-                filter: brightness(0) invert(1);
+            &--collapse {
+                display: block;
+                text-align: right;
+                font-size: 0.9rem;
+                opacity: 0.5;
+                margin-top: 0.25rem;
+                margin-bottom: -1.2rem;
+                padding: 0.5rem 0.75rem;
+                border: none;
+                background: transparent;
+                animation: none;
+
+                &:hover {
+                    opacity: 1;
+                    background: rgba(0, 0, 0, 0.06);
+                }
+
+                @media (min-width: $large-desktop) {
+                    font-size: 1.1rem;
+                    margin-bottom: -1.3rem;
+                }
+            }
+        }
+
+        @keyframes leafExpandBounce {
+
+            0%,
+            100% {
+                transform: translateY(4px);
             }
 
-            &:active { cursor: grabbing; }
-        }
-
-        .checklist-checkbox {
-            all: unset;
-            cursor: pointer;
-            font-size: 1.1rem;
-            line-height: 1;
-            flex-shrink: 0;
-            color: white;
-            padding-top: 5px;
-        }
-
-        .checklist-item-text {
-            flex: 1;
-            word-break: break-word;
-
-            &--linked {
-                color: color.adjust($sky, $lightness: 25%);
-                text-decoration: underline;
-                cursor: pointer;
-            }
-        }
-
-        .checklist-item-edit {
-            all: unset;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-            opacity: 0;
-            transition: opacity 0.1s ease;
-            padding: 2px 4px;
-
-            img { width: 12px; height: 12px; filter: invert(1); }
-
-            &:hover { opacity: 1 !important; }
-        }
-
-        .checklist-item-link {
-            all: unset;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-            opacity: 0;
-            transition: opacity 0.1s ease;
-            padding: 2px 4px;
-            border-radius: 3px;
-
-            img { width: 12px; height: 12px; filter: invert(1); }
-
-            &--active { opacity: 0.9 !important; background: rgba(255, 255, 255, 0.2); }
-            &:hover { opacity: 1 !important; }
-        }
-
-        .checklist-item-link-row {
-            width: 100%;
-            padding: 0.15rem 0 0.2rem 1.4rem;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            box-sizing: border-box;
-        }
-
-        .checklist-item-link-input {
-            all: unset;
-            flex: 1;
-            font-family: inherit;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.9);
-            border-bottom: 1.5px solid rgba(255, 255, 255, 0.6);
-            padding-bottom: 1px;
-            min-width: 0;
-
-            &::placeholder { color: rgba(255, 255, 255, 0.4); }
-        }
-
-        .checklist-item-link-clear {
-            all: unset;
-            cursor: pointer;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.5);
-            padding: 2px 4px;
-            flex-shrink: 0;
-
-            &:hover { color: white; }
-        }
-
-        .checklist-item-edit-input {
-            all: unset;
-            flex: 1;
-            font-family: inherit;
-            font-size: inherit;
-            color: white;
-            border-bottom: 1.5px solid rgba(255, 255, 255, 0.6);
-            padding-bottom: 1px;
-            word-break: break-word;
-            resize: none;
-            overflow: hidden;
-            line-height: inherit;
-            display: block;
-        }
-
-        .checklist-item-delete {
-            all: unset;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            flex-shrink: 0;
-            opacity: 0;
-            transition: opacity 0.1s ease;
-            padding: 2px 4px;
-
-            img { width: 13px; height: 13px; filter: invert(1); }
-
-            &:hover { opacity: 1 !important; }
-        }
-
-        .checklist-add {
-            border-top: 2px solid rgba(255, 255, 255, 0.2);
-            padding: 0.4rem 0.75rem;
-        }
-
-        .checklist-add-input {
-            all: unset;
-            width: 100%;
-            font-size: 0.95rem;
-            color: rgba(255, 255, 255, 0.7);
-
-            &::placeholder {
-                color: rgba(255, 255, 255, 0.45);
-            }
-
-            @media (min-width: $large-desktop) {
-                font-size: 1.2rem;
+            50% {
+                transform: translateY(9px);
             }
         }
     }
+
+    &.link {
+        background: $link;
+        font-size: 1.875rem;
+        text-align: center;
+        justify-content: center;
+        padding: 1.5rem 1rem;
+        text-decoration: none;
+        color: black;
+
+        @media (min-width: $large-desktop) {
+            width: 20rem;
+            font-size: 2.75rem;
+        }
+    }
+
+    @media (max-width: $mobile) {
+        position: relative;
+        width: 15rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 16rem;
+        padding: 1rem 1rem;
+    }
+
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        width: 10rem;
+    }
+
+    &:hover .copy {
+        opacity: 0.5;
+        visibility: visible;
+        pointer-events: all;
+    }
+
+}
+
+@keyframes ribbon-drop {
+    0% {
+        transform: scaleY(1);
+    }
+
+    45% {
+        transform: scaleY(1.2);
+    }
+
+    100% {
+        transform: scaleY(1);
+    }
+}
+
+// Priority ribbon — hangs over the top edge of the card like a draped towel
+.priority-ribbon {
+    all: unset;
+    position: absolute;
+    top: -0.5rem;
+    left: 0.8rem;
+    width: 0.875rem;
+    border: 2px solid black;
+    border-radius: 4px 0 5px 5px;
+    box-shadow: 2px 2px 0 1px black;
+    cursor: pointer;
+    z-index: 4;
+    display: block;
+    transform-origin: top center;
+    transition: filter 0.15s ease, background-color 0.35s ease, height 0.22s ease;
+
+    &:hover {
+        filter: brightness(1.2);
+    }
+
+    // No priority — faint stub, appears on node hover to invite interaction
+    &--none {
+        height: 0.75rem;
+        opacity: 0;
+        background: rgba(190, 90, 0, 0.3);
+        box-shadow: none;
+        transition: opacity 0.2s ease, filter 0.15s ease;
+    }
+
+    &--p1 {
+        height: 3rem;
+        background: #D62000;
+    }
+
+    &--p2 {
+        height: 2rem;
+        background: #E07800;
+    }
+
+    &--p3 {
+        height: 1.25rem;
+        background: #C8A200;
+    }
+
+    // Droop animation — suppress height/color transitions so only the keyframe plays
+    &--animating {
+        animation: ribbon-drop 0.18s ease-out;
+        transition: filter 0.15s ease;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 1.2rem;
+        top: -0.6rem;
+
+        &--none {
+            height: 1rem;
+        }
+
+        &--p1 {
+            height: 4rem;
+        }
+
+        &--p2 {
+            height: 2.75rem;
+        }
+
+        &--p3 {
+            height: 1.6rem;
+        }
+    }
+}
+
+.ideaNode:hover .priority-ribbon--none {
+    opacity: 1;
+}
+
+// Extra left padding when a ribbon is present so text clears the ribbon
+.ideaNode--has-priority {
+    &.parent {
+        padding-left: 1.8rem;
+    }
+
+    &.link {
+        padding-left: 1.8rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        &.parent {
+            padding-left: 2.4rem;
+        }
+
+        &.link {
+            padding-left: 2.4rem;
+        }
+    }
+}
+
+// Leaf nodes: push text via wrapper so the card width stays fixed
+.ideaNode--has-priority.leaf .leaf-wrapper {
+    padding-left: 1.475rem;
+
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        padding-left: 0.975rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        padding-left: 1.3rem;
+    }
+}
+
+// Sort button — below Back button in rootAdditionalButtons
+.sort-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    width: 7rem;
+    height: 2rem;
+    background: $deep-yellow;
+    font-size: 1.1rem;
+    font-weight: 600;
+
+    &-img {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &--recent {
+        opacity: 0.75;
+    }
+
+    &--at-root {
+        transform: translateY(-2.5rem);
+    }
+
+    transition: transform 0.3s ease-in-out;
+
+    @media (min-width: $large-desktop) {
+        width: 9rem;
+        height: 3.2rem;
+        font-size: 1.4rem;
+
+        .sort-btn-img {
+            width: 1.4rem;
+            height: 1.4rem;
+        }
+
+        &--at-root {
+            transform: translateY(-4.7rem);
+        }
+    }
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.copy {
+    all: unset;
+    display: flex;
+    justify-self: end;
+    align-self: start;
+    cursor: pointer;
+    width: 1.2rem;
+    height: 1.2rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+
+    @media (max-width: $mobile) {
+        opacity: .5;
+        width: 1rem;
+        height: 1rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
+.editLink {
+    right: 4rem;
+
+    @media (max-width: $mobile) {
+        right: 4rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        right: 5rem;
+    }
+}
+
+.copyImg {
+    width: fit-content;
+
+}
+
+.changeLinkImg {
+    width: fit-content;
+}
+
+.renameButtonNode {
+    right: 2.5rem;
+
+    @media (max-width: $mobile) {
+        right: 2.5rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        right: 3rem;
+    }
+
+}
+
+// Checklist node
+.ideaNode.checklist {
+    background: $indigo;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    min-height: 7rem;
+    width: 17rem;
+    cursor: default;
+
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        width: 10rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 23rem;
+    }
+
+    .checklist-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0.5rem 1rem 0.25rem 1rem;
+        cursor: pointer;
+        position: relative;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.25);
+        min-height: 3rem;
+        border-radius: 8px 8px 0 0;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        &:hover .copy {
+            opacity: 0.7;
+            visibility: visible;
+            pointer-events: all;
+        }
+
+        @media (min-width: $large-desktop) {
+            padding: 0.75rem 1rem 0.5rem 1rem;
+        }
+
+
+        .renameButtonNode {
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+
+            @media (min-width: $large-desktop) {
+                right: 1rem;
+            }
+        }
+
+    }
+
+    &.ideaNode--has-priority .checklist-header {
+        padding-left: 2.8rem;
+
+        @media (min-width: $large-desktop) {
+            padding-left: 3.2rem;
+        }
+    }
+
+    .checklist-title-text {
+        font-size: 1.2rem;
+        font-weight: 700;
+        word-break: break-word;
+        flex: 1;
+        padding-right: 2.5rem;
+
+        @media (min-width: $large-desktop) {
+            font-size: 1.6rem;
+        }
+    }
+
+    .copy {
+        color: white;
+        filter: invert(1);
+    }
+
+    .checklist-items-wrapper {
+        position: relative;
+    }
+
+    .checklist-items {
+        list-style: none;
+        margin: 0;
+        padding: 0.5rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        &--collapsed {
+            max-height: 25rem;
+            overflow: hidden;
+
+            @media (min-width: $large-desktop) {
+                max-height: 30rem;
+            }
+        }
+    }
+
+    .checklist-fade-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4rem;
+        background: linear-gradient(to bottom, transparent, $indigo);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 0.5rem;
+        pointer-events: none;
+    }
+
+    .checklist-expand-btn {
+        all: unset;
+        cursor: pointer;
+        pointer-events: all;
+        font-size: 1rem;
+        color: black;
+        background: white;
+        border: 2px solid black;
+        border-radius: 5px;
+        padding: 0.3rem 0.75rem;
+        line-height: 1.4;
+        user-select: none;
+        animation: leafExpandBounce 1.4s ease-in-out infinite;
+
+        &:hover {
+            background: #e8e8e8;
+        }
+
+        &--collapse {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            padding: 0.3rem;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 0;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+            animation: none;
+
+            &:hover {
+                opacity: 1;
+                background: rgba(255, 255, 255, 0.08);
+            }
+        }
+    }
+
+    .checklist-item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.3rem 0.75rem;
+        font-size: 1rem;
+
+        @media (min-width: $large-desktop) {
+            font-size: 1.3rem;
+        }
+
+        &--checked .checklist-item-text {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        &:hover .checklist-item-actions .checklist-item-delete,
+        &:hover .checklist-item-actions .checklist-item-edit,
+        &:hover .checklist-item-actions .checklist-item-link {
+            opacity: 1;
+        }
+    }
+
+    .checklist-item-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 1px;
+        margin-left: auto;
+    }
+
+    .checklist-drag {
+        all: unset;
+        cursor: grab;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        padding: 6px 3px 0;
+        touch-action: none;
+        user-select: none;
+        opacity: 0.6;
+
+        img {
+            width: 8px;
+            height: 14px;
+            filter: brightness(0) invert(1);
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
+    .checklist-checkbox {
+        all: unset;
+        cursor: pointer;
+        font-size: 1.1rem;
+        line-height: 1;
+        flex-shrink: 0;
+        color: white;
+        padding-top: 5px;
+    }
+
+    .checklist-item-text {
+        flex: 1;
+        word-break: break-word;
+
+        &--linked {
+            color: color.adjust($sky, $lightness: 25%);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    }
+
+    .checklist-item-edit {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.1s ease;
+        padding: 2px 4px;
+
+        img {
+            width: 16px;
+            height: 16px;
+            filter: invert(1);
+        }
+
+        &:hover {
+            opacity: 1 !important;
+        }
+    }
+
+    .checklist-item-link {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.1s ease;
+        padding: 2px 4px;
+        border-radius: 3px;
+
+        img {
+            width: 16px;
+            height: 16px;
+            filter: invert(1);
+        }
+
+        &--active {
+            opacity: 0.9 !important;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        &:hover {
+            opacity: 1 !important;
+        }
+    }
+
+    .checklist-item-link-row {
+        width: 100%;
+        padding: 0.15rem 0 0.2rem 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        box-sizing: border-box;
+    }
+
+    .checklist-item-link-input {
+        all: unset;
+        flex: 1;
+        font-family: inherit;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.9);
+        border-bottom: 1.5px solid rgba(255, 255, 255, 0.6);
+        padding-bottom: 1px;
+        min-width: 0;
+        cursor: text;
+
+        &::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+    }
+
+    .checklist-item-link-clear {
+        all: unset;
+        cursor: pointer;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        padding: 2px 4px;
+        flex-shrink: 0;
+
+        &:hover {
+            color: white;
+        }
+    }
+
+    .checklist-item-edit-input {
+        all: unset;
+        flex: 1;
+        font-family: inherit;
+        font-size: inherit;
+        color: white;
+        border-bottom: 1.5px solid rgba(255, 255, 255, 0.6);
+        padding-bottom: 1px;
+        word-break: break-word;
+        resize: none;
+        overflow: hidden;
+        line-height: inherit;
+        display: block;
+    }
+
+    .checklist-item-delete {
+        all: unset;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        opacity: 0;
+        transition: opacity 0.1s ease;
+        padding: 2px 4px;
+
+        img {
+            width: 16px;
+            height: 16px;
+            filter: invert(1);
+        }
+
+        &:hover {
+            opacity: 1 !important;
+        }
+    }
+
+    .checklist-add {
+        border-top: 2px solid rgba(255, 255, 255, 0.2);
+        padding: 0.4rem 0.75rem;
+
+        &:hover {
+            cursor: text;
+        }
+    }
+
+    .checklist-add-input {
+        all: unset;
+        width: 100%;
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.7);
+
+
+
+        &::placeholder {
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        @media (min-width: $large-desktop) {
+            font-size: 1.2rem;
+        }
+    }
+}

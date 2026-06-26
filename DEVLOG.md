@@ -4,11 +4,22 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.05.4 — PESTICIDE SPRAY — 2026-06-26
+- Desktop DnD: custom collision detection replaces the default — `trash`/`last-idea` use rect intersection, idea nodes use pointer-proximity with a 10px buffer; fixes misfires when dragging across gaps
+- Desktop DnD: custom drag modifier replaces `restrictToWindowEdges` — constrains left/right/top but leaves the bottom open so the trash is reachable
+- Desktop checklist nodes: item list truncates when overflowing with a "Show more ▾" fade overlay; "Show less ▴" collapses it; state resets on navigation
+- Desktop checklist nodes: item action buttons (link, edit, delete) grouped in a wrapper div for cleaner layout
+- Desktop leaf nodes: expand/collapse arrows relabeled from bare `▾`/`▴` to "Show more ▾" / "Show less ▴"
+- Mobile: sheet bottom lifts with the software keyboard via `visualViewport` resize tracking
+- Mobile: FAB bar hidden while any sheet is open (`mmobile-fab-area--hidden`)
+- Mobile drag: auto-scrolls the node list when dragging within 80px of the top/bottom edge; activates after 250ms, scrolls 4px/frame
+- Mobile mind map sheet: remounts on navigation (`key={currentId}`) so ancestor expansion always reflects the current node; ancestors pre-expanded synchronously via `useLayoutEffect` before paint; auto-scroll re-triggers on `currentId` change
+
 ## V 1.05.3 — Mobile Swipe & Drag — 2026-06-26
 - Swipe-to-reveal actions: swiping left on any node slides it to expose three action buttons — edit (blue), move (yellow), delete (red); swiping back or tapping elsewhere dismisses the reveal; one node revealed at a time
 - Edit sheet: replaces the old rename + separate link sheets; single combined sheet with auto-growing textarea (name) + optional URL input (leaf nodes only), opened from the swipe-reveal pen button; `commitEdit()` saves name and/or link in one pass
 - Mobile drag-and-drop: long-press (360ms) now initiates a drag with a ghost element that follows the touch; drop onto a sibling node reparents under it; a "↑ Move to parent" drop zone appears at the top of the list when dragging inside a nested level; checklist and link nodes excluded as drop targets; `touchmove` prevented on document during drag to stop scroll interference
-- Edit mode removed: `editMode` state, the ✎ FAB button, and the "Tap a node to edit it" hint are gone; the `actions` bottom sheet variant is also removed — all node actions are now accessed via swipe
+- Edit mode removed: `editMode` state, and the "Tap a node to edit it" hint are gone; the `actions` bottom sheet variant is also removed — all node actions are now accessed via swipe
 - Navigation simplified: `navigateMobile()` with its 65ms/90ms fade timeouts removed; navigation is instant (`setCurrentId` directly); `nodesVisible` and `mobileNavTimeouts` state also removed
 - Page title trimmed: `<title>` and all OG/Twitter meta tags changed from "Intraconnected — Private Mind Mapping" to "Intraconnected"
 - Vite dev server: `host: true` added so the dev server is accessible on LAN (useful for testing on a physical mobile device)

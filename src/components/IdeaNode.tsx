@@ -118,23 +118,25 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange }: So
                     <span className="checklist-item-text">{item.text}</span>
                 )
             )}
-            {!isEditing && (
-                <>
-                    <button
-                        className={`checklist-item-link${item.link ? ' checklist-item-link--active' : ''}`}
-                        onClick={e => { e.stopPropagation(); e.preventDefault(); isLinking ? setIsLinking(false) : openLink(e); }}
-                        title={item.link ? 'Edit link' : 'Add link'}
-                    >
-                        <img src="images/LinkBlack.svg" alt="Link" />
-                    </button>
-                    <button className="checklist-item-edit" onClick={startEdit}>
-                        <img src="images/Pen.svg" alt="Edit" />
-                    </button>
-                </>
-            )}
-            <button className="checklist-item-delete" onClick={e => onDelete(e, item.id)}>
-                <img src="images/Trash.svg" alt="Delete" />
-            </button>
+            <div className="checklist-item-actions">
+                {!isEditing && (
+                    <>
+                        <button
+                            className={`checklist-item-link${item.link ? ' checklist-item-link--active' : ''}`}
+                            onClick={e => { e.stopPropagation(); e.preventDefault(); isLinking ? setIsLinking(false) : openLink(e); }}
+                            title={item.link ? 'Edit link' : 'Add link'}
+                        >
+                            <img src="images/LinkBlack.svg" alt="Link" />
+                        </button>
+                        <button className="checklist-item-edit" onClick={startEdit}>
+                            <img src="images/Pen.svg" alt="Edit" />
+                        </button>
+                    </>
+                )}
+                <button className="checklist-item-delete" onClick={e => onDelete(e, item.id)}>
+                    <img src="images/Trash.svg" alt="Delete" />
+                </button>
+            </div>
             {isLinking && (
                 <div className="checklist-item-link-row" onClick={e => { e.stopPropagation(); e.preventDefault(); }}>
                     <input
@@ -178,6 +180,9 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const [addItemDraft, setAddItemDraft] = useState('');
     const [localItems, setLocalItems] = useState<ChecklistItem[]>(isChecklist ? idea.items : []);
     const addInputRef = useRef<HTMLInputElement>(null);
+    const checklistItemsRef = useRef<HTMLUListElement>(null);
+    const [isChecklistExpanded, setIsChecklistExpanded] = useState(false);
+    const [needsChecklistExpand, setNeedsChecklistExpand] = useState(false);
     const itemSensors = useSensors(useSensor(PointerSensor));
     const textRef = useRef<HTMLDivElement>(null);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -220,6 +225,15 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         if (!textRef.current || !isLeaf || isExpanded) return;
         setNeedsExpand(textRef.current.scrollHeight > textRef.current.clientHeight);
     }, [title, isLeaf, isExpanded]);
+
+    useEffect(() => {
+        setIsChecklistExpanded(false);
+    }, [id]);
+
+    useEffect(() => {
+        if (!checklistItemsRef.current || isChecklistExpanded) return;
+        setNeedsChecklistExpand(checklistItemsRef.current.scrollHeight > checklistItemsRef.current.clientHeight);
+    }, [localItems, isChecklistExpanded]);
 
     function makeRoot() {
         navigateToIdea(id, title);
@@ -411,27 +425,41 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                         <img src='images/Pen.svg' alt="Rename" className="copyImg" />
                     </button>
                 </div>
-                <DndContext
-                    sensors={itemSensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleItemDragEnd}
-                    modifiers={[restrictToVerticalAxis]}
-                >
-                    <SortableContext items={localItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                        <ul className="checklist-items" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
-                            {localItems.map(item => (
-                                <SortableNodeItem
-                                    key={item.id}
-                                    item={item}
-                                    onToggle={toggleItem}
-                                    onDelete={deleteItem}
-                                    onEdit={editItem}
-                                    onLinkChange={linkChangeItem}
-                                />
-                            ))}
-                        </ul>
-                    </SortableContext>
-                </DndContext>
+                <div className="checklist-items-wrapper" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+                    <DndContext
+                        sensors={itemSensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleItemDragEnd}
+                        modifiers={[restrictToVerticalAxis]}
+                    >
+                        <SortableContext items={localItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                            <ul ref={checklistItemsRef} className={`checklist-items${!isChecklistExpanded ? ' checklist-items--collapsed' : ''}`}>
+                                {localItems.map(item => (
+                                    <SortableNodeItem
+                                        key={item.id}
+                                        item={item}
+                                        onToggle={toggleItem}
+                                        onDelete={deleteItem}
+                                        onEdit={editItem}
+                                        onLinkChange={linkChangeItem}
+                                    />
+                                ))}
+                            </ul>
+                        </SortableContext>
+                    </DndContext>
+                    {needsChecklistExpand && !isChecklistExpanded && (
+                        <div className="checklist-fade-overlay">
+                            <button className="checklist-expand-btn" onClick={e => { e.stopPropagation(); e.preventDefault(); setIsChecklistExpanded(true); }}>
+                                Show more ▾
+                            </button>
+                        </div>
+                    )}
+                </div>
+                {needsChecklistExpand && isChecklistExpanded && (
+                    <button className="checklist-expand-btn checklist-expand-btn--collapse" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); e.preventDefault(); setIsChecklistExpanded(false); }}>
+                        Show less ▴
+                    </button>
+                )}
                 <div className="checklist-add" onClick={e => e.stopPropagation()}>
                     <input
                         ref={addInputRef}
@@ -471,7 +499,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                                     className="leaf-expand-btn"
                                     onClick={e => { e.stopPropagation(); e.preventDefault(); setIsExpanded(true); }}
                                 >
-                                    ▾
+                                    Show more ▾
                                 </button>
                             </div>
                         )}
@@ -482,7 +510,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                         className="leaf-expand-btn leaf-expand-btn--collapse"
                         onClick={e => { e.stopPropagation(); e.preventDefault(); setIsExpanded(false); }}
                     >
-                        ▴
+                        Show less ▴
                     </button>
                 )}
                 {isLeaf && <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>}

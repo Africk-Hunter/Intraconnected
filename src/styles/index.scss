@@ -11,7 +11,11 @@
 
 html {
     overflow-x: hidden;
-    scrollbar-gutter: stable;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 body {

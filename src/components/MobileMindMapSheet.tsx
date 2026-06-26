@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { IdeaType, getIdeaLink } from '../utilities';
 
 interface Props {
@@ -34,7 +34,26 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
     const scrollRef = useRef<HTMLDivElement>(null);
     const currentNodeRef = useRef<HTMLButtonElement | null>(null);
 
-    // Auto-scroll to highlight current node
+    // Synchronously rebuild expanded ancestors before paint whenever currentId changes.
+    // This overrides the lazy initializer in cases where it captured a stale currentId.
+    useLayoutEffect(() => {
+        const hasRoot = allIdeas.some(i => Number(i.id) === 1);
+        const ideas = hasRoot
+            ? allIdeas
+            : [{ id: 1, content: 'Ideas', parentID: 0, link: '' } as IdeaType, ...allIdeas];
+        const ids = new Set<number>();
+        let id = currentId;
+        while (true) {
+            ids.add(id);
+            if (id === 1) break;
+            const node = ideas.find(i => Number(i.id) === id);
+            if (!node || !node.parentID) break;
+            id = Number(node.parentID);
+        }
+        setExpandedNodes(ids);
+    }, [currentId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Auto-scroll to highlight current node after expanded state is set
     useEffect(() => {
         const timer = setTimeout(() => {
             const container = scrollRef.current;
@@ -46,7 +65,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
             }
         }, 200);
         return () => clearTimeout(timer);
-    }, []);
+    }, [currentId]);
 
     function toggleExpanded(id: number) {
         setExpandedNodes(prev => {
