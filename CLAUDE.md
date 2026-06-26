@@ -1,72 +1,59 @@
 # Intraconnected — CLAUDE.md
 
 ## CRITICAL: Git Commits
-**NEVER create a git commit unless the user explicitly tells you to commit.** This applies unconditionally — no exceptions for "commit all changes", "save this", "push", or any ambiguous phrasing. If in doubt, do not commit. Ask first.
+**NEVER create a git commit unless the user explicitly tells you to commit.**
 
 ## Project Overview
-
-A node-based mind-mapping / idea-tracking web app. Users create a hierarchical tree of ideas, navigate into any node to treat it as the current root, drag nodes to reparent or delete them, and rename/link nodes via modals.
+Node-based mind-mapping app. Users create hierarchical idea trees, navigate into nodes, drag to reparent/delete, rename/link via modals.
 
 ## Commands
-
 ```bash
-npm run dev       # start dev server
-npm run build     # production build
-npm run preview   # preview production build
+npm run dev    # start dev server
+npm run build  # production build
 ```
 
 ## Tech Stack
-
-- **React 19** with hooks — no class components
-- **TypeScript** (strict mode)
-- **Vite** — build tool
-- **SCSS** — all styling, no CSS modules
-- **Firebase** — Auth (email/password) + Firestore (idea storage)
+- **React 19**, **TypeScript** (strict), **Vite**, **SCSS**
+- **Firebase** — Auth (email/password) + Firestore
 - **@dnd-kit/core** — drag and drop
-- **React Router v7** — `/` (login) and `/main` routes
+- **React Router v7** — `/` (login) and `/main`
 
 ## Architecture
 
 ### Data Flow
-
-1. On login, ideas are fetched from Firestore and written to `localStorage`
-2. All reads come from `localStorage` via utility functions
-3. All writes go to both `localStorage` and Firestore simultaneously
-4. `newIdeaSwitch` (boolean toggle in context) triggers re-reads from `localStorage` — always toggle it **after** writing to `localStorage`, never before
+1. Login → fetch from Firestore → write to `localStorage`
+2. All reads: `localStorage` via utility functions
+3. All writes: `localStorage` + Firestore simultaneously
+4. `newIdeaSwitch` toggle triggers re-reads — toggle **after** writing to localStorage, never before
 
 ### State Management
+Global state in `src/context/IdeaContext.tsx` via `useIdeaContext()`. Key fields:
+- `checklistModalId: number | null` — which checklist is open; `null` = closed
+- `newIdeaSwitch: boolean` — toggle after any localStorage write to force re-reads
+- `ideas` — **only current root's direct children**, NOT all ideas. Use `fetchFullIdeaList()` for all ideas.
 
-Global state lives in `src/context/IdeaContext.tsx` via React Context. All components consume it via `useIdeaContext()`. No Redux or Zustand.
-
-Notable context fields beyond the obvious modal flags:
-- `checklistModalId: number | null` — which checklist is open in `ChecklistModal`; `null` = closed
-- `newIdeaSwitch: boolean` — toggled after any write to force re-reads from localStorage; always toggle **after** the write
-
-### Idea Data Shape
-
-`IdeaType` is a **discriminated union** in `src/utilities/types.ts`:
-
+### Idea Data Shape (`src/utilities/types.ts`)
 ```ts
 interface ChecklistItem {
-  id: string;        // String(Date.now()) at creation
+  id: string;        // String(Date.now())
   text: string;
   checked: boolean;
-  link?: string;     // optional URL on a checklist item
+  link?: string;
 }
 
 interface StandardIdea {
-  type?: 'standard'; // optional — undefined means standard (backward-compat)
-  id: number;        // Date.now() for new ideas, 1 for the root
+  type?: 'standard'; // undefined = standard (backward-compat)
+  id: number;
   content: string;
   parentID: number;
-  link: string;      // external URL or empty string
-  priority?: 1 | 2 | 3;  // 1 = High, 2 = Medium, 3 = Low; undefined = none
+  link: string;
+  priority?: 1 | 2 | 3;  // 1=High, 2=Medium, 3=Low
 }
 
 interface ChecklistIdea {
   type: 'checklist';
   id: number;
-  content: string;   // the checklist title — used by all name helpers unchanged
+  content: string;
   parentID: number;
   items: ChecklistItem[];
   priority?: 1 | 2 | 3;
@@ -75,175 +62,65 @@ interface ChecklistIdea {
 type IdeaType = StandardIdea | ChecklistIdea;
 ```
 
-Both types share `content` as the primary label so all existing name-display helpers (`getNameFromID`, rename flow, tree views) work without change. Checklist ideas have no `link` field — always use `getIdeaLink(idea)` instead of accessing `.link` directly.
-
-### End-to-End Encryption
-
-All idea `content` and `link` fields are AES-256-GCM encrypted before being written to Firestore. The server only ever sees ciphertext.
-
-**Two-layer key scheme** (same pattern as Bitwarden/ProtonMail):
-- Each user has a random **DEK** (Data Encryption Key) that encrypts their data. It never changes.
-- The DEK is stored encrypted in Firestore at `users/{uid}/meta/encryption`, wrapped three ways:
-  1. `encryptedDEK` — wrapped with a password-derived KEK (PBKDF2, 100k iterations, UID as salt)
-  2. `recoveryEncryptedDEK` — wrapped with a recovery-code-derived KEK (same derivation, `-recovery` salt suffix)
-  3. `emailEncryptedDEK` — wrapped with an email-derived KEK (`-email` salt suffix); no email is sent — Firebase Auth ownership of the email is the proof of identity
-- `recoveryCodeAcknowledged: boolean` is stored alongside. While `false` (or missing), every login generates a fresh recovery code, re-wraps the DEK with it, and shows the recovery code screen before navigating to `/main`. Once the user clicks "I've saved it", it's set to `true` — no more prompts.
-
-**DEK lifecycle:**
-- In memory: module-level `_dek` in `dekStore.ts`
-- Across page reloads: exported raw bytes stored in `sessionStorage` under key `dek_session`; restored via `loadDEKFromSession()` on mount and on `visibilitychange`
-- On sign-out: `clearDEK()` wipes both `_dek` and `sessionStorage`
-
-**`enc:` prefix:** Encrypted ciphertext is stored as `enc:<base64>`. `decryptField` checks for the prefix — plaintext legacy values pass through unchanged, enabling backward-compatible migration.
-
-**Auth screens in `Auth.tsx`** (three mutually exclusive render paths before the normal login form):
-1. `showRecoveryInput` — enter recovery code after a password reset; "Sign Out" and "Restore Access" buttons
-2. `pendingRecoveryCode` — display new recovery code; copy, download, and "I've saved it" buttons; context message varies by `recoveryCodeContext`: `'signup'` (welcome), `'migration'` (encryption added to existing account), `'restore'` (after password-reset recovery)
-3. Normal login/signup form
-
-**Navigation guards:**
-- `isSigningIn` ref — blocks `onAuthStateChanged` auto-redirect while login async work is in flight
-- `isShowingRecoveryCode` ref — blocks auto-redirect while recovery code screen is displayed
-- `Idea.tsx` `visibilitychange` listener — when tab regains focus, checks DEK in memory/session and redirects to `/` if missing
-
-**Firestore rules required** (must be set in Firebase Console):
-```
-match /users/{userId}/meta/{document} {
-  allow read, write: if request.auth != null && request.auth.uid == userId;
-}
-```
-
 ### Navigation Model
+- `rootId` — currently displayed idea (its children fill the grid)
+- `rootIdStack` — `useRef<number[]>` history stack; push on zoom-in, pop on back (desktop only)
+- Root always `id: 1`, never deletable
 
-- `rootId` — the currently displayed idea (its children fill the grid)
-- `rootIdStack` — a `useRef<number[]>` acting as a history stack; push on zoom-in, pop on back
-- Root idea always has `id: 1` and is never deletable
-
-### Node Types
-
-Determined at render time in `IdeaNode.tsx`:
+### Node Types (render-time, `IdeaNode.tsx`)
 - **leaf** — no children, no link → green (`$leaf`)
 - **parent** — has children → blue (`$sky`)
-- **link** — has a URL → yellow (`$link`)
-- **checklist** — `type === 'checklist'` → indigo (`$indigo`); not navigable, cannot receive DnD drops; clicking the header opens `ChecklistModal`
-
-## Directory Structure
-
-```
-src/
-├── pages/
-│   ├── Idea.tsx              # main page — DnD context, navigation state, drag handler
-│   └── Login.tsx             # login page wrapper
-├── components/
-│   ├── IdeaNode.tsx              # draggable/droppable idea card; priority ribbon in top-left corner
-│   ├── AnimatedOverlay.tsx       # overlay wrapper with CSS scale-in animation from click origin
-│   ├── MindMap.tsx               # desktop full-tree overlay; pan/zoom; clicking a node navigates to it
-│   ├── MobileMindMap.tsx         # mobile-only UI orchestrator (shown ≤576px, hidden on desktop)
-│   ├── MobileHelpSheet.tsx       # mobile help carousel (6 screens); owns helpScreen state
-│   ├── MobileMindMapSheet.tsx    # mobile mind map / navigate sheet (◎ button); full vtree view; replaces MobileNavigateSheet
-│   ├── MobileMoveSheet.tsx       # mobile move-tree sheet; owns expandedMoveNodes state + auto-scroll
-│   ├── MobileNavigateSheet.tsx   # UNUSED — superseded by MobileMindMapSheet; do not import
-│   ├── MobilePatchNotesSheet.tsx # mobile patch notes bottom sheet
-│   ├── PatchNotes.tsx            # desktop "What's New" popup panel (right Navbar); feature request submission
-│   ├── TooltipButton.tsx         # button wrapper with 1000ms delayed hover tooltip
-│   ├── Navbar.tsx                # left + right sidebars; accepts isNewPatchNotes prop for badge
-│   ├── DepthIndicator.tsx        # breadcrumb dot in right sidebar
-│   ├── Trash.tsx                 # drop zone for deletion
-│   ├── Help.tsx                  # 6-screen help carousel (desktop)
-│   ├── LastIdea.tsx              # drop zone to move idea to parent
-│   ├── MessageBox.tsx            # toast notifications
-│   ├── Auth.tsx                  # login/signup form
-│   ├── AuthOptionMessage.tsx     # "Sign In / Sign Up" toggle message below auth form
-│   ├── helpMenus/                # individual help screen components (HelpMenuOne–HelpMenuSix)
-│   └── modals/
-│       ├── CreationModal.tsx       # create new idea (tabs: Idea | Checklist); priority selector
-│       ├── ChecklistModal.tsx      # full-view checklist modal (desktop); opened via checklistModalId context
-│       ├── FeatureImplementedModal.tsx  # confetti modal shown when a tracked feature request is implemented
-│       ├── RenameModal.tsx         # rename idea or current root; says "Rename Checklist" for checklist nodes
-│       ├── LinkChangeModal.tsx     # add/change external link
-│       └── DeleteConfirmModal.tsx  # confirm before deleting
-├── context/
-│   └── IdeaContext.tsx       # all global state
-├── utilities/
-│   ├── index.ts              # barrel export
-│   ├── types.ts              # IdeaType discriminated union (StandardIdea | ChecklistIdea) + ChecklistItem
-│   ├── parseChangelog.ts     # parses CHANGELOG.md into ChangelogEntry[]
-│   ├── patchNotesState.ts    # patch notes "new" badge — isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase
-│   ├── profanityFilter.ts    # containsProfanity() — used to validate feature request text
-│   ├── crypto.ts             # AES-256-GCM encryption primitives + DEK/KEK key scheme
-│   ├── dekStore.ts           # in-memory + sessionStorage DEK persistence
-│   ├── firebase/
-│   │   ├── firebaseHelpers.tsx   # Firestore CRUD (encrypts/decrypts all idea fields)
-│   │   ├── authFirebase.tsx      # sign out (clears DEK)
-│   │   └── featureRequests.ts    # GitHub issue tracking: saveTrackedIssue, checkAndMarkImplementedFeatures
-│   └── idea/
-│       ├── helpers.tsx       # navigation helpers, name/link lookups, cleanLink(), getIdeaLink()
-│       ├── storage.tsx       # localStorage CRUD; updateChecklistItems(); updateIdeaPriority(); schedulePriorityFirebaseWrite()
-│       ├── parsing.tsx       # getIdeasByParentID, sortIdeas(), recursive delete
-│       ├── creation.tsx      # handleIdeaCreation, handleChecklistCreation
-│       └── organizers.tsx    # fetchFromFirebaseAndOrganizeIdeas
-├── styles/
-│   ├── variables.scss        # colors, breakpoints
-│   ├── index.scss            # global styles + imports
-│   ├── idea.scss             # main page + node styles
-│   ├── mindmap.scss          # desktop MindMap overlay styles
-│   ├── mobileMindMap.scss    # mobile UI styles
-│   ├── navbar.scss           # sidebar styles
-│   ├── depth.scss            # breadcrumb indicators
-│   ├── ideaCreationModal.scss # all modal styles (shared)
-│   ├── auth.scss
-│   └── help.scss
-├── CHANGELOG.md              # source of truth for patch notes (parsed at build time)
-└── firebaseConfig.ts         # Firebase init
-```
+- **link** — has URL → yellow (`$link`)
+- **checklist** — `type === 'checklist'` → indigo; not navigable, no DnD drops
 
 ## Critical Gotchas
 
-### `ideas` state vs `fetchFullIdeaList()`
-`ideas` in context only holds the **current root's direct children** (populated via `getIdeasByParentID(rootId)`). It is NOT a full list of all ideas. To read all ideas, use `fetchFullIdeaList()` which reads from `localStorage`. Never assume `ideas` contains anything outside the current view.
+### Always use `getIdeaLink()` — never `.link` directly
+`ChecklistIdea` has no `link` field. Use `getIdeaLink(idea)` from `utilities/idea/helpers.tsx`.
 
-### `rootIdStack` is a ref (desktop only)
-`rootIdStack` is a `useRef<number[]>`, not state. Pushing/popping does not trigger re-renders. The stack is mutated directly (`rootIdStack.current.push(id)`). Re-renders are driven by `setRootId` / `setRootName` calls alongside stack mutations. `MobileMindMap` does **not** use `rootIdStack` — it tracks navigation with a local `currentId` state instead.
+### `ideas` state is not the full list
+Use `fetchFullIdeaList()` (reads localStorage) to get all ideas. Never assume `ideas` contains anything outside the current view.
 
-### Modal `min-height` specificity
-`.neobrutal.modal` has `min-height: 18rem` (and overrides in media queries). A plain `.confirmModal {}` rule will lose the specificity battle. The correct override is `.neobrutal.modal.confirmModal { min-height: auto; }` applied at all three breakpoints.
-
-### `setIdeas` functional updates
-`setIdeas` is typed in context as `(ideas: any) => void` but the underlying setter is a React `useState` dispatcher that accepts functional updates. `setIdeas((prev) => prev.filter(...))` works fine at runtime despite the loose typing.
-
-### Firebase collection path
-Ideas are stored at `users/{uid}/ideas/{ideaId}` in Firestore. The Firebase config is hardcoded in `src/firebaseConfig.ts` (no `.env` file).
-
-### Always use `getIdeaLink()` — never access `.link` directly
-`ChecklistIdea` has no `link` field. Accessing `idea.link` directly on an `IdeaType` will cause a TypeScript error (and a runtime `undefined`). Always use `getIdeaLink(idea)` from `utilities/idea/helpers.tsx`, which returns `''` for checklists and unknown ideas.
-
-### Checklist items are encrypted in Firestore
-`firebaseHelpers.tsx` branches on `data.type === 'checklist'`: for checklists it encrypts/decrypts `items[].text` instead of `link`. `updateChecklistItemsInFirebase` encrypts each item's text before writing. Never write raw item text to Firestore directly.
-
-### Email change breaks email recovery
-`emailEncryptedDEK` is derived from the user's email address at account creation. If a user ever changes their email (not currently a feature), `emailEncryptedDEK` must be re-derived with the new address and updated in Firestore. Failing to do so means "Recover via email" will silently fail — `unwrapDEKWithEmail` will throw because the derived KEK no longer matches.
-
-### Password change requires DEK re-wrap
-If you ever add a "change password" feature using Firebase's `updatePassword()`, you **must** also re-wrap the DEK with the new password and update `encryptedDEK` in Firestore. Failing to do so means the next login will successfully authenticate with Firebase but `unwrapDEK` will throw (wrong KEK) — which is the same code path as a password reset, incorrectly sending the user to the recovery code input screen.
+### `rootIdStack` is a ref, not state
+Mutations don't trigger re-renders. `MobileMindMap` uses local `currentId` state instead.
 
 ### `updateIdeaParentId` syncs Firebase automatically
-`updateIdeaParentId(id, newParentId)` in `storage.tsx` writes to both `localStorage` **and** calls `updateIdeaParentIdInFirebase` internally. Do not add a separate Firebase call after using it — that would double-write.
+Do not add a separate Firebase call after — it double-writes.
 
-### Priority writes are debounced — use `schedulePriorityFirebaseWrite`
-`updateIdeaPriority(id, priority)` writes to `localStorage` only. Always follow it with `schedulePriorityFirebaseWrite(id, priority)` to sync Firestore — it's debounced (same pattern as `scheduleChecklistFirebaseWrite`). Never call `updateIdeaPriorityInFirebase` directly from a component.
+### Priority writes require both calls
+```ts
+updateIdeaPriority(id, priority);           // localStorage only
+schedulePriorityFirebaseWrite(id, priority); // debounced Firestore sync
+```
+Never call `updateIdeaPriorityInFirebase` directly from a component.
 
-### Checklist item `link` field is encrypted in Firestore
-`ChecklistItem` now has `link?: string`. When writing checklist items to Firestore, `updateChecklistItemsInFirebase` encrypts both `items[].text` and `items[].link`. Never write raw item link text to Firestore directly.
+### Checklist items are encrypted in Firestore
+`updateChecklistItemsInFirebase` encrypts both `items[].text` and `items[].link`. Never write raw item text/link to Firestore directly.
+
+### `setNewIdeaSwitch` must be called inside Firebase `.then()`
+Not in the button's `onClick`.
+
+### Modal `min-height` specificity
+`.neobrutal.modal` has `min-height: 18rem`. Override: `.neobrutal.modal.confirmModal { min-height: auto; }` at all three breakpoints.
+
+### `setIdeas` accepts functional updates
+`setIdeas((prev) => prev.filter(...))` works despite the loose `(ideas: any) => void` typing.
+
+### Firebase collection path
+Ideas at `users/{uid}/ideas/{ideaId}`. Config hardcoded in `src/firebaseConfig.ts` (no `.env`).
+
+### Password change requires DEK re-wrap
+If adding "change password" via `updatePassword()`, re-wrap the DEK with the new password and update `encryptedDEK` in Firestore — otherwise next login throws on `unwrapDEK` and sends user to recovery screen.
+
+### E2E Encryption
+All idea `content` and `link` fields AES-256-GCM encrypted before Firestore writes. Ciphertext stored as `enc:<base64>`. `decryptField` passes plaintext through unchanged (backward-compat). DEK in module-level `_dek` (dekStore.ts) + `sessionStorage` key `dek_session`. `clearDEK()` wipes both on sign-out.
 
 ## Key Conventions
 
 ### Modals
-
-All modals share styles from `ideaCreationModal.scss`. Structure:
 ```tsx
 <section className="overlay">
   <div className="modal neobrutal [modifier]">
-    {/* content */}
     <section className="modalButtons">
       <button className="modalButton cancel neobrutal-button">Cancel</button>
       <button className="modalButton continue neobrutal-button">Action</button>
@@ -251,155 +128,37 @@ All modals share styles from `ideaCreationModal.scss`. Structure:
   </div>
 </section>
 ```
-
-Button colors: `cancel` → yellow (`$link`), `continue` → green (`$leaf`), `delete` → red (`$danger`).
-
-Add `confirmModal` class to `.modal` for modals without a textarea (overrides `min-height`).
+`cancel` → yellow (`$link`), `continue` → green (`$leaf`), `delete` → red (`$danger`).
+Add `confirmModal` to `.modal` for modals without a textarea (fixes `min-height`).
 
 ### Rename Flow
-
-`currentNameChangeId === -1` means renaming the root. Any other value targets a child node. `RenameModal` uses `editRootOrNot` to distinguish. `setNewIdeaSwitch` must be called **inside** the Firebase `.then()` after `updateIdeaName`, not in the button's `onClick`.
+`currentNameChangeId === -1` = renaming root. `setNewIdeaSwitch` must be called inside the Firebase `.then()` after `updateIdeaName`.
 
 ### Delete Flow
-
-Dragging to trash sets `pendingDeleteId` and opens `DeleteConfirmModal`. The modal runs `recursivelyDeleteChildren(id)` (handles both localStorage and Firestore) then filters the `ideas` state array.
-
-### Mobile UI (`MobileMindMap`)
-
-`MobileMindMap` is rendered at the bottom of `Idea.tsx` alongside all desktop components. CSS (`mobileMindMap.scss`) shows it only on `≤$mobile` (576px) and the desktop layout hides itself at the same breakpoint.
-
-Key differences from desktop:
-- **Navigation**: local `currentId` state replaces `rootIdStack`; breadcrumb bar at top replaces depth indicators
-- **Interaction**: tap navigates into a node (or opens link if it has one); long-press (360ms) opens an actions bottom sheet; edit mode (pencil button) makes a single tap open the actions sheet instead; long-press also works on the current root header
-- **Sheets**: uses a local `sheet` state (`SheetState` discriminated union) for bottom sheets — does **not** use context modal flags (`renameModalOpen`, etc.)
-- **Sheet types**: `actions` | `rename` | `move` | `link` | `confirmDelete` | `checklist` (no `navigate` — the mind map is handled separately via `showMindMap` state, not as a sheet)
-- **Move tree**: rendered by `MobileMoveSheet`; owns `expandedMoveNodes` state and auto-scroll logic; scrollable tree with expand/collapse; auto-scrolls to current parent on open; descendants and current parent are disabled as move targets
-- **Mind map / navigate**: rendered by `MobileMindMapSheet` (◎ button in FAB area); toggled via local `showMindMap` boolean (not a SheetState); full vtree showing the entire idea tree; clicking a node navigates to it; link nodes open in new tab; checklist nodes are disabled; auto-scrolls to the current node on open
-- **Patch notes**: rendered by `MobilePatchNotesSheet` (patch notes button in FAB area); reuses the help-sheet shell; parses `CHANGELOG.md` via `parseChangelog`
-- **FAB area**: four buttons — patch notes, ◎ (mind map), + (create), ✎ (edit mode toggle)
-- **Priority ribbons**: each node card has a corner ribbon in its top-left that cycles through High (red) → Medium (orange) → Low (yellow) → none on tap; calls `updateIdeaPriority` + `schedulePriorityFirebaseWrite`; animating state (`animatingRibbonId`) drives a CSS animation class
-- **Sort mode**: `sortMode` state (`'priority' | 'recent'`); persisted to `localStorage` as `idea_sort_mode`; sort button in header cycles the mode; `sortIdeas()` in `parsing.tsx` handles ordering
-- **Checklist nodes (mobile)**: tap = toggle inline accordion (expand/collapse items in place); tap the `OpenIcon.svg` button in the header row = open the `checklist` full-view sheet. The `checklist` sheet has its own `sheetItems`/`sheetItemDraft` state initialized fresh from localStorage on open. Sheet items support drag-to-reorder (via `@dnd-kit/sortable`) and inline text editing (pen icon). Checklist nodes cannot be navigated into and cannot receive drops or be moved into. In the move/mind-map trees they appear disabled with `mmobile-move-btn--checklist` styling.
-- **Rename vs. rewrite**: the actions sheet and rename sheet label the action "Rename Idea" when the node has children, "Rewrite Idea" when it's a leaf, "Rename Checklist" for checklist nodes; new ideas use an auto-resizing `<textarea>`, existing renames use a single-line `<input>`
-- **Help carousel**: rendered by `MobileHelpSheet`; owns its own `helpScreen` state (1–6); receives only an `onClose` prop
-- **Link cleaning**: `cleanLink()` in `utilities/idea/helpers.tsx` normalizes URLs — upgrades `http://` to `https://`, passes through any other existing protocol unchanged, prepends `https://` if no protocol present, and appends `.com` only when the hostname has no TLD (no dot). Never double-adds a protocol.
-- **No DnD**: doesn't use `@dnd-kit` at all; touch events handle long-press detection with `touchMoved` guard to cancel on scroll
-
-### Desktop MindMap (`MindMap.tsx`)
-
-Toggled by the logo button in the left Navbar (`showMindMap` state in `Idea.tsx`). When open, the main grid is hidden and `MindMap` renders as a full overlay inside the `.left` column area.
-
-- **Pan**: mouse drag on the canvas background (ignored if target is a button)
-- **Zoom**: scroll wheel (non-passive listener so `preventDefault` works); clamped to 0.2–4×
-- **TreeNode**: recursive component; expand/collapse per node (`collapsed` state); highlights current `rootId` with `mm-node-btn--current`
-- **Navigation**: clicking any node rebuilds `rootIdStack` from scratch (walks up the tree to reconstruct the full path), then calls `setRootId` + `setRootName` + `onClose`
-- **Initial expand state**: ancestors of the current `rootId` start expanded; all others start collapsed
-- Styles live in `mindmap.scss`; BEM-style classes prefixed with `mm-`
-
-Navbar accepts `setShowMindMap`, `showMindMap`, `setShowPatchNotes`, and `isNewPatchNotes` props. When `showMindMap` is true: the `+` (create) button and depth indicators are hidden; the logo button gets a `logo-map-box` wrapper class. All nav buttons use `TooltipButton` instead of plain `<button>`. `isNewPatchNotes` drives a badge dot on the patch notes button.
-
-### Patch Notes
-
-`src/CHANGELOG.md` is the single source of truth. Format — each entry is a `##` section:
-
-```md
-## TAG | Title
-Description text.
-```
-
-`parseChangelog(raw)` in `utilities/parseChangelog.ts` splits on `^## `, then splits each section's first line on `|` to extract `{ tag, title, description }`.
-
-- **Desktop**: `PatchNotes` component (right column of `Idea.tsx`); toggled by the patch notes button in the right Navbar; `showPatchNotes` state lives in `Idea.tsx`; includes feature request submission form (uses `saveTrackedIssue`)
-- **Mobile**: `MobilePatchNotesSheet` bottom sheet; toggled by the patch notes button in the FAB area; `showPatchNotes` state is local to `MobileMindMap`
-- Both parse `changelog` at module load (outside the component), not on each render.
-
-**"New" badge:** `patchNotesState.ts` manages whether the patch notes button shows a badge:
-- `isPatchNotesNew(uid, entries)` — checks `localStorage` key `patchNotes_lastSeen_{uid}` against the latest tag
-- `markPatchNotesSeen(uid, entries)` — writes localStorage + calls `updateLastSeenPatchVersion` in Firestore
-- `syncPatchNotesFromFirebase(uid, entries)` — on first visit (no localStorage), fetches the authoritative version from Firestore, writes to localStorage, and returns whether there are unseen notes
-- `isNewPatchNotes` state in `Idea.tsx` is initialized via `isPatchNotesNew`, then synced on mount via `syncPatchNotesFromFirebase`
-
-**What belongs in CHANGELOG.md:** Only significant new features warrant a changelog entry. Bug fixes and small additions are shipped as `.x` patch version increments and do **not** get a changelog entry — they are silent updates.
-
-**Private dev log:** `DEVLOG.md` at the project root tracks every update (features, bug fixes, small additions). It is never imported or displayed. Changes should only be made just before the update is pushed. Do not commit yourself, the user will commit the changes. The changes should be concise and not overly complex. Multiple issues dealing with the same feature should be collapsed into one hyphen-point. Make sure every update is given a name that summarizes it in a few words.
-
-### TooltipButton
-
-`TooltipButton` wraps a `<button>` in a `div.tooltip-wrapper` and shows a floating label after a 1000ms hover delay.
-
-Props:
-- `tooltip: string` — the label text
-- `tooltipSide?: 'left' | 'right'` — defaults to `'right'`; controls which side the tip appears on
-
-While visible the button also receives a `tooltip-highlighted` class. All other `<button>` props pass through unchanged. Use this for every nav button; don't add raw `title` attributes alongside it.
-
-### Checklist Ideas
-
-Created via the "Checklist" tab in `CreationModal`. Uses `handleChecklistCreation` in `creation.tsx`.
-
-- **Desktop card** (`IdeaNode.tsx`): renders inline with checkboxes + hover-visible trash and edit icons per item + add-item input + drag-to-reorder via `@dnd-kit/sortable`. Clicking the header opens `ChecklistModal` (full-view modal). The card is not clickable-to-navigate and cannot receive DnD drops (`useDroppable` disabled for checklists).
-- **Desktop full-view** (`ChecklistModal.tsx`): opened via `checklistModalId` in context. Manages its own item state; writes to localStorage + Firestore via `updateChecklistItems` on every toggle/add/delete/reorder. Items support drag-to-reorder and inline text editing (pen icon). Uses `overlay--scroll` class so the overlay scrolls when the list is tall.
-- **`checklistModalId`** in context: `number | null` — set to an idea's `id` to open `ChecklistModal`, `null` to close it. `IdeaNode.tsx` sets it on header click; `ChecklistModal` clears it on close.
-
-### Drag and Drop (Desktop)
-
-Drag is disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash` (delete), `last-idea` (reparent to grandparent), `idea-{id}` (reparent). Link nodes and **checklist nodes** cannot receive drops (`useDroppable` `disabled: isMobile || isChecklist`). `PointerSensor` requires 10px movement before a drag starts (prevents accidental drags on clicks).
+Dragging to trash sets `pendingDeleteId` → `DeleteConfirmModal` → `recursivelyDeleteChildren(id)` (localStorage + Firestore) → filter `ideas` state.
 
 ### Priority System
+`priority?: 1 | 2 | 3` (1=High/red, 2=Medium/orange, 3=Low/yellow). Corner ribbon in top-left of each node. Always write both calls (see Critical Gotchas above).
 
-Ideas have an optional `priority?: 1 | 2 | 3` field (1 = High/red, 2 = Medium/orange, 3 = Low/yellow; `undefined` = none). A corner ribbon in the top-left of each node card visualizes priority.
+Sorting via `sortIdeas(ideas, mode)` in `parsing.tsx`: `'priority'` (P1→P2→P3→none) or `'recent'` (ascending `id`). Persisted to localStorage as `idea_sort_mode`.
 
-**Writes:** Always call both functions together:
-1. `updateIdeaPriority(id, priority)` — writes to `localStorage` only
-2. `schedulePriorityFirebaseWrite(id, priority)` — debounced Firestore sync
+### Drag and Drop (Desktop only)
+Disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash`, `last-idea`, `idea-{id}`. Checklist nodes cannot receive drops. `PointerSensor` requires 10px movement.
 
-**Sorting:** `sortIdeas(ideas, mode)` in `parsing.tsx` handles two modes:
-- `'priority'` — P1 first, then P2, P3, then unprioritized (all ties broken by creation order)
-- `'recent'` — creation order (ascending `id`)
+### Mobile UI (`MobileMindMap`, shown ≤576px)
+Rendered at bottom of `Idea.tsx`; CSS swaps desktop/mobile at 576px.
 
-Sort mode is persisted to `localStorage` as `idea_sort_mode` and initialized from there.
+Key differences from desktop:
+- **Navigation**: local `currentId` state, not `rootIdStack`; breadcrumb bar at top
+- **Sheets**: local `sheet` state (`SheetState` union) — does **not** use context modal flags
+- **Sheet types**: `actions | rename | move | link | confirmDelete | checklist`
+- **Mind map**: `showMindMap` boolean (not a SheetState); rendered by `MobileMindMapSheet` (◎ FAB button)
+- **No DnD**: long-press (360ms) with `touchMoved` guard to cancel on scroll
+- **Checklist nodes**: tap = inline accordion; tap OpenIcon = open `checklist` sheet
+- **Rename labels**: "Rename Idea" (has children), "Rewrite Idea" (leaf), "Rename Checklist" (checklist)
+- **FAB**: patch notes, ◎ (mind map), + (create), ✎ (edit mode)
 
-### Feature Request Tracking
-
-Users can submit GitHub issues as feature requests from the `PatchNotes` panel. Submissions are stored in Firestore at `users/{uid}/meta/featureRequests` as a `TrackedIssue[]`.
-
-On each login, `checkAndMarkImplementedFeatures()` polls the GitHub API (using `VITE_GITHUB_TOKEN` and `VITE_GITHUB_REPO` env vars) for any tracked issues that are now `closed` + `completed`. If found, it marks them `seenClosed: true` in Firestore and returns their titles — which triggers `FeatureImplementedModal` (confetti + sound).
-
-Feature request text is validated through `containsProfanity()` in `profanityFilter.ts` before submission.
-
-### `AnimatedOverlay`
-
-`AnimatedOverlay` is an overlay wrapper that animates in from the pointer position (CSS `--origin-dx` / `--origin-dy` custom properties drive a scale transform). Props: `open: boolean`, `scrollable?: boolean`, `onClick?: () => void`, `children`, `origin?: { x, y }`. Closing triggers a 150ms exit animation before unmounting. Use it for modals that should feel like they "pop out" of a button.
-
-### SCSS Colors (`variables.scss`)
-
-```scss
-$background-color: #E9F9E5;  // page background
-$neutral:          #D3DED1;  // input/textarea background
-$roots:            #A3703E;  // root/parent nodes, depth indicators
-$sky:              #00A9D8;  // parent nodes
-$leaf:             #41BC28;  // leaf nodes, confirm buttons
-$back:             #C84600;  // back button
-$danger:           #C80000;  // delete button
-$link:             #E8E879;  // link nodes, cancel buttons
-$neo-pink:         #DB44A4;
-$neo-green:        #2B701D;
-$purple:           #7322C3;
-$indigo:           #2049C5;
-$teal:             #1EB899;
-$orange:           #EC8A13;
-```
-
-### Breakpoints
-
-```scss
-$mobile:              576px;
-$tablet:              768px;
-$desktop:             1024px;
-$macbook-air-15:      1439px;
-$macbook-air-13:      1999px;
-$large-desktop:       1921px;
-$very-large-desktop:  3840px;
-```
-
-Drag and drop UI is hidden on mobile. Depth indicators are hidden on mobile (`display: none`). The desktop layout and `MobileMindMap` swap at `$mobile` (576px).
+### Changelog & DEVLOG
+- `src/CHANGELOG.md` — only significant new features get entries; bug fixes are silent `.x` patches
+- Format: `## TAG | Title\nDescription`
+- `DEVLOG.md` at project root — tracks every update before pushing; concise; collapse same-feature issues into one point; do not commit yourself

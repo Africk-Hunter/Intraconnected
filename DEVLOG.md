@@ -4,12 +4,22 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
-## V 1.05.02 — Minor Fixes — 2026-06-25
+## V 1.05.3 — Mobile Swipe & Drag — 2026-06-26
+- Swipe-to-reveal actions: swiping left on any node slides it to expose three action buttons — edit (blue), move (yellow), delete (red); swiping back or tapping elsewhere dismisses the reveal; one node revealed at a time
+- Edit sheet: replaces the old rename + separate link sheets; single combined sheet with auto-growing textarea (name) + optional URL input (leaf nodes only), opened from the swipe-reveal pen button; `commitEdit()` saves name and/or link in one pass
+- Mobile drag-and-drop: long-press (360ms) now initiates a drag with a ghost element that follows the touch; drop onto a sibling node reparents under it; a "↑ Move to parent" drop zone appears at the top of the list when dragging inside a nested level; checklist and link nodes excluded as drop targets; `touchmove` prevented on document during drag to stop scroll interference
+- Edit mode removed: `editMode` state, the ✎ FAB button, and the "Tap a node to edit it" hint are gone; the `actions` bottom sheet variant is also removed — all node actions are now accessed via swipe
+- Navigation simplified: `navigateMobile()` with its 65ms/90ms fade timeouts removed; navigation is instant (`setCurrentId` directly); `nodesVisible` and `mobileNavTimeouts` state also removed
+- Page title trimmed: `<title>` and all OG/Twitter meta tags changed from "Intraconnected — Private Mind Mapping" to "Intraconnected"
+- Vite dev server: `host: true` added so the dev server is accessible on LAN (useful for testing on a physical mobile device)
+- New `public/images/Move.svg` asset added for the swipe-reveal move button
+
+## V 1.05.2 — Minor Fixes — 2026-06-25
 - Onboarding modal: seen-state now synced to Firestore (`preferences.onboardingSeen`) so dismissing on one device suppresses it on all others.
 - Root priority buttons (inline 1/2/3 in sidebar) removed because it wasn't obvious what they did.
 - Logo button sizing fixed on desktop (width/height 100% now applied outside the mobile-only media query).
 
-## V 1.05.01 — SCRUBBIN' DA FLOORS (POLISH) — 2026-06-24
+## V 1.05.1 — SCRUBBIN' DA FLOORS (POLISH) — 2026-06-24
 - Onboarding modal: shown once on first visit (`onboarding_v1_seen` in localStorage); three cards with animated CSS mini-illustrations (tree structure, click-to-navigate, drag on desktop / long-press on mobile)
 - Navigation fade transition: nodes briefly fade out (60ms) before the root changes and fade back in; applied to both desktop (`nodesVisible` / `ideaNodes--fade`) and mobile (`mmobile-content--fade`) via `navigateToIdea()` in context
 - New `ArrowBack.svg` replaces the CSS-flipped arrow on the back button; back and sort button heights reduced from 2.8rem → 2rem; mobile back button updated from `‹` text to the SVG icon
