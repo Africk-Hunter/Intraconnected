@@ -1,0 +1,417 @@
+@use "./variables" as *;
+
+.mmobile-help-sheet {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    top: max(8px, env(safe-area-inset-top, 8px));
+    z-index: 31;
+    background: $neutral;
+    border: 3px solid #111;
+    border-radius: 20px;
+    padding: 16px;
+    bottom: calc(max(10px, env(safe-area-inset-bottom, 10px)) + 107px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform-origin: 50% 0%;
+    animation: mmHelpSheetPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mmobile-help-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.mmobile-help-pager {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.mmobile-help-close {
+    background: $neutral;
+    border: 2px solid #111;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.mmobile-help-content {
+    flex: 1;
+    height: 0;
+    overflow-y: auto;
+    touch-action: pan-y;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+}
+
+.mmobile-help-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 12px;
+    line-height: 1.2;
+    color: #111;
+}
+
+.mmobile-help-subtext {
+    font-size: 0.9rem;
+    color: #111;
+    margin: -8px 0 12px;
+}
+
+.mmobile-help-text {
+    font-size: 0.97rem;
+    line-height: 1.55;
+    margin: 0;
+    color: #111;
+}
+
+.mmobile-help-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px 14px;
+    align-items: center;
+}
+
+.mmobile-help-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #111;
+    border-radius: 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 9px 8px;
+    white-space: nowrap;
+    align-self: start;
+    margin-top: 2px;
+    color: #111;
+
+    &--root            { background: $roots; }
+    &--add             { background: $leaf; }
+    &--back {
+        background: $back;
+        .mmobile-help-badge-icon { object-fit: contain; }
+    }
+    &--delete          { background: $danger; }
+    &--leaf            { background: $leaf; }
+    &--parent          { background: $sky; }
+    &--link            { background: $link; }
+    &--checklist-node  { background: $indigo; color: white; }
+    &--nav             { background: white; }
+    &--patchnotes      { background: white; }
+    &--edit            { background: white; }
+    &--p1              { background: #D62000; color: white; }
+    &--sort            { background: $deep-yellow; }
+}
+
+// ── Screen 6: priority & sorting ────────────────────────────────
+
+@keyframes mmobile-help-rib-cycle {
+    0%, 8%   { height: 0.65rem; background: rgba(150, 70, 0, 0.2);  border-color: rgba(0, 0, 0, 0.2); box-shadow: none; }
+    20%, 32% { height: 2.5rem;  background: #D62000;                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
+    44%, 56% { height: 1.75rem; background: #E07800;                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
+    68%, 80% { height: 1.1rem;  background: #C8A200;                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
+    92%, 100%{ height: 0.65rem; background: rgba(150, 70, 0, 0.2);  border-color: rgba(0, 0, 0, 0.2); box-shadow: none; }
+}
+
+.mmobile-help-node-demo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: $leaf;
+    border: 2.5px solid #111;
+    border-radius: 14px;
+    box-shadow: 3px 3px 0 #111;
+    padding: 13px 16px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: visible;
+}
+
+.mmobile-help-node-demo-text {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.mmobile-help-rib-anim {
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: -1.35rem;
+    width: 1.1rem;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px 1px 5px 5px;
+    animation: mmobile-help-rib-cycle 4s ease-in-out infinite;
+    transform-origin: top center;
+}
+
+.mmobile-help-node-demo-arrow {
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: rgba(0, 0, 0, 0.35);
+}
+
+// ── Screen 4: mini mind-map visual ──────────────────────────────
+
+.mmobile-help-mini-map {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: $background-color;
+    background-size: 18px 18px;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    border: 2px solid rgba(0, 0, 0, 0.18);
+    border-radius: 12px;
+    padding: 14px 16px 12px;
+    margin-bottom: 14px;
+}
+
+.mmobile-mm-node {
+    border: 2px solid #111;
+    border-radius: 8px;
+    padding: 5px 11px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #111;
+    box-shadow: 2px 2px 0 1px #111;
+    white-space: nowrap;
+
+    &--current { background: $roots; color: #fff; box-shadow: 2px 2px 0 1px #111, 0 0 0 3px #6b4929; }
+    &--parent  { background: $sky; }
+    &--leaf    { background: $leaf; }
+}
+
+.mmobile-mm-trunk {
+    width: 2px;
+    height: 12px;
+    background: #111;
+}
+
+.mmobile-mm-row {
+    display: flex;
+    gap: 20px;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: calc(25% - 1px);
+        right: calc(25% - 1px);
+        height: 2px;
+        background: #111;
+    }
+}
+
+.mmobile-mm-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mmobile-mm-v {
+    width: 2px;
+    height: 12px;
+    background: #111;
+
+    &--short { height: 8px; }
+}
+
+
+// ── Screen 4: vertical tree demo ────────────────────────────────
+
+.mmobile-help-vtree-demo {
+    background-color: $background-color;
+    background-size: 18px 18px;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    border: 2px solid rgba(0, 0, 0, 0.18);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.mmobile-help-vtree-root {
+    display: inline-block;
+    background: $roots;
+    color: white;
+    border: 2px solid #111;
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 2px 2px 0 1px #111;
+    margin-bottom: 6px;
+}
+
+.mmobile-help-vtree-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 6px;
+
+    &:last-child { margin-bottom: 0; }
+}
+
+.mmobile-help-vtree-gap {
+    width: 16px;
+    flex-shrink: 0;
+    align-self: stretch;
+    position: relative;
+
+    &--line::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 7px;
+        width: 2px;
+        background: rgba(0, 0, 0, 0.22);
+    }
+}
+
+.mmobile-help-vtree-conn {
+    width: 16px;
+    flex-shrink: 0;
+    align-self: stretch;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 7px;
+        width: 2px;
+        background: rgba(0, 0, 0, 0.22);
+    }
+
+    &--last::before                    { bottom: 50%; }
+    &:not(.mmobile-help-vtree-conn--last)::before { bottom: 0; }
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 8px;
+        right: 0;
+        height: 2px;
+        background: rgba(0, 0, 0, 0.22);
+    }
+}
+
+.mmobile-help-vtree-chip {
+    padding: 5px 10px;
+    border: 2px solid #111;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: 2px 2px 0 1px #111;
+    color: #111;
+
+    &--parent { background: $sky; }
+    &--leaf   { background: $leaf; }
+}
+
+// ────────────────────────────────────────────────────────────────
+
+.mmobile-help-badge-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+}
+
+.mmobile-help-nav {
+    flex-shrink: 0;
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.mmobile-help-nav-btn {
+    flex: 1;
+    border: 3px solid #111;
+    border-radius: 11px;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #111;
+    background: $back;
+
+    &--next { background: $leaf; padding: 12px; }
+
+    &:disabled {
+        opacity: 0.3;
+        box-shadow: none;
+        cursor: default;
+    }
+}
+
+.mmobile-content--fade {
+    opacity: 0;
+}
+
+@keyframes mmHelpSheetPop {
+    from {
+        transform: translate(var(--origin-dx, 0px), var(--origin-dy, 0px)) scale(0.05);
+        opacity: 0;
+    }
+    to {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+}
+
+// ── Tablet scaling (640px – 1023px) ─────────────────────────────
+@media (min-width: 640px) {
+    .mmobile-help-sheet {
+        left: 14px;
+        right: 14px;
+        top: max(12px, env(safe-area-inset-top, 12px));
+        bottom: calc(max(14px, env(safe-area-inset-bottom, 14px)) + 144px);
+        padding: 22px;
+        border-radius: 26px;
+        border-width: 4px;
+    }
+
+    .mmobile-help-title {
+        font-size: 1.9rem;
+        margin-bottom: 16px;
+    }
+
+    .mmobile-help-text {
+        font-size: 1.2rem;
+    }
+
+    .mmobile-help-badge {
+        font-size: 1.4rem;
+        padding: 12px 10px;
+    }
+
+    .mmobile-help-badge-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .mmobile-help-nav-btn {
+        font-size: 1.2rem;
+        padding: 8px 16px;
+        border-radius: 14px;
+
+        &--next { padding: 16px; }
+    }
+}

@@ -1,0 +1,255 @@
+@use "./variables" as *;
+
+// ── Mobile Mind Map Sheet ────────────────────────────────────────
+
+.mmobile-mindmap-sheet {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: calc(max(10px, env(safe-area-inset-bottom, 10px)) + 102px);
+    z-index: 31;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 3px solid #111;
+    border-radius: 20px;
+    background: $background-color;
+    background-size: 40px 40px;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.28) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.28) 1px, transparent 1px);
+    transform-origin: 50% 100%;
+    animation: mmMindMapIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mmobile-mindmap-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: $neutral;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.mmobile-mindmap-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111;
+}
+
+.mmobile-mindmap-close {
+    background: $neutral;
+    border: 2px solid #111;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.4;
+    color: #111;
+}
+
+.mmobile-mindmap-footer {
+    flex-shrink: 0;
+    padding: 12px 14px;
+    border-top: 2px solid rgba(0, 0, 0, 0.12);
+}
+
+.mmobile-mindmap-close-btn {
+    width: 100%;
+    padding: 13px;
+    background: $danger;
+    color: #fff;
+    border: 3px solid #111;
+    border-radius: 13px;
+    box-shadow: 0 4px 0 #111;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:active {
+        box-shadow: 0 1px 0 #111;
+        translate: 0 3px;
+    }
+}
+
+// ── Vertical tree ───────────────────────────────────────────────
+
+.vtree-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px 24px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+}
+
+.vtree-root-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.vtree-root-btn {
+    flex: 1;
+    text-align: left;
+    border: 3px solid #111;
+    border-radius: 12px;
+    background: $roots;
+    color: white;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 14px 16px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 #111;
+    word-break: break-word;
+
+    &--current {
+        cursor: default;
+    }
+}
+
+.vtree-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.vtree-guides {
+    display: flex;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+
+.vtree-guide {
+    width: 20px;
+    flex-shrink: 0;
+    position: relative;
+
+    &--line::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        height: calc(100% + 8px);
+        left: 9px;
+        width: 2px;
+        background: rgba(0, 0, 0, 0.5);
+    }
+}
+
+.vtree-connector {
+    width: 20px;
+    flex-shrink: 0;
+    position: relative;
+    align-self: stretch;
+
+    // Vertical segment — full height for non-last, top-half only for last
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 9px;
+        width: 2px;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    &--last::before  { bottom: 50%; }
+    &:not(.vtree-connector--last)::before { height: calc(100% + 8px); }
+
+    // Horizontal segment from center to right
+    &::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 10px;
+        right: 0;
+        height: 2px;
+        background: rgba(0, 0, 0, 0.5);
+    }
+}
+
+.vtree-node {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    border: 2px solid #111;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 10px 12px;
+    cursor: pointer;
+    word-break: break-word;
+    box-shadow: 3px 3px 0 #111;
+
+    &--current   { background: $roots; color: white; cursor: default; }
+    &--parent    { background: $sky; }
+    &--leaf      { background: $leaf; }
+    &--link      { background: $link; }
+    &--checklist { background: $indigo; color: white; cursor: default; opacity: 0.75; }
+}
+
+.vtree-toggle {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border: 2px solid #111;
+    border-radius: 9px;
+    background: $neutral;
+    font-family: inherit;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes mmMindMapIn {
+    from {
+        opacity: 0;
+        transform: translate(var(--origin-dx, 0px), var(--origin-dy, 0px)) scale(0.05);
+    }
+    to {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+// ── Tablet scaling (640px – 1023px) ─────────────────────────────
+@media (min-width: 640px) {
+    .vtree-scroll {
+        padding: 20px 18px 28px;
+    }
+
+    .vtree-root-btn {
+        font-size: 1.35rem;
+        padding: 20px 22px;
+        border-radius: 16px;
+        box-shadow: 5px 5px 0 #111;
+    }
+
+    .vtree-node {
+        font-size: 1.15rem;
+        padding: 14px 18px;
+        border-radius: 13px;
+        box-shadow: 4px 4px 0 #111;
+    }
+
+    .vtree-toggle {
+        width: 48px;
+        height: 48px;
+        font-size: 1.35rem;
+        border-radius: 13px;
+    }
+
+    .mmobile-mindmap-sheet {
+        bottom: calc(max(14px, env(safe-area-inset-bottom, 14px)) + 132px);
+    }
+}

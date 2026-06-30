@@ -4,6 +4,9 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.05.6 Code Cleanup - 2026-06-30
+- Cleaned up/refactored mobile code.
+
 ## V 1.05.5 ET PHONE HOME + OTHER QOL CHANGES — 2026-06-30
 - Home button added to desktop navbar and mobile FAB — jumps to root with fade transition, grays out when already at root
 - Desktop navbar redesigned: logo button replaced with a dedicated pink Mind Map toggle; Create button moved to the top of the sidebar
