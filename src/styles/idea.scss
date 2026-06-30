@@ -969,20 +969,20 @@
             opacity: 0.5;
         }
 
-        &:hover .checklist-item-actions .checklist-item-delete,
-        &:hover .checklist-item-actions .checklist-item-edit,
-        &:hover .checklist-item-actions .checklist-item-link {
-            opacity: 1;
-        }
+        &:hover .checklist-item-copy,
+        &:hover .checklist-item-edit,
+        &:hover .checklist-item-link,
+        &:hover .checklist-item-delete { opacity: 1; }
     }
 
     .checklist-item-actions {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px 2px;
         flex-shrink: 0;
-        gap: 1px;
         margin-left: auto;
+
+        &.has-active-link .checklist-item-link { opacity: 1; }
     }
 
     .checklist-drag {
@@ -1028,37 +1028,19 @@
         }
     }
 
-    .checklist-item-edit {
+    .checklist-item-copy,
+    .checklist-item-edit,
+    .checklist-item-link,
+    .checklist-item-delete {
         all: unset;
         cursor: pointer;
         display: flex;
         align-items: center;
-        flex-shrink: 0;
-        opacity: 0;
-        transition: opacity 0.1s ease;
-        padding: 2px 4px;
-
-        img {
-            width: 16px;
-            height: 16px;
-            filter: invert(1);
-        }
-
-        &:hover {
-            opacity: 1 !important;
-        }
-    }
-
-    .checklist-item-link {
-        all: unset;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-        opacity: 0;
-        transition: opacity 0.1s ease;
+        justify-content: center;
         padding: 2px 4px;
         border-radius: 3px;
+        opacity: 0;
+        transition: opacity 0.1s ease;
 
         img {
             width: 16px;
@@ -1066,14 +1048,11 @@
             filter: invert(1);
         }
 
-        &--active {
-            opacity: 0.9 !important;
-            background: rgba(255, 255, 255, 0.2);
-        }
+        &:hover { background: rgba(255, 255, 255, 0.15); }
+    }
 
-        &:hover {
-            opacity: 1 !important;
-        }
+    .checklist-item-link--active {
+        background: rgba(255, 255, 255, 0.2);
     }
 
     .checklist-item-link-row {
@@ -1127,27 +1106,6 @@
         overflow: hidden;
         line-height: inherit;
         display: block;
-    }
-
-    .checklist-item-delete {
-        all: unset;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-        opacity: 0;
-        transition: opacity 0.1s ease;
-        padding: 2px 4px;
-
-        img {
-            width: 16px;
-            height: 16px;
-            filter: invert(1);
-        }
-
-        &:hover {
-            opacity: 1 !important;
-        }
     }
 
     .checklist-add {

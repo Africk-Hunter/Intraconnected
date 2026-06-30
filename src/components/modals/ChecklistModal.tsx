@@ -14,13 +14,15 @@ interface SortableItemProps {
     onDelete: (id: string) => void;
     onEdit: (id: string, newText: string) => void;
     onLinkChange: (id: string, link: string) => void;
+    onCopy: (text: string) => void;
 }
 
-function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange }: SortableItemProps) {
+function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCopy }: SortableItemProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
     const editInputRef = useRef<HTMLTextAreaElement>(null);
+    const [copied, setCopied] = useState(false);
     const [isLinking, setIsLinking] = useState(false);
     const [linkDraft, setLinkDraft] = useState('');
     const linkInputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +105,10 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange 
                 )
             )}
             {!isEditing && (
-                <>
+                <div className={`checklistModal-item-actions${item.link ? ' has-active-link' : ''}`}>
+                    <button className="checklistModal-copy-btn" onClick={() => { onCopy(item.text); setCopied(true); setTimeout(() => setCopied(false), 1000); }} title="Copy text">
+                        <img src={copied ? 'images/Checkmark.svg' : 'images/CopyIcon.svg'} alt="Copy" />
+                    </button>
                     <button
                         className={`checklistModal-link-btn${item.link ? ' checklistModal-link-btn--active' : ''}`}
                         onClick={() => isLinking ? setIsLinking(false) : openLink()}
@@ -111,14 +116,14 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange 
                     >
                         <img src="images/LinkBlack.svg" alt="Link" />
                     </button>
-                    <button className="checklistModal-edit-item" onClick={startEdit}>
-                        <img src="images/Pen.svg" alt="Edit" />
+                    <button className="checklistModal-edit-item" onClick={startEdit} title="Rename">
+                        <img src="images/Pen.svg" alt="Rename" />
                     </button>
-                </>
+                    <button className="checklistModal-del" onClick={() => onDelete(item.id)} title="Delete">
+                        <img src="images/Trash.svg" alt="Delete" />
+                    </button>
+                </div>
             )}
-            <button className="checklistModal-del" onClick={() => onDelete(item.id)}>
-                <img src="images/Trash.svg" alt="Delete" />
-            </button>
             {isLinking && (
                 <div className="checklistModal-item-link-row">
                     <input
@@ -236,6 +241,10 @@ function ChecklistModal() {
         setNewIdeaSwitch(prev => !prev);
     }
 
+    function copyItemText(text: string) {
+        navigator.clipboard.writeText(text).catch(() => {});
+    }
+
     function openRename() {
         setCurrentNameChangeId(checklistModalId!);
         setSelectedIdeaName(title);
@@ -272,6 +281,7 @@ function ChecklistModal() {
                                         onDelete={deleteItem}
                                         onEdit={editItem}
                                         onLinkChange={linkChangeItem}
+                                        onCopy={copyItemText}
                                     />
                                 ))}
                                 {items.length === 0 && (

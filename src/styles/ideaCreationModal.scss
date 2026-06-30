@@ -632,8 +632,10 @@
         opacity: 0.4;
     }
 
+    &:hover .checklistModal-copy-btn,
+    &:hover .checklistModal-edit-item,
+    &:hover .checklistModal-link-btn,
     &:hover .checklistModal-del { opacity: 1; }
-    &:hover .checklistModal-link-btn { opacity: 1; }
 
     @media (min-width: $large-desktop) { font-size: 1.4rem; }
 }
@@ -675,40 +677,46 @@
     }
 }
 
-.checklistModal-edit-item {
-    all: unset;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
+.checklistModal-item-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px 2px;
     flex-shrink: 0;
-    opacity: 0;
-    padding: 2px 4px;
-    transition: opacity 0.12s ease;
 
-    img { width: 14px; height: 14px; }
+    &.has-active-link .checklistModal-link-btn { opacity: 1; }
 }
 
-.checklistModal-item:hover .checklistModal-edit-item { opacity: 1; }
-
-.checklistModal-link-btn {
+.checklistModal-copy-btn,
+.checklistModal-edit-item,
+.checklistModal-link-btn,
+.checklistModal-del {
     all: unset;
     cursor: pointer;
     display: flex;
     align-items: center;
-    flex-shrink: 0;
-    opacity: 0;
+    justify-content: center;
     padding: 2px 4px;
-    transition: opacity 0.12s ease;
     border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.12s ease;
 
     img { width: 14px; height: 14px; }
 
-    &--active {
-        opacity: 1 !important;
-        background: rgba($link, 0.5);
-    }
+    &:hover { background: rgba(0, 0, 0, 0.07); }
+}
 
-    @media (min-width: $large-desktop) { img { width: 18px; height: 18px; } }
+.checklistModal-link-btn--active {
+    background: rgba($link, 0.5);
+
+    &:hover { background: rgba($link, 0.7); }
+}
+
+.checklistModal-del:hover img {
+    filter: brightness(0) saturate(100%) invert(13%) sepia(96%) saturate(7481%) hue-rotate(356deg) brightness(96%) contrast(112%);
+}
+
+@media (min-width: $large-desktop) {
+    .checklistModal-link-btn img { width: 18px; height: 18px; }
 }
 
 .checklistModal-item-link-row {
@@ -760,20 +768,6 @@
     display: block;
 }
 
-.checklistModal-del {
-    all: unset;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    opacity: 0;
-    padding: 2px 4px;
-    transition: opacity 0.12s ease;
-
-    img { width: 14px; height: 14px; }
-
-    &:hover img { filter: brightness(0) saturate(100%) invert(13%) sepia(96%) saturate(7481%) hue-rotate(356deg) brightness(96%) contrast(112%); }
-}
 
 .checklistModal-empty {
     padding: 1.25rem 1rem;

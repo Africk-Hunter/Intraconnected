@@ -19,13 +19,15 @@ interface SortableNodeItemProps {
     onDelete: (e: React.MouseEvent, id: string) => void;
     onEdit: (id: string, newText: string) => void;
     onLinkChange: (id: string, link: string) => void;
+    onCopy: (text: string) => void;
 }
 
-function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange }: SortableNodeItemProps) {
+function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCopy }: SortableNodeItemProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
     const editInputRef = useRef<HTMLTextAreaElement>(null);
+    const [copied, setCopied] = useState(false);
     const [isLinking, setIsLinking] = useState(false);
     const [linkDraft, setLinkDraft] = useState('');
     const linkInputRef = useRef<HTMLInputElement>(null);
@@ -118,25 +120,26 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange }: So
                     <span className="checklist-item-text">{item.text}</span>
                 )
             )}
-            <div className="checklist-item-actions">
-                {!isEditing && (
-                    <>
-                        <button
-                            className={`checklist-item-link${item.link ? ' checklist-item-link--active' : ''}`}
-                            onClick={e => { e.stopPropagation(); e.preventDefault(); isLinking ? setIsLinking(false) : openLink(e); }}
-                            title={item.link ? 'Edit link' : 'Add link'}
-                        >
-                            <img src="images/LinkBlack.svg" alt="Link" />
-                        </button>
-                        <button className="checklist-item-edit" onClick={startEdit}>
-                            <img src="images/Pen.svg" alt="Edit" />
-                        </button>
-                    </>
-                )}
-                <button className="checklist-item-delete" onClick={e => onDelete(e, item.id)}>
-                    <img src="images/Trash.svg" alt="Delete" />
-                </button>
-            </div>
+            {!isEditing && (
+                <div className={`checklist-item-actions${item.link ? ' has-active-link' : ''}`}>
+                    <button className="checklist-item-copy" onClick={e => { e.stopPropagation(); e.preventDefault(); onCopy(item.text); setCopied(true); setTimeout(() => setCopied(false), 1000); }} title="Copy text">
+                        <img src={copied ? 'images/Checkmark.svg' : 'images/CopyIcon.svg'} alt="Copy" />
+                    </button>
+                    <button
+                        className={`checklist-item-link${item.link ? ' checklist-item-link--active' : ''}`}
+                        onClick={e => { e.stopPropagation(); e.preventDefault(); isLinking ? setIsLinking(false) : openLink(e); }}
+                        title={item.link ? 'Edit link' : 'Add link'}
+                    >
+                        <img src="images/LinkBlack.svg" alt="Link" />
+                    </button>
+                    <button className="checklist-item-edit" onClick={startEdit} title="Rename">
+                        <img src="images/Pen.svg" alt="Rename" />
+                    </button>
+                    <button className="checklist-item-delete" onClick={e => onDelete(e, item.id)} title="Delete">
+                        <img src="images/Trash.svg" alt="Delete" />
+                    </button>
+                </div>
+            )}
             {isLinking && (
                 <div className="checklist-item-link-row" onClick={e => { e.stopPropagation(); e.preventDefault(); }}>
                     <input
@@ -369,6 +372,10 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         }
     }
 
+    function copyItem(text: string) {
+        navigator.clipboard.writeText(text).catch(() => {});
+    }
+
     function deleteItem(e: React.MouseEvent, itemId: string) {
         e.stopPropagation();
         e.preventDefault();
@@ -442,6 +449,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                                         onDelete={deleteItem}
                                         onEdit={editItem}
                                         onLinkChange={linkChangeItem}
+                                        onCopy={copyItem}
                                     />
                                 ))}
                             </ul>

@@ -131,7 +131,7 @@ All idea `content` and `link` fields AES-256-GCM encrypted before Firestore writ
 `cancel` → yellow (`$link`), `continue` → green (`$leaf`), `delete` → red (`$danger`).
 Add `confirmModal` to `.modal` for modals without a textarea (fixes `min-height`).
 
-### Rename Flow
+### Rename Flow (Desktop)
 `currentNameChangeId === -1` = renaming root. `setNewIdeaSwitch` must be called inside the Firebase `.then()` after `updateIdeaName`.
 
 ### Delete Flow
@@ -143,20 +143,32 @@ Dragging to trash sets `pendingDeleteId` → `DeleteConfirmModal` → `recursive
 Sorting via `sortIdeas(ideas, mode)` in `parsing.tsx`: `'priority'` (P1→P2→P3→none) or `'recent'` (ascending `id`). Persisted to localStorage as `idea_sort_mode`.
 
 ### Drag and Drop (Desktop only)
-Disabled on mobile (`window.matchMedia('(max-width: 768px)')`). Drop targets: `trash`, `last-idea`, `idea-{id}`. Checklist nodes cannot receive drops. `PointerSensor` requires 10px movement.
+Disabled on mobile. Drop targets: `trash`, `last-idea`, `idea-{id}`. Checklist nodes cannot receive drops. `PointerSensor` requires 10px movement.
+
+Custom collision detection: `trash`/`last-idea` use rect intersection; idea nodes use pointer-proximity with 10px buffer. Custom drag modifier constrains left/right/top edges but leaves bottom open (so trash is reachable). Do not restore `restrictToWindowEdges`.
+
+### Desktop Navbar
+Left sidebar: **Create** (green, top) → **Home** (burnt-orange; grays out + disabled when `rootId === 1`, triggers fade transition via `setNodesVisible`) → **Mind Map toggle** (pink, `MindMapBlack.svg`; wraps in `.nav-btn-group` which gets `--active` class). Right sidebar: log out, help, patch notes.
+
+`returnToRoot()` from `utilities/idea/helpers` handles stack clearing.
+
+### Desktop Node Overflow
+Both checklist item lists and leaf-node content truncate when overflowing with a "Show more ▾" fade overlay; "Show less ▴" collapses. State resets on navigation.
 
 ### Mobile UI (`MobileMindMap`, shown ≤576px)
-Rendered at bottom of `Idea.tsx`; CSS swaps desktop/mobile at 576px.
+Rendered at bottom of `Idea.tsx`; CSS swaps desktop/mobile at 576px. Mobile-specific sub-components live in `src/components/mobile/` (`MobileChecklistItemSheet`, `SortableMobileChecklistItem`, `mobileTypes.ts`).
 
 Key differences from desktop:
-- **Navigation**: local `currentId` state, not `rootIdStack`; breadcrumb bar at top
-- **Sheets**: local `sheet` state (`SheetState` union) — does **not** use context modal flags
-- **Sheet types**: `actions | rename | move | link | confirmDelete | checklist`
+- **Navigation**: local `currentId` state, not `rootIdStack`; breadcrumb bar at top; navigation is instant (`setCurrentId` directly — no fade/timeout)
+- **Sheets**: local `sheet` state (`SheetState` union from `mobileTypes.ts`) — does **not** use context modal flags
+- **Sheet types**: `rename | edit | move | link | confirmDelete | checklist` (`actions` sheet removed; `edit` replaces separate rename+link sheets)
+- **Edit sheet**: single sheet with auto-growing textarea (name) + optional URL input (leaf only); `commitEdit()` saves both in one pass
+- **Swipe-to-reveal**: swipe left on any node slides it to expose three buttons — edit (blue), move (yellow), delete (red); swiping back or tapping elsewhere dismisses; one node revealed at a time; tracked via `swipeRevealedId` state
 - **Mind map**: `showMindMap` boolean (not a SheetState); rendered by `MobileMindMapSheet` (◎ FAB button)
-- **No DnD**: long-press (360ms) with `touchMoved` guard to cancel on scroll
-- **Checklist nodes**: tap = inline accordion; tap OpenIcon = open `checklist` sheet
-- **Rename labels**: "Rename Idea" (has children), "Rewrite Idea" (leaf), "Rename Checklist" (checklist)
-- **FAB**: patch notes, ◎ (mind map), + (create), ✎ (edit mode)
+- **Drag-and-drop**: long-press (360ms, `pressingNodeId` state) initiates drag with a ghost element (`isDragging`/`dragPos`); drop onto sibling reparents; "↑ Move to parent" zone slides in at list top when dragging inside a nested level (`parentZoneRef`); auto-scrolls near edges (80px, 250ms delay, 4px/frame); checklist/link nodes excluded as drop targets; `touchmove` prevented on document during drag
+- **Checklist nodes**: tap = inline accordion (`expandedChecklists` Set); tap OpenIcon = open `checklist` sheet
+- **FAB**: patch notes, ◎ (mind map), + (create) — edit mode and ✎ button removed
+- **Keyboard**: `keyboardInset` state tracks `visualViewport` resize to lift sheets above software keyboard
 
 ### Changelog & DEVLOG
 - `src/CHANGELOG.md` — only significant new features get entries; bug fixes are silent `.x` patches
