@@ -34,7 +34,7 @@ const HelpMenuFour: React.FC = () => {
                 </div>
             </div>
             <p className="details">
-                Click the <span className="detailsBox help-logo-chip"><img src="/images/Logo.svg" alt="logo" className="help-logo-img" /></span> button to open the Mind Map overlay. Drag to pan, scroll to zoom, click any node to jump there instantly. The <span className="detailsBox help-mm-current-chip">brown node</span> marks where you currently are.
+                Click the <span className="detailsBox help-logo-chip"><img src="/images/MindMapBlack.svg" alt="logo" className="help-logo-img" /></span> button to open the Mind Map overlay. Drag to pan, scroll to zoom, click any node to jump there instantly. The <span className="detailsBox help-mm-current-chip">brown node</span> marks where you currently are.
             </p>
         </section>
     );

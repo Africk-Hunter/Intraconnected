@@ -127,7 +127,7 @@ function MobileHelpSheet({ onClose, style }: Props) {
                                 </div>
                             </div>
                             <div className="mmobile-help-grid">
-                                <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/NewMindMap.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
+                                <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapBlack.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
                                 <p className="mmobile-help-text">The <strong>Mind Map</strong> button opens a full tree of all your ideas. Tap any node to jump there, or use ▸ / ▾ to expand and collapse branches.</p>
                             </div>
                         </>

@@ -6,5 +6,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
+    allowedHosts: ['cobalt-salaried-aluminum.ngrok-free.dev'],
   },
 })

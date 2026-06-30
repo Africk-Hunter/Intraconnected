@@ -242,7 +242,9 @@ function MobileMindMap() {
     // Drag-and-drop
     const isDraggingRef = useRef(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [isDroppingAnim, setIsDroppingAnim] = useState(false);
     const [dragNodeId, setDragNodeId] = useState<number | null>(null);
+    const [pressingNodeId, setPressingNodeId] = useState<number | null>(null);
     const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
     const dragPosRef = useRef({ x: 0, y: 0 });
     const _dropTargetId = useRef<number | null>(null);
@@ -254,6 +256,8 @@ function MobileMindMap() {
     const edgeScrollRafRef = useRef<number | null>(null);
 
     const headerTextareaRef = useRef<HTMLTextAreaElement>(null);
+    const headerDivRef = useRef<HTMLDivElement | null>(null);
+    const fabAreaRef = useRef<HTMLDivElement | null>(null);
     const sheetWasNullRef = useRef(true);
     const mobileListRef = useRef<HTMLDivElement>(null);
     const mobileFlipSnapshot = useRef<Map<number, number>>(new Map());
@@ -323,6 +327,24 @@ function MobileMindMap() {
         document.addEventListener('touchmove', prevent, { passive: false });
         return () => document.removeEventListener('touchmove', prevent);
     }, [isDragging]);
+
+    // Prevent iOS scroll-recognizer confusion when swipes originate outside the list.
+    // touch-action: manipulation alone isn't enough on all iOS versions; a non-passive
+    // touchmove handler with preventDefault() is the reliable guarantee.
+    useEffect(() => {
+        const prevent = (e: TouchEvent) => e.preventDefault();
+        const preventOutsideTextarea = (e: TouchEvent) => {
+            if (e.target !== headerTextareaRef.current) e.preventDefault();
+        };
+        const fab = fabAreaRef.current;
+        const hdr = headerDivRef.current;
+        fab?.addEventListener('touchmove', prevent, { passive: false });
+        hdr?.addEventListener('touchmove', preventOutsideTextarea, { passive: false });
+        return () => {
+            fab?.removeEventListener('touchmove', prevent);
+            hdr?.removeEventListener('touchmove', preventOutsideTextarea);
+        };
+    }, []);
 
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const longPressActive = useRef(false);
@@ -449,15 +471,32 @@ function MobileMindMap() {
 
     function endPress() {
         if (pressTimer.current) clearTimeout(pressTimer.current);
+        setPressingNodeId(null);
     }
 
-    function startPress(_nodeId?: number) {
+    function startPress(nodeId?: number) {
         longPressActive.current = false;
         touchMoved.current = false;
         if (pressTimer.current) clearTimeout(pressTimer.current);
+        if (nodeId !== undefined) setPressingNodeId(nodeId);
         pressTimer.current = setTimeout(() => {
             longPressActive.current = true;
             lastLongPressTime.current = Date.now();
+            if (nodeId !== undefined) {
+                setPressingNodeId(null);
+                navigator.vibrate?.(25);
+                const el = nodeElRefs.current[nodeId];
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    const initialPos = { x: rect.left + rect.width / 2, y: rect.top + 40 };
+                    dragPosRef.current = initialPos;
+                    setDragPos(initialPos);
+                    resetSwipeNode(nodeId);
+                }
+                isDraggingRef.current = true;
+                setIsDragging(true);
+                setDragNodeId(nodeId);
+            }
         }, 360);
     }
 
@@ -603,7 +642,16 @@ function MobileMindMap() {
             } else if (target !== null && target > 0) {
                 doMove(nodeId, target);
             }
-            clearDrag();
+            // stop logic immediately, but let the ghost play its landing animation
+            isDraggingRef.current = false;
+            stopEdgeScroll();
+            setDropTargetId(null);
+            setIsDroppingAnim(true);
+            setTimeout(() => {
+                setIsDragging(false);
+                setDragNodeId(null);
+                setIsDroppingAnim(false);
+            }, 180);
             swipeStartRef.current = null;
             swipeDirRef.current = null;
             endPress();
@@ -938,6 +986,7 @@ function MobileMindMap() {
             )}
 
             <div
+                ref={headerDivRef}
                 className="mmobile-header"
                 onMouseDown={() => startPress(currentId)}
                 onMouseUp={endPress}
@@ -1017,7 +1066,7 @@ function MobileMindMap() {
                                 </div>
                                 <div
                                     ref={el => { nodeElRefs.current[child.id] = el; }}
-                                    className={`mmobile-node mmobile-node--checklist${isExpanded ? ' mmobile-node--expanded' : ''}${isDragging && dragNodeId === child.id ? ' mmobile-node--dragging' : ''}`}
+                                    className={`mmobile-node mmobile-node--checklist${isExpanded ? ' mmobile-node--expanded' : ''}${isDragging && dragNodeId === child.id ? ' mmobile-node--held' : ''}${pressingNodeId === child.id ? ' mmobile-node--pressing' : ''}`}
                                     onMouseDown={() => startPress(child.id)}
                                     onMouseUp={endPress}
                                     onMouseLeave={endPress}
@@ -1124,7 +1173,7 @@ function MobileMindMap() {
                             </div>
                             <div
                                 ref={el => { nodeElRefs.current[child.id] = el; }}
-                                className={`mmobile-node ${colorClass}${dropTargetId === child.id ? ' mmobile-node--drop-target' : ''}${isDragging && dragNodeId === child.id ? ' mmobile-node--dragging' : ''}`}
+                                className={`mmobile-node ${colorClass}${dropTargetId === child.id ? ' mmobile-node--drop-target' : ''}${isDragging && dragNodeId === child.id ? ' mmobile-node--held' : ''}${pressingNodeId === child.id ? ' mmobile-node--pressing' : ''}`}
                                 onMouseDown={() => startPress(child.id)}
                                 onMouseUp={endPress}
                                 onMouseLeave={endPress}
@@ -1147,7 +1196,7 @@ function MobileMindMap() {
                 })}
             </div>
 
-            <div className={`mmobile-fab-area${sheet ? ' mmobile-fab-area--hidden' : ''}`}>
+            <div ref={fabAreaRef} className={`mmobile-fab-area${sheet ? ' mmobile-fab-area--hidden' : ''}`}>
                 <button
                     className={`mmobile-patchnotes-btn${isNewPatchNotes ? ' mmobile-patchnotes-btn--new' : ''}${showPatchNotes ? ' mmobile-patchnotes-btn--active' : ''}`}
                     onClick={() => {
@@ -1160,6 +1209,10 @@ function MobileMindMap() {
                     }}
                 ><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" /></button>
                 <button
+                    className={`mmobile-home-btn${currentId === 1 ? ' mmobile-home-btn--at-root' : ''}`}
+                    onClick={currentId === 1 ? undefined : () => { setCurrentId(1); setSheet(null); }}
+                ><img src="/images/Home.svg" alt="Home" /></button>
+                <button
                     className={`mmobile-fab${sheet?.type === 'rename' && sheet.isNew ? ' mmobile-fab--active' : ''}`}
                     onClick={addChild}
                 ><img src="/images/SkinnyPlus.svg" alt="Create" /></button>
@@ -1170,7 +1223,7 @@ function MobileMindMap() {
                         setShowMindMap(m => !m);
                     }}
                 >
-                    <img src="/images/NewMindMap.svg" alt="Navigate" />
+                    <img src="/images/MindMapBlack.svg" alt="Navigate" />
                 </button>
             </div>
 
@@ -1184,8 +1237,8 @@ function MobileMindMap() {
                     : 'mmobile-node--leaf';
                 return (
                     <div
-                        className={`mmobile-drag-ghost mmobile-node ${dragColorClass}`}
-                        style={{ top: dragPos.y - 40, left: 16, right: 16 } as React.CSSProperties}
+                        className={`mmobile-drag-ghost mmobile-node ${dragColorClass}${isDroppingAnim ? ' mmobile-drag-ghost--dropping' : ''}`}
+                        style={{ top: dragPos.y - 40 } as React.CSSProperties}
                     >
                         <span className="mmobile-node-title">{dragNode.content}</span>
                         <span className="mmobile-node-arrow">›</span>

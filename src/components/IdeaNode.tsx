@@ -482,7 +482,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {title}
                 <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>
                 <button className="renameButtonNode copy" onClick={changeName}><img src='images/Pen.svg' alt="Rename" className="copyImg" /></button>
-                <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt="Copy Idea Content" className="copyImg" /></button>
+                <button className="copy" onClick={e => { e.stopPropagation(); e.preventDefault(); navigator.clipboard.writeText(link).then(() => { setCopyPath('images/Checkmark.svg'); setTimeout(() => setCopyPath('images/CopyIcon.svg'), 1000); }); }}><img src={copyPath} alt="Copy Link" className="copyImg" /></button>
             </a>
         ) : (
             <div onClick={makeRoot} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} onMouseLeave={flushResort} {...attributes} {...listeners}>

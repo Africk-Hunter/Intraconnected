@@ -4,6 +4,14 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.05.5 ET PHONE HOME + OTHER QOL CHANGES — 2026-06-30
+- Home button added to desktop navbar and mobile FAB — jumps to root with fade transition, grays out when already at root
+- Desktop navbar redesigned: logo button replaced with a dedicated pink Mind Map toggle; Create button moved to the top of the sidebar
+- Mobile long-press drag polish: node plays a "charging" outline/scale animation before drag initiates; haptic pulse on threshold; held node goes fully invisible; ghost plays a shrink-fade landing animation on drop; "Move to parent" zone slides in instead of appearing instantly
+- Mobile touch/scroll fixes: non-passive `touchmove` handlers on FAB and header prevent iOS scroll-recognizer misfires; `overscroll-behavior: none` on node list; various sheet overflow/height fixes
+- Desktop link nodes: copy button now copies the URL instead of the idea text
+- `MindMapBlack.svg` and `Home.svg` assets added; mind map icon updated site-wide
+
 ## V 1.05.4 — PESTICIDE SPRAY — 2026-06-26
 - Desktop DnD: custom collision detection replaces the default — `trash`/`last-idea` use rect intersection, idea nodes use pointer-proximity with a 10px buffer; fixes misfires when dragging across gaps
 - Desktop DnD: custom drag modifier replaces `restrictToWindowEdges` — constrains left/right/top but leaves the bottom open so the trash is reachable
