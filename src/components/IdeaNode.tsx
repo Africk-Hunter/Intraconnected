@@ -172,7 +172,7 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCo
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
-    const { navigateToIdea, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId } = useIdeaContext();
+    const { navigateToId, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId } = useIdeaContext();
 
     const { id, content: title } = idea;
     const link = getIdeaLink(idea);
@@ -239,7 +239,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }, [localItems, isChecklistExpanded]);
 
     function makeRoot() {
-        navigateToIdea(id, title);
+        navigateToId(id);
     }
 
     useEffect(() => {

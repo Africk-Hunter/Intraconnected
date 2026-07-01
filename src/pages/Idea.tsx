@@ -22,7 +22,6 @@ import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from 
 import { getDEK, loadDEKFromSession } from '../utilities/dekStore';
 import {
     fetchFullIdeaList,
-    handleBackClick,
     handleIdeaCreation,
     handleChecklistCreation,
     fetchFromFirebaseAndOrganizeIdeas,
@@ -114,7 +113,7 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, setNodesVisible } = useIdeaContext();
+    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId } = useIdeaContext();
 
     useEffect(() => {
         const handleVisibilityChange = async () => {
@@ -171,7 +170,7 @@ function Idea() {
 
         loadIdeas();
         setLastRootName(getNameFromID(getParentID(rootId)));
-    }, [rootId, newIdeaSwitch, rootName]);
+    }, [rootId, newIdeaSwitch]);
 
     const nodePointerCollision: CollisionDetection = (args) => {
         const { droppableContainers, droppableRects, pointerCoordinates } = args;
@@ -231,14 +230,6 @@ function Idea() {
     function setIdeasFromStorage() {
         const loadedIdeas = getIdeasByParentID(rootId);
         setIdeas(loadedIdeas);
-    }
-
-    function handleBackWithFade() {
-        setNodesVisible(false);
-        setTimeout(() => {
-            handleBackClick({ setRootId, setRootName, rootIdStack, ideas });
-        }, 65);
-        setTimeout(() => setNodesVisible(true), 90);
     }
 
     function toggleSortMode() {
@@ -363,7 +354,7 @@ function Idea() {
                         <section className="top">
                             <section className="rootHolder">
                                 <section className="rootAdditionalButtons">
-                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={handleBackWithFade}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
+                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => navigateToId(getParentID(rootId))}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
                                     <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Age'}</button>
                                 </section>
                                 <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
