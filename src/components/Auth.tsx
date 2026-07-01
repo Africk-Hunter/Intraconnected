@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersiste
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
-import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, unwrapDEKWithRecovery, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
+import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
 import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
 import { signUserOut } from "../utilities/firebase/authFirebase";
@@ -16,8 +16,6 @@ const Auth: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [pendingRecoveryCode, setPendingRecoveryCode] = useState("");
-    const [showRecoveryInput, setShowRecoveryInput] = useState(false);
-    const [recoveryCodeInput, setRecoveryCodeInput] = useState("");
     const [copied, setCopied] = useState(false);
     const [recoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
 
@@ -35,7 +33,7 @@ const Auth: React.FC = () => {
         });
 
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user && !isShowingRecoveryCode.current && !isSigningIn.current && !showRecoveryInput) {
+            if (user && !isShowingRecoveryCode.current && !isSigningIn.current) {
                 const dekLoaded = await loadDEKFromSession();
                 if (dekLoaded) window.location.href = '/main';
             }
@@ -124,7 +122,11 @@ const Auth: React.FC = () => {
             })
             .catch((error) => {
                 isSigningIn.current = false;
-                console.log(error.message);
+                if (error.code === 'auth/email-already-in-use') {
+                    displayMessage('An account with that email already exists.', 'bad');
+                } else {
+                    console.log(error.message);
+                }
             });
     }
 
@@ -202,12 +204,12 @@ const Auth: React.FC = () => {
                         window.location.href = '/main';
                     }
                 } catch {
-                    // DEK decryption failed — password was reset via email, recovery code needed
+                    // DEK decryption failed — password was reset; auto-recover via email
                     pendingPasswordRef.current = capturedPassword;
                     pendingUidRef.current = user.uid;
                     pendingEncDataRef.current = encData;
                     isSigningIn.current = false;
-                    setShowRecoveryInput(true);
+                    await handleEmailRecovery();
                 }
             } else {
                 // No DEK yet — account predates encryption
@@ -227,41 +229,6 @@ const Auth: React.FC = () => {
             isSigningIn.current = false;
             console.error('Encryption setup error:', error);
             displayMessage('Login error — please try again.', 'bad');
-        }
-    }
-
-    async function handleRecoveryRestore() {
-        const encData = pendingEncDataRef.current;
-        const uid = pendingUidRef.current;
-        const newPassword = pendingPasswordRef.current;
-        if (!encData) return;
-
-        // Normalize: strip non-hex characters, reformat to original XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX
-        const stripped = recoveryCodeInput.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
-        const normalized = [0, 10, 20, 30].map(i => stripped.slice(i, i + 10)).join('-');
-
-        let dek: CryptoKey;
-        try {
-            dek = await unwrapDEKWithRecovery(encData.recoveryEncryptedDEK, normalized, uid);
-        } catch {
-            displayMessage('Invalid recovery code. Please try again.', 'bad');
-            return;
-        }
-
-        try {
-            const newEncryptedDEK = await wrapDEK(dek, newPassword, uid);
-            const newRecoveryCode = generateRecoveryCode();
-            const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, uid);
-            const newEmailEncryptedDEK = await wrapDEKWithEmail(dek, auth.currentUser!.email!, uid);
-            await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK, newEmailEncryptedDEK);
-            await setDEK(dek);
-
-            setShowRecoveryInput(false);
-            setRecoveryCodeInput("");
-            try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
-            window.location.href = '/main';
-        } catch {
-            displayMessage('Could not save your new keys. Please try again.', 'bad');
         }
     }
 
@@ -292,7 +259,6 @@ const Auth: React.FC = () => {
             await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK, newEmailEncryptedDEK);
             await setDEK(dek);
 
-            setShowRecoveryInput(false);
             try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
             window.location.href = '/main';
         } catch {
@@ -326,40 +292,6 @@ const Auth: React.FC = () => {
         a.download = 'intraconnected-recovery-code.txt';
         a.click();
         URL.revokeObjectURL(url);
-    }
-
-    // Recovery code entry screen (after password reset)
-    if (showRecoveryInput) {
-        return (
-            <div className="recoveryOverlay">
-                <div className="recoveryModal neobrutal">
-                    <h2 className="recoveryTitle">Restore Encrypted Data</h2>
-                    <p className="recoveryWarning">
-                        Your password was reset, so your encryption key needs to be restored. Enter your recovery code to regain access to your ideas.
-                    </p>
-                    <input
-                        type="text"
-                        className="input neobrutal-input recoveryInput"
-                        placeholder="XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX-XXXXXXXXXX"
-                        value={recoveryCodeInput}
-                        onChange={(e) => setRecoveryCodeInput(e.target.value)}
-                        spellCheck={false}
-                    />
-                    <div className="recoveryActions">
-                        <button className="recoveryCopyBtn neobrutal-button" onClick={signUserOut}>
-                            Sign Out
-                        </button>
-                        <button className="recoveryConfirmBtn neobrutal-button" onClick={handleRecoveryRestore}>
-                            Restore Access
-                        </button>
-                    </div>
-                    <button className="recoveryEmailBtn neobrutal-button" onClick={handleEmailRecovery}>
-                        Recover via email
-                    </button>
-                    <MessageBox />
-                </div>
-            </div>
-        );
     }
 
     // New recovery code display screen (after signup or after successful restore)

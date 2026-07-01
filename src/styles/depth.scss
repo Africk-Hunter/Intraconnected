@@ -15,9 +15,9 @@
     align-items: center;
     justify-content: center;
     background: $roots;
-    border: 2px solid black;
-    border-radius: 5px;
-    box-shadow: 2px 2px 0 2px black;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    box-shadow: $neo-detail-shadow;
     font-size: 0;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -28,8 +28,18 @@
     }
 
     &:hover {
-        box-shadow: 0px 0px 0 2px black;
-        translate: 2px 2px;
+        box-shadow: $neo-btn-press;
+        translate: $neo-detail-translate;
+    }
+
+    @media (min-width: $large-desktop) {
+        border: $neo-detail-border-lg;
+        box-shadow: $neo-detail-shadow-lg;
+
+        &:hover {
+            box-shadow: $neo-btn-press-lg;
+            translate: $neo-detail-translate-lg;
+        }
     }
 
     &:active {
@@ -44,7 +54,7 @@
 .depthText {
     display: flex;
     position: absolute;
-    border-radius: 5px;
+    border-radius: $neo-detail-radius;
     border: 3px solid black;
     transition: all 0.2s ease;
     padding: 0.5rem 1rem;

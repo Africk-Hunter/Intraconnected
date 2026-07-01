@@ -28,6 +28,80 @@ $very-large-desktop: 3840px;
 //Idea Component
 $back-size: 7rem;
 
+// ── Neobrutal design tokens ──────────────────────────────────────────────────
+
+// Desktop — Card (nodes, modals, large panels)
+$neo-card-border:         4px solid black;
+$neo-card-shadow:         5px 5px 0 2px black;
+
+// Desktop — Button (all interactive buttons)
+$neo-btn-border:          3px solid black;
+$neo-btn-shadow:          4px 4px 0 1px black;
+$neo-btn-press:           0px 0px 0 1px black;
+$neo-btn-translate:       4px 4px;
+
+// Desktop — Detail (badges, priority chips, small UI)
+$neo-detail-border:       2px solid black;
+$neo-detail-shadow:       3px 3px 0 1px black;
+$neo-detail-translate:    3px 3px;
+
+// Large desktop (≥ $large-desktop = 1921px)
+$neo-card-border-lg:      4px solid black;
+$neo-card-shadow-lg:      6px 6px 0 2px black;
+
+$neo-btn-border-lg:       3px solid black;
+$neo-btn-shadow-lg:       4px 4px 0 2px black;
+$neo-btn-press-lg:        0px 0px 0 2px black;
+$neo-btn-translate-lg:    4px 4px;
+
+$neo-detail-border-lg:    2px solid black;
+$neo-detail-shadow-lg:    3px 3px 0 1px black;
+$neo-detail-translate-lg: 3px 3px;
+
+// Desktop — Radius
+$neo-card-radius:         8px;
+$neo-btn-radius:          8px;
+$neo-detail-radius:       7px;
+
+$neo-card-radius-lg:      10px;
+$neo-btn-radius-lg:       10px;
+$neo-detail-radius-lg:    8px;
+
+// Desktop — Idea node (heavier than generic card; overrides neobrutal-button on .ideaNode)
+$neo-idea-border:         4px solid black;
+$neo-idea-shadow:         6px 6px 0 2px black;
+$neo-idea-press:          0px 0px 0 2px black;
+$neo-idea-translate:      6px 6px;
+
+$neo-idea-border-lg:      4px solid black;
+$neo-idea-shadow-lg:      6px 6px 0 3px black;
+$neo-idea-press-lg:       0px 0px 0 3px black;
+$neo-idea-translate-lg:   6px 6px;
+
+// Mobile phone (< 640px) — card uses diagonal, buttons use bottom shadow
+$neo-m-card-border:       3px solid #111;
+$neo-m-card-shadow:       4px 4px 0 #111;
+
+$neo-m-fab-border:        3px solid #111;   // FABs, nav buttons
+$neo-m-fab-shadow:        0 5px 0 #111;
+$neo-m-fab-press:         0 2px 0 #111;
+$neo-m-fab-translate:     0 3px;
+
+$neo-m-sheet-border:      3px solid #111;   // sheet confirm buttons, inputs
+$neo-m-sheet-shadow:      0 3px 0 #111;
+
+$neo-m-detail-border:     2px solid #111;   // priority btns, tags, sort btn
+$neo-m-detail-shadow:     2px 2px 0 1px #111;
+
+// Mobile tablet (≥ 640px) — scaled up
+$neo-m-card-border-t:     4px solid #111;
+$neo-m-card-shadow-t:     5px 5px 0 #111;
+
+$neo-m-fab-border-t:      4px solid #111;
+$neo-m-fab-shadow-t:      0 6px 0 #111;
+
+$neo-m-sheet-shadow-t:    0 4px 0 #111;
+
 
 .neutral{
     background: $neutral;

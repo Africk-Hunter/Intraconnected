@@ -169,7 +169,7 @@
     font-size: 0.95rem;
     padding: 7px 10px;
     border-radius: 6px;
-    border: 2px solid #ccc;
+    border: $neo-m-detail-border;
     background: $neutral;
     min-width: 0;
 
@@ -211,7 +211,7 @@
     font-size: 1rem;
     padding: 9px 12px;
     border-radius: 8px;
-    border: 2px solid #ccc;
+    border: $neo-m-detail-border;
     background: $neutral;
 
     &:focus { outline: none; border-color: $indigo; }

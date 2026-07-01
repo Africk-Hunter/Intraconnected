@@ -233,50 +233,8 @@
 
 .buttonImg {
     user-select: none;
-
-    &.logoButton {
-        width: 100%;
-        height: 100%;
-    }
-
-    &.buttonImg--large {
-        width: 55%;
-        height: 55%;
-    }
-
-    &.buttonImg--boost {
-        width: 65%;
-        height: 65%;
-    }
-
-    @media (max-width: $mobile) {
-
-        &.logoButton {
-
-            width: 100%;
-            height: 100%;
-        }
-    }
-
-    @media (min-width: $large-desktop) {
-        width: 50%;
-        height: 50%;
-
-        &.logoButton {
-            width: 90%;
-            height: 90%;
-        }
-
-        &.buttonImg--large {
-            width: 65%;
-            height: 65%;
-        }
-
-        &.buttonImg--boost {
-            width: 75%;
-            height: 75%;
-        }
-    }
+    width: 75%;
+    height: 75%;
 }
 
 .trashCan>.buttonImg {

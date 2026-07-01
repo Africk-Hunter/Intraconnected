@@ -4,6 +4,16 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.06 — Profile Modal & Account Management — 2026-06-30
+- Logout button replaced with a Profile button (new `Profile.svg`) on desktop navbar and mobile FAB; opens a new `ProfileModal`
+- Profile modal — desktop: left tab sidebar + right content panel; mobile: card-list → back-nav pattern; tabs: Account (active), Customization (disabled, coming soon)
+- Account tab: send password reset email, log out, delete account (requires current password + typing "DELETE"; reauthenticates, wipes all Firestore ideas + meta docs, deletes Firebase Auth user)
+- `deleteUserAccount` and `sendPasswordReset` helpers added to `authFirebase.tsx`
+- Manual recovery code screen removed: DEK decryption failure after password reset now triggers automatic email recovery instead of showing a recovery code input form
+- Signup now shows a user-facing error message for `auth/email-already-in-use` instead of logging to console
+- `profileModalOpen` / `setProfileModalOpen` added to `IdeaContext`; `signUserOut` prop removed from `Navbar`
+- Neobrutal design tokens extracted to `variables.scss` (`$neo-btn-radius`, `$neo-btn-border`, `$neo-btn-shadow`, etc.); hardcoded values in `index.scss` replaced with variables
+
 ## V 1.05.6 Code Cleanup - 2026-06-30
 - Cleaned up/refactored mobile code.
 

@@ -8,7 +8,6 @@ import { returnToRoot } from '../utilities/idea/helpers';
 
 interface NavbarProps {
     side: string;
-    signUserOut: () => void;
     setShowHelp: () => void;
     showHelp: boolean;
     setShowPatchNotes: () => void;
@@ -18,9 +17,9 @@ interface NavbarProps {
     isNewPatchNotes?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, setShowMindMap, showMindMap, isNewPatchNotes }) => {
+const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, setShowMindMap, showMindMap, isNewPatchNotes }) => {
 
-    const { rootIdStack, setCreationModalOpen, rootId, setRootId, setRootName, setNodesVisible } = useIdeaContext();
+    const { rootIdStack, setCreationModalOpen, rootId, setRootId, setRootName, setNodesVisible, setProfileModalOpen } = useIdeaContext();
 
     function handleReturnToRootWithFade() {
         setNodesVisible(false);
@@ -48,7 +47,7 @@ const Navbar: React.FC<NavbarProps> = ({ side, signUserOut, setShowHelp, showHel
 
                 <nav className="navbar rightSide">
                     <section className="rightSideButtons">
-                        <TooltipButton tooltip="Log out" tooltipSide="left" className="mediumSideButton neutral neobrutal-button navButton" onClick={() => signUserOut()}><img src="/images/LogOut.svg" alt="" className="buttonImg" /></TooltipButton>
+                        <TooltipButton tooltip="Profile" tooltipSide="left" className="mediumSideButton neutral neobrutal-button navButton" onClick={() => setProfileModalOpen(true)}><img src="/images/Profile.svg" alt="" className="buttonImg" /></TooltipButton>
                         <TooltipButton tooltip="Help & instructions" tooltipSide="left" className={`smallSideButton neobrutal-button navButton${showHelp ? ' navButton--active' : ' neutral'}`} onClick={setShowHelp}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></TooltipButton>
                         <TooltipButton tooltip="Patch notes" tooltipSide="left" alwaysVisible={isNewPatchNotes} className={`smallSideButton neobrutal-button navButton patchNotesBtn${showPatchNotes ? ' navButton--active' : ' neutral'}`} onClick={setShowPatchNotes}><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" className="buttonImg" /></TooltipButton>
                     </section>

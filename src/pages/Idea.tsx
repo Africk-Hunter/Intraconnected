@@ -27,7 +27,6 @@ import {
     handleChecklistCreation,
     fetchFromFirebaseAndOrganizeIdeas,
     getIdeasByParentID,
-    signUserOut,
     IdeaType,
     updateIdeaParentId,
     updateIdeaPriority,
@@ -43,6 +42,7 @@ import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
 import ChecklistModal from '../components/modals/ChecklistModal';
 import FeatureImplementedModal from '../components/modals/FeatureImplementedModal';
 import OnboardingModal from '../components/modals/OnboardingModal';
+import ProfileModal from '../components/modals/ProfileModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
 import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRequests';
@@ -355,7 +355,7 @@ function Idea() {
         <DndContext onDragEnd={handleDragEnd} collisionDetection={nodePointerCollision} modifiers={[restrictToTopLeftRight]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
-                    <Navbar side="left" signUserOut={signUserOut} setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
+                    <Navbar side="left" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
                     <Trash hidden={showMindMap} />
                 </section>
 
@@ -390,7 +390,7 @@ function Idea() {
                     </section>
 
                 <section className="right">
-                    <Navbar side="right" signUserOut={signUserOut} setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
+                    <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
                     <Help showHelp={showHelp} />
                     <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>
@@ -403,6 +403,7 @@ function Idea() {
             <ChecklistModal />
             <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} />
             <OnboardingModal />
+            <ProfileModal />
             {implementedTitles && (
                 <FeatureImplementedModal titles={implementedTitles} onClose={() => setImplementedTitles(null)} />
             )}

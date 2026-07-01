@@ -20,7 +20,6 @@ import {
     handleChecklistCreation,
     recursivelyDeleteChildren,
     cleanLink,
-    signUserOut,
     getIdeaLink,
     sortIdeas,
 } from '../utilities';
@@ -45,7 +44,7 @@ if (typeof window !== 'undefined') {
 
 
 function MobileMindMap() {
-    const { setNewIdeaSwitch, newIdeaSwitch } = useIdeaContext();
+    const { setNewIdeaSwitch, newIdeaSwitch, setProfileModalOpen } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
     const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
@@ -795,8 +794,8 @@ function MobileMindMap() {
                         ))}
                     </div>
                 )}
-                <button className="mmobile-logout" onClick={signUserOut}>
-                    <img src="/images/LogOut.svg" alt="Sign out" />
+                <button className="mmobile-logout" onClick={() => setProfileModalOpen(true)}>
+                    <img src="/images/Profile.svg" alt="Profile" />
                 </button>
             </div>
 
