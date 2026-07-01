@@ -16,46 +16,19 @@ export function checkIfIdeaIsLeaf(ideaID: number): boolean {
     return !ideas.some((idea: IdeaType) => idea.parentID === ideaID);
 }
 
-export function handleBackClick(params: {
-    setRootId: (id: number) => void;
-    setRootName: (name: string) => void;
-    rootIdStack: React.RefObject<number[]>;
-    ideas: IdeaType[];
-}): void {
-    const { setRootId, setRootName, rootIdStack, ideas } = params;
-
-    if (rootIdStack.current.length > 0) {
-        rootIdStack.current.pop();
-        const newRootId = rootIdStack.current[rootIdStack.current.length - 1] || 1;
-        setRootId(newRootId);
-
-        const newRoot = ideas.find((idea: IdeaType) => idea.id === newRootId);
-        setRootName(newRoot ? newRoot.content : "Ideas");
+export function buildAncestorPath(targetId: number, allIdeas: IdeaType[]): number[] {
+    const path: number[] = [];
+    let id = targetId;
+    while (true) {
+        path.unshift(id);
+        if (id === 1) break;
+        const node = allIdeas.find((idea: IdeaType) => idea.id === id);
+        if (!node || !node.parentID) break;
+        const parentExists = allIdeas.some((idea: IdeaType) => idea.id === node.parentID) || node.parentID === 1;
+        if (!parentExists) break;
+        id = node.parentID;
     }
-}
-
-export function returnToRoot(params: {
-    setRootId: (id: number) => void;
-    setRootName: (name: string) => void;
-    rootIdStack: React.RefObject<number[]>;
-}) {
-    const { setRootId, setRootName, rootIdStack } = params;
-
-    setRootId(1);
-    setRootName("Ideas");
-    while (rootIdStack.current.length > 1) {
-        rootIdStack.current.pop();
-    }
-}
-
-export function returnToRootOfID(params: { setRootId: (id: number) => void; setRootName: (name: string) => void; rootIdStack: React.RefObject<number[]>; rootToGoTo: number; newRootName: string }) {
-    const { setRootId, setRootName, rootIdStack, rootToGoTo, newRootName } = params;
-
-    setRootId(rootToGoTo);
-    setRootName(newRootName);
-    while (rootIdStack.current[rootIdStack.current.length - 1] !== rootToGoTo) {
-        rootIdStack.current.pop();
-    }
+    return path;
 }
 
 export function getParentID(parentID: number): number {
