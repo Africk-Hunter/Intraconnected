@@ -122,7 +122,7 @@ interface MindMapProps {
 }
 
 function MindMap({ onClose, visible }: MindMapProps) {
-    const { rootId, setRootId, setRootName, rootIdStack, newIdeaSwitch } = useIdeaContext();
+    const { rootId, navigateToId, newIdeaSwitch } = useIdeaContext();
     const [allIdeas, setAllIdeas] = useState<IdeaType[]>([]);
 
     useEffect(() => {
@@ -253,18 +253,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
     }
 
     function navigateTo(idea: IdeaType) {
-        const path: number[] = [];
-        let id = Number(idea.id);
-        while (true) {
-            path.unshift(id);
-            const node = allIdeas.find(i => Number(i.id) === id);
-            if (!node || Number(node.id) === 1 || !node.parentID) break;
-            id = Number(node.parentID);
-        }
-        rootIdStack.current.length = 0;
-        path.forEach(p => rootIdStack.current.push(p));
-        setRootId(Number(idea.id));
-        setRootName(idea.content);
+        navigateToId(Number(idea.id));
         onClose();
     }
 

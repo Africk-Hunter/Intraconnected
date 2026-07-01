@@ -3,7 +3,6 @@ import DepthIndicator from './DepthIndicator';
 import TooltipButton from './TooltipButton';
 import { useIdeaContext } from '../context/IdeaContext';
 import { getNameFromID } from '../utilities/index';
-import { returnToRoot } from '../utilities/idea/helpers';
 
 
 interface NavbarProps {
@@ -19,16 +18,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, setShowMindMap, showMindMap, isNewPatchNotes }) => {
 
-    const { rootIdStack, setCreationModalOpen, rootId, setRootId, setRootName, setNodesVisible, setProfileModalOpen } = useIdeaContext();
-
-    function handleReturnToRootWithFade() {
-        setNodesVisible(false);
-        setTimeout(() => {
-            returnToRoot({ setRootId, setRootName, rootIdStack });
-        }, 65);
-        setTimeout(() => setNodesVisible(true), 90);
-    }
-
+    const { rootIdStack, setCreationModalOpen, rootId, navigateToId, profileModalOpen, setProfileModalOpen } = useIdeaContext();
 
     const [depthElements, setDepthElements] = useState<JSX.Element[]>([]);
 
@@ -58,7 +48,7 @@ const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPat
 
                 <nav className="navbar">
                     <TooltipButton tooltip="Create new idea" tooltipSide="right" wrapperClassName={showMindMap ? 'nav-btn--hidden' : ''} className="largeSideButton leaf neobrutal-button navButton" onClick={() => setCreationModalOpen(true)}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg buttonImg--large" /></TooltipButton>
-                    <TooltipButton tooltip="Return to root" tooltipSide="right" wrapperClassName={`nav-btn--return-root${rootId === 1 ? ' nav-btn--at-root' : ''}${showMindMap ? ' nav-btn--hidden' : ''}`} className="medLargeSideButton burnt-orange neobrutal-button navButton" onClick={rootId === 1 ? undefined : handleReturnToRootWithFade}><img src="/images/Home.svg" alt="Return to root" className="buttonImg buttonImg--boost" /></TooltipButton>
+                    <TooltipButton tooltip="Return to root" tooltipSide="right" wrapperClassName={`nav-btn--return-root${rootId === 1 ? ' nav-btn--at-root' : ''}${showMindMap ? ' nav-btn--hidden' : ''}`} className="medLargeSideButton burnt-orange neobrutal-button navButton" onClick={rootId === 1 ? undefined : () => navigateToId(1)}><img src="/images/Home.svg" alt="Return to root" className="buttonImg buttonImg--boost" /></TooltipButton>
                     <div className={`nav-btn-group${showMindMap ? ' nav-btn-group--active' : ''}`}>
                         <TooltipButton tooltip="Toggle mind map" tooltipSide="right" className="mediumSideButton neo-pink neobrutal-button navButton" onClick={() => setShowMindMap(prev => !prev)}><img src="/images/MindMapBlack.svg" alt="" className="buttonImg logoButton" /></TooltipButton>
                     </div>

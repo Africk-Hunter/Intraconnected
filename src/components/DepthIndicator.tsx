@@ -1,5 +1,4 @@
 import React from 'react';
-import { returnToRootOfID } from '../utilities/index';
 import { useIdeaContext } from '../context/IdeaContext';
 
 interface DepthIndicatorProps {
@@ -9,16 +8,10 @@ interface DepthIndicatorProps {
 }
 
 const DepthIndicator: React.FC<DepthIndicatorProps> = ({ index, rootId, rootName }) => {
-    const { setRootId, setRootName, rootIdStack } = useIdeaContext();
+    const { navigateToId } = useIdeaContext();
 
     const handleClick = () => {
-        returnToRootOfID({
-            setRootId,
-            setRootName,
-            rootIdStack,
-            rootToGoTo: rootId,
-            newRootName: rootName,
-        });
+        navigateToId(rootId);
     };
 
     const col = index % 3; // 0 = left, 1 = middle, 2 = right
