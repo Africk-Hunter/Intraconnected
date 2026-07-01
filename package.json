@@ -13,7 +13,6 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "firebase": "^11.6.1",
-    "ngrok": "^5.0.0-beta.2",
     "normalize.css": "^8.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
