@@ -13,6 +13,20 @@ interface TreeNodeProps {
 function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: TreeNodeProps) {
     const idea = allIdeas.find(i => Number(i.id) === ideaId);
     const [collapsed, setCollapsed] = useState(!expandedIds.has(ideaId));
+    const wasOnPathRef = useRef(expandedIds.has(ideaId));
+
+    // TreeNode instances persist across navigations (the overlay never unmounts),
+    // so `collapsed` must re-sync whenever this node enters or leaves the current
+    // path — the useState initializer above only runs once, at first mount. Only
+    // forcing collapsed when path membership actually flips (not on every render)
+    // preserves a manual +/- toggle on branches that aren't on the current path.
+    useEffect(() => {
+        const isOnPath = expandedIds.has(ideaId);
+        if (isOnPath !== wasOnPathRef.current) {
+            setCollapsed(!isOnPath);
+            wasOnPathRef.current = isOnPath;
+        }
+    }, [expandedIds, ideaId]);
 
     if (!idea) return null;
 
@@ -134,6 +148,10 @@ function MindMap({ onClose, visible }: MindMapProps) {
         setAllIdeas(withRoot);
     }, [newIdeaSwitch]);
 
+    // The set of ids whose CHILDREN should render — every ancestor of the current
+    // idea, PLUS the current idea itself (so its direct children preview one level
+    // ahead), but not any of those children (so grandchildren of the current idea
+    // stay hidden).
     const expandedIds = useMemo(() => {
         const ids = new Set<number>();
         let id = rootId;
