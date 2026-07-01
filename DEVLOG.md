@@ -4,6 +4,10 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.06.1 — 2026-07-01
+- Profile navbar button gets `navButton--active` highlight while the profile modal is open (matches help/patch notes button behavior)
+- `docs/` added to `.gitignore`
+
 ## V 1.06 — Profile Modal & Account Management — 2026-06-30
 - Logout button replaced with a Profile button (new `Profile.svg`) on desktop navbar and mobile FAB; opens a new `ProfileModal`
 - Profile modal — desktop: left tab sidebar + right content panel; mobile: card-list → back-nav pattern; tabs: Account (active), Customization (disabled, coming soon)
