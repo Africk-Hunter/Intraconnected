@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, MouseEvent } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
-import { fetchFullIdeaList, IdeaType, ChecklistIdea, getIdeaLink } from '../utilities';
+import { fetchFullIdeaList, IdeaType, ChecklistIdea, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface TreeNodeProps {
     ideaId: number;
@@ -21,6 +21,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
 
     const isLink = !!getIdeaLink(idea);
     const isChecklist = idea.type === 'checklist';
+    const isNote = isNoteMode(idea);
 
     const btnClass = [
         'mm-node-btn',
@@ -29,6 +30,8 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
             ? 'mm-node-btn--current'
             : isChecklist
             ? 'mm-node-btn--checklist'
+            : isNote
+            ? 'mm-node-btn--note'
             : isLink
             ? 'mm-node-btn--link'
             : hasKids
@@ -81,7 +84,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
                 style={isRoot ? { fontSize: '1.9rem', padding: '1rem 2rem', maxWidth: '300px', fontWeight: 800 } : undefined}
                 onClick={handleClick}
             >
-                {idea.content.split('\n')[0]}
+                {resolveIdeaLabel(idea).split('\n')[0]}
             </button>
             {hasKids && (
                 <>
@@ -264,7 +267,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
         rootIdStack.current.length = 0;
         path.forEach(p => rootIdStack.current.push(p));
         setRootId(Number(idea.id));
-        setRootName(idea.content);
+        setRootName(resolveIdeaLabel(idea));
         onClose();
     }
 

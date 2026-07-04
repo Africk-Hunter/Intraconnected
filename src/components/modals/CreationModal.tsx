@@ -106,7 +106,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation }: Creation
 
                         {activeTab === 'idea' && (
                             <section className="contentHolder">
-                                <textarea autoFocus={true} maxLength={200} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => setModalContent(e.target.value)}></textarea>
+                                <textarea autoFocus={true} maxLength={2000} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => setModalContent(e.target.value)}></textarea>
                                 <div className="linkArea">
                                     <button className="linkButton neobrutal-button" onClick={toggleLinkBox}>
                                         Add Link

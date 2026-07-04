@@ -36,6 +36,8 @@ import {
     checkIfIdeaIsLeaf,
     getIdeaLink,
     sortIdeas,
+    isNoteWide,
+    resolveIdeaLabel,
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
@@ -60,6 +62,7 @@ const restrictToTopLeftRight: Modifier = ({ transform, draggingNodeRect, windowR
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
+    const [isLoadingIdeas, setIsLoadingIdeas] = useState(true);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
@@ -150,6 +153,7 @@ function Idea() {
                 rootIdStack.current.push(rootId);
             }
             setIdeas(loadedIdeas);
+            setIsLoadingIdeas(false);
         }
 
         const unsubscribe = auth.onAuthStateChanged(() => {
@@ -164,7 +168,7 @@ function Idea() {
 
             const currentRoot = fetchFullIdeaList().find((idea: IdeaType) => idea.id === rootId);
             if (currentRoot) {
-                setRootName(currentRoot.content);
+                setRootName(resolveIdeaLabel(currentRoot));
                 setRootPriority(currentRoot.priority);
             }
         };
@@ -376,8 +380,14 @@ function Idea() {
                         <section className="bottom">
                             <main className="ideaSpace">
                                 <section className={`ideaNodes${!nodesVisible ? ' ideaNodes--fade' : ''}`} ref={ideaNodesRef}>
-                                    {displayedIdeas?.map((idea: IdeaType) => (
-                                        <div key={idea.id} data-flip-id={idea.id}>
+                                    {isLoadingIdeas ? (
+                                        <div className="ideaNode-loading" role="status" aria-label="Loading ideas">
+                                            <span className="ideaNode-loading-dot" />
+                                            <span className="ideaNode-loading-dot" />
+                                            <span className="ideaNode-loading-dot" />
+                                        </div>
+                                    ) : displayedIdeas?.map((idea: IdeaType) => (
+                                        <div key={idea.id} data-flip-id={idea.id} className={isNoteWide(idea) ? 'ideaNodes-wide-item' : undefined}>
                                             <IdeaNode
                                                 idea={idea}
                                                 isLeaf={checkIfIdeaIsLeaf(idea.id)}

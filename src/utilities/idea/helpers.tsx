@@ -1,5 +1,26 @@
 import { IdeaType } from "../types";
 
+export const NOTE_MODE_THRESHOLD = 150;
+export const NOTE_WIDE_THRESHOLD = 500;
+
+export function isNoteMode(idea: IdeaType | undefined): boolean {
+    if (!idea || idea.type === 'checklist') return false;
+    return idea.content.length > NOTE_MODE_THRESHOLD;
+}
+
+export function isNoteWide(idea: IdeaType | undefined): boolean {
+    return isNoteMode(idea) && (idea as { content: string }).content.length > NOTE_WIDE_THRESHOLD;
+}
+
+export function resolveIdeaLabel(idea: IdeaType | undefined): string {
+    if (!idea) return 'Idea';
+    if (isNoteMode(idea)) {
+        const noteTitle = (idea as { noteTitle?: string }).noteTitle;
+        return noteTitle && noteTitle.trim() ? noteTitle : 'Untitled';
+    }
+    return idea.content;
+}
+
 export function fetchFullIdeaList() {
     const ideas = localStorage.getItem("ideas");
 
@@ -30,7 +51,7 @@ export function handleBackClick(params: {
         setRootId(newRootId);
 
         const newRoot = ideas.find((idea: IdeaType) => idea.id === newRootId);
-        setRootName(newRoot ? newRoot.content : "Ideas");
+        setRootName(newRoot ? resolveIdeaLabel(newRoot) : "Ideas");
     }
 }
 
@@ -67,7 +88,7 @@ export function getParentID(parentID: number): number {
 export function getNameFromID(id: number): string {
     const ideas = fetchFullIdeaList();
     const idea = ideas.find((idea: IdeaType) => idea.id === id);
-    return idea ? idea.content : 'Idea';
+    return resolveIdeaLabel(idea);
 }
 
 export function getIdeaLink(idea: IdeaType | undefined): string {

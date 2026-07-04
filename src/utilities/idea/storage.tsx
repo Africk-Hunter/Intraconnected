@@ -63,6 +63,17 @@ export function updateIdeaName(id: number, newName: string) {
     localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
 }
 
+export function updateIdeaNoteTitle(id: number, newTitle: string) {
+    const ideas = fetchFullIdeaList();
+    const updatedIdeas = ideas.map((idea: IdeaType) => {
+        if (idea.id === id) {
+            return { ...idea, noteTitle: newTitle };
+        }
+        return idea;
+    });
+    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+}
+
 export function updateIdeaLink(id: number, newLink: string) {
     const ideas = fetchFullIdeaList();
     const updatedIdeas = ideas.map((idea: IdeaType) => {

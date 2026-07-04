@@ -258,6 +258,7 @@
     &--parent    { background: $sky; }
     &--leaf      { background: $leaf; }
     &--link      { background: $link; }
+    &--note      { background: $neo-green; color: white; align-items: flex-start; }
     &--checklist { background: $indigo; color: white; }
 
     &--selectable {
@@ -316,6 +317,37 @@
     color: #1a1208;
     word-break: break-word;
     white-space: pre-wrap;
+}
+
+.mmobile-node-title--note {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: white;
+}
+
+.mmobile-node-note-header {
+    font-weight: 700;
+    font-size: 1.05rem;
+
+    &:empty::after {
+        content: 'Untitled';
+        opacity: 0.6;
+        font-weight: 400;
+        font-style: italic;
+    }
+}
+
+.mmobile-node-note-body {
+    font-family: $note-font;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    opacity: 0.95;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .mmobile-node-count {
@@ -923,6 +955,7 @@
     &--parent     { background: $sky; }
     &--leaf       { background: $leaf; }
     &--link       { background: $link; }
+    &--note       { background: $neo-green; color: white; }
     &--checklist  { background: $indigo; color: white; }
     &--disabled   { opacity: 0.4; cursor: default; }
     &--current    { outline: 3px solid #111; outline-offset: 2px; opacity: 0.6; cursor: default; }

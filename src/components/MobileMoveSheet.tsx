@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdeaType, getIdeaLink } from '../utilities';
+import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface Props {
     nodeId: number;
@@ -73,6 +73,8 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                 const hasKids = allIdeas.some(i => i.parentID === child.id);
                 const colorClass = isChecklist
                     ? 'mmobile-move-btn--checklist'
+                    : isNoteMode(child)
+                    ? 'mmobile-move-btn--note'
                     : getIdeaLink(child)
                     ? 'mmobile-move-btn--link'
                     : hasKids ? 'mmobile-move-btn--parent'
@@ -85,7 +87,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                             disabled={isDisabled}
                             onClick={isDisabled ? undefined : () => onMove(nodeId, child.id)}
                         >
-                            {child.content.split('\n')[0]}
+                            {resolveIdeaLabel(child).split('\n')[0]}
                         </button>
                         {visibleKids.length > 0 && (
                             <button className="mmobile-move-toggle" onClick={() => toggleExpanded(child.id)}>
@@ -108,7 +110,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                         disabled={rootDisabled}
                         onClick={rootDisabled ? undefined : () => onMove(nodeId, 1)}
                     >
-                        {root.content.split('\n')[0]}
+                        {resolveIdeaLabel(root).split('\n')[0]}
                     </button>
                     <button className="mmobile-move-toggle" onClick={() => toggleExpanded(1)}>
                         {rootExpanded ? '▾' : '▸'}

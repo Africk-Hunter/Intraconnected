@@ -12,6 +12,7 @@ export interface StandardIdea {
     parentID: number;
     link: string;
     priority?: 1 | 2 | 3;
+    noteTitle?: string; // header label once content grows past the note-mode threshold
 }
 
 export interface ChecklistIdea {

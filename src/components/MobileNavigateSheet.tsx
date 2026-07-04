@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdeaType, getIdeaLink } from '../utilities';
+import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface Props {
     currentId: number;
@@ -51,8 +51,11 @@ function MobileNavigateSheet({ currentId, allIdeas, onNavigate }: Props) {
                 const isLink = !!getIdeaLink(child);
                 const isChecklist = child.type === 'checklist';
                 const isDisabled = isCurrent || isLink || isChecklist;
+                const isNote = isNoteMode(child);
                 const colorClass = isChecklist
                     ? 'mmobile-move-btn--checklist'
+                    : isNote
+                    ? 'mmobile-move-btn--note'
                     : isLink
                     ? 'mmobile-move-btn--link'
                     : hasKids
@@ -66,7 +69,7 @@ function MobileNavigateSheet({ currentId, allIdeas, onNavigate }: Props) {
                             disabled={isDisabled}
                             onClick={isDisabled ? undefined : () => onNavigate(child.id)}
                         >
-                            {child.content}
+                            {resolveIdeaLabel(child)}
                         </button>
                         {hasKids && (
                             <button className="mmobile-move-toggle" onClick={() => toggleExpanded(child.id)}>
@@ -93,7 +96,7 @@ function MobileNavigateSheet({ currentId, allIdeas, onNavigate }: Props) {
                         disabled={rootIsCurrent}
                         onClick={rootIsCurrent ? undefined : () => onNavigate(1)}
                     >
-                        {root.content}
+                        {resolveIdeaLabel(root)}
                     </button>
                     <button className="mmobile-move-toggle" onClick={() => toggleExpanded(1)}>
                         {rootExpanded ? '▾' : '▸'}

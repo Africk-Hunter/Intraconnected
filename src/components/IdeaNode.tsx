@@ -5,7 +5,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, scheduleChecklistFirebaseWrite, cleanLink, updateIdeaPriority, schedulePriorityFirebaseWrite } from '../utilities';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, scheduleChecklistFirebaseWrite, cleanLink, updateIdeaPriority, schedulePriorityFirebaseWrite, isNoteMode, isNoteWide, updateIdeaName, updateIdeaNameInFirebase } from '../utilities';
 
 
 interface IdeaNodeProps {
@@ -177,6 +177,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const { id, content: title } = idea;
     const link = getIdeaLink(idea);
     const isChecklist = idea.type === 'checklist';
+    const noteTitle = (idea as { noteTitle?: string }).noteTitle ?? '';
 
     const [nodeType, setNodeType] = useState('leaf');
     const [copyPath, setCopyPath] = useState('images/CopyIcon.svg');
@@ -190,6 +191,14 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const textRef = useRef<HTMLDivElement>(null);
     const [isExpanded, setIsExpanded] = useState(false);
     const [needsExpand, setNeedsExpand] = useState(false);
+
+    const noteMode = isNoteMode(idea);
+    const [isEditingBody, setIsEditingBody] = useState(false);
+    const [bodyDraft, setBodyDraft] = useState('');
+    const bodyEditRef = useRef<HTMLTextAreaElement>(null);
+    const noteBodyRef = useRef<HTMLDivElement>(null);
+    const [isNoteExpanded, setIsNoteExpanded] = useState(false);
+    const [needsNoteExpand, setNeedsNoteExpand] = useState(false);
 
     const [isMobile, setIsMobile] = useState<boolean>(() => {
         if (typeof window === 'undefined') return false;
@@ -234,6 +243,25 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }, [id]);
 
     useEffect(() => {
+        setIsNoteExpanded(false);
+        setIsEditingBody(false);
+    }, [id]);
+
+    useEffect(() => {
+        if (!noteBodyRef.current || !noteMode || isNoteExpanded) return;
+        setNeedsNoteExpand(noteBodyRef.current.scrollHeight > noteBodyRef.current.clientHeight);
+    }, [idea, noteMode, isNoteExpanded]);
+
+    useLayoutEffect(() => {
+        if (!isEditingBody) return;
+        const el = bodyEditRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+        el.focus();
+    }, [isEditingBody]);
+
+    useEffect(() => {
         if (!checklistItemsRef.current || isChecklistExpanded) return;
         setNeedsChecklistExpand(checklistItemsRef.current.scrollHeight > checklistItemsRef.current.clientHeight);
     }, [localItems, isChecklistExpanded]);
@@ -244,7 +272,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
 
     useEffect(() => {
         determineNodeType();
-    }, [id, link, isLeaf, isChecklist]);
+    }, [id, link, isLeaf, isChecklist, noteMode]);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -257,6 +285,10 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     function determineNodeType() {
         if (isChecklist) {
             setNodeType('checklist');
+            return;
+        }
+        if (noteMode) {
+            setNodeType('note');
             return;
         }
         if (link !== '') {
@@ -316,8 +348,24 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         e.stopPropagation();
         e.preventDefault();
         setCurrentNameChangeId(id);
-        setSelectedIdeaName(title);
+        setSelectedIdeaName(noteMode ? noteTitle : title);
         setRenameModalOpen(true);
+    }
+
+    function startBodyEdit() {
+        setBodyDraft(title);
+        setIsEditingBody(true);
+    }
+
+    function commitBodyEdit() {
+        setIsEditingBody(false);
+        if (bodyDraft === title) return;
+        updateIdeaNameInFirebase(id, bodyDraft).then(() => {
+            updateIdeaName(id, bodyDraft);
+            setNewIdeaSwitch(prev => !prev);
+        }).catch((error) => {
+            console.error("Error updating note body: ", error);
+        });
     }
 
     function cyclePriority(e: React.MouseEvent) {
@@ -479,6 +527,65 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                         maxLength={200}
                     />
                 </div>
+            </div>
+        );
+    }
+
+    if (noteMode) {
+        const wideClass = isNoteWide(idea) ? ' ideaNode--wide' : '';
+        return (
+            <div
+                ref={setNodeRef}
+                style={combinedStyle}
+                className={`neobrutal-button ideaNode note${wideClass}${fadeInClass}${priorityClass}`}
+                onMouseLeave={flushResort}
+                {...attributes}
+                {...listeners}
+            >
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority} — click to change` : 'Click to set priority'} />
+                <div className="note-header" onClick={makeRoot}>
+                    <span className="note-title-text">{noteTitle}</span>
+                    <button className="renameButtonNode copy" onClick={changeName}>
+                        <img src='images/Pen.svg' alt="Rename" className="copyImg" />
+                    </button>
+                </div>
+                <div className="note-body-wrapper" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
+                    {isEditingBody ? (
+                        <textarea
+                            ref={bodyEditRef}
+                            className="note-body-edit"
+                            value={bodyDraft}
+                            maxLength={2000}
+                            onChange={e => {
+                                setBodyDraft(e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            onBlur={commitBodyEdit}
+                            onClick={e => e.stopPropagation()}
+                        />
+                    ) : (
+                        <div
+                            ref={noteBodyRef}
+                            className={`note-body${!isNoteExpanded ? ' note-body--collapsed' : ''}`}
+                            onClick={e => { e.stopPropagation(); if (isNoteExpanded) startBodyEdit(); }}
+                        >
+                            {title}
+                            {needsNoteExpand && !isNoteExpanded && (
+                                <div className="note-fade-overlay" onClick={e => e.stopPropagation()}>
+                                    <button className="note-expand-btn" onClick={e => { e.stopPropagation(); e.preventDefault(); setIsNoteExpanded(true); }}>
+                                        Show more ▾
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+                {!isEditingBody && needsNoteExpand && isNoteExpanded && (
+                    <button className="note-expand-btn note-expand-btn--collapse" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); e.preventDefault(); setIsNoteExpanded(false); }}>
+                        Show less ▴
+                    </button>
+                )}
             </div>
         );
     }
