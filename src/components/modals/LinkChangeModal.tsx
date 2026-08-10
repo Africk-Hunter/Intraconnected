@@ -20,7 +20,7 @@ function LinkChangeModal() {
     return (
         <AnimatedOverlay open={linkChangeModalOpen}>
             <div className="modal neobrutal">
-                <textarea autoFocus={true} maxLength={100} className="ideaContent neobrutal-input" placeholder='Change Link...' onChange={(e) => setModalContent(e.target.value)}>{currentLink}</textarea>
+                <textarea autoFocus={true} className="ideaContent neobrutal-input" placeholder='Change Link...' onChange={(e) => setModalContent(e.target.value)}>{currentLink}</textarea>
                 <section className="modalButtons">
                     <button className="modalButton cancel neobrutal-button" onClick={() => setLinkChangeModalOpen(false)}>Cancel</button>
                     <button className="modalButton continue neobrutal-button" onClick={() => { handleLinkChange(currentLinkID, cleanLink(modalContent)); setLinkChangeModalOpen(false); }}>Change</button>

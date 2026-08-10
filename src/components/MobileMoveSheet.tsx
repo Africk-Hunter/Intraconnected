@@ -67,13 +67,14 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
             .flatMap(child => {
                 const visibleKids = allIdeas.filter(i => i.parentID === child.id && !hidden.has(i.id));
                 const isChecklist = child.type === 'checklist';
-                const isDisabled = disabled.has(child.id) || isChecklist;
+                const isNote = isNoteMode(child);
+                const isDisabled = disabled.has(child.id) || isChecklist || isNote;
                 const isExpanded = expandedMoveNodes.has(child.id);
                 const isCurrentParent = child.id === movingNode?.parentID;
                 const hasKids = allIdeas.some(i => i.parentID === child.id);
                 const colorClass = isChecklist
                     ? 'mmobile-move-btn--checklist'
-                    : isNoteMode(child)
+                    : isNote
                     ? 'mmobile-move-btn--note'
                     : getIdeaLink(child)
                     ? 'mmobile-move-btn--link'

@@ -25,6 +25,7 @@ import {
     handleBackClick,
     handleIdeaCreation,
     handleChecklistCreation,
+    handleNoteCreation,
     fetchFromFirebaseAndOrganizeIdeas,
     getIdeasByParentID,
     IdeaType,
@@ -37,6 +38,7 @@ import {
     getIdeaLink,
     sortIdeas,
     isNoteWide,
+    isNoteMode,
     resolveIdeaLabel,
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
@@ -226,6 +228,7 @@ function Idea() {
         } else {
             if (activeId === overId) return;
             if (overLink !== '') return;
+            if (isNoteMode(overIdea)) return;
             const newParentId = Number(over.id.split('-')[1]);
             updateIdeaParentId(activeId, newParentId);
             setIdeasFromStorage();
@@ -311,6 +314,18 @@ function Idea() {
             return;
         }
 
+        // Skip if the id sequence itself didn't change — this wasn't an add, delete, or
+        // reorder, just an in-place content edit (e.g. renaming a note) that happened to
+        // change a card's height. Animating a slide for every sibling that got pushed by
+        // the reflow reads as the whole grid flickering, so let the browser reflow normally.
+        const isSameSequence = nextIds.length === prevFlipIds.current.length &&
+            nextIds.every((id, i) => id === prevFlipIds.current[i]);
+        if (isSameSequence) {
+            flipSnapshot.current = nextSnap;
+            prevFlipIds.current = nextIds;
+            return;
+        }
+
         const toAnimate: HTMLElement[] = [];
 
         nodes.forEach(el => {
@@ -379,7 +394,7 @@ function Idea() {
 
                         <section className="bottom">
                             <main className="ideaSpace">
-                                <section className={`ideaNodes${!nodesVisible ? ' ideaNodes--fade' : ''}`} ref={ideaNodesRef}>
+                                <section className={`ideaNodes${!nodesVisible ? ' ideaNodes--fade' : ''}${isLoadingIdeas ? ' ideaNodes--loading' : ''}`} ref={ideaNodesRef}>
                                     {isLoadingIdeas ? (
                                         <div className="ideaNode-loading" role="status" aria-label="Loading ideas">
                                             <span className="ideaNode-loading-dot" />
@@ -411,7 +426,7 @@ function Idea() {
             <LinkChangeModal />
             <DeleteConfirmModal />
             <ChecklistModal />
-            <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} />
+            <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} handleNoteCreation={handleNoteCreation} />
             <OnboardingModal />
             <ProfileModal />
             {implementedTitles && (

@@ -322,43 +322,193 @@
     }
 }
 
-// Creation modal tabs
-.creation-tabs {
-    display: flex;
-    width: 28.125rem;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 2px solid black;
-    box-shadow: 3px 3px 0 1px black;
+// Tab panels stay mounted (for crossfade) and are stacked on top of each
+// other, so switching Idea/Checklist/Note only crossfades opacity. Every tab
+// grows the stack via an inline height (CreationModal.tsx measures its own
+// content — textarea scrollHeight for Idea/Note, item list scrollHeight for
+// Checklist) so a full textbox or long item list expands the modal instead of
+// scrolling internally; min-height below floors it back to the shared default
+// size once the content shrinks back down.
+.creation-panel-stack {
+    position: relative;
+    width: 30.125rem;
+    // Floor is sized to fit the checklist tab's shortest state (title + one
+    // add-item input, no items) — previously also had to fit a second
+    // dashed ghost input, which is gone now.
+    height: 7.5rem;
+    min-height: 7.5rem;
+    transition: height 0.2s ease;
 
     @media (max-width: $mobile) {
-        width: 20rem;
+        width: 21.5rem;
+        height: 7rem;
+        min-height: 7rem;
     }
 
     @media (min-width: $large-desktop) {
-        width: 37rem;
+        width: 39rem;
+        height: 9.5rem;
+        min-height: 9.5rem;
+    }
+}
+
+.creation-panel {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    // Room for children's neobrutal box-shadow (spills ~6px right/bottom) so
+    // it isn't clipped by this wrapper's overflow:hidden; margin cancels the
+    // padding so it doesn't add to the fixed size above. 1px on left/top too,
+    // otherwise children's border sits flush on the clip edge and gets
+    // antialiased away, making it look like it has no left/top border.
+    padding: 1px 8px 8px 1px;
+    margin: -1px -8px -8px -1px;
+    box-sizing: border-box;
+
+    &--active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+// The create/note modal runs a bit wider than the shared .modal/.contentHolder/
+// .ideaContent/.modalButtons defaults (those are reused by Rename/Link/Delete/
+// etc., so they aren't touched directly) — overridden here via .creationModal.
+.neobrutal.modal.creationModal {
+    width: 35rem;
+
+    @media (max-width: $mobile) {
+        width: 90%;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 44.5rem;
+    }
+}
+
+.creationModal .contentHolder,
+.creationModal .modalButtons {
+    width: 30.125rem;
+
+    @media (max-width: $mobile) {
+        width: 21.5rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 39rem;
+    }
+}
+
+.creationModal .ideaContent {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.creationModal .modalButton {
+    width: 13.5rem;
+
+    @media (min-width: $large-desktop) {
+        width: 18rem;
+    }
+}
+
+// Each tab's root section fills its creation-panel's height (100%), so Idea
+// and Note (fixed-height panels) occupy identical space regardless of
+// content; the checklist panel's 100% instead tracks the panel-stack's
+// content-driven height, so its items list (flex: 1 below) gets exactly the
+// room it needs with no internal clipping.
+.creation-panel > .contentHolder,
+.creation-panel > .checklist-creation,
+.creation-panel > .note-creation {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.creation-panel > .contentHolder {
+    align-items: stretch;
+}
+
+.creation-panel .ideaContent {
+    flex: 1;
+    min-height: 0;
+    resize: none;
+}
+
+// Note's textarea sits in a nested contentHolder (below its title input), so
+// that contentHolder fills the leftover space instead of the full 100%.
+.note-creation > .contentHolder {
+    height: auto;
+    flex: 1;
+    min-height: 0;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+// Creation modal tabs — separate neobrutal buttons, not a connected segmented control
+.creation-tabs {
+    display: flex;
+    gap: 0.75rem;
+    width: 30.125rem;
+
+    @media (max-width: $mobile) {
+        width: 21.5rem;
+        gap: 0.5rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 39rem;
+        gap: 1rem;
     }
 }
 
 .creation-tab {
     all: unset;
+    box-sizing: border-box;
     flex: 1;
     text-align: center;
     padding: 0.6rem 0;
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     background: $neutral;
-    transition: background 0.15s ease;
+    color: #111;
 
+    border-radius: $neo-btn-radius;
+    border: $neo-btn-border;
+    box-shadow: $neo-btn-shadow;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, translate 0.15s ease;
+
+    &:hover {
+        box-shadow: $neo-btn-press;
+        translate: $neo-btn-translate;
+    }
+
+    // Selected tab stays in the "pressed" neobrutal state and takes the color of
+    // the node type it represents — matches leaf/checklist/note node colors.
     &--active {
-        background: $indigo;
+        box-shadow: $neo-btn-press;
+        translate: $neo-btn-translate;
         color: white;
     }
+
+    &--idea.creation-tab--active { background: $leaf; }
+    &--checklist.creation-tab--active { background: $indigo; }
+    &--note.creation-tab--active { background: $neo-green; }
 
     @media (min-width: $large-desktop) {
         font-size: 1.4rem;
         padding: 0.8rem 0;
+        border: $neo-btn-border-lg;
+        border-radius: $neo-btn-radius-lg;
+        box-shadow: $neo-btn-shadow-lg;
+
+        &:hover, &.creation-tab--active {
+            box-shadow: $neo-btn-press-lg;
+            translate: $neo-btn-translate-lg;
+        }
     }
 }
 
@@ -367,10 +517,10 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    width: 28.125rem;
+    width: 30.125rem;
 
     @media (max-width: $mobile) {
-        width: 20rem;
+        width: 21.5rem;
         background: $neutral;
         border: 2px solid black;
         box-shadow: 4px 4px 0 2px black;
@@ -380,7 +530,7 @@
     }
 
     @media (min-width: $large-desktop) {
-        width: 37rem;
+        width: 39rem;
     }
 }
 
@@ -419,26 +569,67 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
-    max-height: calc(70dvh - 22rem);
+    gap: 0.75rem;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 
     &::-webkit-scrollbar {
         display: none;
     }
+
+    // With zero items this is still a real (zero-height) flex child of
+    // .checklist-creation, so the section's own gap applies on both sides of
+    // it — title-to-input ends up with double the intended gap. Collapsing it
+    // out of flow entirely when empty removes that phantom gap without
+    // touching the ref/measurement logic in CreationModal.tsx.
+    &:empty {
+        display: none;
+    }
 }
 
+// Wraps each item so add/remove animates height via the grid-rows trick
+// instead of the list snapping to its new size instantly.
+.checklist-creation-item-wrap {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition: grid-template-rows 0.22s ease, opacity 0.16s ease 0.1s;
+
+    &--collapsed {
+        grid-template-rows: 0fr;
+        opacity: 0;
+        transition: grid-template-rows 0.22s ease, opacity 0.1s ease;
+    }
+}
+
+// Matches .checklist-creation-item-input exactly (same border/radius/padding/
+// font/background/width) but with no drop shadow and translated by the
+// shadow's own offset — reads as the neobrutal box already pressed in. This
+// is also exactly what .checklist-creation-item-input--pressing transitions
+// the real input to on Enter, so a freshly-committed item lands in this
+// look with zero visible change from how the input looked a moment earlier.
 .checklist-creation-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.25rem 0.5rem;
-    font-size: 1rem;
+    font-size: 1.1rem;
+    font-family: inherit;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border: 2px solid black;
+    box-shadow: none;
+    translate: 3px 3px;
     background: $neutral;
-    border-radius: 6px;
+    // 3px narrower than the input to offset the translate above — otherwise
+    // shifting right/down by the shadow's own offset pushes it past the
+    // list's right edge instead of landing flush with it.
+    width: calc(100% - 2rem - 4px - 3px);
+    overflow: hidden;
+    min-height: 0;
 
     @media (min-width: $large-desktop) {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
     }
 }
 
@@ -455,6 +646,8 @@
 
 .checklist-creation-add {
     display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .checklist-creation-item-input {
@@ -466,9 +659,24 @@
     box-shadow: 3px 3px 0 1px black;
     background: $neutral;
     width: calc(100% - 2rem - 4px);
+    opacity: 1;
+    // Press (box-shadow/translate/width) matches .neobrutal-button's own
+    // hover/press timing (same one every idea node uses) — 0.3s ease.
+    transition: box-shadow 0.3s ease, translate 0.3s ease, width 0.3s ease, opacity 0.3s ease;
 
+    // .neobrutal-input:focus (index.scss) sets a bigger shadow (5px 5px 0 2px,
+    // vs this input's own 3px 3px 0 1px) plus a sky background — and being a
+    // class+pseudo-class, it outranks any single-class modifier here. Pinning
+    // focus back to this input's own idle look means it stays visually
+    // consistent whether focused or not, and frees --pressing/--ghost below
+    // to actually control box-shadow without a specificity fight (the input
+    // is focused essentially the whole time the user is typing/pressing
+    // Enter, so without this override those modifiers would never win).
     &:focus {
         outline: none;
+        box-shadow: 3px 3px 0 1px black;
+        background: $neutral;
+        color: black;
     }
 
     @media (max-width: $mobile) {
@@ -480,10 +688,94 @@
         padding: 0.5rem 1rem 0.75rem;
         width: calc(100% - 2rem);
         background: $neutral;
+
+        &:focus {
+            box-shadow: none;
+            background: $neutral;
+        }
     }
 
     @media (min-width: $large-desktop) {
         font-size: 1.4rem;
+    }
+
+    // Momentary "clicked" feedback on Enter — same press look every neobrutal
+    // box uses on hover (shadow off, translate by the shadow's own offset),
+    // and not coincidentally identical to .checklist-creation-item's box
+    // model (including its 3px width reduction), so when this row is swapped
+    // for the real committed item a moment later, nothing visibly moves.
+    // Combined with &:focus so this reliably outranks the :focus override
+    // right above it (same 0,2,0 specificity, declared later — wins the tie)
+    // instead of losing to it the way it lost to the generic one before.
+    &--pressing,
+    &:focus.checklist-creation-item-input--pressing {
+        box-shadow: none;
+        translate: 3px 3px;
+        width: calc(100% - 2rem - 4px - 3px);
+
+        // Mobile's input is already borderless/shadowless (border-top divider
+        // only) — there's no raised shadow to "press away", so translating it
+        // would just read as an unexplained jiggle. A quick opacity dip reads
+        // as "clicked" instead.
+        @media (max-width: $mobile) {
+            translate: none;
+            width: calc(100% - 2rem);
+            opacity: 0.7;
+        }
+    }
+}
+
+// Note creation form
+.note-creation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 30.125rem;
+
+    @media (max-width: $mobile) {
+        width: 21.5rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 39rem;
+    }
+}
+
+.note-creation-title {
+    font-size: 1.4rem;
+    font-family: inherit;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 2px solid black;
+    box-shadow: 3px 3px 0 1px black;
+    background: $neutral;
+    width: calc(100% - 2rem - 4px);
+
+    &:focus {
+        outline: none;
+    }
+
+    @media (max-width: $mobile) {
+        font-size: 1.3rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.8rem;
+    }
+}
+
+.note-creation .note-body {
+    font-size: 1.05rem;
+    padding: 1rem;
+
+    @media (max-width: $mobile) {
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.3rem;
+        padding: 1.25rem 1rem;
     }
 }
 
@@ -492,14 +784,14 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    width: 28.125rem;
+    width: 30.125rem;
 
     @media (max-width: $mobile) {
-        width: 20rem;
+        width: 21.5rem;
     }
 
     @media (min-width: $large-desktop) {
-        width: 37rem;
+        width: 39rem;
     }
 }
 

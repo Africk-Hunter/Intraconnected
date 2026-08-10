@@ -97,6 +97,7 @@ export async function fetchIdeasFromFirebase() {
                 parentID: data.parentID as number,
                 link: await decryptField(data.link as string | null | undefined, dek),
                 ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
+                ...(data.isNote !== undefined ? { isNote: data.isNote as boolean } : {}),
                 ...(data.noteTitle !== undefined ? { noteTitle: await decryptField(data.noteTitle as string, dek) } : {}),
             };
         }));

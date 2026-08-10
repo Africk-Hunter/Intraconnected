@@ -99,7 +99,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
             ].join(' ');
 
             function handleClick() {
-                if (isChecklist) return;
+                if (isChecklist || isNote) return;
                 if (isLink) { window.open(getIdeaLink(child), '_blank', 'noopener,noreferrer'); return; }
                 onNavigate(id);
             }

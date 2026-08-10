@@ -50,8 +50,8 @@ function MobileNavigateSheet({ currentId, allIdeas, onNavigate }: Props) {
                 const isCurrent = child.id === currentId;
                 const isLink = !!getIdeaLink(child);
                 const isChecklist = child.type === 'checklist';
-                const isDisabled = isCurrent || isLink || isChecklist;
                 const isNote = isNoteMode(child);
+                const isDisabled = isCurrent || isLink || isChecklist || isNote;
                 const colorClass = isChecklist
                     ? 'mmobile-move-btn--checklist'
                     : isNote
@@ -65,7 +65,7 @@ function MobileNavigateSheet({ currentId, allIdeas, onNavigate }: Props) {
                     <div key={child.id} className="mmobile-move-row" style={{ paddingLeft: `${depth * 16}px` }}>
                         <button
                             ref={isCurrent ? el => { currentBtnRef.current = el; } : undefined}
-                            className={`mmobile-move-btn ${colorClass}${isCurrent ? ' mmobile-move-btn--current' : ''}${isLink || isChecklist ? ' mmobile-move-btn--disabled' : ''}`}
+                            className={`mmobile-move-btn ${colorClass}${isCurrent ? ' mmobile-move-btn--current' : ''}${isLink || isChecklist || isNote ? ' mmobile-move-btn--disabled' : ''}`}
                             disabled={isDisabled}
                             onClick={isDisabled ? undefined : () => onNavigate(child.id)}
                         >

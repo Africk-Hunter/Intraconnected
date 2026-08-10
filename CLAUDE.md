@@ -1,5 +1,7 @@
 # Intraconnected — CLAUDE.md
 
+## When stuck, output your current hypothesis before making changes.
+
 ## CRITICAL: Git Commits
 **NEVER create a git commit unless the user explicitly tells you to commit.**
 

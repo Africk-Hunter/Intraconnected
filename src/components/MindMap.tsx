@@ -42,7 +42,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
     const isRoot = ideaId === 1;
 
     function handleClick() {
-        if (isChecklist) return;
+        if (isChecklist || isNote) return;
         if (isLink) {
             window.open(getIdeaLink(idea), '_blank', 'noopener,noreferrer');
         } else {

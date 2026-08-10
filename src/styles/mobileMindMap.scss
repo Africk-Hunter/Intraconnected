@@ -267,37 +267,58 @@
     }
 }
 
+// Real button is an invisible, oversized tap target (negative left/right
+// margins cancel the extra width so it doesn't shift row layout); the visible
+// ribbon is a ::after swatch pinned at the original size inside it.
 .mmobile-node-priority-ribbon {
     all: unset;
+    position: relative;
     flex-shrink: 0;
     align-self: flex-start;
     // pull it above the card's top border (padding 14px + border 3px + ~2px overhang)
-    margin-top: -1.3rem;
-    width: 1.1rem;
-    border: 2px solid #111;
-    border-radius: 4px 1px 5px 5px;
-    box-shadow: 2px 2px 0 1px #111;
+    margin-top: -1.65rem;
+    margin-bottom: -0.35rem;
+    margin-left: -0.4rem;
+    margin-right: -0.4rem;
+    width: 1.9rem;
     cursor: pointer;
     display: block;
     transform-origin: top center;
-    transition: filter 0.15s ease, background-color 0.35s ease, height 0.22s ease;
+    transition: filter 0.15s ease;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0.35rem;
+        transform: translateX(-50%);
+        width: 1.5rem;
+        border: 2px solid #111;
+        border-radius: 4px 1px 5px 5px;
+        box-shadow: 2px 2px 0 1px #111;
+        transition: background-color 0.35s ease, height 0.22s ease;
+    }
 
     &:hover { filter: brightness(1.2); }
     &:active { filter: brightness(0.9); }
 
     &--none {
-        height: 0.65rem;
-        background: rgba(190, 90, 0, 0.2);
-        border-color: rgba(0, 0, 0, 0.2);
-        box-shadow: none;
+        height: 1.35rem;
         opacity: 0.5;
         transition: opacity 0.15s ease, filter 0.15s ease;
         &:hover { opacity: 0.85; filter: none; }
         &:active { opacity: 1; }
+
+        &::after {
+            height: 0.65rem;
+            background: rgba(190, 90, 0, 0.2);
+            border-color: rgba(0, 0, 0, 0.2);
+            box-shadow: none;
+        }
     }
-    &--p1 { height: 2.5rem;  background: #D62000; }
-    &--p2 { height: 1.75rem; background: #E07800; }
-    &--p3 { height: 1.1rem;  background: #C8A200; }
+    &--p1 { height: 3.2rem; &::after { height: 2.5rem;  background: #D62000; } }
+    &--p2 { height: 2.45rem; &::after { height: 1.75rem; background: #E07800; } }
+    &--p3 { height: 1.8rem; &::after { height: 1.1rem;  background: #C8A200; } }
 
     &--animating {
         animation: mobile-ribbon-drop 0.18s ease-out;
@@ -1117,33 +1138,43 @@
     &::placeholder { color: rgba(255, 255, 255, 0.35); }
 }
 
-// Creation tabs in the new-item sheet
+// Creation tabs in the new-item sheet — separate neobrutal buttons, not a
+// connected segmented control (matches desktop's .creation-tabs).
 .mmobile-create-tabs {
     display: flex;
-    border: 2px solid #111;
-    border-radius: 10px;
-    overflow: hidden;
+    gap: 8px;
     margin-bottom: 12px;
 }
 
 .mmobile-create-tab {
     all: unset;
+    box-sizing: border-box;
     flex: 1;
     text-align: center;
     padding: 10px 0;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     background: $neutral;
+    color: #111;
+    border: 2px solid #111;
+    border-radius: 10px;
+    box-shadow: 0 3px 0 #111;
 
+    // Selected tab takes the color of the node type it represents — matches
+    // the leaf/checklist/note node colors used on desktop.
     &--active {
-        background: $indigo;
         color: white;
     }
+
+    &--idea.mmobile-create-tab--active { background: $leaf; }
+    &--checklist.mmobile-create-tab--active { background: $indigo; }
+    &--note.mmobile-create-tab--active { background: $neo-green; }
 }
 
 // Checklist creation form in the new-item sheet
-.mmobile-sheet-cl-create {
+.mmobile-sheet-cl-create,
+.mmobile-sheet-create-fields {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -1275,12 +1306,20 @@
 
     .mmobile-node-priority-ribbon {
         // padding 20px + border 4px + ~2px overhang = 26px ≈ 1.63rem
-        margin-top: -1.73rem;
-        width: 1.3rem;
+        margin-top: -2.13rem;
+        margin-bottom: -0.4rem;
+        margin-left: -0.45rem;
+        margin-right: -0.45rem;
+        width: 2.2rem;
 
-        &--p1 { height: 3.2rem; }
-        &--p2 { height: 2.2rem; }
-        &--p3 { height: 1.4rem; }
+        &::after {
+            top: 0.4rem;
+            width: 1.8rem;
+        }
+
+        &--p1 { height: 4rem;  &::after { height: 3.2rem; } }
+        &--p2 { height: 3rem;  &::after { height: 2.2rem; } }
+        &--p3 { height: 2.2rem; &::after { height: 1.4rem; } }
     }
 
     .mmobile-node-title {

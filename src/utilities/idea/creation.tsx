@@ -15,3 +15,10 @@ export function handleChecklistCreation(title: string, parentID: number, items: 
     appendToLocalStorageFromFrontend(idea);
     addIdeaToFirebase(idea);
 }
+
+export function handleNoteCreation(title: string, parentID: number, body: string, priority?: 1 | 2 | 3) {
+    const newID = Date.now();
+    const idea = { id: newID, content: body, parentID, link: '', isNote: true, noteTitle: title, ...(priority ? { priority } : {}) };
+    appendToLocalStorageFromFrontend(idea);
+    addIdeaToFirebase(idea);
+}

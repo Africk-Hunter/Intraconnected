@@ -72,7 +72,6 @@ function RenameModal() {
             <div className="modal neobrutal">
                 <textarea
                     autoFocus={true}
-                    maxLength={100}
                     className="ideaContent neobrutal-input"
                     placeholder={`${actionLabel}...`}
                     value={modalContent}

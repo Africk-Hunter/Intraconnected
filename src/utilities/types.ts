@@ -12,7 +12,8 @@ export interface StandardIdea {
     parentID: number;
     link: string;
     priority?: 1 | 2 | 3;
-    noteTitle?: string; // header label once content grows past the note-mode threshold
+    isNote?: boolean; // set at creation via the Note tab; immutable after that — ideas and notes can't convert into each other
+    noteTitle?: string; // header label shown while isNote is true
 }
 
 export interface ChecklistIdea {

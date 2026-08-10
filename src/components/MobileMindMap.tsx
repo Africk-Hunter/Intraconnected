@@ -22,6 +22,7 @@ import {
     updateChecklistItems,
     scheduleChecklistFirebaseWrite,
     handleChecklistCreation,
+    handleNoteCreation,
     recursivelyDeleteChildren,
     cleanLink,
     getIdeaLink,
@@ -70,10 +71,12 @@ function MobileMindMap() {
     const [inlineDrafts, setInlineDrafts] = useState<Record<number, string>>({});
     const [sheetItems, setSheetItems] = useState<ChecklistItem[]>([]);
     const [sheetItemDraft, setSheetItemDraft] = useState('');
-    const [createTab, setCreateTab] = useState<'idea' | 'checklist'>('idea');
+    const [createTab, setCreateTab] = useState<'idea' | 'checklist' | 'note'>('idea');
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
+    const [newNoteTitle, setNewNoteTitle] = useState('');
+    const [newNoteBody, setNewNoteBody] = useState('');
     const [newIdeaLink, setNewIdeaLink] = useState('');
     const [editLinkDraft, setEditLinkDraft] = useState('');
     const [editBodyDraft, setEditBodyDraft] = useState('');
@@ -376,7 +379,8 @@ function MobileMindMap() {
         for (const child of children) {
             if (child.id === draggingId) continue;
             if (child.type === 'checklist') continue;
-            if (!isNoteMode(child) && getIdeaLink(child)) continue;
+            if (isNoteMode(child)) continue;
+            if (getIdeaLink(child)) continue;
             const el = nodeElRefs.current[child.id];
             if (!el) continue;
             const r = el.getBoundingClientRect();
@@ -566,12 +570,11 @@ function MobileMindMap() {
             });
             return;
         }
-        if (!isNoteMode(node)) {
-            const nodeLink = getIdeaLink(node);
-            if (nodeLink) {
-                window.open(nodeLink, '_blank', 'noopener,noreferrer');
-                return;
-            }
+        if (isNoteMode(node)) return;
+        const nodeLink = getIdeaLink(node);
+        if (nodeLink) {
+            window.open(nodeLink, '_blank', 'noopener,noreferrer');
+            return;
         }
         setCurrentId(nodeId);
         setSheet(null);
@@ -660,6 +663,8 @@ function MobileMindMap() {
         setChecklistTitle('');
         setChecklistItems([]);
         setChecklistItemDraft('');
+        setNewNoteTitle('');
+        setNewNoteBody('');
         setNewIdeaPriority(undefined);
         setSheet({ type: 'rename', nodeId: -1, isNew: true });
     }
@@ -700,6 +705,15 @@ function MobileMindMap() {
         if (sheet.isNew && createTab === 'checklist') {
             const title = checklistTitle.trim() || 'Untitled';
             handleChecklistCreation(title, currentId, checklistItems, newIdeaPriority);
+            setNewIdeaSwitch(prev => !prev);
+            closeSheet();
+            return;
+        }
+
+        if (sheet.isNew && createTab === 'note') {
+            const title = newNoteTitle.trim();
+            if (!title) return;
+            handleNoteCreation(title, currentId, newNoteBody, newIdeaPriority);
             setNewIdeaSwitch(prev => !prev);
             closeSheet();
             return;
@@ -792,7 +806,7 @@ function MobileMindMap() {
     const sheetNodeLink = getIdeaLink(sheetNode ?? undefined);
     const sheetTitle =
         sheet?.type === 'move' ? 'Move under…' :
-        sheet?.type === 'rename' ? (sheet.isNew ? (createTab === 'checklist' ? 'New checklist' : 'New idea') : sheetNode?.type === 'checklist' ? 'Rename checklist' : allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea') :
+        sheet?.type === 'rename' ? (sheet.isNew ? (createTab === 'checklist' ? 'New checklist' : createTab === 'note' ? 'New note' : 'New idea') : sheetNode?.type === 'checklist' ? 'Rename checklist' : allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea') :
         sheet?.type === 'edit' ? (sheetNode?.type === 'checklist' ? 'Edit checklist' : isNoteMode(sheetNode) ? 'Edit note' : 'Edit idea') :
         sheet?.type === 'link' ? (sheetNodeLink ? 'Change link' : 'Add link') :
         sheet?.type === 'confirmDelete' ? 'Delete idea?' :
@@ -1059,7 +1073,7 @@ function MobileMindMap() {
                                     onTouchEnd={e => e.stopPropagation()}
                                     onMouseDown={e => e.stopPropagation()}
                                 />
-                                <span className="mmobile-node-arrow">›</span>
+                                {!noteMode && <span className="mmobile-node-arrow">›</span>}
                             </div>
                         </div>
                     );
@@ -1112,7 +1126,7 @@ function MobileMindMap() {
                         style={{ top: dragPos.y - 40 } as React.CSSProperties}
                     >
                         <span className="mmobile-node-title">{resolveIdeaLabel(dragNode)}</span>
-                        <span className="mmobile-node-arrow">›</span>
+                        {!isNoteMode(dragNode) && <span className="mmobile-node-arrow">›</span>}
                     </div>
                 );
             })()}
@@ -1133,64 +1147,67 @@ function MobileMindMap() {
                                 {sheet.isNew && (
                                     <div className="mmobile-create-tabs">
                                         <button
-                                            className={`mmobile-create-tab${createTab === 'idea' ? ' mmobile-create-tab--active' : ''}`}
+                                            className={`mmobile-create-tab mmobile-create-tab--idea${createTab === 'idea' ? ' mmobile-create-tab--active' : ''}`}
                                             onClick={() => setCreateTab('idea')}
                                         >
                                             Idea
                                         </button>
                                         <button
-                                            className={`mmobile-create-tab${createTab === 'checklist' ? ' mmobile-create-tab--active' : ''}`}
+                                            className={`mmobile-create-tab mmobile-create-tab--checklist${createTab === 'checklist' ? ' mmobile-create-tab--active' : ''}`}
                                             onClick={() => setCreateTab('checklist')}
                                         >
                                             Checklist
                                         </button>
+                                        <button
+                                            className={`mmobile-create-tab mmobile-create-tab--note${createTab === 'note' ? ' mmobile-create-tab--active' : ''}`}
+                                            onClick={() => setCreateTab('note')}
+                                        >
+                                            Note
+                                        </button>
                                     </div>
                                 )}
 
-                                {(!sheet.isNew || createTab === 'idea') && (
-                                    sheet.isNew ? (
-                                        <textarea
-                                            autoFocus
-                                            className="mmobile-rename-input mmobile-rename-input--grow"
-                                            value={draft}
-                                            onChange={e => {
-                                                setDraft(e.target.value);
-                                                const el = e.target;
-                                                el.style.height = 'auto';
-                                                el.style.height = el.scrollHeight + 'px';
-                                            }}
-                                            placeholder="Idea name"
-                                            rows={1}
-                                        />
-                                    ) : (
-                                        <textarea
-                                            autoFocus
-                                            className="mmobile-rename-input mmobile-rename-input--grow"
-                                            value={draft}
-                                            onChange={e => {
-                                                setDraft(e.target.value);
-                                                const el = e.target;
-                                                el.style.height = 'auto';
-                                                el.style.height = el.scrollHeight + 'px';
-                                            }}
-                                            onFocus={e => { const el = e.target; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }}
-                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitRename(); } }}
-                                            placeholder="Idea name"
-                                            maxLength={2000}
-                                            rows={1}
-                                        />
-                                    )
+                                {!sheet.isNew && (
+                                    <textarea
+                                        autoFocus
+                                        className="mmobile-rename-input mmobile-rename-input--grow"
+                                        value={draft}
+                                        onChange={e => {
+                                            setDraft(e.target.value);
+                                            const el = e.target;
+                                            el.style.height = 'auto';
+                                            el.style.height = el.scrollHeight + 'px';
+                                        }}
+                                        onFocus={e => { const el = e.target; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }}
+                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitRename(); } }}
+                                        placeholder="Idea name"
+                                        rows={1}
+                                    />
                                 )}
 
                                 {sheet.isNew && createTab === 'idea' && (
-                                    <input
-                                        className="mmobile-rename-input mmobile-link-input"
-                                        placeholder="Link (optional)"
-                                        value={newIdeaLink}
-                                        onChange={e => setNewIdeaLink(e.target.value)}
-                                        type="url"
-                                        maxLength={500}
-                                    />
+                                    <div className="mmobile-sheet-create-fields">
+                                        <textarea
+                                            autoFocus
+                                            className="mmobile-rename-input mmobile-rename-input--grow"
+                                            value={draft}
+                                            onChange={e => {
+                                                setDraft(e.target.value);
+                                                const el = e.target;
+                                                el.style.height = 'auto';
+                                                el.style.height = el.scrollHeight + 'px';
+                                            }}
+                                            placeholder="Idea name"
+                                            rows={1}
+                                        />
+                                        <input
+                                            className="mmobile-rename-input mmobile-link-input"
+                                            placeholder="Link (optional)"
+                                            value={newIdeaLink}
+                                            onChange={e => setNewIdeaLink(e.target.value)}
+                                            type="url"
+                                        />
+                                    </div>
                                 )}
 
                                 {sheet.isNew && createTab === 'checklist' && (
@@ -1224,6 +1241,32 @@ function MobileMindMap() {
                                     </div>
                                 )}
 
+                                {sheet.isNew && createTab === 'note' && (
+                                    <div className="mmobile-sheet-create-fields">
+                                        <input
+                                            autoFocus
+                                            className="mmobile-rename-input"
+                                            placeholder="Note title"
+                                            value={newNoteTitle}
+                                            onChange={e => setNewNoteTitle(e.target.value)}
+                                            maxLength={100}
+                                        />
+                                        <textarea
+                                            className="mmobile-rename-input mmobile-rename-input--grow"
+                                            value={newNoteBody}
+                                            onChange={e => {
+                                                setNewNoteBody(e.target.value);
+                                                const el = e.target;
+                                                el.style.height = 'auto';
+                                                el.style.height = el.scrollHeight + 'px';
+                                            }}
+                                            placeholder="Write your note..."
+                                            maxLength={2000}
+                                            rows={4}
+                                        />
+                                    </div>
+                                )}
+
                                 {sheet.isNew && (
                                     <div className="mmobile-priority-row mmobile-priority-row--create">
                                         <span className="mmobile-priority-label">Priority</span>
@@ -1247,7 +1290,7 @@ function MobileMindMap() {
                                     <button
                                         className="mmobile-sheet-btn mmobile-sheet-btn--save"
                                         onClick={commitRename}
-                                        disabled={sheet.isNew && createTab === 'checklist' && !checklistTitle.trim()}
+                                        disabled={sheet.isNew && ((createTab === 'checklist' && !checklistTitle.trim()) || (createTab === 'note' && !newNoteTitle.trim()))}
                                     >
                                         {sheet.isNew ? 'Create' : 'Save'}
                                     </button>
@@ -1265,7 +1308,6 @@ function MobileMindMap() {
                                     onKeyDown={e => e.key === 'Enter' && commitLink()}
                                     placeholder="https://..."
                                     type="url"
-                                    maxLength={500}
                                 />
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
@@ -1329,7 +1371,6 @@ function MobileMindMap() {
                                     onFocus={e => { const el = e.target; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }}
                                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit(); } }}
                                     placeholder="Idea name"
-                                    maxLength={2000}
                                     rows={1}
                                 />
                                 {sheetNode?.type !== 'checklist' && !allIdeas.some(i => i.parentID === sheetNode?.id) && (
@@ -1339,7 +1380,6 @@ function MobileMindMap() {
                                         value={editLinkDraft}
                                         onChange={e => setEditLinkDraft(e.target.value)}
                                         type="url"
-                                        maxLength={500}
                                     />
                                 )}
                                 <div className="mmobile-sheet-btns">

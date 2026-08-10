@@ -1,15 +1,12 @@
 import { IdeaType } from "../types";
 
-export const NOTE_MODE_THRESHOLD = 150;
-export const NOTE_WIDE_THRESHOLD = 500;
-
 export function isNoteMode(idea: IdeaType | undefined): boolean {
     if (!idea || idea.type === 'checklist') return false;
-    return idea.content.length > NOTE_MODE_THRESHOLD;
+    return idea.isNote === true;
 }
 
 export function isNoteWide(idea: IdeaType | undefined): boolean {
-    return isNoteMode(idea) && (idea as { content: string }).content.length > NOTE_WIDE_THRESHOLD;
+    return isNoteMode(idea);
 }
 
 export function resolveIdeaLabel(idea: IdeaType | undefined): string {
