@@ -97,6 +97,8 @@ export async function fetchIdeasFromFirebase() {
                 parentID: data.parentID as number,
                 link: await decryptField(data.link as string | null | undefined, dek),
                 ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
+                ...(data.isNote !== undefined ? { isNote: data.isNote as boolean } : {}),
+                ...(data.noteTitle !== undefined ? { noteTitle: await decryptField(data.noteTitle as string, dek) } : {}),
             };
         }));
         return ideasList;
@@ -128,6 +130,7 @@ export async function addIdeaToFirebase(idea: IdeaType) {
                 ...idea,
                 content: await encryptField(idea.content, dek),
                 link: await encryptField(idea.link, dek),
+                ...(idea.noteTitle !== undefined ? { noteTitle: await encryptField(idea.noteTitle, dek) } : {}),
             };
         }
         await setDoc(doc(ideasCollection, idea.id.toString()), encrypted);
@@ -208,6 +211,20 @@ export async function updateIdeaNameInFirebase(ideaId: number, newName: string) 
         await updateSyncTimestamp();
     } catch (error) {
         console.error("Error updating idea name: ", error);
+    }
+}
+
+export async function updateNoteTitleInFirebase(ideaId: number, newTitle: string) {
+    const user = authCheck();
+    if (!user) return;
+
+    try {
+        const dek = getDEK();
+        const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
+        await setDoc(ideaDoc, { noteTitle: await encryptField(newTitle, dek) }, { merge: true });
+        await updateSyncTimestamp();
+    } catch (error) {
+        console.error("Error updating note title: ", error);
     }
 }
 

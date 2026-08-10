@@ -24,6 +24,7 @@ import {
     fetchFullIdeaList,
     handleIdeaCreation,
     handleChecklistCreation,
+    handleNoteCreation,
     fetchFromFirebaseAndOrganizeIdeas,
     getIdeasByParentID,
     IdeaType,
@@ -35,6 +36,9 @@ import {
     checkIfIdeaIsLeaf,
     getIdeaLink,
     sortIdeas,
+    isNoteWide,
+    isNoteMode,
+    resolveIdeaLabel,
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
 import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
@@ -59,6 +63,7 @@ const restrictToTopLeftRight: Modifier = ({ transform, draggingNodeRect, windowR
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
+    const [isLoadingIdeas, setIsLoadingIdeas] = useState(true);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
@@ -149,6 +154,7 @@ function Idea() {
                 rootIdStack.current.push(rootId);
             }
             setIdeas(loadedIdeas);
+            setIsLoadingIdeas(false);
         }
 
         const unsubscribe = auth.onAuthStateChanged(() => {
@@ -163,7 +169,7 @@ function Idea() {
 
             const currentRoot = fetchFullIdeaList().find((idea: IdeaType) => idea.id === rootId);
             if (currentRoot) {
-                setRootName(currentRoot.content);
+                setRootName(resolveIdeaLabel(currentRoot));
                 setRootPriority(currentRoot.priority);
             }
         };
@@ -221,6 +227,7 @@ function Idea() {
         } else {
             if (activeId === overId) return;
             if (overLink !== '') return;
+            if (isNoteMode(overIdea)) return;
             const newParentId = Number(over.id.split('-')[1]);
             updateIdeaParentId(activeId, newParentId);
             setIdeasFromStorage();
@@ -298,6 +305,18 @@ function Idea() {
             return;
         }
 
+        // Skip if the id sequence itself didn't change — this wasn't an add, delete, or
+        // reorder, just an in-place content edit (e.g. renaming a note) that happened to
+        // change a card's height. Animating a slide for every sibling that got pushed by
+        // the reflow reads as the whole grid flickering, so let the browser reflow normally.
+        const isSameSequence = nextIds.length === prevFlipIds.current.length &&
+            nextIds.every((id, i) => id === prevFlipIds.current[i]);
+        if (isSameSequence) {
+            flipSnapshot.current = nextSnap;
+            prevFlipIds.current = nextIds;
+            return;
+        }
+
         const toAnimate: HTMLElement[] = [];
 
         nodes.forEach(el => {
@@ -366,9 +385,15 @@ function Idea() {
 
                         <section className="bottom">
                             <main className="ideaSpace">
-                                <section className={`ideaNodes${!nodesVisible ? ' ideaNodes--fade' : ''}`} ref={ideaNodesRef}>
-                                    {displayedIdeas?.map((idea: IdeaType) => (
-                                        <div key={idea.id} data-flip-id={idea.id}>
+                                <section className={`ideaNodes${!nodesVisible ? ' ideaNodes--fade' : ''}${isLoadingIdeas ? ' ideaNodes--loading' : ''}`} ref={ideaNodesRef}>
+                                    {isLoadingIdeas ? (
+                                        <div className="ideaNode-loading" role="status" aria-label="Loading ideas">
+                                            <span className="ideaNode-loading-dot" />
+                                            <span className="ideaNode-loading-dot" />
+                                            <span className="ideaNode-loading-dot" />
+                                        </div>
+                                    ) : displayedIdeas?.map((idea: IdeaType) => (
+                                        <div key={idea.id} data-flip-id={idea.id} className={isNoteWide(idea) ? 'ideaNodes-wide-item' : undefined}>
                                             <IdeaNode
                                                 idea={idea}
                                                 isLeaf={checkIfIdeaIsLeaf(idea.id)}
@@ -392,7 +417,7 @@ function Idea() {
             <LinkChangeModal />
             <DeleteConfirmModal />
             <ChecklistModal />
-            <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} />
+            <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} handleNoteCreation={handleNoteCreation} />
             <OnboardingModal />
             <ProfileModal />
             {implementedTitles && (

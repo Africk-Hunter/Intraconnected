@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { IdeaType, getIdeaLink } from '../utilities';
+import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface Props {
     nodeId: number;
@@ -67,12 +67,15 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
             .flatMap(child => {
                 const visibleKids = allIdeas.filter(i => i.parentID === child.id && !hidden.has(i.id));
                 const isChecklist = child.type === 'checklist';
-                const isDisabled = disabled.has(child.id) || isChecklist;
+                const isNote = isNoteMode(child);
+                const isDisabled = disabled.has(child.id) || isChecklist || isNote;
                 const isExpanded = expandedMoveNodes.has(child.id);
                 const isCurrentParent = child.id === movingNode?.parentID;
                 const hasKids = allIdeas.some(i => i.parentID === child.id);
                 const colorClass = isChecklist
                     ? 'mmobile-move-btn--checklist'
+                    : isNote
+                    ? 'mmobile-move-btn--note'
                     : getIdeaLink(child)
                     ? 'mmobile-move-btn--link'
                     : hasKids ? 'mmobile-move-btn--parent'
@@ -85,7 +88,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                             disabled={isDisabled}
                             onClick={isDisabled ? undefined : () => onMove(nodeId, child.id)}
                         >
-                            {child.content.split('\n')[0]}
+                            {resolveIdeaLabel(child).split('\n')[0]}
                         </button>
                         {visibleKids.length > 0 && (
                             <button className="mmobile-move-toggle" onClick={() => toggleExpanded(child.id)}>
@@ -108,7 +111,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                         disabled={rootDisabled}
                         onClick={rootDisabled ? undefined : () => onMove(nodeId, 1)}
                     >
-                        {root.content.split('\n')[0]}
+                        {resolveIdeaLabel(root).split('\n')[0]}
                     </button>
                     <button className="mmobile-move-toggle" onClick={() => toggleExpanded(1)}>
                         {rootExpanded ? '▾' : '▸'}

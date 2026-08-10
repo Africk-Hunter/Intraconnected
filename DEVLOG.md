@@ -4,6 +4,24 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.07 — Note Ideas — 2026-08-10
+- New idea type: Notes — a third creation tab alongside Idea and Checklist; give it a title plus a long-form body (2000 chars) instead of a single content line
+- `isNote` set at creation via the Note tab and immutable afterward — notes can't convert to/from a standard idea; `noteTitle` holds the header label. Replaces the old length-threshold "note mode" auto-detection (`NOTE_MODE_THRESHOLD`/`NOTE_WIDE_THRESHOLD` removed) with an explicit flag
+- `resolveIdeaLabel()` added to centralize the idea/note label lookup and used everywhere a node's label is displayed: mind map (desktop + mobile), breadcrumbs, headers, delete confirmation, move/navigate sheets
+- Desktop: note cards render dark green (`$neo-green`) in a typewriter font (`Courier Prime`, loaded via Google Fonts in `index.html`); always render "wide" (double grid column) regardless of body length; not draggable/droppable (same as checklists)
+- Desktop note editing: title via `RenameModal` (now note-aware — button reads "Name Note"/"Save"), body via inline `contentEditable` (was a plain `<textarea>` in the initial checkpoint) with pasted content sanitized to plain text and clamped at 2000 chars; separate copy button copies the note body
+- Note body and leaf-node "Show more/less" now animate with a physical Web Animations API height roll (overshoot + settle) instead of snapping instantly; the collapse button grows/shrinks in lockstep with the same animation
+- Desktop leaf and link node rendering merged into a single code path (`handleNodeClick` opens the link in a new tab, otherwise navigates); link nodes gained the same rename/copy affordances leaf nodes already had
+- Mobile: notes render as a two-line header+body list item with their own color, get a dedicated edit sheet (separate title + body fields, "Edit note"), and are excluded as drag/move/navigate targets
+- Firebase: `isNote` and `noteTitle` synced and encrypted like other idea fields; `updateNoteTitleInFirebase()` added
+- Idea creation modal: idea textarea cap raised 200 → 2000 chars; tabs crossfade instead of unmounting and the panel stack height-animates between tabs; checklist item add/remove get press-in/collapse animations
+- Loading state: three-dot bounce placeholder shown while ideas are being fetched from localStorage, replacing a blank grid on load
+- Help screen 3 (desktop) gets a Note entry; stray 100-char cap on the link-change textarea removed
+
+## V 1.06.1 — 2026-07-01
+- Profile navbar button gets `navButton--active` highlight while the profile modal is open (matches help/patch notes button behavior)
+- `docs/` added to `.gitignore`
+
 ## V 1.06 — Profile Modal & Account Management — 2026-06-30
 - Logout button replaced with a Profile button (new `Profile.svg`) on desktop navbar and mobile FAB; opens a new `ProfileModal`
 - Profile modal — desktop: left tab sidebar + right content panel; mobile: card-list → back-nav pattern; tabs: Account (active), Customization (disabled, coming soon)

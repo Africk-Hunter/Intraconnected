@@ -1,5 +1,5 @@
 import { useIdeaContext } from "../../context/IdeaContext";
-import { updateIdeaName, updateIdeaNameInFirebase, fetchFullIdeaList } from "../../utilities";
+import { updateIdeaName, updateIdeaNameInFirebase, updateIdeaNoteTitle, updateNoteTitleInFirebase, fetchFullIdeaList, isNoteMode } from "../../utilities";
 import { useEffect, useState } from "react";
 import AnimatedOverlay from "../AnimatedOverlay";
 
@@ -37,30 +37,41 @@ function RenameModal() {
         return currentNameChangeId;
     }
 
+    const targetId = editRootOrNot ? rootId : currentNameChangeId;
+    const allIdeas = fetchFullIdeaList();
+    const targetIdea = allIdeas.find((idea: any) => idea.id === targetId);
+    const isChecklist = targetIdea?.type === 'checklist';
+    const noteMode = isNoteMode(targetIdea);
+    const hasChildren = allIdeas.some((idea: any) => idea.parentID === targetId);
+    const actionLabel = isChecklist ? 'Rename Checklist' : noteMode ? 'Name Note' : hasChildren ? 'Rename Idea' : 'Rewrite Idea';
+
     function handleIdeaRename(newName: string) {
         setSelectedIdeaName(newName);
-        updateIdeaNameInFirebase(pickID(), newName).then(() => {
+        const id = pickID();
+        if (noteMode) {
+            updateNoteTitleInFirebase(id, newName).then(() => {
+                if (editRootOrNot) setRootName(newName.trim() ? newName : 'Untitled');
+                updateIdeaNoteTitle(id, newName);
+                setNewIdeaSwitch(prev => !prev);
+            }).catch((error) => {
+                console.error("Error renaming note: ", error);
+            });
+            return;
+        }
+        updateIdeaNameInFirebase(id, newName).then(() => {
             if (editRootOrNot) setRootName(newName);
-            updateIdeaName(pickID(), newName);
+            updateIdeaName(id, newName);
             setNewIdeaSwitch(prev => !prev);
         }).catch((error) => {
             console.error("Error renaming idea: ", error);
         });
     }
 
-    const targetId = editRootOrNot ? rootId : currentNameChangeId;
-    const allIdeas = fetchFullIdeaList();
-    const targetIdea = allIdeas.find((idea: any) => idea.id === targetId);
-    const isChecklist = targetIdea?.type === 'checklist';
-    const hasChildren = allIdeas.some((idea: any) => idea.parentID === targetId);
-    const actionLabel = isChecklist ? 'Rename Checklist' : hasChildren ? 'Rename Idea' : 'Rewrite Idea';
-
     return (
         <AnimatedOverlay open={renameModalOpen}>
             <div className="modal neobrutal">
                 <textarea
                     autoFocus={true}
-                    maxLength={100}
                     className="ideaContent neobrutal-input"
                     placeholder={`${actionLabel}...`}
                     value={modalContent}
@@ -68,7 +79,7 @@ function RenameModal() {
                 ></textarea>
                 <section className="modalButtons">
                     <button className="modalButton cancel neobrutal-button" onClick={closeModal}>Cancel</button>
-                    <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); closeModal(); }}>{isChecklist ? 'Rename' : hasChildren ? 'Rename' : 'Rewrite'}</button>
+                    <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); closeModal(); }}>{isChecklist ? 'Rename' : noteMode ? 'Save' : hasChildren ? 'Rename' : 'Rewrite'}</button>
                 </section>
             </div>
         </AnimatedOverlay>

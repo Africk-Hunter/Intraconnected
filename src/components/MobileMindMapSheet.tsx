@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { IdeaType, getIdeaLink } from '../utilities';
+import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface Props {
     currentId: number;
@@ -86,18 +86,20 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
             const isCurrent = id === currentId;
             const isLink = !!getIdeaLink(child);
             const isChecklist = child.type === 'checklist';
+            const isNote = isNoteMode(child);
 
             const nodeClass = [
                 'vtree-node',
                 isCurrent      ? 'vtree-node--current'   :
                 isChecklist    ? 'vtree-node--checklist'  :
+                isNote         ? 'vtree-node--note'       :
                 isLink         ? 'vtree-node--link'       :
                 hasKids        ? 'vtree-node--parent'     :
                                  'vtree-node--leaf'
             ].join(' ');
 
             function handleClick() {
-                if (isChecklist) return;
+                if (isChecklist || isNote) return;
                 if (isLink) { window.open(getIdeaLink(child), '_blank', 'noopener,noreferrer'); return; }
                 onNavigate(id);
             }
@@ -115,7 +117,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
                         className={nodeClass}
                         onClick={handleClick}
                     >
-                        {child.content.split('\n')[0]}
+                        {resolveIdeaLabel(child).split('\n')[0]}
                     </button>
                     {hasKids && (
                         <button className="vtree-toggle" onClick={() => toggleExpanded(id)}>
@@ -154,7 +156,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
                                 className={`vtree-root-btn${rootIsCurrent ? ' vtree-root-btn--current' : ''}`}
                                 onClick={() => { if (!rootIsCurrent) onNavigate(1); }}
                             >
-                                {root.content.split('\n')[0]}
+                                {resolveIdeaLabel(root).split('\n')[0]}
                             </button>
                             {rootHasKids && (
                                 <button className="vtree-toggle" onClick={() => toggleExpanded(1)}>

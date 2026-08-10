@@ -13,6 +13,32 @@ interface HelpProps {
 const Help: React.FC<HelpProps> = ({ showHelp }) => {
 
     const [helpScreen, setHelpScreen] = React.useState(1);
+    const [popupHeight, setPopupHeight] = React.useState<number>();
+    const popupRef = React.useRef<HTMLElement>(null);
+
+    // Each screen sizes to its own content — but instead of snapping between
+    // heights, measure the new screen's natural height and hand it to the popup
+    // as an explicit px value, so the existing `transition: all` on
+    // .howToUsePopup animates the resize smoothly. Release the height clamp,
+    // read the browser's own natural total (border-box) size, then restore.
+    // .howToUsePopup is content-box (default, unset), so the `height` property
+    // only accepts the content portion — subtract padding/border (read live,
+    // so it stays correct across the mobile/large-desktop breakpoints) before
+    // assigning, or every screen change would inflate the box by that amount.
+    React.useLayoutEffect(() => {
+        if (!showHelp || !popupRef.current) return;
+        const popup = popupRef.current;
+        const prevHeight = popup.style.height;
+        popup.style.height = 'auto';
+        const total = popup.getBoundingClientRect().height;
+        popup.style.height = prevHeight;
+
+        const style = getComputedStyle(popup);
+        const verticalExtras = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+            + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+
+        setPopupHeight(total - verticalExtras);
+    }, [helpScreen, showHelp]);
 
     function decrementHelpScreen() {
         if (helpScreen > 1) {
@@ -47,7 +73,11 @@ const Help: React.FC<HelpProps> = ({ showHelp }) => {
 
     return (
         <>
-            <section className={`howToUsePopup neutral ${showHelp ? 'show' : ''}`}>
+            <section
+                ref={popupRef}
+                className={`howToUsePopup neutral ${showHelp ? 'show' : ''}`}
+                style={popupHeight ? { height: `${popupHeight}px` } : undefined}
+            >
                 <div className={`moveArrow ${helpScreen != 1 && 'show'}`} onClick={decrementHelpScreen}><img src="images/LeftArrow.svg" alt="" /></div>
 
                 {chooseHelpScreen()}

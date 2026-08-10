@@ -1,5 +1,23 @@
 import { IdeaType } from "../types";
 
+export function isNoteMode(idea: IdeaType | undefined): boolean {
+    if (!idea || idea.type === 'checklist') return false;
+    return idea.isNote === true;
+}
+
+export function isNoteWide(idea: IdeaType | undefined): boolean {
+    return isNoteMode(idea);
+}
+
+export function resolveIdeaLabel(idea: IdeaType | undefined): string {
+    if (!idea) return 'Idea';
+    if (isNoteMode(idea)) {
+        const noteTitle = (idea as { noteTitle?: string }).noteTitle;
+        return noteTitle && noteTitle.trim() ? noteTitle : 'Untitled';
+    }
+    return idea.content;
+}
+
 export function fetchFullIdeaList() {
     const ideas = localStorage.getItem("ideas");
 
@@ -40,7 +58,7 @@ export function getParentID(parentID: number): number {
 export function getNameFromID(id: number): string {
     const ideas = fetchFullIdeaList();
     const idea = ideas.find((idea: IdeaType) => idea.id === id);
-    return idea ? idea.content : 'Idea';
+    return resolveIdeaLabel(idea);
 }
 
 export function getIdeaLink(idea: IdeaType | undefined): string {

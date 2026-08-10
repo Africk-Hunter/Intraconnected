@@ -212,6 +212,7 @@
         overflow: hidden;
     }
     &--link      { background: $link; }
+    &--note      { background: $neo-green; color: white; }
     &--checklist {
         background: $indigo;
         color: white;

@@ -43,13 +43,14 @@ export function appendToLocalStorageFromFrontend(idea: IdeaType) {
     const currentData = localStorage.getItem("ideas");
     if (currentData === null) {
         localStorage.setItem("ideas", JSON.stringify([idea]));
-    } else {
-        const parsed = JSON.parse(currentData);
-        if (Array.isArray(parsed)) {
-            parsed.push(idea);
-            localStorage.setItem("ideas", JSON.stringify(parsed));
-        }
+        return;
     }
+
+    const parsed = JSON.parse(currentData);
+    if (!Array.isArray(parsed)) return;
+
+    parsed.push(idea);
+    localStorage.setItem("ideas", JSON.stringify(parsed));
 }
 
 export function updateIdeaName(id: number, newName: string) {
@@ -57,6 +58,17 @@ export function updateIdeaName(id: number, newName: string) {
     const updatedIdeas = ideas.map((idea: IdeaType) => {
         if (idea.id === id) {
             return { ...idea, content: newName };
+        }
+        return idea;
+    });
+    localStorage.setItem("ideas", JSON.stringify(updatedIdeas));
+}
+
+export function updateIdeaNoteTitle(id: number, newTitle: string) {
+    const ideas = fetchFullIdeaList();
+    const updatedIdeas = ideas.map((idea: IdeaType) => {
+        if (idea.id === id) {
+            return { ...idea, noteTitle: newTitle };
         }
         return idea;
     });
