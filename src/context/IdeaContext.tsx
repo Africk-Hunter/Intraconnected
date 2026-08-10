@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useRef, useState } from "react";
 import { IdeaType } from "../utilities/types";
+import { buildAncestorPath, fetchFullIdeaList } from "../utilities/idea/helpers";
 
 interface IdeaContextType {
     ideas: IdeaType[];
@@ -11,7 +12,7 @@ interface IdeaContextType {
     rootIdStack: React.RefObject<number[]>;
     nodesVisible: boolean;
     setNodesVisible: (visible: boolean) => void;
-    navigateToIdea: (id: number, name: string) => void;
+    navigateToId: (id: number) => void;
     creationModalOpen: boolean;
     setCreationModalOpen: (open: boolean) => void;
     renameModalOpen: boolean;
@@ -55,6 +56,7 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [rootName, setRootName] = useState("Ideas");
     const [nodesVisible, setNodesVisible] = useState(true);
     const navTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
+    const navGeneration = useRef(0);
     const [creationModalOpen, setCreationModalOpen] = useState(false);
     const [renameModalOpen, setRenameModalOpen] = useState(false);
     const [linkChangeModalOpen, setLinkChangeModalOpen] = useState(false);
@@ -74,24 +76,22 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const rootIdStack = useRef<number[]>([]);
 
-    function navigateToIdea(id: number, name: string) {
+    function navigateToId(targetId: number) {
+        const navToken = ++navGeneration.current;
         navTimeouts.current.forEach(clearTimeout);
-        const allIdeas: IdeaType[] = JSON.parse(localStorage.getItem('ideas') || '[]');
-        const hasChildren = allIdeas.some(i => i.parentID === id);
-        if (!hasChildren) {
-            setRootId(id);
-            setRootName(name);
-            rootIdStack.current.push(id);
-            return;
-        }
         setNodesVisible(false);
         navTimeouts.current = [
             setTimeout(() => {
-                setRootId(id);
-                setRootName(name);
-                rootIdStack.current.push(id);
+                if (navGeneration.current !== navToken) return;
+                const allIdeas: IdeaType[] = fetchFullIdeaList();
+                rootIdStack.current = buildAncestorPath(targetId, allIdeas);
+                setRootId(targetId);
+                const targetIdea = allIdeas.find(i => i.id === targetId);
+                setRootName(targetIdea ? targetIdea.content : "Ideas");
             }, 65),
-            setTimeout(() => setNodesVisible(true), 90),
+            setTimeout(() => {
+                if (navGeneration.current === navToken) setNodesVisible(true);
+            }, 90),
         ];
     }
 
@@ -107,7 +107,7 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 rootIdStack,
                 nodesVisible,
                 setNodesVisible,
-                navigateToIdea,
+                navigateToId,
                 creationModalOpen,
                 setCreationModalOpen,
                 renameModalOpen,
