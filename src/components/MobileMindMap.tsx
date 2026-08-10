@@ -49,7 +49,7 @@ if (typeof window !== 'undefined') {
 
 
 function MobileMindMap() {
-    const { setNewIdeaSwitch, newIdeaSwitch, setProfileModalOpen } = useIdeaContext();
+    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
     const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
@@ -103,6 +103,8 @@ function MobileMindMap() {
     const edgeZoneEnterTimeRef = useRef<number | null>(null);
     const edgeScrollRafRef = useRef<number | null>(null);
 
+    const mountTimeRef = useRef(Date.now());
+
     const headerTextareaRef = useRef<HTMLTextAreaElement>(null);
     const headerDivRef = useRef<HTMLDivElement | null>(null);
     const fabAreaRef = useRef<HTMLDivElement | null>(null);
@@ -132,6 +134,53 @@ function MobileMindMap() {
         }
         sheetWasNullRef.current = !isOpen;
     }, [sheet]);
+
+    // Mobile overlays (sheet, help, patch notes, mind map, profile) are mutually exclusive —
+    // opening one closes any others already open.
+    useEffect(() => {
+        if (sheet !== null) {
+            setShowHelp(false);
+            setShowPatchNotes(false);
+            setShowMindMap(false);
+            setProfileModalOpen(false);
+        }
+    }, [sheet]);
+
+    useEffect(() => {
+        if (showHelp) {
+            setSheet(null);
+            setShowPatchNotes(false);
+            setShowMindMap(false);
+            setProfileModalOpen(false);
+        }
+    }, [showHelp]);
+
+    useEffect(() => {
+        if (showPatchNotes) {
+            setSheet(null);
+            setShowHelp(false);
+            setShowMindMap(false);
+            setProfileModalOpen(false);
+        }
+    }, [showPatchNotes]);
+
+    useEffect(() => {
+        if (showMindMap) {
+            setSheet(null);
+            setShowHelp(false);
+            setShowPatchNotes(false);
+            setProfileModalOpen(false);
+        }
+    }, [showMindMap]);
+
+    useEffect(() => {
+        if (profileModalOpen) {
+            setSheet(null);
+            setShowHelp(false);
+            setShowPatchNotes(false);
+            setShowMindMap(false);
+        }
+    }, [profileModalOpen]);
 
     useEffect(() => {
         const vv = window.visualViewport;
@@ -315,6 +364,10 @@ function MobileMindMap() {
         if (pressTimer.current) clearTimeout(pressTimer.current);
         if (nodeId !== undefined) setPressingNodeId(nodeId);
         pressTimer.current = setTimeout(() => {
+            if (Date.now() - mountTimeRef.current < 1000) {
+                if (nodeId !== undefined) setPressingNodeId(null);
+                return;
+            }
             longPressActive.current = true;
             lastLongPressTime.current = Date.now();
             if (nodeId !== undefined) {

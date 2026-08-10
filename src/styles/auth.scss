@@ -203,7 +203,15 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    align-items: flex-start;
+    align-items: stretch;
+}
+
+.passwordFieldRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.4rem;
 }
 
 .forgotPassword {
@@ -214,15 +222,13 @@
     background: none;
     border: none;
     padding: 0;
-    margin-top: 0.4rem;
     max-height: 2rem;
     overflow: hidden;
     opacity: 1;
-    transition: opacity 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+    transition: opacity 0.3s ease, max-height 0.3s ease;
 
     &.hidden {
         max-height: 0;
-        margin-top: 0;
         opacity: 0;
         pointer-events: none;
     }
@@ -230,6 +236,57 @@
     @media (max-width: $mobile) {
         font-size: 1rem;
     }
+}
+
+.rememberMe {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    user-select: none;
+
+    @media (max-width: $mobile) {
+        font-size: 1rem;
+    }
+}
+
+.rememberMeInput {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+.rememberMeBox {
+    flex-shrink: 0;
+    width: 1lh;
+    height: 1lh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $neutral;
+    border-radius: $neo-detail-radius;
+    border: $neo-detail-border;
+    box-shadow: 2px 2px 0 1px black;
+    font-size: 1.1rem;
+    color: black;
+    transition: background 0.2s ease, box-shadow 0.2s ease, translate 0.2s ease;
+}
+
+.rememberMeInput:checked + .rememberMeBox {
+    background: $leaf;
+    box-shadow: 0px 0px 0 1px black;
+    translate: 2px 2px;
+
+    &::after {
+        content: '✓';
+    }
+}
+
+.rememberMeInput:focus-visible + .rememberMeBox {
+    box-shadow: $neo-card-shadow;
+    background: $sky;
 }
 
 .confirmPassword {

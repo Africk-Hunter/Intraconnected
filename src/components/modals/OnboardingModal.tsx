@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { auth } from '../../firebaseConfig';
 import { fetchOnboardingSeen, markOnboardingSeen } from '../../utilities/firebase/firebaseHelpers';
 
 const STORAGE_KEY = 'onboarding_v1_seen';
@@ -8,13 +9,19 @@ function OnboardingModal() {
 
     useEffect(() => {
         if (localStorage.getItem(STORAGE_KEY) === 'true') return;
-        fetchOnboardingSeen().then(seen => {
-            if (seen) {
-                localStorage.setItem(STORAGE_KEY, 'true');
-            } else {
-                setOpen(true);
-            }
-        }).catch(() => setOpen(true));
+
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (!user) return;
+            unsubscribe();
+            fetchOnboardingSeen().then(seen => {
+                if (seen) {
+                    localStorage.setItem(STORAGE_KEY, 'true');
+                } else {
+                    setOpen(true);
+                }
+            }).catch(() => setOpen(true));
+        });
+        return () => unsubscribe();
     }, []);
 
     if (!open) return null;

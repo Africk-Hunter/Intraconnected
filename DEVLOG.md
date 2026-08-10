@@ -4,6 +4,13 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.07.1 — Minor Update — Bug Fixes — 2026-08-10
+- Auth screen: "Keep me signed in" checkbox added next to Forgot password; when checked, the DEK is also persisted to `localStorage` (`dek_local`) alongside `sessionStorage` so the session survives a full browser restart, not just a tab reload
+- Onboarding modal: now waits for `auth.onAuthStateChanged` to resolve before calling `fetchOnboardingSeen()`, fixing a race where the Firestore read could fire before the user was authenticated
+- Mobile: sheet, help, patch notes, mind map, and profile overlays made mutually exclusive — opening any one now closes the others if already open
+- Mobile: long-press drag suppressed for the first second after `MobileMindMap` mounts, preventing an accidental drag from a press that was already in progress on load/navigation
+- Mobile patch notes sheet given its own auto-height sizing (`mmobile-patchnotes-sheet`) instead of inheriting the fixed help-sheet height, so it doesn't leave excess empty space
+
 ## V 1.07 — Note Ideas — 2026-08-10
 - New idea type: Notes — a third creation tab alongside Idea and Checklist; give it a title plus a long-form body (2000 chars) instead of a single content line
 - `isNote` set at creation via the Note tab and immutable afterward — notes can't convert to/from a standard idea; `noteTitle` holds the header label. Replaces the old length-threshold "note mode" auto-detection (`NOTE_MODE_THRESHOLD`/`NOTE_WIDE_THRESHOLD` removed) with an explicit flag

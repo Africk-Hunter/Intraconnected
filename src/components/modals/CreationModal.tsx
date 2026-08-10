@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useIdeaContext } from "../../context/IdeaContext";
 import { cleanLink } from "../../utilities";
 import { ChecklistItem } from "../../utilities/types";
@@ -80,6 +80,16 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         else noteTitleRef.current?.focus();
     }, [activeTab]);
 
+    // AnimatedOverlay mounts the modal's content on its own effect-driven timing
+    // (a render pass after this component's own effects have already fired with
+    // refs still null), so the [activeTab] effect above can't catch the initial
+    // open — reset() always leaves activeTab as 'idea' before a reopen, so
+    // focusing here on actual DOM mount covers the open case.
+    const focusIdeaTextarea = useCallback((el: HTMLTextAreaElement | null) => {
+        ideaTextareaRef.current = el;
+        el?.focus();
+    }, []);
+
     // scrollHeight on a flex:1-stretched element is max(contentHeight, clientHeight)
     // — once the stack has grown, that element's clientHeight is already inflated,
     // so its scrollHeight can never report smaller even after the content shrinks
@@ -105,46 +115,62 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     // down to the shared default size once the content shrinks back below it.
     // useLayoutEffect (not useEffect) so the measureNatural overrides above
     // are applied and reverted before the browser paints.
+    // Pulled out of the layout effect below so it can also be invoked from
+    // panelStackMountRef — AnimatedOverlay mounts/unmounts this modal's DOM
+    // via its own internal `show` state (a child re-render), which doesn't
+    // re-trigger this component's effects, so relying solely on the state
+    // deps below misses the actual mount and leaves panelHeight stuck at the
+    // CSS fallback (too short for Idea's content, clipping contentHolder's
+    // box-shadow against creation-panel's overflow:hidden).
+    const recomputePanelHeight = useCallback(() => {
+        if (activeTab === 'checklist') {
+            const section = checklistSectionRef.current;
+            const title = checklistTitleRef.current;
+            const items = checklistItemsRef.current;
+            const addRow = checklistAddRowRef.current;
+            if (!section || !title || !items || !addRow) return;
+            const gap = parseFloat(getComputedStyle(section).rowGap) || 0;
+            setPanelHeight(title.offsetHeight + measureNatural(items) + addRow.offsetHeight + gap * 2);
+        } else if (activeTab === 'idea') {
+            const holder = ideaContentHolderRef.current;
+            const textarea = ideaTextareaRef.current;
+            const linkArea = linkAreaRef.current;
+            if (!holder || !textarea || !linkArea) return;
+            const holderStyle = getComputedStyle(holder);
+            const borderY = parseFloat(holderStyle.borderTopWidth) + parseFloat(holderStyle.borderBottomWidth);
+            setPanelHeight(borderY + measureNatural(textarea) + linkArea.offsetHeight);
+        } else {
+            const section = noteSectionRef.current;
+            const title = noteTitleRef.current;
+            const holder = noteContentHolderRef.current;
+            const body = noteBodyRef.current;
+            if (!section || !title || !holder || !body) return;
+            const gap = parseFloat(getComputedStyle(section).rowGap) || 0;
+            const holderStyle = getComputedStyle(holder);
+            const borderY = parseFloat(holderStyle.borderTopWidth) + parseFloat(holderStyle.borderBottomWidth);
+            setPanelHeight(title.offsetHeight + borderY + measureNatural(body) + gap);
+        }
+    }, [activeTab]);
+
     useLayoutEffect(() => {
-        const recompute = () => {
-            if (activeTab === 'checklist') {
-                const section = checklistSectionRef.current;
-                const title = checklistTitleRef.current;
-                const items = checklistItemsRef.current;
-                const addRow = checklistAddRowRef.current;
-                if (!section || !title || !items || !addRow) return;
-                const gap = parseFloat(getComputedStyle(section).rowGap) || 0;
-                setPanelHeight(title.offsetHeight + measureNatural(items) + addRow.offsetHeight + gap * 2);
-            } else if (activeTab === 'idea') {
-                const holder = ideaContentHolderRef.current;
-                const textarea = ideaTextareaRef.current;
-                const linkArea = linkAreaRef.current;
-                if (!holder || !textarea || !linkArea) return;
-                const holderStyle = getComputedStyle(holder);
-                const borderY = parseFloat(holderStyle.borderTopWidth) + parseFloat(holderStyle.borderBottomWidth);
-                setPanelHeight(borderY + measureNatural(textarea) + linkArea.offsetHeight);
-            } else {
-                const section = noteSectionRef.current;
-                const title = noteTitleRef.current;
-                const holder = noteContentHolderRef.current;
-                const body = noteBodyRef.current;
-                if (!section || !title || !holder || !body) return;
-                const gap = parseFloat(getComputedStyle(section).rowGap) || 0;
-                const holderStyle = getComputedStyle(holder);
-                const borderY = parseFloat(holderStyle.borderTopWidth) + parseFloat(holderStyle.borderBottomWidth);
-                setPanelHeight(title.offsetHeight + borderY + measureNatural(body) + gap);
-            }
-        };
-        recompute();
+        recomputePanelHeight();
         // Checklist rows animate their own height via a grid-template-rows
         // transition, so an immediate measurement can undershoot mid-animation —
         // re-measure once that transition actually settles.
         const items = checklistItemsRef.current;
         if (activeTab === 'checklist' && items) {
-            items.addEventListener('transitionend', recompute);
-            return () => items.removeEventListener('transitionend', recompute);
+            items.addEventListener('transitionend', recomputePanelHeight);
+            return () => items.removeEventListener('transitionend', recomputePanelHeight);
         }
-    }, [activeTab, checklistItems, removingItemIds, modalContent, isLinkBoxShown, link, noteTitle, noteBody]);
+    }, [recomputePanelHeight, checklistItems, removingItemIds, modalContent, isLinkBoxShown, link, noteTitle, noteBody]);
+
+    // Fires when AnimatedOverlay actually mounts this modal's DOM (fresh
+    // node every open, since it unmounts on close) — the one point where we
+    // know the refs above just attached, regardless of whether this
+    // component's own state changed to trigger the effect above.
+    const panelStackMountRef = useCallback((el: HTMLDivElement | null) => {
+        if (el) recomputePanelHeight();
+    }, [recomputePanelHeight]);
 
     function toggleLinkBox() {
         if (isLinkBoxShown) {
@@ -315,11 +341,12 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
 
                         <div
                             className="creation-panel-stack"
+                            ref={panelStackMountRef}
                             style={panelHeight !== undefined ? { height: panelHeight } : undefined}
                         >
                             <div className={`creation-panel${activeTab === 'idea' ? ' creation-panel--active' : ''}`}>
                                 <section className="contentHolder" ref={ideaContentHolderRef}>
-                                    <textarea ref={ideaTextareaRef} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => { setModalContent(e.target.value); masterContentRef.current = e.target.value; }}></textarea>
+                                    <textarea ref={focusIdeaTextarea} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => { setModalContent(e.target.value); masterContentRef.current = e.target.value; }}></textarea>
                                     <div className="linkArea" ref={linkAreaRef}>
                                         <button className="linkButton neobrutal-button" onClick={toggleLinkBox}>
                                             Add Link

@@ -55,65 +55,66 @@ function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?
 
     return (
         <>
-            <div className="mmobile-scrim" onClick={onClose} />
-            <div className="mmobile-help-sheet" style={style}>
-                <div className="mmobile-help-header">
-                    <span className="mmobile-help-pager">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</span>
-                    {view === 'notes'
-                        ? <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>+ Recommend a feature</button>
-                        : <button className="mmobile-help-close" onClick={view === 'submitting' ? undefined : reset}>✕</button>
-                    }
-                </div>
+            <div className="mmobile-scrim mmobile-patchnotes-scrim" onClick={onClose}>
+                <div className="mmobile-help-sheet mmobile-patchnotes-sheet" style={style} onClick={e => e.stopPropagation()}>
+                    <div className="mmobile-help-header">
+                        <span className="mmobile-help-pager">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</span>
+                        {view === 'notes'
+                            ? <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>+ Recommend a feature</button>
+                            : <button className="mmobile-help-close" onClick={view === 'submitting' ? undefined : reset}>✕</button>
+                        }
+                    </div>
 
-                <div className="mmobile-help-content">
-                    {view === 'notes' && entries.map((entry, i) => (
-                        <div key={i} className="mmobile-patchnotes-entry">
-                            <div className="mmobile-patchnotes-tag-row">
-                                <span className="mmobile-patchnotes-tag">{entry.tag}</span>
+                    <div className="mmobile-help-content">
+                        {view === 'notes' && entries.map((entry, i) => (
+                            <div key={i} className="mmobile-patchnotes-entry">
+                                <div className="mmobile-patchnotes-tag-row">
+                                    <span className="mmobile-patchnotes-tag">{entry.tag}</span>
+                                </div>
+                                <h3 className="mmobile-patchnotes-title">{entry.title}</h3>
+                                <p className="mmobile-help-text">{entry.description}</p>
                             </div>
-                            <h3 className="mmobile-patchnotes-title">{entry.title}</h3>
-                            <p className="mmobile-help-text">{entry.description}</p>
-                        </div>
-                    ))}
+                        ))}
 
-                    {(view === 'form' || view === 'submitting' || view === 'error') && (
-                        <div className="mmobile-patchnotes-form">
-                            <input
-                                className="mmobile-rename-input"
-                                placeholder="Feature title"
-                                value={title}
-                                onChange={e => { setTitle(e.target.value); setProfanityError(false); }}
-                                maxLength={100}
-                                disabled={view === 'submitting'}
-                                autoFocus
-                            />
-                            <textarea
-                                className="mmobile-rename-input mmobile-patchnotes-textarea"
-                                placeholder="Describe your idea (optional)"
-                                value={body}
-                                onChange={e => { setBody(e.target.value); setProfanityError(false); }}
-                                maxLength={1000}
-                                disabled={view === 'submitting'}
-                            />
-                            {profanityError && <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--error">Please keep your request respectful.</p>}
-                            {view === 'error' && !profanityError && <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--error">Something went wrong. Try again.</p>}
-                            <div className="mmobile-sheet-btns">
-                                <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={reset} disabled={view === 'submitting'}>Cancel</button>
-                                <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={submit} disabled={!title.trim() || view === 'submitting'}>
-                                    {view === 'submitting' ? 'Sending…' : 'Submit'}
-                                </button>
+                        {(view === 'form' || view === 'submitting' || view === 'error') && (
+                            <div className="mmobile-patchnotes-form">
+                                <input
+                                    className="mmobile-rename-input"
+                                    placeholder="Feature title"
+                                    value={title}
+                                    onChange={e => { setTitle(e.target.value); setProfanityError(false); }}
+                                    maxLength={100}
+                                    disabled={view === 'submitting'}
+                                    autoFocus
+                                />
+                                <textarea
+                                    className="mmobile-rename-input mmobile-patchnotes-textarea"
+                                    placeholder="Describe your idea (optional)"
+                                    value={body}
+                                    onChange={e => { setBody(e.target.value); setProfanityError(false); }}
+                                    maxLength={1000}
+                                    disabled={view === 'submitting'}
+                                />
+                                {profanityError && <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--error">Please keep your request respectful.</p>}
+                                {view === 'error' && !profanityError && <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--error">Something went wrong. Try again.</p>}
+                                <div className="mmobile-sheet-btns">
+                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={reset} disabled={view === 'submitting'}>Cancel</button>
+                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={submit} disabled={!title.trim() || view === 'submitting'}>
+                                        {view === 'submitting' ? 'Sending…' : 'Submit'}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {view === 'success' && (
-                        <div className="mmobile-patchnotes-form">
-                            <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--success">Thanks! Your request has been submitted.</p>
-                            <div className="mmobile-sheet-btns">
-                                <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={reset}>Back to Notes</button>
+                        {view === 'success' && (
+                            <div className="mmobile-patchnotes-form">
+                                <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--success">Thanks! Your request has been submitted.</p>
+                                <div className="mmobile-sheet-btns">
+                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={reset}>Back to Notes</button>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </>

@@ -15,6 +15,7 @@ const Auth: React.FC = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [pendingRecoveryCode, setPendingRecoveryCode] = useState("");
     const [copied, setCopied] = useState(false);
     const [recoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
@@ -113,7 +114,7 @@ const Auth: React.FC = () => {
                 const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
 
                 await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
-                await setDEK(dek);
+                await setDEK(dek, rememberMe);
 
                 sessionStorage.setItem('new_user', 'true');
                 isSigningIn.current = false;
@@ -165,7 +166,7 @@ const Auth: React.FC = () => {
             if (encData) {
                 try {
                     const dek = await unwrapDEK(encData.encryptedDEK, capturedPassword, user.uid);
-                    await setDEK(dek);
+                    await setDEK(dek, rememberMe);
 
                     // Derive email DEK — use stored one or generate fresh if account predates email recovery
                     const emailForDEK = user.email!;
@@ -219,7 +220,7 @@ const Auth: React.FC = () => {
                 const recoveryEncryptedDEK = await wrapDEKWithRecovery(dek, recoveryCode, user.uid);
                 const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
                 await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
-                await setDEK(dek);
+                await setDEK(dek, rememberMe);
 
                 isSigningIn.current = false;
                 try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
@@ -257,7 +258,7 @@ const Auth: React.FC = () => {
             const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, uid);
             const newEmailEncryptedDEK = await wrapDEKWithEmail(dek, userEmail, uid);
             await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK, newEmailEncryptedDEK);
-            await setDEK(dek);
+            await setDEK(dek, rememberMe);
 
             try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
             window.location.href = '/main';
@@ -333,9 +334,16 @@ const Auth: React.FC = () => {
                     <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     <div className="passwordField">
                         <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                        <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
-                            Forgot password?
-                        </button>
+                        <div className="passwordFieldRow">
+                            <label className="rememberMe">
+                                <input type="checkbox" className="rememberMeInput" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                                <span className="rememberMeBox" aria-hidden="true" />
+                                Keep me signed in
+                            </label>
+                            <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
+                                Forgot password?
+                            </button>
+                        </div>
                     </div>
                     <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </section>
