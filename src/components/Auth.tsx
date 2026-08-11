@@ -335,7 +335,7 @@ const Auth: React.FC = () => {
                     <div className="passwordField">
                         <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
                         <div className="passwordFieldRow">
-                            <label className="rememberMe">
+                            <label className={`rememberMe ${showConfirmPassword ? "hidden" : ""}`}>
                                 <input type="checkbox" className="rememberMeInput" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                                 <span className="rememberMeBox" aria-hidden="true" />
                                 Keep me signed in
@@ -361,7 +361,10 @@ const Auth: React.FC = () => {
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} />
             </section>
-            <a href="/privacy" className="privacyLink">Privacy Policy</a>
+            <div className="legalLinks">
+                <a href="/terms" className="legalLink">Terms of Service</a>
+                <a href="/privacy" className="legalLink">Privacy Policy</a>
+            </div>
         </div>
     );
 };

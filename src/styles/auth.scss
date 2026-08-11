@@ -69,7 +69,7 @@
     background: $leaf;
     user-select: none;
     &.login{
-        transform: translateY(-8rem);
+        transform: translateY(-8.4rem);
         transition: box-shadow 0.3s ease, translate 0.3s ease, transform 0.3s ease;
     }
 
@@ -212,6 +212,11 @@
     justify-content: space-between;
     gap: 1rem;
     margin-top: 0.4rem;
+    transition: margin-top 0.3s ease;
+
+    &:has(.hidden) {
+        margin-top: 0;
+    }
 }
 
 .forgotPassword {
@@ -245,6 +250,17 @@
     font-size: 1.1rem;
     cursor: pointer;
     user-select: none;
+    max-height: 2rem;
+    overflow: hidden;
+    padding: 0 3px 3px 0;
+    opacity: 1;
+    transition: opacity 0.3s ease, max-height 0.3s ease;
+
+    &.hidden {
+        max-height: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
 
     @media (max-width: $mobile) {
         font-size: 1rem;
@@ -306,26 +322,34 @@
 }
 
 
-.privacyLink {
-    font-size: 1rem;
-    color: $neo-green;
-    text-decoration: underline;
+.legalLinks {
+    display: flex;
+    gap: 1rem;
     margin-top: -3rem;
 
     @media (max-width: $mobile) {
-        font-size: 0.9rem;
         margin-top: -1.5rem;
     }
 }
 
-.privacyPage {
+.legalLink {
+    font-size: 1rem;
+    color: $neo-green;
+    text-decoration: underline;
+
+    @media (max-width: $mobile) {
+        font-size: 0.9rem;
+    }
+}
+
+.legalPage {
     min-height: 100vh;
     background: $background-color;
     font-family: "DM Sans", sans-serif;
     padding: 4rem 2rem;
 }
 
-.privacyContainer {
+.legalContainer {
     max-width: 72rem;
     margin: 0 auto;
     display: flex;
@@ -333,7 +357,7 @@
     gap: 0.5rem;
 }
 
-.privacyBack {
+.legalBack {
     align-self: flex-start;
     background: $neutral;
     font-size: 1.1rem;
@@ -341,7 +365,7 @@
     margin-bottom: 1rem;
 }
 
-.privacyTitle {
+.legalTitle {
     font-size: 3rem;
     font-weight: 700;
 
@@ -350,13 +374,13 @@
     }
 }
 
-.privacyMeta {
+.legalMeta {
     font-size: 1rem;
     color: #555;
     margin-bottom: 1rem;
 }
 
-.privacySection {
+.legalSection {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;

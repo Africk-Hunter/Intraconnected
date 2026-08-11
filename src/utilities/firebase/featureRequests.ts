@@ -1,66 +1,38 @@
-import { db, auth } from "../../firebaseConfig";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth } from "../../firebaseConfig";
 
-interface TrackedIssue {
-    issueNumber: number;
-    title: string;
-    seenClosed: boolean;
+async function parseJsonOrThrow<T>(res: Response): Promise<T> {
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+        const message = data && typeof data.error === "string" ? data.error : "Something went wrong. Try again.";
+        throw new Error(message);
+    }
+    return data as T;
 }
 
-function authCheck() {
+export async function submitFeatureRequest(title: string, body?: string): Promise<number> {
     const user = auth.currentUser;
-    if (!user) return null;
-    return user;
-}
-
-export async function saveTrackedIssue(issueNumber: number, title: string): Promise<void> {
-    const user = authCheck();
-    if (!user) return;
-    const ref = doc(db, "users", user.uid, "meta", "featureRequests");
-    const snap = await getDoc(ref);
-    const existing: TrackedIssue[] = snap.exists() ? (snap.data().issues ?? []) : [];
-    await setDoc(ref, { issues: [...existing, { issueNumber, title, seenClosed: false }] });
+    if (!user) {
+        throw new Error("You must be signed in to submit a feature request.");
+    }
+    const idToken = await user.getIdToken();
+    const res = await fetch("/.netlify/functions/submit-feature-request", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ title, body }),
+    });
+    const data = await parseJsonOrThrow<{ issueNumber: number }>(res);
+    return data.issueNumber;
 }
 
 export async function checkAndMarkImplementedFeatures(): Promise<string[] | null> {
-    const user = authCheck();
+    const user = auth.currentUser;
     if (!user) return null;
-    const ref = doc(db, "users", user.uid, "meta", "featureRequests");
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return null;
-
-    const issues: TrackedIssue[] = snap.data().issues ?? [];
-    const pending = issues.filter(i => !i.seenClosed);
-    if (pending.length === 0) return null;
-
-    const token = import.meta.env.VITE_GITHUB_TOKEN;
-    const repo = import.meta.env.VITE_GITHUB_REPO;
-    const implemented: TrackedIssue[] = [];
-
-    await Promise.all(pending.map(async (issue) => {
-        try {
-            const res = await fetch(`https://api.github.com/repos/${repo}/issues/${issue.issueNumber}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/vnd.github+json',
-                },
-            });
-            if (!res.ok) return;
-            const data = await res.json();
-            if (data.state === 'closed' && data.state_reason === 'completed') {
-                implemented.push(issue);
-            }
-        } catch { /* ignore network errors */ }
-    }));
-
-    if (implemented.length === 0) return null;
-
-    const updated = issues.map(i =>
-        implemented.some(impl => impl.issueNumber === i.issueNumber)
-            ? { ...i, seenClosed: true }
-            : i
-    );
-    await setDoc(ref, { issues: updated });
-
-    return implemented.map(i => i.title);
+    const idToken = await user.getIdToken();
+    const res = await fetch("/.netlify/functions/check-feature-request-status", {
+        headers: { Authorization: `Bearer ${idToken}` },
+    });
+    return parseJsonOrThrow<string[] | null>(res);
 }

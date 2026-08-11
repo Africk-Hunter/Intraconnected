@@ -9,6 +9,7 @@ import { IdeaProvider } from './context/IdeaContext';
 import Idea from './pages/Idea';
 import Login from './pages/Login';
 import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -21,6 +22,7 @@ root.render(
         <Route path="/" element={<Login />} />
         <Route path="/main" element={<Idea />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
       </Routes>
     </BrowserRouter>
   </IdeaProvider>

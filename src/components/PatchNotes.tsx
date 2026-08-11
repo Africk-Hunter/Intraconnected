@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import changelog from '../CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { containsProfanity } from '../utilities/profanityFilter';
-import { saveTrackedIssue } from '../utilities/firebase/featureRequests';
+import { submitFeatureRequest } from '../utilities/firebase/featureRequests';
 
 interface PatchNotesProps {
     showPatchNotes: boolean;
@@ -17,6 +17,7 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
     const [profanityError, setProfanityError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (!showPatchNotes) reset();
@@ -27,6 +28,7 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
         setTitle('');
         setBody('');
         setProfanityError(false);
+        setErrorMessage('');
     }
 
     async function submit() {
@@ -38,25 +40,10 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
         setProfanityError(false);
         setView('submitting');
         try {
-            const token = import.meta.env.VITE_GITHUB_TOKEN;
-            const repo = import.meta.env.VITE_GITHUB_REPO;
-            const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    Accept: 'application/vnd.github+json',
-                },
-                body: JSON.stringify({
-                    title: `[Feature Request] ${title.trim()}`,
-                    body: body.trim() || undefined,
-                }),
-            });
-            if (!res.ok) throw new Error();
-            const data = await res.json();
-            saveTrackedIssue(data.number, title.trim());
+            await submitFeatureRequest(title.trim(), body.trim() || undefined);
             setView('success');
-        } catch {
+        } catch (err) {
+            setErrorMessage(err instanceof Error && err.message ? err.message : 'Something went wrong. Try again.');
             setView('error');
         }
     }
@@ -111,7 +98,7 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
                         disabled={view === 'submitting'}
                     />
                     {profanityError && <p className="patchNotes-msg patchNotes-msg--error">Please keep your request respectful.</p>}
-                    {view === 'error' && !profanityError && <p className="patchNotes-msg patchNotes-msg--error">Something went wrong. Try again.</p>}
+                    {view === 'error' && !profanityError && <p className="patchNotes-msg patchNotes-msg--error">{errorMessage}</p>}
                     <div className="patchNotes-form-btns">
                         <button className="modalButton cancel neobrutal-button" onClick={reset} disabled={view === 'submitting'}>Cancel</button>
                         <button className="modalButton continue neobrutal-button" onClick={submit} disabled={!title.trim() || view === 'submitting'}>

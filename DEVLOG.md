@@ -4,6 +4,14 @@ Personal record of every update. Not displayed to users. See `src/CHANGELOG.md` 
 
 ---
 
+## V 1.07.2 — Minor Update — Feature Request Security & Terms of Service — 2026-08-10
+- Feature request submission moved server-side: new Netlify Functions (`submit-feature-request`, `check-feature-request-status`) proxy the GitHub Issues API using a server-held `GITHUB_TOKEN`; client no longer holds the token, `.env.example` and `VITE_GITHUB_TOKEN`/`VITE_GITHUB_REPO` removed
+- Functions verify the caller's Firebase ID token via `firebase-admin` (`lib/firebaseAdmin.ts`, service account from `FIREBASE_SERVICE_ACCOUNT_BASE64`) before touching Firestore or GitHub; `submit-feature-request` also enforces server-side title/body length caps, profanity filtering, and a 5-per-24h rate limit per user (`createdAt` added to `TrackedIssue`)
+- `submitFeatureRequest()` in `featureRequests.ts` replaces the old direct-to-GitHub `fetch` + `saveTrackedIssue`; both desktop `PatchNotes` and `MobilePatchNotesSheet` now surface the server's actual error message instead of a generic string
+- New Terms of Service page (`src/pages/Terms.tsx`, `/terms` route); Privacy page and shared SCSS classes renamed from `privacy*` to `legal*` so both pages share styling; Privacy policy content updated to describe email-based password recovery (replacing the old recovery-code language) and self-serve account deletion, plus a new "Feature Requests" section noting submissions are posted as public GitHub issues
+- Auth screen: "Keep me signed in" checkbox now collapses/fades out on the signup panel (confirm-password view) instead of staying visible; Privacy link replaced with a Terms + Privacy link row (`.legalLinks`)
+- `netlify.toml` and `tsconfig.functions.json` added to build/bundle the new functions; `@netlify/functions`, `firebase-admin`, `@types/node` added as dev dependencies
+
 ## V 1.07.1 — Minor Update — Bug Fixes — 2026-08-10
 - Auth screen: "Keep me signed in" checkbox added next to Forgot password; when checked, the DEK is also persisted to `localStorage` (`dek_local`) alongside `sessionStorage` so the session survives a full browser restart, not just a tab reload
 - Onboarding modal: now waits for `auth.onAuthStateChanged` to resolve before calling `fetchOnboardingSeen()`, fixing a race where the Firestore read could fire before the user was authenticated

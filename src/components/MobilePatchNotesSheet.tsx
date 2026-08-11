@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import changelog from '../CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { containsProfanity } from '../utilities/profanityFilter';
-import { saveTrackedIssue } from '../utilities/firebase/featureRequests';
+import { submitFeatureRequest } from '../utilities/firebase/featureRequests';
 
 const entries = parseChangelog(changelog);
 
@@ -13,12 +13,14 @@ function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
     const [profanityError, setProfanityError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     function reset() {
         setView('notes');
         setTitle('');
         setBody('');
         setProfanityError(false);
+        setErrorMessage('');
     }
 
     async function submit() {
@@ -30,25 +32,10 @@ function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?
         setProfanityError(false);
         setView('submitting');
         try {
-            const token = import.meta.env.VITE_GITHUB_TOKEN;
-            const repo = import.meta.env.VITE_GITHUB_REPO;
-            const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    Accept: 'application/vnd.github+json',
-                },
-                body: JSON.stringify({
-                    title: `[Feature Request] ${title.trim()}`,
-                    body: body.trim() || undefined,
-                }),
-            });
-            if (!res.ok) throw new Error();
-            const data = await res.json();
-            saveTrackedIssue(data.number, title.trim());
+            await submitFeatureRequest(title.trim(), body.trim() || undefined);
             setView('success');
-        } catch {
+        } catch (err) {
+            setErrorMessage(err instanceof Error && err.message ? err.message : 'Something went wrong. Try again.');
             setView('error');
         }
     }
@@ -96,7 +83,7 @@ function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?
                                     disabled={view === 'submitting'}
                                 />
                                 {profanityError && <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--error">Please keep your request respectful.</p>}
-                                {view === 'error' && !profanityError && <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--error">Something went wrong. Try again.</p>}
+                                {view === 'error' && !profanityError && <p className="mmobile-patchnotes-msg mmobile-patchnotes-msg--error">{errorMessage}</p>}
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={reset} disabled={view === 'submitting'}>Cancel</button>
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={submit} disabled={!title.trim() || view === 'submitting'}>
