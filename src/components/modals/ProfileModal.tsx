@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { signUserOut, deleteUserAccount, sendPasswordReset } from '../../utilities/firebase/authFirebase';
 import { auth } from '../../firebaseConfig';
+import { cancelSubscription } from '../../utilities/billing/billing';
+import { getCachedBillingStatus, BillingStatus } from '../../utilities/firebase/firebaseHelpers';
 import '../../styles/profileModal.scss';
 
 type Tab = 'account' | 'customization';
 type MobileView = 'tabs' | 'account';
 
 function ProfileModal() {
-    const { profileModalOpen, setProfileModalOpen } = useIdeaContext();
+    const { profileModalOpen, setProfileModalOpen, billingPlan, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     const [activeTab, setActiveTab] = useState<Tab>('account');
     const [mobileView, setMobileView] = useState<MobileView>('tabs');
@@ -19,6 +21,20 @@ function ProfileModal() {
     const [deleteConfirm, setDeleteConfirm] = useState('');
     const [deleteError, setDeleteError] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [billingStatus, setBillingStatus] = useState<BillingStatus>(getCachedBillingStatus());
+    const [cancelStep, setCancelStep] = useState<'idle' | 'confirm'>('idle');
+    const [isCancelling, setIsCancelling] = useState(false);
+    const [cancelError, setCancelError] = useState('');
+
+    useEffect(() => {
+        if (profileModalOpen) setBillingStatus(getCachedBillingStatus());
+    }, [profileModalOpen]);
+
+    function handleOpenUpgrade() {
+        handleClose();
+        setUpgradeModalReason(null);
+        setUpgradeModalOpen(true);
+    }
 
     function handleClose() {
         setProfileModalOpen(false);
@@ -30,6 +46,22 @@ function ProfileModal() {
         setDeleteConfirm('');
         setDeleteError('');
         setIsDeleting(false);
+        setCancelStep('idle');
+        setCancelError('');
+    }
+
+    async function handleCancelSubscription() {
+        setIsCancelling(true);
+        setCancelError('');
+        try {
+            await cancelSubscription();
+            setBillingStatus(prev => ({ ...prev, cancelAtPeriodEnd: true }));
+            setCancelStep('idle');
+        } catch {
+            setCancelError('Failed to cancel subscription. Please try again.');
+        } finally {
+            setIsCancelling(false);
+        }
     }
 
     async function handleResetPassword() {
@@ -63,8 +95,71 @@ function ProfileModal() {
 
     const deleteEnabled = deleteConfirm === 'DELETE' && deletePassword.length > 0 && !isDeleting;
 
+    const planLabel = billingPlan === 'annual' ? 'Annual' : billingPlan === 'lifetime' ? 'Lifetime' : 'Free';
+
     const accountContent = (
         <div className="profile-account-content">
+            {/* Plan */}
+            <section className="profile-section profile-section--plan">
+                <h3 className="profile-section-title">Plan</h3>
+                <p className="profile-section-desc">You're on the <strong>{planLabel}</strong> plan.</p>
+                {billingPlan === 'free' && (
+                    <button className="profile-action-btn neobrutal-button" onClick={handleOpenUpgrade}>
+                        Upgrade
+                    </button>
+                )}
+                {billingPlan === 'annual' && (
+                    <div className="profile-plan-actions">
+                        <button
+                            className="profile-action-btn neobrutal-button"
+                            onClick={handleOpenUpgrade}
+                        >
+                            Upgrade to Lifetime
+                        </button>
+
+                        {billingStatus.cancelAtPeriodEnd ? (
+                            <p className="profile-section-desc profile-plan-cancel-note">
+                                Your subscription is set to cancel
+                                {billingStatus.currentPeriodEnd
+                                    ? ` on ${new Date(billingStatus.currentPeriodEnd).toLocaleDateString()}`
+                                    : ' at the end of your billing period'}
+                                . You'll keep access until then.
+                            </p>
+                        ) : cancelStep === 'confirm' ? (
+                            <div className="profile-plan-cancel-confirm">
+                                <p className="profile-section-desc">
+                                    Cancel your annual subscription? You'll keep access until the end of your current billing period.
+                                </p>
+                                <div className="profile-plan-cancel-buttons">
+                                    <button
+                                        className="profile-action-btn neutral neobrutal-button"
+                                        onClick={() => setCancelStep('idle')}
+                                        disabled={isCancelling}
+                                    >
+                                        Keep plan
+                                    </button>
+                                    <button
+                                        className="profile-action-btn danger neobrutal-button"
+                                        onClick={handleCancelSubscription}
+                                        disabled={isCancelling}
+                                    >
+                                        {isCancelling ? 'Cancelling…' : 'Confirm cancellation'}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button
+                                className="profile-action-btn danger neobrutal-button"
+                                onClick={() => setCancelStep('confirm')}
+                            >
+                                Cancel subscription
+                            </button>
+                        )}
+                        {cancelError && <p className="profile-error">{cancelError}</p>}
+                    </div>
+                )}
+            </section>
+
             {/* Reset Password */}
             <section className="profile-section profile-section--reset">
                 <h3 className="profile-section-title">Reset Password</h3>

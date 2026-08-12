@@ -10,7 +10,13 @@
 @use "./mobileMindMapSheet";
 @use "./mobileChecklistSheet";
 @use "./mindmap";
+@use "./landing";
+@use "./pricing";
+@use "./marketingTransition";
+@use "./upgradeModal";
+@use "./checkoutModal";
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
 
 html {
     overflow-x: hidden;
@@ -22,6 +28,7 @@ html {
 }
 
 body {
+    margin: 0;
     background: $background-color;
     background-size: 40px 40px;
     background-image:

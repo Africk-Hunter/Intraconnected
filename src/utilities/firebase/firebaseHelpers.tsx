@@ -1,10 +1,33 @@
 import { db, auth } from "../../firebaseConfig";
-import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, deleteField } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, deleteField, onSnapshot } from "firebase/firestore";
 import { IdeaType, ChecklistItem } from "../types";
 import { encryptField, decryptField } from "../crypto";
 import { getDEK } from "../dekStore";
 
 const SYNC_LS_KEY = 'sync_lastModified';
+const BILLING_LS_KEY = 'billing_plan';
+
+export type BillingPlan = 'free' | 'annual' | 'lifetime';
+
+export interface BillingStatus {
+    plan: BillingPlan;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionStatus: string | null;
+    currentPeriodEnd: number | null;
+    cancelAtPeriodEnd: boolean;
+    updatedAt: number;
+}
+
+const FREE_BILLING_STATUS: BillingStatus = {
+    plan: 'free',
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    subscriptionStatus: null,
+    currentPeriodEnd: null,
+    cancelAtPeriodEnd: false,
+    updatedAt: 0,
+};
 
 export async function updateSyncTimestamp(): Promise<void> {
     const user = authCheck();
@@ -22,6 +45,32 @@ export async function fetchSyncTimestamp(): Promise<number | null> {
     const snap = await getDoc(syncDoc);
     if (!snap.exists()) return null;
     return (snap.data().lastModified as number) ?? null;
+}
+
+// The billing doc is written only by the stripe-webhook Netlify Function
+// (server is the source of truth) — this is the only listener-shaped (vs
+// one-shot getDoc) export in this file, since the client needs to react to
+// a webhook write it didn't itself trigger. Mirrors every snapshot to
+// localStorage so canCreateIdea() can read it synchronously.
+export function subscribeBillingStatus(callback: (status: BillingStatus) => void): () => void {
+    const user = authCheck();
+    if (!user) return () => {};
+    const billingDoc = doc(db, "users", user.uid, "meta", "billing");
+    return onSnapshot(billingDoc, snap => {
+        const status: BillingStatus = snap.exists() ? (snap.data() as BillingStatus) : FREE_BILLING_STATUS;
+        localStorage.setItem(BILLING_LS_KEY, JSON.stringify(status));
+        callback(status);
+    });
+}
+
+export function getCachedBillingStatus(): BillingStatus {
+    try {
+        const raw = localStorage.getItem(BILLING_LS_KEY);
+        if (!raw) return FREE_BILLING_STATUS;
+        return JSON.parse(raw) as BillingStatus;
+    } catch {
+        return FREE_BILLING_STATUS;
+    }
 }
 
 function authCheck() {

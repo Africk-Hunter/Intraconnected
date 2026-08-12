@@ -117,6 +117,39 @@ If adding "change password" via `updatePassword()`, re-wrap the DEK with the new
 ### E2E Encryption
 All idea `content` and `link` fields AES-256-GCM encrypted before Firestore writes. Ciphertext stored as `enc:<base64>`. `decryptField` passes plaintext through unchanged (backward-compat). DEK in module-level `_dek` (dekStore.ts) + `sessionStorage` key `dek_session`. `clearDEK()` wipes both on sign-out.
 
+## Pricing & Billing
+
+Three plans: `free` (capped at `FREE_NODE_LIMIT` = 50 nodes, `src/utilities/billing/limits.tsx`), `annual` (Stripe subscription), `lifetime` (Stripe one-time payment). `canCreateIdea()` gates node creation against the cached plan. **Not yet deployed** (per DEVLOG) — pre-launch.
+
+- **Checkout is embedded Stripe Elements, not a Checkout Session redirect.** `startCheckout(plan)` (`src/utilities/billing/billing.tsx`) → signed-out users are bounced to `/` with the intended plan stashed in `sessionStorage` (`pending_checkout_plan`), resumed post-login via `consumePendingCheckoutPlan()`. Signed-in users hit `create-payment-intent` (Netlify function), which returns a PaymentIntent client secret (lifetime) or an incomplete Subscription's invoice client secret (annual) — mounted into a `<CardElement>` (`CheckoutModal.tsx`/`CheckoutForm.tsx`) and confirmed client-side via `stripe.confirmCardPayment`. Uses `VITE_STRIPE_PUBLISHABLE_KEY`. (Docs/DEVLOG previously described a server-redirected Stripe Checkout Session via a `create-checkout-session` function — that function does not exist; this is the shipped design.)
+- **Intended source of truth is the server, but this is not currently enforced.** The client is *supposed* to never write billing state directly — `stripe-webhook.ts` verifies the Stripe signature, runs the event through the pure `deriveBillingUpdate()` (`netlify/functions/lib/billingEvents.ts`), and merges the result into Firestore at `users/{uid}/meta/billing`. **However, live Firestore rules do not lock that path down** (see Firestore Security Rules below) — a signed-in client can currently write to their own `meta/billing` doc directly and grant themselves any plan. Treat this as an open pre-launch blocker, not a documented safe design.
+- **Client sync**: `subscribeBillingStatus()` (`firebaseHelpers.tsx`) listens on that Firestore doc and mirrors every snapshot to `localStorage` (`billing_plan`) so `getCachedBillingStatus()` can read synchronously (e.g. from `canCreateIdea()`).
+- **Cancellation**: `cancelSubscription()` → `cancel-subscription` Netlify function sets `cancel_at_period_end: true` (never an immediate cancel) so the user keeps access through the period they paid for; the plan only flips to `free` when `customer.subscription.deleted` fires. **Gap**: `customer.subscription.updated` grants `plan: "annual"` for *any* `sub.status` (including `incomplete_expired`/`unpaid`, i.e. never-paid or stopped-paying) — status is recorded but not checked before granting access. Account deletion (`deleteUserAccount` in `authFirebase.tsx`) also never cancels the underlying Stripe subscription.
+- **Subscription uid resolution**: `subscriptions.create` (annual) and `paymentIntents.create` (lifetime) in `create-payment-intent.ts` stamp `firebaseUid` onto `metadata` server-side at creation time, since renewal/cancellation webhook events carry no `client_reference_id` of their own.
+- Price IDs (`STRIPE_PRICE_ANNUAL`, `STRIPE_PRICE_LIFETIME`) and secrets (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`) are env vars, not hardcoded — unlike the Firebase config.
+- Full audit of known gaps (Firestore rule, subscription-status handling, double-billing, account deletion, etc.): see `docs/prds/003-stripe-payments.md` and PRD 001 below — fixes not yet applied as of 2026-08-11.
+
+## Firestore Security Rules
+
+**No `firestore.rules` file exists in this repo** — rules are authored/deployed directly through the Firebase Console (project `interconnectedness-3a37b`) and are not checked into source control. Confirmed live rules as of 2026-08-11 (see `docs/prds/001-firestore-security-rules.md` §10):
+
+```
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/ideas/{ideaId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId}/meta/{document} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+Ownership-only: ideas and every `meta/*` doc are fully readable/writable by their owning `uid`, nothing else. This is sufficient for cross-user isolation (verified: User A cannot touch User B's docs) but has **no per-document restriction within a user's own `meta/` collection** — notably `meta/billing` is writable by the client even though PRD 003 requires it be server-write-only (see Pricing & Billing above). Any change to these rules must be made in the Firebase Console until a `firestore.rules` file is added to the repo (tracked in PRD 001 as not-yet-done despite being marked "done" there).
+
 ## Key Conventions
 
 ### Modals

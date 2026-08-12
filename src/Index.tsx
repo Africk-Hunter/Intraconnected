@@ -10,6 +10,7 @@ import Idea from './pages/Idea';
 import Login from './pages/Login';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import MarketingTransition from './components/landing/MarketingTransition';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -23,6 +24,8 @@ root.render(
         <Route path="/main" element={<Idea />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/landing" element={<MarketingTransition />} />
+        <Route path="/pricing" element={<MarketingTransition />} />
       </Routes>
     </BrowserRouter>
   </IdeaProvider>

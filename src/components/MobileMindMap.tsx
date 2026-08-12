@@ -27,6 +27,7 @@ import {
     cleanLink,
     getIdeaLink,
     sortIdeas,
+    canCreateIdea,
 } from '../utilities';
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
@@ -49,7 +50,7 @@ if (typeof window !== 'undefined') {
 
 
 function MobileMindMap() {
-    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen } = useIdeaContext();
+    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
     const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
@@ -711,6 +712,11 @@ function MobileMindMap() {
     }
 
     function addChild() {
+        if (!canCreateIdea()) {
+            setUpgradeModalReason('limit');
+            setUpgradeModalOpen(true);
+            return;
+        }
         setDraft('');
         setCreateTab('idea');
         setChecklistTitle('');

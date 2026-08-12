@@ -1,0 +1,23 @@
+@use './variables' as *;
+
+.marketingPage {
+    @include marketing-tokens;
+}
+
+.marketingSlideTrack {
+    display: flex;
+    width: 200%;
+    transform: translateX(var(--slide-start));
+    align-items: flex-start;
+
+    &.marketingSlideTrack--active {
+        transform: translateX(var(--slide-end));
+        transition: transform 0.42s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+}
+
+.marketingSlidePane {
+    width: 50%;
+    flex-shrink: 0;
+    min-width: 0;
+}

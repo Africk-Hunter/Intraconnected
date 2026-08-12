@@ -1,0 +1,241 @@
+@use './variables' as *;
+
+.pricingPage {
+    min-height: 100vh;
+    font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif;
+    color: #111;
+    @include landing-grid-bg;
+    @include marketing-tokens;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────
+
+.pricingHero {
+    text-align: center;
+    padding: 76px 48px 52px;
+
+    @media (max-width: $mobile) {
+        padding: 48px 20px 36px;
+    }
+}
+
+.pricingHeroTitle {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    line-height: 1.07;
+    letter-spacing: -2px;
+    color: #111;
+}
+
+.pricingHeroSubline {
+    font-size: 18px;
+    font-weight: 500;
+    color: #444;
+    margin-top: 20px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.7;
+}
+
+// ── Cards ─────────────────────────────────────────────────────────────────
+
+.pricingCards {
+    padding: 0 52px 56px;
+    max-width: 1140px;
+    margin: 0 auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    align-items: stretch;
+
+    @media (max-width: $tablet) {
+        grid-template-columns: 1fr;
+        padding: 0 20px 40px;
+    }
+}
+
+.priceCard {
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    &--free {
+        background: #fff;
+    }
+
+    &--annual {
+        background: $sky;
+    }
+
+    &--lifetime {
+        background: $leaf;
+    }
+}
+
+.priceCardBadge {
+    position: absolute;
+    top: -15px;
+    right: 20px;
+    background: $link;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    padding: 5px 13px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-radius: 4px;
+    transform: rotate(1.5deg);
+    color: #111;
+    white-space: nowrap;
+}
+
+.priceCardTier {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 18px;
+
+    .priceCard--annual &,
+    .priceCard--lifetime & {
+        color: rgba(0, 0, 0, 0.45);
+    }
+}
+
+.priceCardPriceRow {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    line-height: 1;
+}
+
+.priceCardPrice {
+    font-size: 62px;
+    font-weight: 800;
+    letter-spacing: -3px;
+    color: #111;
+}
+
+.priceCardPriceSuffix {
+    font-size: 16px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.5);
+    margin-bottom: 10px;
+}
+
+.priceCardSubtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+    margin-top: 6px;
+
+    .priceCard--annual &,
+    .priceCard--lifetime & {
+        color: rgba(0, 0, 0, 0.5);
+    }
+}
+
+.priceCardNote {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #efefef;
+    font-size: 13px;
+    font-weight: 500;
+    color: #aaa;
+    margin-bottom: 28px;
+
+    .priceCard--annual &,
+    .priceCard--lifetime & {
+        border-top-color: rgba(0, 0, 0, 0.12);
+        color: rgba(0, 0, 0, 0.45);
+    }
+}
+
+.priceCardFeatures {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    flex: 1;
+    margin-bottom: 32px;
+}
+
+.priceCardFeature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &--locked {
+        opacity: 0.38;
+
+        .priceCardFeatureLabel {
+            text-decoration: line-through;
+        }
+    }
+}
+
+.priceCardFeatureLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+
+    &--bold {
+        font-weight: 800;
+    }
+}
+
+.priceCardCta {
+    display: block;
+    text-align: center;
+    padding: 15px 24px;
+    border-radius: 7px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #111;
+    text-decoration: none;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    background: $background-color;
+
+    .priceCard--annual &,
+    .priceCard--lifetime & {
+        background: $link;
+    }
+}
+
+.priceCardFootNote {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #aaa;
+    margin-top: 10px;
+
+    .priceCard--annual &,
+    .priceCard--lifetime & {
+        color: rgba(0, 0, 0, 0.45);
+    }
+}
+
+// ── Tagline ───────────────────────────────────────────────────────────────
+
+.pricingTaglineWrap {
+    display: flex;
+    justify-content: center;
+    padding: 0 48px 80px;
+}
+
+.pricingTagline {
+    display: inline-block;
+    background: $link;
+    border: $neo-card-border;
+    box-shadow: $neo-card-shadow;
+    border-radius: 8px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+}

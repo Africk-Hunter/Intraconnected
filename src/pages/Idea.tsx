@@ -46,9 +46,13 @@ import ChecklistModal from '../components/modals/ChecklistModal';
 import FeatureImplementedModal from '../components/modals/FeatureImplementedModal';
 import OnboardingModal from '../components/modals/OnboardingModal';
 import ProfileModal from '../components/modals/ProfileModal';
+import UpgradeModal from '../components/modals/UpgradeModal';
+import CheckoutModal from '../components/modals/CheckoutModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
 import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRequests';
+import { subscribeBillingStatus } from '../utilities/firebase/firebaseHelpers';
+import { consumePendingCheckoutPlan } from '../utilities/billing/billing';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -76,6 +80,7 @@ function Idea() {
         (localStorage.getItem('idea_sort_mode') as 'priority' | 'recent') ?? 'priority'
     );
     const [rootPriority, setRootPriority] = useState<1 | 2 | 3 | undefined>(undefined);
+    const [checkoutBanner, setCheckoutBanner] = useState<string | null>(null);
 
     const ideaNodesRef = useRef<HTMLDivElement>(null);
     const flipSnapshot = useRef<Map<number, { top: number; left: number }>>(new Map());
@@ -104,6 +109,49 @@ function Idea() {
         }
     }, []);
 
+    useEffect(() => {
+        let unsubscribeBilling: (() => void) | undefined;
+        const unsubscribeAuth = auth.onAuthStateChanged(user => {
+            unsubscribeBilling?.();
+            unsubscribeBilling = undefined;
+            if (!user) return;
+            unsubscribeBilling = subscribeBillingStatus(status => setBillingPlan(status.plan));
+        });
+        return () => {
+            unsubscribeAuth();
+            unsubscribeBilling?.();
+        };
+    }, []);
+
+    // A plan clicked while signed out (see startCheckout in billing.tsx)
+    // is remembered in sessionStorage and resumed here once auth resolves.
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (!user) return;
+            unsubscribe();
+            const pendingPlan = consumePendingCheckoutPlan();
+            if (pendingPlan) setCheckoutPlan(pendingPlan);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Stripe's webhook may lag a few seconds behind the checkout redirect —
+    // this just covers that gap with a brief message rather than a silent
+    // flash of "still free".
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const checkout = params.get('checkout');
+        if (checkout === 'success') {
+            setCheckoutBanner('Finalizing your upgrade…');
+            setTimeout(() => setCheckoutBanner(null), 4000);
+        }
+        if (checkout) {
+            params.delete('checkout');
+            const query = params.toString();
+            window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+        }
+    }, []);
+
     function handleTogglePatchNotes() {
         if (!showPatchNotes) {
             markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);
@@ -118,7 +166,7 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId } = useIdeaContext();
+    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId, setBillingPlan, setCheckoutPlan } = useIdeaContext();
 
     useEffect(() => {
         const handleVisibilityChange = async () => {
@@ -420,6 +468,13 @@ function Idea() {
             <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} handleNoteCreation={handleNoteCreation} />
             <OnboardingModal />
             <ProfileModal />
+            <UpgradeModal />
+            <CheckoutModal />
+            {checkoutBanner && (
+                <section className="messageBox shadowAndBorder neobrutal-button good checkoutBanner">
+                    <p className="messageBoxMessage">{checkoutBanner}</p>
+                </section>
+            )}
             {implementedTitles && (
                 <FeatureImplementedModal titles={implementedTitles} onClose={() => setImplementedTitles(null)} />
             )}

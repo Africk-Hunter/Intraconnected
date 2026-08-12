@@ -1,6 +1,6 @@
 @use './variables' as *;
 
-.profile-modal {
+.neobrutal.modal.profile-modal {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -21,6 +21,14 @@
             linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
         background-size: 40px 40px;
         padding: 1rem 1rem 0rem 1rem !important;
+    }
+
+    @media (min-width: $desktop) {
+        width: min(64rem, 90vw);
+    }
+
+    @media (min-width: $large-desktop) {
+        width: min(64rem, 90vw);
     }
 }
 
@@ -114,6 +122,44 @@
     margin-bottom: 0.75rem;
     background: $neutral;
     outline: none;
+}
+
+.profile-plan-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+// Desktop: "Upgrade to Lifetime" and "Cancel subscription" sit side by side
+// rather than stacked. Scoped to .profile-desktop (hidden on mobile) rather
+// than a width media query since it targets the desktop two-panel layout
+// specifically, not just wide viewports.
+.profile-desktop .profile-plan-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+
+    > .profile-action-btn {
+        width: auto;
+    }
+}
+
+.profile-plan-cancel-note {
+    margin: 0;
+}
+
+.profile-plan-cancel-confirm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+}
+
+.profile-plan-cancel-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .profile-error {

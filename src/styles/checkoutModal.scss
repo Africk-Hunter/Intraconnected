@@ -1,0 +1,155 @@
+@use './variables' as *;
+
+.neobrutal.modal.checkoutModal {
+    position: relative;
+    width: 38rem;
+    min-width: 34rem;
+    padding: 2.75rem 1.5rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: $mobile) {
+        width: 92%;
+        min-width: 0;
+        padding: 2.5rem 1rem 1.25rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 42rem;
+    }
+}
+
+.checkoutModal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    background: $neutral;
+    flex-shrink: 0;
+    z-index: 1;
+    // .neobrutal-button's default shadow/press (index.scss) is sized for
+    // full-width buttons — scaled down here so it doesn't dwarf this small
+    // icon button. Matches .upgradeModal-close.
+    box-shadow: 1px 1px 0 1px black;
+
+    &:hover, &:active {
+        box-shadow: 0 0 0 1px black;
+        translate: 1px 1px;
+    }
+
+    @media (max-width: $mobile) {
+        width: 1.9rem;
+        height: 1.9rem;
+        top: 0.75rem;
+        right: 0.75rem;
+        font-size: 0.95rem;
+    }
+}
+
+.checkoutModalLoading,
+.checkoutModalError {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0;
+    padding: 3rem 0;
+}
+
+.checkoutModalError {
+    color: $danger;
+}
+
+.checkoutForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+// A quiet receipt line, not a promo badge — $neutral is the same muted tone
+// already used for de-emphasized UI elsewhere (e.g. the modal's own close
+// button), signaling "information" rather than "offer."
+.checkoutFormSummary {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    color: #000;
+    background: $neutral;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+
+    span:first-child {
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+
+    span:last-child {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: rgba(0, 0, 0, 0.6);
+    }
+
+    @media (max-width: $mobile) {
+        span:first-child {
+            font-size: 0.95rem;
+        }
+
+        span:last-child {
+            font-size: 0.8rem;
+        }
+    }
+}
+
+.checkoutFormLabel {
+    margin: 0 0 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.checkoutFormCardBox {
+    padding: 1.4rem 1.1rem;
+    background: $background-color;
+    border: $neo-btn-border;
+    box-shadow: $neo-btn-shadow;
+    border-radius: $neo-btn-radius;
+}
+
+.checkoutFormTrust {
+    margin: -0.4rem 0 0;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.45);
+}
+
+// Overrides the full-modal centering .checkoutModalError gets when it's the
+// only thing rendered (see CheckoutModal.tsx) — here it's a compact inline
+// message under the payment fields.
+.checkoutForm .checkoutModalError {
+    display: block;
+    padding: 0.6rem 0.8rem;
+    border: $neo-detail-border;
+    background: rgba($danger, 0.1);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: left;
+}
+
+// .modalButton (ideaCreationModal.scss) fixes width: 12.5rem for its usual
+// job of sitting side-by-side in a .modalButtons row — this button is alone
+// and needs to stretch to match the boxes above it, or everything reads as
+// off-center.
+.checkoutFormSubmit {
+    width: 100%;
+}

@@ -1,0 +1,261 @@
+@use './variables' as *;
+
+.landingPage {
+    min-height: 100vh;
+    font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif;
+    color: #111;
+    @include landing-grid-bg;
+    @include marketing-tokens;
+}
+
+// ── Navbar ────────────────────────────────────────────────────────────────
+
+.landingNavbar {
+    height: 72px;
+    @include landing-grid-bg;
+    border-bottom: $neo-card-border;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    @media (max-width: $mobile) {
+        padding: 0 20px;
+    }
+}
+
+.landingNavbarBrand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #111;
+}
+
+.landingNavbarBrandText {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    color: #111;
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.landingNavbarLinks {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.landingNavLink {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 2.5px solid transparent;
+    transition: border-color 0.15s;
+
+    &:hover {
+        border-bottom-color: #111;
+    }
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.landingNavCta {
+    display: inline-block;
+    padding: 10px 24px;
+    background: $link;
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────
+
+.landingHero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 76px 48px 52px;
+    text-align: center;
+
+    @media (max-width: $mobile) {
+        padding: 48px 20px 36px;
+    }
+}
+
+.landingHeroTitle {
+    font-size: clamp(38px, 5.2vw, 68px);
+    font-weight: 800;
+    line-height: 1.07;
+    letter-spacing: -2px;
+    color: #111;
+    max-width: 840px;
+}
+
+.landingHeroSubline {
+    font-size: 19px;
+    font-weight: 500;
+    color: #444;
+    margin-top: 22px;
+    max-width: 480px;
+    line-height: 1.7;
+}
+
+.landingMindMapBox {
+    margin: 52px auto 44px;
+    width: 100%;
+    max-width: 760px;
+    border: $neo-card-border;
+    box-shadow: $neo-card-shadow;
+    border-radius: $neo-card-radius;
+    @include landing-grid-bg;
+    overflow: hidden;
+    padding: 24px;
+
+    @media (max-width: $mobile) {
+        margin: 36px auto 32px;
+        padding: 14px;
+    }
+}
+
+.mmSvg {
+    display: block;
+}
+
+.mmGroup {
+    opacity: 1;
+
+    // Transition lives only on the --fading rule: fading in (class removed on
+    // loop reset) must be instant, fading out (class added) animates 0.8s.
+    &.mmGroup--fading {
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+    }
+}
+
+// Transition lives only on the --visible/--drawn rule so popping in animates
+// but the per-loop reset (class removed) snaps back instantly, matching the
+// reference implementation's explicit transition:none-then-reenable dance.
+.mmNode {
+    opacity: 0;
+    transform: scale(0.3);
+
+    &.mmNode--visible {
+        opacity: 1;
+        transform: scale(1);
+        transition: opacity 0.3s ease, transform 0.48s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+}
+
+.mmLine {
+    // opacity:0 (not just dashoffset) hides the round-linecap dot that
+    // otherwise peeks through at the path's start point before it draws.
+    opacity: 0;
+    stroke-dasharray: var(--mm-len, 0);
+    stroke-dashoffset: var(--mm-len, 0);
+
+    &.mmLine--drawn {
+        opacity: 1;
+        stroke-dashoffset: 0;
+        transition: stroke-dashoffset 0.5s ease-out;
+    }
+}
+
+.landingCta {
+    display: inline-block;
+    padding: 18px 54px;
+    background: $leaf;
+    font-size: 20px;
+    font-weight: 800;
+    color: #111;
+    text-decoration: none;
+    letter-spacing: -0.4px;
+    white-space: nowrap;
+}
+
+// ── Feature strip ────────────────────────────────────────────────────────
+
+.landingFeatures {
+    padding: 40px 52px 80px;
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+
+    @media (max-width: $tablet) {
+        grid-template-columns: 1fr;
+        padding: 24px 20px 56px;
+    }
+}
+
+.featureCard {
+    padding: 32px 28px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 7px 7px 0 2px black;
+    }
+
+    &--white {
+        background: #fff;
+    }
+
+    &--yellow {
+        background: $link;
+    }
+
+    &--indigo {
+        background: $indigo;
+
+        .featureCardTitle,
+        .featureCardBody {
+            color: #fff;
+        }
+
+        .featureCardBody {
+            color: rgba(255, 255, 255, 0.82);
+        }
+    }
+}
+
+.featureCardIcon {
+    width: 52px;
+    height: 52px;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: $neo-btn-radius;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.featureCardTitle {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 10px;
+    color: #111;
+}
+
+.featureCardBody {
+    font-size: 15px;
+    font-weight: 500;
+    color: #555;
+    line-height: 1.7;
+}

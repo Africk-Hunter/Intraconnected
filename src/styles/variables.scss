@@ -131,3 +131,23 @@ $neo-m-sheet-shadow-t:    0 4px 0 #111;
 .neo-pink {
     background: $neo-pink;
 }
+
+// Marketing pages (landing, pricing) share this dotted-grid backdrop.
+@mixin landing-grid-bg {
+    background-color: $background-color;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.065) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.065) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+// Bridges existing app color tokens to CSS custom properties so the marketing
+// pages' inline-SVG components (which can't reach Sass vars) stay in sync.
+@mixin marketing-tokens {
+    --mm-roots: #{$roots};
+    --mm-sky: #{$sky};
+    --mm-leaf: #{$leaf};
+    --mm-link: #{$link};
+    --mm-indigo: #{$indigo};
+    --mm-bg: #{$background-color};
+}
