@@ -1,5 +1,5 @@
 import { db, auth } from "../../firebaseConfig";
-import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, deleteField, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch, deleteField, onSnapshot, increment } from "firebase/firestore";
 import { IdeaType, ChecklistItem } from "../types";
 import { encryptField, decryptField } from "../crypto";
 import { getDEK } from "../dekStore";
@@ -156,6 +156,41 @@ export async function fetchIdeasFromFirebase() {
     }
 }
 
+// Overwrites meta/nodeCount with the true current count — see
+// useNodeCountResync, which calls this once per session for free-plan
+// users using a count already available locally (fetchFullIdeaList().length
+// reads localStorage, not Firestore). Needed because adjustNodeCount below
+// only runs for free-plan users, so the counter goes stale (unmaintained)
+// for however long an account spends on a paid plan — this is what catches
+// it back up on downgrade, and what initializes it correctly for existing
+// users on their first session after this feature ships.
+export async function resyncNodeCount(count: number): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    try {
+        const countDoc = doc(db, "users", user.uid, "meta", "nodeCount");
+        await setDoc(countDoc, { count });
+    } catch (error) {
+        console.error("Error resyncing node count: ", error);
+    }
+}
+
+// Firestore rules only ever consult meta/nodeCount to gate a free-plan
+// account against FREE_NODE_LIMIT (see firestore.rules) — a paid account is
+// never capped, so there's no reason to pay the extra read+write this
+// causes on every create/delete for one. Silently a no-op otherwise.
+async function adjustNodeCount(delta: number): Promise<void> {
+    if (getCachedBillingStatus().plan !== 'free') return;
+    const user = authCheck();
+    if (!user) return;
+    try {
+        const countDoc = doc(db, "users", user.uid, "meta", "nodeCount");
+        await setDoc(countDoc, { count: increment(delta) }, { merge: true });
+    } catch (error) {
+        console.error("Error adjusting node count: ", error);
+    }
+}
+
 export async function addIdeaToFirebase(idea: IdeaType) {
     const user = authCheck();
     if (!user) return;
@@ -183,6 +218,7 @@ export async function addIdeaToFirebase(idea: IdeaType) {
             };
         }
         await setDoc(doc(ideasCollection, idea.id.toString()), encrypted);
+        await adjustNodeCount(1);
         await updateSyncTimestamp();
     } catch (error) {
         console.error("Error adding idea: ", error);
@@ -215,6 +251,7 @@ export async function deleteIdeaFromFirebase(ideaId: number) {
     try {
         const ideaDoc = doc(db, "users", user.uid, "ideas", ideaId.toString());
         await deleteDoc(ideaDoc);
+        await adjustNodeCount(-1);
         await updateSyncTimestamp();
     } catch (error) {
         console.error("Error deleting idea: ", error);
@@ -230,6 +267,7 @@ export async function batchDeleteIdeasFromFirebase(ids: number[]): Promise<void>
             batch.delete(doc(db, "users", user.uid, "ideas", id.toString()));
         });
         await batch.commit();
+        await adjustNodeCount(-ids.length);
         await updateSyncTimestamp();
     } catch (error) {
         console.error("Error batch deleting ideas: ", error);

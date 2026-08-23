@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { auth } from "../firebaseConfig";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
 import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
-import { signUserOut } from "../utilities/firebase/authFirebase";
 
 const Auth: React.FC = () => {
 
@@ -29,10 +28,6 @@ const Auth: React.FC = () => {
     const { setMessageBoxMessage, setMessageType, messageBoxMessage } = useIdeaContext();
 
     useEffect(() => {
-        setPersistence(auth, browserLocalPersistence).catch((error) => {
-            console.error("Error setting persistence:", error);
-        });
-
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user && !isShowingRecoveryCode.current && !isSigningIn.current) {
                 const dekLoaded = await loadDEKFromSession();
@@ -70,20 +65,38 @@ const Auth: React.FC = () => {
     }
 
     function checkPassword(password: string) {
-        if (password.length < 6) {
-            displayMessage("Password must be at least 6 characters long", "bad");
+        // Length over arbitrary complexity rules (NIST 800-63B) — a longer
+        // minimum stops more real attacks than forcing symbols/digits does,
+        // and spaces are allowed rather than banned so a passphrase like
+        // "correct horse battery staple" isn't rejected. The upper bound is
+        // just a sanity cap against pathologically long input, not a
+        // meaningful security control.
+        if (password.length < 8) {
+            displayMessage("Password must be at least 8 characters long", "bad");
             console.log(messageBoxMessage);
             return false;
-        } else if (password.length > 20) {
-            displayMessage("Password must be less than 20 characters long", "bad");
+        } else if (password.length > 128) {
+            displayMessage("Password must be less than 128 characters long", "bad");
             console.log(messageBoxMessage);
-            return false;
-        } else if (/\s/.test(password)) {
-            displayMessage("Password cannot contain spaces", "bad");
             return false;
         }
         setMessageBoxMessage("");
         return true;
+    }
+
+    // "Keep me signed in" gates both the Firebase Auth session itself and
+    // the encryption key (see setDEK(dek, rememberMe) below) — previously
+    // only the DEK honored this, while the Auth session always persisted
+    // via a hardcoded browserLocalPersistence regardless of the checkbox,
+    // so unchecking it didn't actually end the session on browser close.
+    // Must be applied before the sign-in/sign-up call for that call to pick
+    // it up.
+    async function applyPersistence() {
+        try {
+            await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+        } catch (error) {
+            console.error("Error setting persistence:", error);
+        }
     }
 
     function defaultSignUp(e: React.MouseEvent<HTMLButtonElement>): void {
@@ -100,12 +113,19 @@ const Auth: React.FC = () => {
         console.log('Password did not meet requirements.');
     }
 
-    function handleSignUp() {
+    async function handleSignUp() {
         isSigningIn.current = true;
+        await applyPersistence();
         createUserWithEmailAndPassword(auth, email.trim(), password)
             .then(async (userCredential) => {
                 const user = userCredential.user;
                 const capturedPassword = password;
+
+                // Best-effort — a paying customer needs a real, confirmed
+                // email on file (see verifyIdTokenDetailed's check in
+                // create-payment-intent.ts), but a failure here shouldn't
+                // block account creation. Resend is available from Profile.
+                sendEmailVerification(user).catch(() => { /* non-critical */ });
 
                 const dek = await generateDEK();
                 const recoveryCode = generateRecoveryCode();
@@ -148,6 +168,7 @@ const Auth: React.FC = () => {
         e.preventDefault();
         const capturedPassword = password;
         isSigningIn.current = true;
+        await applyPersistence();
 
         let userCredential;
         try {

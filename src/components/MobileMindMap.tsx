@@ -33,7 +33,7 @@ import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileMindMapSheet from './MobileMindMapSheet';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
-import changelog from '../CHANGELOG.md?raw';
+import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../utilities/patchNotesState';
 import { auth } from '../firebaseConfig';
@@ -414,14 +414,6 @@ function MobileMindMap() {
         edgeScrollRafRef.current = requestAnimationFrame(tick);
     }
 
-    function clearDrag() {
-        isDraggingRef.current = false;
-        setIsDragging(false);
-        setDragNodeId(null);
-        setDropTargetId(null);
-        stopEdgeScroll();
-    }
-
     function updateDropTarget(x: number, y: number, draggingId: number) {
         if (parentZoneRef.current) {
             const r = parentZoneRef.current.getBoundingClientRect();
@@ -741,9 +733,9 @@ function MobileMindMap() {
 
     function saveHeaderDraft() {
         const currentIdea = fetchFullIdeaList().find((i: IdeaType) => i.id === currentId);
-        if (isNoteMode(currentIdea)) {
+        if (currentIdea && currentIdea.type !== 'checklist' && currentIdea.isNote) {
             const trimmed = headerDraft.trim();
-            if (trimmed === (currentIdea?.noteTitle ?? '')) return;
+            if (trimmed === (currentIdea.noteTitle ?? '')) return;
             updateIdeaNoteTitle(currentId, trimmed);
             updateNoteTitleInFirebase(currentId, trimmed).then(() => {
                 setNewIdeaSwitch(prev => !prev);
@@ -824,9 +816,9 @@ function MobileMindMap() {
         const node = allIdeas.find(i => i.id === sheet.nodeId);
         let changed = false;
 
-        if (isNoteMode(node)) {
+        if (node && node.type !== 'checklist' && node.isNote) {
             const title = draft.trim();
-            if (title !== (node?.noteTitle ?? '')) {
+            if (title !== (node.noteTitle ?? '')) {
                 updateIdeaNoteTitle(sheet.nodeId, title);
                 updateNoteTitleInFirebase(sheet.nodeId, title);
                 changed = true;
@@ -866,7 +858,7 @@ function MobileMindMap() {
     const sheetTitle =
         sheet?.type === 'move' ? 'Move under…' :
         sheet?.type === 'rename' ? (sheet.isNew ? (createTab === 'checklist' ? 'New checklist' : createTab === 'note' ? 'New note' : 'New idea') : sheetNode?.type === 'checklist' ? 'Rename checklist' : allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea') :
-        sheet?.type === 'edit' ? (sheetNode?.type === 'checklist' ? 'Edit checklist' : isNoteMode(sheetNode) ? 'Edit note' : 'Edit idea') :
+        sheet?.type === 'edit' ? (sheetNode?.type === 'checklist' ? 'Edit checklist' : isNoteMode(sheetNode ?? undefined) ? 'Edit note' : 'Edit idea') :
         sheet?.type === 'link' ? (sheetNodeLink ? 'Change link' : 'Add link') :
         sheet?.type === 'confirmDelete' ? 'Delete idea?' :
         sheet?.type === 'checklist' ? (sheetNode?.content ?? '') : '';
@@ -1383,7 +1375,7 @@ function MobileMindMap() {
                             />
                         )}
 
-                        {sheet.type === 'edit' && isNoteMode(sheetNode) && (
+                        {sheet.type === 'edit' && isNoteMode(sheetNode ?? undefined) && (
                             <>
                                 <textarea
                                     autoFocus
@@ -1415,7 +1407,7 @@ function MobileMindMap() {
                             </>
                         )}
 
-                        {sheet.type === 'edit' && !isNoteMode(sheetNode) && (
+                        {sheet.type === 'edit' && !isNoteMode(sheetNode ?? undefined) && (
                             <>
                                 <textarea
                                     autoFocus
@@ -1451,7 +1443,7 @@ function MobileMindMap() {
                         {sheet.type === 'confirmDelete' && (
                             <>
                                 <p className="mmobile-confirm-text">
-                                    This will permanently delete <strong>{resolveIdeaLabel(sheetNode)}</strong> and all its children.
+                                    This will permanently delete <strong>{resolveIdeaLabel(sheetNode ?? undefined)}</strong> and all its children.
                                 </p>
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>

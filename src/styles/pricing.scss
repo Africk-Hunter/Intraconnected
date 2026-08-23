@@ -54,6 +54,19 @@
         grid-template-columns: 1fr;
         padding: 0 20px 40px;
     }
+
+    // Fewer than 3 cards render for an already-Annual/Lifetime user (see
+    // Pricing.tsx) — auto-fit collapses the unused track(s) instead of
+    // leaving them empty, and justify-content centers the remaining card(s)
+    // as a group rather than pinning them to the left edge.
+    &.pricingCards--compact {
+        grid-template-columns: repeat(auto-fit, minmax(0, 340px));
+        justify-content: center;
+
+        @media (max-width: $tablet) {
+            grid-template-columns: 1fr;
+        }
+    }
 }
 
 .priceCard {
@@ -238,4 +251,16 @@
     font-size: 15px;
     font-weight: 700;
     color: #111;
+}
+
+.pricingSupport {
+    text-align: center;
+    padding: 0 48px 64px;
+    font-size: 14px;
+    color: #888;
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
 }

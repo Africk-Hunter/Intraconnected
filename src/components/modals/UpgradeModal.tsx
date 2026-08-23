@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIdeaContext } from "../../context/IdeaContext";
 import AnimatedOverlay from "../AnimatedOverlay";
 import PriceCard from "../landing/PriceCard";
 import { startCheckout, fetchLifetimePricePreview, formatMoney, type LifetimePricePreview } from "../../utilities/billing/billing";
 import { FREE_NODE_LIMIT } from "../../utilities/billing/limits";
+import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../../utilities/billing/pricingDisplay";
+import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
 
 function UpgradeModal() {
     const { upgradeModalOpen, setUpgradeModalOpen, billingPlan, upgradeModalReason, setCheckoutPlan } = useIdeaContext();
     const [lifetimePreview, setLifetimePreview] = useState<LifetimePricePreview | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     // Only Annual subscribers are ever eligible for the Lifetime-upgrade
     // credit (see isEligibleForLifetimeUpgradeDiscount) — skip the request
@@ -33,6 +36,8 @@ function UpgradeModal() {
         setUpgradeModalOpen(false);
     }
 
+    useModalFocusTrap(upgradeModalOpen, containerRef, handleClose);
+
     function handleUpgrade(plan: 'annual' | 'lifetime') {
         setUpgradeModalOpen(false);
         startCheckout(plan, setCheckoutPlan);
@@ -56,9 +61,17 @@ function UpgradeModal() {
 
     return (
         <AnimatedOverlay open={upgradeModalOpen} scrollable onClick={handleClose}>
-            <div className="modal neobrutal confirmModal upgradeModal" onClick={(e) => e.stopPropagation()}>
+            <div
+                className={`modal neobrutal confirmModal upgradeModal${showAnnual ? '' : ' upgradeModal--single'}`}
+                onClick={(e) => e.stopPropagation()}
+                ref={containerRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="upgradeModalTitle"
+                tabIndex={-1}
+            >
                 <button className="upgradeModal-close neobrutal-button" onClick={handleClose} aria-label="Close">✕</button>
-                <h3 className="upgradeModalTitle">{title}</h3>
+                <h3 className="upgradeModalTitle" id="upgradeModalTitle">{title}</h3>
                 {forced ? (
                     <p className="upgradeModalNotice">
                         <span className="upgradeModalNotice-icon" aria-hidden="true">⚠</span>
@@ -72,7 +85,7 @@ function UpgradeModal() {
                         <PriceCard
                             variant="annual"
                             tier="Annual"
-                            price="$1.99"
+                            price={ANNUAL_PRICE_DISPLAY}
                             priceSuffix="/ year"
                             subtitle="Billed once a year"
                             note="Cancel anytime."
@@ -85,7 +98,7 @@ function UpgradeModal() {
                             ctaLabel="Start Annual Plan"
                             ctaHref="#"
                             onCtaClick={() => handleUpgrade('annual')}
-                            footNote="Renews at $1.99/yr · Cancel anytime"
+                            footNote={`Renews at ${ANNUAL_PRICE_DISPLAY}/yr · Cancel anytime`}
                         />
                     )}
                     <PriceCard
@@ -94,7 +107,7 @@ function UpgradeModal() {
                         tier="Lifetime"
                         price={lifetimePreview && lifetimePreview.discountCents > 0
                             ? formatMoney(lifetimePreview.amount, lifetimePreview.currency)
-                            : '$4.99'}
+                            : LIFETIME_PRICE_DISPLAY}
                         priceSuffix="one time"
                         subtitle="Pay once, yours forever"
                         note={billingPlan === 'annual'

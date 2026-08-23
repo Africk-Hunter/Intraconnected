@@ -10,23 +10,28 @@ import Idea from './pages/Idea';
 import Login from './pages/Login';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import AuthAction from './pages/AuthAction';
 import MarketingTransition from './components/landing/MarketingTransition';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
 root.render(
-  <IdeaProvider>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/main" element={<Idea />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/landing" element={<MarketingTransition />} />
-        <Route path="/pricing" element={<MarketingTransition />} />
-      </Routes>
-    </BrowserRouter>
-  </IdeaProvider>
+  <ErrorBoundary>
+    <IdeaProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/main" element={<Idea />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/auth/action" element={<AuthAction />} />
+          <Route path="/landing" element={<MarketingTransition />} />
+          <Route path="/pricing" element={<MarketingTransition />} />
+        </Routes>
+      </BrowserRouter>
+    </IdeaProvider>
+  </ErrorBoundary>
 );

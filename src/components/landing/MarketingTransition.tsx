@@ -4,6 +4,8 @@ import LandingNavbar from './LandingNavbar';
 import Landing from '../../pages/Landing';
 import Pricing from '../../pages/Pricing';
 import CheckoutModal from '../modals/CheckoutModal';
+import { useIdeaContext } from '../../context/IdeaContext';
+import { useBillingPlanSync } from '../../utilities/billing/useBillingPlanSync';
 
 type PageKey = 'landing' | 'pricing';
 
@@ -31,6 +33,13 @@ const renderPage = (key: PageKey) => (key === 'pricing' ? <Pricing /> : <Landing
 const MarketingTransition: React.FC = () => {
   const location = useLocation();
   const targetKey = keyForPath(location.pathname);
+  const { setBillingPlan } = useIdeaContext();
+
+  // These pages sit outside the authenticated app (Idea.tsx never mounts
+  // here), so without this an already-Annual user landing on /pricing
+  // directly would see billingPlan stuck at its default 'free' and be
+  // shown "Start Annual Plan" again — see Pricing.tsx's use of billingPlan.
+  useBillingPlanSync(setBillingPlan);
 
   const [currentKey, setCurrentKey] = useState<PageKey>(targetKey);
   const [transition, setTransition] = useState<Transition | null>(null);

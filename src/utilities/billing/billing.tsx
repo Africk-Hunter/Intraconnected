@@ -44,7 +44,18 @@ export async function fetchCheckoutIntent(plan: CheckoutPlan): Promise<CheckoutI
     });
 
     if (!res.ok) {
-        throw new Error(await res.text());
+        // Server errors here are JSON ({ error: "..." }, see jsonError in
+        // create-payment-intent.ts) — e.g. "You already have an active
+        // Annual subscription." is genuinely useful to show, unlike a
+        // generic retry message that would just fail the same way again.
+        let message = 'Failed to start checkout.';
+        try {
+            const body = await res.json() as { error?: string };
+            if (body.error) message = body.error;
+        } catch {
+            // Non-JSON error body — keep the generic message.
+        }
+        throw new Error(message);
     }
 
     return (await res.json()) as CheckoutIntent;
@@ -81,6 +92,40 @@ export function formatMoney(amountCents: number, currency: string): string {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase() }).format(amountCents / 100);
 }
 
+// Mirrors REFUND_WINDOW_MS in refund-lifetime.ts — duplicated rather than
+// shared (Netlify Functions can't import from src/, same constraint as
+// SUPPORT_EMAIL) so this is only used client-side to decide whether to show
+// the refund button at all; the server call above is the actual authority.
+const REFUND_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+
+export function isLifetimeRefundEligible(updatedAt: number): boolean {
+    return Date.now() - updatedAt <= REFUND_WINDOW_MS;
+}
+
+export async function requestLifetimeRefund(): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error('You must be signed in to request a refund.');
+    }
+
+    const idToken = await user.getIdToken();
+    const res = await fetch('/.netlify/functions/refund-lifetime', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+    });
+
+    if (!res.ok) {
+        let message = 'Failed to process refund.';
+        try {
+            const body = await res.json() as { error?: string };
+            if (body.error) message = body.error;
+        } catch {
+            // Non-JSON error body — keep the generic message.
+        }
+        throw new Error(message);
+    }
+}
+
 export async function cancelSubscription(): Promise<void> {
     const user = auth.currentUser;
     if (!user) {
@@ -89,6 +134,26 @@ export async function cancelSubscription(): Promise<void> {
 
     const idToken = await user.getIdToken();
     const res = await fetch('/.netlify/functions/cancel-subscription', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+    });
+
+    if (!res.ok) {
+        throw new Error(await res.text());
+    }
+}
+
+// Testing-only helper (see reset-subscription-test.ts) — cancels the user's
+// live Stripe subscription (if any) and resets their billing doc to free.
+// Not wired into any production-visible UI path.
+export async function resetSubscriptionForTesting(): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error('You must be signed in.');
+    }
+
+    const idToken = await user.getIdToken();
+    const res = await fetch('/.netlify/functions/reset-subscription-test', {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}` },
     });

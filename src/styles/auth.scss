@@ -322,6 +322,53 @@
 }
 
 
+.authActionCard {
+    background: $background-color;
+    padding: 3rem;
+    max-width: 32rem;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    text-align: center;
+    font-family: "DM Sans", sans-serif;
+}
+
+.authActionTitle {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.authActionText {
+    font-size: 1.2rem;
+    line-height: 1.6;
+}
+
+.authActionError {
+    font-size: 1rem;
+    color: $back;
+}
+
+.authActionForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    width: 100%;
+
+    .input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+.authActionBtn {
+    font-size: 1.25rem;
+    padding: 0.75rem 2rem;
+    width: 100%;
+}
+
 .legalLinks {
     display: flex;
     gap: 1rem;

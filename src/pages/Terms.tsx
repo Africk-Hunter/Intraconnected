@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { SUPPORT_EMAIL } from "../utilities/support";
 
 const Terms: React.FC = () => {
     const navigate = useNavigate();
@@ -179,7 +180,7 @@ const Terms: React.FC = () => {
                     <h2>14. Contact</h2>
                     <p>
                         Questions about these Terms? Reach us at{" "}
-                        <a href="mailto:gamehunter5879@gmail.com">gamehunter5879@gmail.com</a>.
+                        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
                     </p>
                 </section>
             </div>

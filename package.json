@@ -5,9 +5,12 @@
   "scripts": {
     "dev": "vite",
     "dev:functions": "netlify dev",
-    "build": "vite build",
+    "dev:stripe": "concurrently -n netlify,stripe -c blue,magenta \"netlify dev\" \"stripe listen --forward-to localhost:8888/.netlify/functions/stripe-webhook\"",
+    "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc -b && tsc -p tsconfig.functions.json",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -21,7 +24,7 @@
     "normalize.css": "^8.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.5.2",
+    "react-router-dom": "^7.18.2",
     "sass": "^1.87.0",
     "stripe": "^22.5.0"
   },
@@ -32,6 +35,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^6.0.2",
+    "concurrently": "^10.0.4",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
@@ -43,6 +47,6 @@
     "vitest": "^3.2.6"
   },
   "overrides": {
-    "jose": "^4.15.5"
+    "jose": "^4.15.9"
   }
 }

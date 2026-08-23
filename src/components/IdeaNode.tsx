@@ -182,7 +182,7 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCo
                     </button>
                     <button
                         className={`checklist-item-link${item.link ? ' checklist-item-link--active' : ''}`}
-                        onClick={e => { e.stopPropagation(); e.preventDefault(); isLinking ? setIsLinking(false) : openLink(e); }}
+                        onClick={e => { e.stopPropagation(); e.preventDefault(); if (isLinking) { setIsLinking(false); } else { openLink(e); } }}
                         title={item.link ? 'Edit link' : 'Add link'}
                     >
                         <img src="images/LinkBlack.svg" alt="Link" />

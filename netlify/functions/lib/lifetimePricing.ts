@@ -3,11 +3,13 @@ import { stripe } from "./stripe";
 import { isEligibleForLifetimeUpgradeDiscount, type BillingDoc } from "./billingEvents";
 
 // Flat credit toward Lifetime for existing Annual subscribers, equal to
-// what they already paid for the year. 0/unset disables the feature.
-const LIFETIME_UPGRADE_DISCOUNT_CENTS = (() => {
-    const raw = Number(process.env.STRIPE_LIFETIME_UPGRADE_DISCOUNT_CENTS);
-    return Number.isFinite(raw) && raw > 0 ? raw : 0;
-})();
+// what they already paid for the year. Not a secret/per-environment value —
+// committed as a constant (like ANNUAL_PRICE_DISPLAY in
+// src/utilities/billing/pricingDisplay.ts, which Netlify Functions can't
+// import) rather than an env var, since env vars aren't committed and this
+// needs to just work in every environment without extra setup. Keep in sync
+// with ANNUAL_PRICE_DISPLAY if the annual price ever changes.
+const LIFETIME_UPGRADE_DISCOUNT_CENTS = 199;
 
 export async function getBillingDoc(uid: string): Promise<BillingDoc | null> {
     const doc = await firestore().collection("users").doc(uid).collection("meta").doc("billing").get();
@@ -17,7 +19,6 @@ export async function getBillingDoc(uid: string): Promise<BillingDoc | null> {
 // Best-effort: a failure here should never block checkout, just fall back
 // to full price.
 export async function getLifetimeUpgradeDiscountCents(uid: string): Promise<number> {
-    if (LIFETIME_UPGRADE_DISCOUNT_CENTS <= 0) return 0;
     try {
         const billing = await getBillingDoc(uid);
         return isEligibleForLifetimeUpgradeDiscount(billing) ? LIFETIME_UPGRADE_DISCOUNT_CENTS : 0;

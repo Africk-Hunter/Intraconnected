@@ -26,8 +26,6 @@ stripe-testing.local.md
 *.sw?
 
 .agents
-docs/
-/docs
 
 # Local Netlify folder
 .netlify

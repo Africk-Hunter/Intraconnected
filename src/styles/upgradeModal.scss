@@ -18,6 +18,15 @@
     @media (min-width: $large-desktop) {
         width: 58rem;
     }
+
+    // Annual subscribers only ever see the single Lifetime upsell card
+    // (see showAnnual in UpgradeModal.tsx) — the two-card width above leaves
+    // huge empty gutters around the narrow centered card, so shrink the
+    // modal itself to hug it instead. Mobile already collapses to 90% for
+    // both cases, so no override needed there.
+    &.upgradeModal--single {
+        width: 26rem;
+    }
 }
 
 .upgradeModal-close {

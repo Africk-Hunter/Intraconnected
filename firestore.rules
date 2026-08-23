@@ -1,0 +1,94 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+
+      match /ideas/{ideaId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+
+        // Free-tier node cap (FREE_NODE_LIMIT in limits.tsx), enforced
+        // server-side via a denormalized counter at meta/nodeCount —
+        // Firestore rules can only read individual documents via
+        // get()/exists(), there's no way to count a collection's size
+        // directly in a rule. Paid users skip the check entirely.
+        allow create: if request.auth != null && request.auth.uid == userId
+          && (
+            // Bootstrapping fallback: no count doc yet (brand-new user, or
+            // this session's resync hasn't landed yet — see
+            // useNodeCountResync). Fails open rather than blocking a
+            // user's very first-ever creation on that race. Bounded, not
+            // an open door: nodeCount can never be deleted (see below), so
+            // this only ever applies until the first creation or resync
+            // creates the doc — after that, every future create is gated
+            // on a real count.
+            !exists(/databases/$(database)/documents/users/$(userId)/meta/nodeCount)
+            || get(/databases/$(database)/documents/users/$(userId)/meta/nodeCount).data.count < 50
+            || get(/databases/$(database)/documents/users/$(userId)/meta/billing).data.plan != 'free'
+          );
+      }
+
+      // Every meta doc except `billing`/`nodeCount` keeps the pre-existing
+      // ownership-only read/write. Both are excluded here explicitly (not
+      // just handled by their own more-specific match below) because
+      // Firestore combines overlapping `match` blocks with a logical OR —
+      // if this wildcard still evaluated to true for those paths, it would
+      // keep allowing the write no matter what a separate, stricter block
+      // said. The exclusion is what actually closes each hole; the blocks
+      // below grant back exactly the access each one is meant to have.
+      match /meta/{metaDocId} {
+        allow read, write: if request.auth != null
+          && request.auth.uid == userId
+          && metaDocId != 'billing'
+          && metaDocId != 'nodeCount';
+      }
+
+      // Client-maintained (unlike meta/billing) — the app increments this
+      // by 1 on every idea creation and decrements it on deletion (see
+      // addIdeaToFirebase/batchDeleteIdeasFromFirebase in
+      // firebaseHelpers.tsx), and resyncs it to the true count once per
+      // session (useNodeCountResync). This is deliberately not fully
+      // tamper-proof — Firestore rules can't verify a write here actually
+      // corresponds to real ideas being created/deleted, since rules
+      // evaluate each document write independently with no visibility into
+      // sibling writes in the same batch. What this does close: the exact
+      // scenario it was built for — a user calling this app's own
+      // Firestore-write helpers directly past the free-tier cap. A
+      // fully tamper-proof version would need a Cloud Function trigger,
+      // which this app doesn't have.
+      match /meta/nodeCount {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create, update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.count is int;
+        // Never deletable — if this doc could be removed, the "no count
+        // doc yet" bootstrapping fallback on ideas/{ideaId} above would
+        // let a free user delete their way back to an uncapped state
+        // indefinitely, rather than only ever the one time before the
+        // doc first exists.
+        allow delete: if false;
+      }
+
+      // Written only by the stripe-webhook Netlify Function via the Admin
+      // SDK, which authenticates as a service account and bypasses these
+      // rules entirely — so client write is unconditionally false here,
+      // never a check to get right. Read stays owner-only so the app can
+      // still show the user their own plan (subscribeBillingStatus() in
+      // firebaseHelpers.tsx). Confirmed via full-repo search: no client
+      // code path writes to this doc — see CLAUDE.md's Pricing & Billing
+      // section.
+      match /meta/billing {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    // Explicit default-deny for everything else (belt-and-suspenders —
+    // Firestore already denies unmatched paths by default, but this
+    // documents intent).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

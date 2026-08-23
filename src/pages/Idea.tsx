@@ -10,13 +10,13 @@ import LastIdea from '../components/LastIdea';
 
 // 3rd Party Libraries
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { Modifier, CollisionDetection } from '@dnd-kit/core';
+import type { Modifier, CollisionDetection, DragEndEvent } from '@dnd-kit/core';
 import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } from '@dnd-kit/core';
 
 // Custom Libraries
 import { auth } from '../firebaseConfig';
 import { useIdeaContext } from '../context/IdeaContext';
-import changelog from '../CHANGELOG.md?raw';
+import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../utilities/patchNotesState';
 import { getDEK, loadDEKFromSession } from '../utilities/dekStore';
@@ -29,8 +29,6 @@ import {
     getIdeasByParentID,
     IdeaType,
     updateIdeaParentId,
-    updateIdeaPriority,
-    schedulePriorityFirebaseWrite,
     getParentID,
     getNameFromID,
     checkIfIdeaIsLeaf,
@@ -48,11 +46,13 @@ import OnboardingModal from '../components/modals/OnboardingModal';
 import ProfileModal from '../components/modals/ProfileModal';
 import UpgradeModal from '../components/modals/UpgradeModal';
 import CheckoutModal from '../components/modals/CheckoutModal';
+import UpgradeCelebrationModal from '../components/modals/UpgradeCelebrationModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
 import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRequests';
-import { subscribeBillingStatus } from '../utilities/firebase/firebaseHelpers';
 import { consumePendingCheckoutPlan } from '../utilities/billing/billing';
+import { useBillingPlanSync } from '../utilities/billing/useBillingPlanSync';
+import { useNodeCountResync } from '../utilities/billing/useNodeCountResync';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -79,8 +79,6 @@ function Idea() {
     const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
         (localStorage.getItem('idea_sort_mode') as 'priority' | 'recent') ?? 'priority'
     );
-    const [rootPriority, setRootPriority] = useState<1 | 2 | 3 | undefined>(undefined);
-    const [checkoutBanner, setCheckoutBanner] = useState<string | null>(null);
 
     const ideaNodesRef = useRef<HTMLDivElement>(null);
     const flipSnapshot = useRef<Map<number, { top: number; left: number }>>(new Map());
@@ -109,20 +107,6 @@ function Idea() {
         }
     }, []);
 
-    useEffect(() => {
-        let unsubscribeBilling: (() => void) | undefined;
-        const unsubscribeAuth = auth.onAuthStateChanged(user => {
-            unsubscribeBilling?.();
-            unsubscribeBilling = undefined;
-            if (!user) return;
-            unsubscribeBilling = subscribeBillingStatus(status => setBillingPlan(status.plan));
-        });
-        return () => {
-            unsubscribeAuth();
-            unsubscribeBilling?.();
-        };
-    }, []);
-
     // A plan clicked while signed out (see startCheckout in billing.tsx)
     // is remembered in sessionStorage and resumed here once auth resolves.
     useEffect(() => {
@@ -133,23 +117,6 @@ function Idea() {
             if (pendingPlan) setCheckoutPlan(pendingPlan);
         });
         return () => unsubscribe();
-    }, []);
-
-    // Stripe's webhook may lag a few seconds behind the checkout redirect —
-    // this just covers that gap with a brief message rather than a silent
-    // flash of "still free".
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const checkout = params.get('checkout');
-        if (checkout === 'success') {
-            setCheckoutBanner('Finalizing your upgrade…');
-            setTimeout(() => setCheckoutBanner(null), 4000);
-        }
-        if (checkout) {
-            params.delete('checkout');
-            const query = params.toString();
-            window.history.replaceState({}, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
-        }
     }, []);
 
     function handleTogglePatchNotes() {
@@ -166,7 +133,10 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, pendingDeleteId, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId, setBillingPlan, setCheckoutPlan } = useIdeaContext();
+    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan } = useIdeaContext();
+
+    useBillingPlanSync(setBillingPlan);
+    useNodeCountResync(billingPlan, initialFetch);
 
     useEffect(() => {
         const handleVisibilityChange = async () => {
@@ -218,7 +188,6 @@ function Idea() {
             const currentRoot = fetchFullIdeaList().find((idea: IdeaType) => idea.id === rootId);
             if (currentRoot) {
                 setRootName(resolveIdeaLabel(currentRoot));
-                setRootPriority(currentRoot.priority);
             }
         };
 
@@ -252,12 +221,12 @@ function Idea() {
         return collisions.map(c => ({ id: c.id }));
     };
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!active || !over) return;
 
-        const activeId = Number(active.id.split('-')[1]);
-        const overId = Number(over.id.split('-')[1]);
+        const activeId = Number(String(active.id).split('-')[1]);
+        const overId = Number(String(over.id).split('-')[1]);
         const overIdea = fetchFullIdeaList().find((i: IdeaType) => i.id === overId);
         const overLink = getIdeaLink(overIdea);
 
@@ -276,7 +245,7 @@ function Idea() {
             if (activeId === overId) return;
             if (overLink !== '') return;
             if (isNoteMode(overIdea)) return;
-            const newParentId = Number(over.id.split('-')[1]);
+            const newParentId = Number(String(over.id).split('-')[1]);
             updateIdeaParentId(activeId, newParentId);
             setIdeasFromStorage();
         }
@@ -291,13 +260,6 @@ function Idea() {
         const next = sortMode === 'priority' ? 'recent' : 'priority';
         setSortMode(next);
         localStorage.setItem('idea_sort_mode', next);
-    }
-
-    function handleRootPriority(p: 1 | 2 | 3) {
-        const next: 1 | 2 | 3 | undefined = rootPriority === p ? undefined : p;
-        setRootPriority(next);
-        updateIdeaPriority(rootId, next);
-        schedulePriorityFirebaseWrite(rootId, next);
     }
 
     const displayedIdeas = sortIdeas(ideas, sortMode);
@@ -424,7 +386,7 @@ function Idea() {
                                     <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => navigateToId(getParentID(rootId))}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
                                     <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Age'}</button>
                                 </section>
-                                <div className="ideaRoot neobrutal-button" onClick={() => { rootId !== 1 && setRenameModalOpen(true)}}><span className="ideaRoot-text">{rootName}</span></div>
+                                <div className="ideaRoot neobrutal-button" onClick={() => { if (rootId !== 1) setRenameModalOpen(true); }}><span className="ideaRoot-text">{rootName}</span></div>
                                 <div className="rootSpacer">
                                     {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
                                 </div>
@@ -470,10 +432,8 @@ function Idea() {
             <ProfileModal />
             <UpgradeModal />
             <CheckoutModal />
-            {checkoutBanner && (
-                <section className="messageBox shadowAndBorder neobrutal-button good checkoutBanner">
-                    <p className="messageBoxMessage">{checkoutBanner}</p>
-                </section>
+            {celebrationPlan && (
+                <UpgradeCelebrationModal plan={celebrationPlan} onClose={() => setCelebrationPlan(null)} />
             )}
             {implementedTitles && (
                 <FeatureImplementedModal titles={implementedTitles} onClose={() => setImplementedTitles(null)} />

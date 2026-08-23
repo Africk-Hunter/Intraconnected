@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface Props {
@@ -61,7 +61,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
         });
     }
 
-    function renderMoveTree(parentId: number, depth: number) {
+    function renderMoveTree(parentId: number, depth: number): ReactNode[] {
         return allIdeas
             .filter(i => i.parentID === parentId && !hidden.has(i.id))
             .flatMap(child => {

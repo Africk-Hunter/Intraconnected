@@ -55,6 +55,8 @@ interface IdeaContextType {
     setUpgradeModalReason: (reason: 'limit' | null) => void;
     checkoutPlan: CheckoutPlan | null;
     setCheckoutPlan: (plan: CheckoutPlan | null) => void;
+    celebrationPlan: CheckoutPlan | null;
+    setCelebrationPlan: (plan: CheckoutPlan | null) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -87,6 +89,7 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [upgradeModalReason, setUpgradeModalReason] = useState<'limit' | null>(null);
     const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
+    const [celebrationPlan, setCelebrationPlan] = useState<CheckoutPlan | null>(null);
 
     const rootIdStack = useRef<number[]>([]);
 
@@ -162,6 +165,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUpgradeModalReason,
                 checkoutPlan,
                 setCheckoutPlan,
+                celebrationPlan,
+                setCelebrationPlan,
             }}>
             {children}
         </IdeaContext.Provider>

@@ -168,6 +168,18 @@
     margin: 0 0 0.75rem 0;
 }
 
+.profile-support {
+    font-size: 0.85rem;
+    color: #888;
+    text-align: center;
+    margin: 0.5rem 0 0;
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
+}
+
 .profile-close {
     position: absolute;
     top: 1rem;

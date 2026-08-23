@@ -6,7 +6,11 @@ import { canCreateIdea } from "../billing/limits";
 // Redundant free-tier gate — the primary check happens where the "create"
 // UI is triggered (Navbar/MobileMindMap), before this ever runs. Kept here
 // too as defense-in-depth against any future call site that skips that
-// check; this is a UX gate only, not a security boundary (see PRD 003).
+// check. This one's still just a UX nicety (a client that skips it entirely
+// would just have its Firestore write rejected instead) — the actual
+// enforcement now lives server-side in firestore.rules (meta/nodeCount),
+// not here. See addIdeaToFirebase in firebaseHelpers.tsx for where that
+// counter actually gets maintained.
 export function handleIdeaCreation(content: string, parentID: number, link: string, priority?: 1 | 2 | 3) {
     if (!canCreateIdea()) return;
     const newID = Date.now();

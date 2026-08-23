@@ -35,9 +35,9 @@ function organizeIdeas(ideas: IdeaType[]) {
     });
 }
 
-function appendToLocalStorageFromFirebase(name: string, data: any) {
-    
-    let currentData = localStorage.getItem(name);
+function appendToLocalStorageFromFirebase(name: string, data: IdeaType) {
+
+    const currentData = localStorage.getItem(name);
     if (currentData === null) {
         localStorage.setItem(name, JSON.stringify([data]));
     } else {
