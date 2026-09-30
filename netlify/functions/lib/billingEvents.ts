@@ -231,15 +231,12 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
 // reverts to "annual", since that refund is undoing the upgrade, not an
 // original purchase the account never had anything before.
 //
-// This deliberately does not attempt to resurrect a live Stripe
-// subscription for the annual→lifetime case — the original subscription was
-// canceled immediately at upgrade time (see the Annual→Lifetime critical
-// fix), not left to expire, so there is nothing left in Stripe to restore.
-// Reverting `plan` to "annual" here grants that access back on our own
-// record without a subscription behind it, which means nothing will ever
-// bill or expire it again automatically. Accepted, disclosed trade-off for
-// an edge case (upgrade, then refund the upgrade) rather than building a
-// synthetic-subscription reinstatement flow for it.
+// A bare "annual" from here is only a request, not a grant: the original
+// subscription was canceled immediately at upgrade time, so there is no
+// subscription behind it. stripe-webhook.ts (resumeAnnualSubscription)
+// turns it into a real, trialing subscription for the rest of the year the
+// user had already paid for — or "free" if that year is over — and never
+// writes this "annual" to Firestore as-is.
 //
 // Unlike deriveBillingUpdate above, this doesn't take the raw Stripe event —
 // Charge metadata is a separate dictionary from the PaymentIntent's and is

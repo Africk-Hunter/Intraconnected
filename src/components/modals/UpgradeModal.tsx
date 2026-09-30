@@ -96,7 +96,6 @@ function UpgradeModal() {
                                 { label: 'Suggest new features' },
                             ]}
                             ctaLabel="Start Annual Plan"
-                            ctaHref="#"
                             onCtaClick={() => handleUpgrade('annual')}
                             footNote={`Renews at ${ANNUAL_PRICE_DISPLAY}/yr · Cancel anytime`}
                         />
@@ -122,7 +121,6 @@ function UpgradeModal() {
                             { label: 'Suggest new features' },
                         ]}
                         ctaLabel="Unlock Lifetime Access"
-                        ctaHref="#"
                         onCtaClick={() => handleUpgrade('lifetime')}
                         footNote="Access Forever"
                     />

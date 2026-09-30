@@ -7,7 +7,6 @@ export * from './idea/storage';
 export * from './idea/helpers';
 export * from './idea/parsing';
 export * from './idea/creation';
-export * from './idea/organizers';
 
 // Billing
 export * from './billing/limits';

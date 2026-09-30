@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig, configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
@@ -17,5 +17,10 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // `netlify dev`/`netlify build` populate .netlify/functions-serve with
+    // bundled copies of every *.test.ts file; without this, vitest's default
+    // glob picks those up too and reports spurious "no test suite found"
+    // failures for each one whenever it's run locally after using either.
+    exclude: [...configDefaults.exclude, '.netlify/**'],
   },
 })

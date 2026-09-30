@@ -16,8 +16,7 @@ interface PriceCardProps {
   note: string;
   features: PriceFeature[];
   ctaLabel: string;
-  ctaHref: string;
-  onCtaClick?: () => void;
+  onCtaClick: () => void;
   footNote: string;
 }
 
@@ -31,7 +30,6 @@ const PriceCard: React.FC<PriceCardProps> = ({
   note,
   features,
   ctaLabel,
-  ctaHref,
   onCtaClick,
   footNote,
 }) => {
@@ -63,19 +61,9 @@ const PriceCard: React.FC<PriceCardProps> = ({
         ))}
       </div>
 
-      {onCtaClick ? (
-        <button type="button" className="priceCardCta neobrutal-button" onClick={onCtaClick}>
-          {ctaLabel}
-        </button>
-      ) : (
-        <a
-          href={ctaHref}
-          className="priceCardCta neobrutal-button"
-          onClick={ctaHref === '#' ? (e) => e.preventDefault() : undefined}
-        >
-          {ctaLabel}
-        </a>
-      )}
+      <button type="button" className="priceCardCta neobrutal-button" onClick={onCtaClick}>
+        {ctaLabel}
+      </button>
       <div className="priceCardFootNote">{footNote}</div>
     </div>
   );

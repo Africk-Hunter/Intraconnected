@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FeatureCard from '../components/landing/FeatureCard';
 import MindMapHeroAnimation from '../components/landing/MindMapHeroAnimation';
@@ -29,11 +28,15 @@ const ChecklistIcon = () => (
   </svg>
 );
 
-const Landing: React.FC = () => {
-  useEffect(() => {
-    document.title = 'Intraconnected — Map Your Mind. Connect Your Ideas.';
-  }, []);
+const LockIcon = () => (
+  <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+    <rect x="4.5" y="11" width="17" height="12" rx="2.5" stroke="#111" strokeWidth="2.5" />
+    <path d="M8.5 11V8a4.5 4.5 0 0 1 9 0v3" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
+    <line x1="13" y1="15.5" x2="13" y2="18.5" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
+  </svg>
+);
 
+const Landing: React.FC = () => {
   return (
     <div className="landingPage">
       <section className="landingHero">
@@ -61,6 +64,72 @@ const Landing: React.FC = () => {
         <FeatureCard variant="indigo" iconBg="var(--mm-bg)" icon={<ChecklistIcon />} title="Checklists built in">
           Turn any node into an actionable checklist and keep tasks right inside your mind map.
         </FeatureCard>
+        <p className="landingNoLockIn">
+          No lock-in: export your whole map to Markdown, OPML or JSON anytime, on any plan.
+        </p>
+      </section>
+
+      {/* Wording must stay in step with Privacy.tsx "How Your Data Is
+          Protected": this is client-side encryption with an email-recovery
+          key, NOT end-to-end — never claim "only you can decrypt" or "we
+          cannot read" here (see CLAUDE.md → Client-side encryption). */}
+      <section className="landingSecurity" aria-labelledby="landingSecurityTitle">
+        <div className="landingSecurityHeader">
+          <div className="landingSecurityIcon"><LockIcon /></div>
+          <h2 id="landingSecurityTitle" className="landingSecurityTitle">How your ideas are protected</h2>
+          <p className="landingSecuritySubline">Plain answers, including the trade-off.</p>
+        </div>
+
+        <ol className="landingSecuritySteps">
+          <li className="securityStep neobrutal">
+            <span className="securityStepNumber">1</span>
+            <h3 className="securityStepTitle">Encrypted on your device</h3>
+            <p className="securityStepBody">
+              Your ideas are locked with AES-256-GCM in your browser before they're sent
+              anywhere. Nothing readable leaves your device.
+            </p>
+          </li>
+          <li className="securityStep neobrutal">
+            <span className="securityStepNumber">2</span>
+            <h3 className="securityStepTitle">Stored scrambled</h3>
+            <p className="securityStepBody">
+              Our database holds the encrypted version, not your readable ideas. We don't
+              look at your ideas, and there are no ads, trackers or analytics.
+            </p>
+          </li>
+          <li className="securityStep securityStep--tradeoff neobrutal">
+            <span className="securityStepNumber">3</span>
+            <h3 className="securityStepTitle">Recoverable if you forget your password</h3>
+            <p className="securityStepBody">
+              We keep a recovery copy of your key tied to your email, so a password reset
+              doesn't wipe your ideas. The trade-off: someone with access to both our
+              database and your account details, including us, could technically decrypt
+              them. We don't, and won't unless required by law.
+            </p>
+          </li>
+        </ol>
+
+        <div className="securityScope neobrutal">
+          <div className="securityScopeCol">
+            <h3 className="securityScopeTitle">Encrypted</h3>
+            <ul>
+              <li>Idea and note text</li>
+              <li>Links</li>
+              <li>Checklist items and their links</li>
+            </ul>
+          </div>
+          <div className="securityScopeCol securityScopeCol--plain">
+            <h3 className="securityScopeTitle">Not encrypted</h3>
+            <ul>
+              <li>Your email address</li>
+              <li>How your ideas are arranged (what's inside what)</li>
+              <li>Priorities and checked/unchecked state</li>
+              <li>Your plan</li>
+            </ul>
+          </div>
+        </div>
+
+        <Link to="/privacy" className="securityMoreLink">Full details in our Privacy Policy →</Link>
       </section>
     </div>
   );

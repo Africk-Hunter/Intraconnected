@@ -13,6 +13,7 @@ import Terms from './pages/Terms';
 import AuthAction from './pages/AuthAction';
 import MarketingTransition from './components/landing/MarketingTransition';
 import ErrorBoundary from './components/ErrorBoundary';
+import ScrollToTop from './components/ScrollToTop';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -22,6 +23,7 @@ root.render(
   <ErrorBoundary>
     <IdeaProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/main" element={<Idea />} />

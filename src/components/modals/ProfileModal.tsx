@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { signUserOut, deleteUserAccount, sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
@@ -7,10 +7,31 @@ import { fetchFullIdeaList } from '../../utilities/idea/helpers';
 import { cancelSubscription, resetSubscriptionForTesting, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
 import { getCachedBillingStatus, BillingStatus } from '../../utilities/firebase/firebaseHelpers';
 import { SUPPORT_EMAIL } from '../../utilities/support';
+import { ideasToMarkdown, ideasToOpml } from '../../utilities/idea/exporters';
+import type { SortMode } from '../../utilities/idea/sorting';
+import { downloadFile } from '../../utilities/download';
+import { useSmoothHeight } from '../../utilities/useSmoothHeight';
+import ImportDataSection from './ImportDataSection';
 import '../../styles/profileModal.scss';
 
-type Tab = 'account' | 'customization';
-type MobileView = 'tabs' | 'account';
+type Tab = 'account' | 'data' | 'developer';
+type ExportFormat = 'md' | 'opml' | 'json';
+
+const EXPORT_MIME_TYPES: Record<ExportFormat, string> = {
+    md: 'text/markdown',
+    opml: 'text/x-opml',
+    json: 'application/json',
+};
+type MobileView = 'tabs' | Tab;
+
+// Developer tab only exists in dev builds — never ships to prod
+const TABS: { id: Tab; label: string; desc: string }[] = [
+    { id: 'account', label: 'Account', desc: 'Plan, password & account settings' },
+    { id: 'data', label: 'Data', desc: 'Import & export your ideas' },
+    ...(import.meta.env.DEV
+        ? [{ id: 'developer' as const, label: 'Developer Testing', desc: 'Dev-only tools' }]
+        : []),
+];
 
 function ProfileModal() {
     const { profileModalOpen, setProfileModalOpen, billingPlan, setBillingPlan, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
@@ -36,6 +57,7 @@ function ProfileModal() {
     const [verifyResendSent, setVerifyResendSent] = useState(false);
     const [verifyError, setVerifyError] = useState('');
     const [isCheckingVerified, setIsCheckingVerified] = useState(false);
+    const { contentRef, height: contentHeight, animate: animateHeight } = useSmoothHeight<HTMLDivElement>();
 
     useEffect(() => {
         if (profileModalOpen) {
@@ -167,25 +189,29 @@ function ProfileModal() {
     // already reads the decrypted copy straight out of localStorage, so
     // there's nothing for a server export endpoint to add here. Mirrors the
     // Blob/object-URL download pattern already used for the recovery code
-    // in Auth.tsx.
-    function handleExportData() {
-        const user = auth.currentUser;
-        const payload = {
-            exportedAt: new Date().toISOString(),
-            account: {
-                email: user?.email ?? null,
-                uid: user?.uid ?? null,
-                accountCreated: user?.metadata?.creationTime ?? null,
-            },
-            ideas: fetchFullIdeaList(),
-        };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `intraconnected-export-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+    // in Auth.tsx. Never plan-gated — exporting is the no-lock-in promise.
+    function handleExportData(format: ExportFormat) {
+        const now = new Date();
+        const ideas = fetchFullIdeaList();
+        const sortMode = (localStorage.getItem('idea_sort_mode') as SortMode | null) ?? 'priority';
+        let contents: string;
+        if (format === 'md') {
+            contents = ideasToMarkdown(ideas, { sortMode });
+        } else if (format === 'opml') {
+            contents = ideasToOpml(ideas, { sortMode, exportedAt: now });
+        } else {
+            const user = auth.currentUser;
+            contents = JSON.stringify({
+                exportedAt: now.toISOString(),
+                account: {
+                    email: user?.email ?? null,
+                    uid: user?.uid ?? null,
+                    accountCreated: user?.metadata?.creationTime ?? null,
+                },
+                ideas,
+            }, null, 2);
+        }
+        downloadFile(contents, EXPORT_MIME_TYPES[format], `intraconnected-export-${now.toISOString().slice(0, 10)}.${format}`);
     }
 
     async function handleDeleteAccount() {
@@ -343,24 +369,6 @@ function ProfileModal() {
                 </section>
             )}
 
-            {/* Developer Testing (dev builds only, never ships to prod) */}
-            {import.meta.env.DEV && (
-                <section className="profile-section profile-section--dev">
-                    <h3 className="profile-section-title">Developer Testing</h3>
-                    <p className="profile-section-desc">
-                        Cancels any live Stripe subscription and resets your plan to Free. Dev-only.
-                    </p>
-                    <button
-                        className="profile-action-btn danger neobrutal-button"
-                        onClick={handleResetPlanForTesting}
-                        disabled={isResettingPlan || billingPlan === 'free'}
-                    >
-                        {isResettingPlan ? 'Resetting…' : 'Reset to Free'}
-                    </button>
-                    {resetPlanError && <p className="profile-error">{resetPlanError}</p>}
-                </section>
-            )}
-
             {/* Reset Password */}
             <section className="profile-section profile-section--reset">
                 <h3 className="profile-section-title">Reset Password</h3>
@@ -380,15 +388,6 @@ function ProfileModal() {
                 <p className="profile-section-desc">Log out of account.</p>
                 <button className="profile-action-btn neutral neobrutal-button" onClick={signUserOut}>
                     Log out
-                </button>
-            </section>
-
-            {/* Export Data */}
-            <section className="profile-section profile-section--export">
-                <h3 className="profile-section-title">Export Your Data</h3>
-                <p className="profile-section-desc">Download a copy of your ideas and account info as a JSON file.</p>
-                <button className="profile-action-btn neobrutal-button" onClick={handleExportData}>
-                    Export data
                 </button>
             </section>
 
@@ -432,66 +431,133 @@ function ProfileModal() {
         </div>
     );
 
+    const dataContent = (
+        <div className="profile-account-content">
+            {/* Export Data */}
+            <section className="profile-section profile-section--export">
+                <h3 className="profile-section-title">Export Your Data</h3>
+                <p className="profile-section-desc">
+                    Download a copy of your ideas anytime. Markdown for notes apps, OPML for other
+                    mind-map and outliner apps, JSON for a full backup.
+                </p>
+                <div className="profile-export-buttons">
+                    <button className="profile-action-btn neobrutal-button" onClick={() => handleExportData('md')}>
+                        Markdown (.md)
+                    </button>
+                    <button className="profile-action-btn neobrutal-button" onClick={() => handleExportData('opml')}>
+                        OPML (.opml)
+                    </button>
+                    <button className="profile-action-btn neobrutal-button" onClick={() => handleExportData('json')}>
+                        JSON (.json)
+                    </button>
+                </div>
+            </section>
+
+            {/* Import Data */}
+            <ImportDataSection onUpgrade={handleOpenUpgrade} />
+        </div>
+    );
+
+    // Dev builds only — the tab itself is omitted from TABS in prod
+    const developerContent = (
+        <div className="profile-account-content">
+            <section className="profile-section profile-section--dev">
+                <h3 className="profile-section-title">Reset Plan</h3>
+                <p className="profile-section-desc">
+                    Cancels any live Stripe subscription and resets your plan to Free. Dev-only.
+                </p>
+                <button
+                    className="profile-action-btn danger neobrutal-button"
+                    onClick={handleResetPlanForTesting}
+                    disabled={isResettingPlan || billingPlan === 'free'}
+                >
+                    {isResettingPlan ? 'Resetting…' : 'Reset to Free'}
+                </button>
+                {resetPlanError && <p className="profile-error">{resetPlanError}</p>}
+            </section>
+        </div>
+    );
+
+    const tabContent: Record<Tab, ReactNode> = {
+        account: accountContent,
+        data: dataContent,
+        developer: import.meta.env.DEV ? developerContent : null,
+    };
+
     return (
         <AnimatedOverlay open={profileModalOpen}>
             <div className="modal neobrutal profile-modal">
+                {/* Height animates between tabs / content changes (see useSmoothHeight) */}
+                <div
+                    className={`profile-resize${animateHeight ? ' profile-resize--animate' : ''}`}
+                    style={{ height: contentHeight }}
+                >
+                    <div ref={contentRef}>
 
-                {/* ── DESKTOP layout ── */}
-                <div className="profile-desktop">
-                    <div className="profile-left">
-                        <h2 className="profile-heading">Profile Options</h2>
-                        <button
-                            className={`profile-tab neobrutal-button${activeTab === 'account' ? ' profile-tab--active' : ''}`}
-                            onClick={() => setActiveTab('account')}
-                        >
-                            Account
-                        </button>
-                        <button
-                            className="profile-tab profile-tab--disabled neobrutal-button"
-                            disabled
-                        >
-                            Customization
-                        </button>
-                    </div>
-                    <div className="profile-right">
-                        {activeTab === 'account' && accountContent}
-                    </div>
-                </div>
+                        {/* ── DESKTOP layout ── */}
+                        <div className="profile-desktop">
+                            <div className="profile-left">
+                                <h2 className="profile-heading">Profile Options</h2>
+                                {TABS.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        className={`profile-tab neobrutal-button${activeTab === tab.id ? ' profile-tab--active' : ''}`}
+                                        onClick={() => setActiveTab(tab.id)}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                                <button
+                                    className="profile-tab profile-tab--disabled neobrutal-button"
+                                    disabled
+                                >
+                                    Customization
+                                </button>
+                            </div>
+                            <div className="profile-right">
+                                {tabContent[activeTab]}
+                            </div>
+                        </div>
 
-                {/* ── MOBILE layout ── */}
-                <div className="profile-mobile">
-                    {mobileView === 'tabs' ? (
-                        <>
-                            <h2 className="profile-heading">Profile Options</h2>
-                            <button
-                                className="profile-tab profile-tab--mobile neobrutal-button"
-                                onClick={() => setMobileView('account')}
-                            >
-                                <div>
-                                    <span className="profile-tab-label">Account</span>
-                                    <span className="profile-tab-desc">Password &amp; account settings</span>
-                                </div>
-                                <span className="profile-tab-arrow">›</span>
-                            </button>
-                            <button
-                                className="profile-tab profile-tab--mobile profile-tab--disabled neobrutal-button"
-                                disabled
-                            >
-                                <div>
-                                    <span className="profile-tab-label">Customization</span>
-                                    <span className="profile-tab-soon">Coming soon</span>
-                                </div>
-                                <span className="profile-tab-arrow">›</span>
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button className="profile-back neobrutal-button" onClick={() => setMobileView('tabs')}>
-                                ← Back
-                            </button>
-                            {accountContent}
-                        </>
-                    )}
+                        {/* ── MOBILE layout ── */}
+                        <div className="profile-mobile">
+                            {mobileView === 'tabs' ? (
+                                <>
+                                    <h2 className="profile-heading">Profile Options</h2>
+                                    {TABS.map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            className="profile-tab profile-tab--mobile neobrutal-button"
+                                            onClick={() => setMobileView(tab.id)}
+                                        >
+                                            <div>
+                                                <span className="profile-tab-label">{tab.label}</span>
+                                                <span className="profile-tab-desc">{tab.desc}</span>
+                                            </div>
+                                            <span className="profile-tab-arrow">›</span>
+                                        </button>
+                                    ))}
+                                    <button
+                                        className="profile-tab profile-tab--mobile profile-tab--disabled neobrutal-button"
+                                        disabled
+                                    >
+                                        <div>
+                                            <span className="profile-tab-label">Customization</span>
+                                            <span className="profile-tab-soon">Coming soon</span>
+                                        </div>
+                                        <span className="profile-tab-arrow">›</span>
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className="profile-back neobrutal-button" onClick={() => setMobileView('tabs')}>
+                                        ← Back
+                                    </button>
+                                    {tabContent[mobileView]}
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Close button */}

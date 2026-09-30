@@ -9,17 +9,18 @@ vi.hoisted(() => {
 const { firestoreMock } = vi.hoisted(() => ({ firestoreMock: vi.fn() }));
 vi.mock("./lib/firebaseAdmin", () => ({ firestore: firestoreMock }));
 
-const { constructEvent, paymentIntentsRetrieve, subscriptionsCancel, subscriptionsCreate } = vi.hoisted(() => ({
+const { constructEvent, paymentIntentsRetrieve, subscriptionsCancel, subscriptionsCreate, subscriptionsList } = vi.hoisted(() => ({
     constructEvent: vi.fn(),
     paymentIntentsRetrieve: vi.fn(),
     subscriptionsCancel: vi.fn(),
     subscriptionsCreate: vi.fn(),
+    subscriptionsList: vi.fn(),
 }));
 vi.mock("./lib/stripe", () => ({
     stripe: () => ({
         webhooks: { constructEvent },
         paymentIntents: { retrieve: paymentIntentsRetrieve },
-        subscriptions: { cancel: subscriptionsCancel, create: subscriptionsCreate },
+        subscriptions: { cancel: subscriptionsCancel, create: subscriptionsCreate, list: subscriptionsList },
     }),
 }));
 
@@ -184,48 +185,118 @@ describe("stripe-webhook", () => {
         });
 
         // The case this fix is for: refunding a Lifetime purchase that was
-        // itself an Annual→Lifetime upgrade must actually resume billing,
-        // not just flip a Firestore label with no live subscription behind
-        // it — see resumeAnnualSubscription's own docs in stripe-webhook.ts.
-        it("resumes Annual billing off-session when refunding an annual→lifetime upgrade", async () => {
-            constructEvent.mockReturnValue({
-                id: "evt_refund_annual",
-                type: "charge.refunded",
-                data: { object: { refunded: true, payment_intent: "pi_1" } },
-            });
-            paymentIntentsRetrieve.mockResolvedValue({ metadata: { firebaseUid: "uid-1", plan: "lifetime" } });
-            deriveLifetimeRefundUpdate.mockReturnValue({
-                uid: "uid-1",
-                update: { plan: "annual", stripeCustomerId: "cus_abc", previousPlan: null },
-            });
-            subscriptionsCreate.mockResolvedValue({ id: "sub_new", status: "active", customer: "cus_abc" });
-            deriveBillingUpdate.mockReturnValue({
-                uid: "uid-1",
-                update: { plan: "annual", stripeSubscriptionId: "sub_new", subscriptionStatus: "active" },
-            });
-            const { billingSet } = mockDb({ eventData: null });
+        // itself an Annual→Lifetime upgrade must actually restore the Annual
+        // year already paid for, not just flip a Firestore label with no
+        // live subscription behind it — and must not charge again to do it.
+        // See resumeAnnualSubscription's own docs in stripe-webhook.ts.
+        describe("refunding an annual→lifetime upgrade", () => {
+            const futureEnd = () => Math.floor(Date.now() / 1000) + 200 * 24 * 60 * 60;
 
-            const res = await handler(fakeWebhookRequest(), {} as never);
+            function setUpRefund() {
+                constructEvent.mockReturnValue({
+                    id: "evt_refund_annual",
+                    type: "charge.refunded",
+                    data: { object: { refunded: true, payment_intent: "pi_1" } },
+                });
+                paymentIntentsRetrieve.mockResolvedValue({ metadata: { firebaseUid: "uid-1", plan: "lifetime" } });
+                deriveLifetimeRefundUpdate.mockReturnValue({
+                    uid: "uid-1",
+                    update: { plan: "annual", stripeCustomerId: "cus_abc", previousPlan: null },
+                });
+            }
 
-            expect(res.status).toBe(200);
-            expect(subscriptionsCreate).toHaveBeenCalledWith(
-                expect.objectContaining({ customer: "cus_abc", items: [{ price: "price_annual_test" }] })
-            );
-            // Reuses deriveBillingUpdate's own status-gating by synthesizing
-            // the customer.subscription.updated event Stripe would otherwise
-            // send for the newly created subscription, rather than
-            // duplicating that logic here.
-            expect(deriveBillingUpdate).toHaveBeenCalledWith(
-                expect.objectContaining({ type: "customer.subscription.updated", data: { object: expect.objectContaining({ id: "sub_new" }) } }),
-                expect.objectContaining({ plan: "annual" })
-            );
-            expect(billingSet).toHaveBeenCalledWith(
-                expect.objectContaining({ plan: "annual", stripeSubscriptionId: "sub_new" }),
-                { merge: true }
-            );
+            function canceledSub(overrides: Record<string, unknown> = {}) {
+                return {
+                    id: "sub_old",
+                    default_payment_method: "pm_card",
+                    cancel_at_period_end: false,
+                    items: { data: [{ current_period_end: futureEnd() }] },
+                    ...overrides,
+                };
+            }
+
+            it("restores Annual as a trial to the original period end, with the saved card and no charge now", async () => {
+                setUpRefund();
+                const periodEnd = futureEnd();
+                subscriptionsList.mockResolvedValue({ data: [canceledSub({ items: { data: [{ current_period_end: periodEnd }] } })] });
+                subscriptionsCreate.mockResolvedValue({ id: "sub_new", status: "trialing", customer: "cus_abc" });
+                deriveBillingUpdate.mockReturnValue({
+                    uid: "uid-1",
+                    update: { plan: "annual", stripeSubscriptionId: "sub_new", subscriptionStatus: "trialing" },
+                });
+                const { billingSet } = mockDb({ eventData: null });
+
+                const res = await handler(fakeWebhookRequest(), {} as never);
+
+                expect(res.status).toBe(200);
+                expect(subscriptionsList).toHaveBeenCalledWith({ customer: "cus_abc", status: "canceled", limit: 1 });
+                expect(subscriptionsCreate).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        customer: "cus_abc",
+                        items: [{ price: "price_annual_test" }],
+                        trial_end: periodEnd,
+                        default_payment_method: "pm_card",
+                        cancel_at_period_end: false,
+                    })
+                );
+                // Never the old default_incomplete flow, which needed a
+                // client-side confirmation nothing ever performed.
+                expect(subscriptionsCreate.mock.calls[0][0]).not.toHaveProperty("payment_behavior");
+                // Reuses deriveBillingUpdate's own status-gating by synthesizing
+                // the customer.subscription.updated event Stripe would otherwise
+                // send for the newly created subscription, rather than
+                // duplicating that logic here.
+                expect(deriveBillingUpdate).toHaveBeenCalledWith(
+                    expect.objectContaining({ type: "customer.subscription.updated", data: { object: expect.objectContaining({ id: "sub_new" }) } }),
+                    expect.objectContaining({ plan: "annual" })
+                );
+                expect(billingSet).toHaveBeenCalledWith(
+                    expect.objectContaining({ plan: "annual", stripeSubscriptionId: "sub_new" }),
+                    { merge: true }
+                );
+            });
+
+            it("carries over a pending cancellation instead of silently renewing", async () => {
+                setUpRefund();
+                subscriptionsList.mockResolvedValue({ data: [canceledSub({ cancel_at_period_end: true, default_payment_method: null })] });
+                subscriptionsCreate.mockResolvedValue({ id: "sub_new", status: "trialing" });
+                deriveBillingUpdate.mockReturnValue({ uid: "uid-1", update: { plan: "annual" } });
+                mockDb({ eventData: null });
+
+                await handler(fakeWebhookRequest(), {} as never);
+
+                const params = subscriptionsCreate.mock.calls[0][0];
+                expect(params.cancel_at_period_end).toBe(true);
+                expect(params).not.toHaveProperty("default_payment_method");
+            });
+
+            it("goes to free without creating anything when the paid year has already ended", async () => {
+                setUpRefund();
+                subscriptionsList.mockResolvedValue({
+                    data: [canceledSub({ items: { data: [{ current_period_end: Math.floor(Date.now() / 1000) - 10 }] } })],
+                });
+                const { billingSet } = mockDb({ eventData: null });
+
+                const res = await handler(fakeWebhookRequest(), {} as never);
+
+                expect(res.status).toBe(200);
+                expect(subscriptionsCreate).not.toHaveBeenCalled();
+                expect(billingSet).toHaveBeenCalledWith(expect.objectContaining({ plan: "free" }), { merge: true });
+            });
+
+            it("goes to free when there's no prior subscription to restore from", async () => {
+                setUpRefund();
+                subscriptionsList.mockResolvedValue({ data: [] });
+                const { billingSet } = mockDb({ eventData: null });
+
+                await handler(fakeWebhookRequest(), {} as never);
+
+                expect(subscriptionsCreate).not.toHaveBeenCalled();
+                expect(billingSet).toHaveBeenCalledWith(expect.objectContaining({ plan: "free" }), { merge: true });
+            });
         });
 
-        it("falls back to free when the resume attempt is declined", async () => {
+        it("falls back to free when Stripe rejects the restore", async () => {
             constructEvent.mockReturnValue({
                 id: "evt_refund_declined",
                 type: "charge.refunded",
@@ -233,12 +304,15 @@ describe("stripe-webhook", () => {
             });
             paymentIntentsRetrieve.mockResolvedValue({ metadata: { firebaseUid: "uid-1", plan: "lifetime" } });
             deriveLifetimeRefundUpdate.mockReturnValue({ uid: "uid-1", update: { plan: "annual", stripeCustomerId: "cus_abc" } });
-            subscriptionsCreate.mockRejectedValue(new Error("Your card was declined."));
+            subscriptionsList.mockResolvedValue({
+                data: [{ items: { data: [{ current_period_end: Math.floor(Date.now() / 1000) + 86400 }] }, cancel_at_period_end: false }],
+            });
+            subscriptionsCreate.mockRejectedValue(new Error("No such price."));
             const { billingSet } = mockDb({ eventData: null });
 
             const res = await handler(fakeWebhookRequest(), {} as never);
 
-            // A resume failure is never a processing failure of the refund
+            // A restore failure is never a processing failure of the refund
             // event itself — the refund already happened in Stripe — so
             // this still succeeds overall, just with a safe "free" outcome
             // instead of an ungated "annual".
@@ -247,7 +321,7 @@ describe("stripe-webhook", () => {
             expect(billingSet).toHaveBeenCalledWith(expect.objectContaining({ plan: "free" }), { merge: true });
         });
 
-        it("falls back to free without calling Stripe when there's no customer to resume against", async () => {
+        it("falls back to free without calling Stripe when there's no customer to restore against", async () => {
             constructEvent.mockReturnValue({
                 id: "evt_refund_no_customer",
                 type: "charge.refunded",

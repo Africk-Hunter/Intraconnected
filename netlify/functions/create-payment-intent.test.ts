@@ -9,15 +9,16 @@ vi.hoisted(() => {
 const { verifyIdTokenDetailed } = vi.hoisted(() => ({ verifyIdTokenDetailed: vi.fn() }));
 vi.mock("./lib/firebaseAdmin", () => ({ verifyIdTokenDetailed }));
 
-const { paymentIntentsCreate, customersCreate, subscriptionsCreate } = vi.hoisted(() => ({
+const { paymentIntentsCreate, customersCreate, customersUpdate, subscriptionsCreate } = vi.hoisted(() => ({
     paymentIntentsCreate: vi.fn(),
     customersCreate: vi.fn(),
+    customersUpdate: vi.fn(),
     subscriptionsCreate: vi.fn(),
 }));
 vi.mock("./lib/stripe", () => ({
     stripe: () => ({
         paymentIntents: { create: paymentIntentsCreate },
-        customers: { create: customersCreate },
+        customers: { create: customersCreate, update: customersUpdate },
         subscriptions: { create: subscriptionsCreate },
     }),
 }));
@@ -62,20 +63,20 @@ describe("create-payment-intent", () => {
     });
 
     it("rejects once the rate limit is hit", async () => {
-        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true });
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         checkRateLimit.mockResolvedValue(false);
         const res = await handler(fakeRequest({ plan: "lifetime" }), {} as never);
         expect(res.status).toBe(429);
     });
 
     it("rejects an invalid plan value", async () => {
-        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true });
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         const res = await handler(fakeRequest({ plan: "monthly" }), {} as never);
         expect(res.status).toBe(400);
     });
 
     it("rejects a second Lifetime purchase for an account that already has it", async () => {
-        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true });
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         getBillingDoc.mockResolvedValue({ plan: "lifetime" });
         const res = await handler(fakeRequest({ plan: "lifetime" }), {} as never);
         expect(res.status).toBe(409);
@@ -83,7 +84,7 @@ describe("create-payment-intent", () => {
     });
 
     it("rejects a new Annual subscription while one is already active", async () => {
-        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true });
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         getBillingDoc.mockResolvedValue({ plan: "annual", subscriptionStatus: "active" });
         const res = await handler(fakeRequest({ plan: "annual" }), {} as never);
         expect(res.status).toBe(409);
@@ -91,7 +92,7 @@ describe("create-payment-intent", () => {
     });
 
     it("creates a Lifetime PaymentIntent for an eligible verified user, on a newly created Stripe Customer", async () => {
-        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true });
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         getLifetimePrice.mockResolvedValue({ amount: 500, currency: "usd" });
         customersCreate.mockResolvedValue({ id: "cus_new" });
         paymentIntentsCreate.mockResolvedValue({ id: "pi_1", client_secret: "secret_abc" });
@@ -101,8 +102,13 @@ describe("create-payment-intent", () => {
 
         expect(res.status).toBe(200);
         expect(body.clientSecret).toBe("secret_abc");
+        expect(customersCreate).toHaveBeenCalledWith({ email: "user@example.com", metadata: { firebaseUid: "uid-1" } });
         expect(paymentIntentsCreate).toHaveBeenCalledWith(
-            expect.objectContaining({ metadata: { firebaseUid: "uid-1", plan: "lifetime" }, customer: "cus_new" })
+            expect.objectContaining({
+                metadata: { firebaseUid: "uid-1", plan: "lifetime" },
+                customer: "cus_new",
+                receipt_email: "user@example.com",
+            })
         );
     });
 
@@ -112,7 +118,7 @@ describe("create-payment-intent", () => {
     // is exactly what stripe-webhook.ts needs to resume Annual billing if an
     // annual→lifetime upgrade is later refunded.
     it("reuses the existing Stripe Customer for a Lifetime purchase instead of creating a new one", async () => {
-        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true });
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         getBillingDoc.mockResolvedValue({ plan: "annual", stripeCustomerId: "cus_existing" });
         getLifetimePrice.mockResolvedValue({ amount: 500, currency: "usd" });
         paymentIntentsCreate.mockResolvedValue({ id: "pi_1", client_secret: "secret_abc" });
@@ -121,6 +127,22 @@ describe("create-payment-intent", () => {
 
         expect(res.status).toBe(200);
         expect(customersCreate).not.toHaveBeenCalled();
+        // Backfills the email onto Customers created before it was recorded.
+        expect(customersUpdate).toHaveBeenCalledWith("cus_existing", { email: "user@example.com" });
         expect(paymentIntentsCreate).toHaveBeenCalledWith(expect.objectContaining({ customer: "cus_existing" }));
+    });
+
+    it("creates the Annual subscription's Customer with the account's email", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        customersCreate.mockResolvedValue({ id: "cus_new" });
+        subscriptionsCreate.mockResolvedValue({
+            latest_invoice: { confirmation_secret: { client_secret: "secret_sub" }, amount_due: 199, currency: "usd" },
+        });
+
+        const res = await handler(fakeRequest({ plan: "annual" }), {} as never);
+
+        expect(res.status).toBe(200);
+        expect(customersCreate).toHaveBeenCalledWith({ email: "user@example.com", metadata: { firebaseUid: "uid-1" } });
+        expect(subscriptionsCreate).toHaveBeenCalledWith(expect.objectContaining({ customer: "cus_new" }));
     });
 });

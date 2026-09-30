@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PriceCard from '../components/landing/PriceCard';
 import { startCheckout } from '../utilities/billing/billing';
 import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY } from '../utilities/billing/pricingDisplay';
@@ -7,10 +7,7 @@ import { SUPPORT_EMAIL } from '../utilities/support';
 
 const Pricing: React.FC = () => {
   const { setCheckoutPlan, billingPlan } = useIdeaContext();
-
-  useEffect(() => {
-    document.title = 'Intraconnected — Pricing';
-  }, []);
+  const navigate = useNavigate();
 
   // An already-Annual user re-subscribing would silently create a second,
   // independent Stripe subscription (Stripe allows multiple per customer) —
@@ -45,9 +42,10 @@ const Pricing: React.FC = () => {
             { label: 'Unlimited nodes', locked: true },
             { label: 'Up to 50 nodes' },
             { label: 'Full feature access' },
+            { label: 'Export anytime (Markdown, OPML, JSON)' },
           ]}
           ctaLabel="Get Started Free"
-          ctaHref="/"
+          onCtaClick={() => navigate('/')}
           footNote="No card required"
         />
         {showAnnual && (
@@ -62,10 +60,10 @@ const Pricing: React.FC = () => {
               { label: 'Unlimited nodes', bold: true },
               { label: 'Full feature access' },
               { label: 'Cancel anytime' },
+              { label: 'Export anytime (Markdown, OPML, JSON)' },
               { label: 'Suggest new features' },
             ]}
             ctaLabel="Start Annual Plan"
-            ctaHref="#"
             onCtaClick={() => startCheckout('annual', setCheckoutPlan)}
             footNote={`Renews at ${ANNUAL_PRICE_DISPLAY}/yr · Cancel anytime`}
           />
@@ -83,10 +81,10 @@ const Pricing: React.FC = () => {
               { label: 'Unlimited nodes', bold: true },
               { label: 'Full feature access' },
               { label: 'Pay once, yours forever' },
+              { label: 'Export anytime (Markdown, OPML, JSON)' },
               { label: 'Suggest new features' },
             ]}
             ctaLabel="Unlock Lifetime Access"
-            ctaHref="#"
             onCtaClick={() => startCheckout('lifetime', setCheckoutPlan)}
             footNote="Access Forever"
           />
@@ -95,6 +93,9 @@ const Pricing: React.FC = () => {
 
       <div className="pricingTaglineWrap">
         <div className="pricingTagline">Less than a cup of coffee. Your ideas last forever.</div>
+        <p className="pricingNoLockIn">
+          Your data is never locked in. Export to Markdown, OPML or JSON anytime, on any plan.
+        </p>
       </div>
 
       <p className="pricingSupport">

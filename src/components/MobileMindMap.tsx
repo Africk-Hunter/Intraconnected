@@ -37,6 +37,7 @@ import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../utilities/patchNotesState';
 import { auth } from '../firebaseConfig';
+import { onSyncRefreshed } from '../utilities/sync/syncStore';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -53,6 +54,19 @@ function MobileMindMap() {
     const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
+
+    // Another device's changes were just pulled in (Idea.tsx already
+    // re-renders via newIdeaSwitch) — if the idea being viewed was deleted
+    // over there, step back to the top level instead of showing a dead view.
+    useEffect(() => {
+        return onSyncRefreshed(() => {
+            if (currentId !== 1 && !fetchFullIdeaList().some((idea) => idea.id === currentId)) {
+                setCurrentId(1);
+                setSheet(null);
+            }
+        });
+    }, [currentId]);
+
     const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
         (localStorage.getItem('idea_sort_mode') as 'priority' | 'recent') ?? 'priority'
     );

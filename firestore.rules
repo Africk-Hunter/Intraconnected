@@ -37,11 +37,20 @@ service cloud.firestore {
       // keep allowing the write no matter what a separate, stricter block
       // said. The exclusion is what actually closes each hole; the blocks
       // below grant back exactly the access each one is meant to have.
+      //
+      // `featureRequests` and `rateLimit_*` are the Netlify Functions' own
+      // throttling state (submit-feature-request.ts, lib/rateLimit.ts) —
+      // client-writable, a user could just clear them and bypass the limit.
+      // They get no grant-back block at all: no client code reads or writes
+      // them, the default-deny at the bottom covers them, and the Admin SDK
+      // those functions use ignores rules entirely.
       match /meta/{metaDocId} {
         allow read, write: if request.auth != null
           && request.auth.uid == userId
           && metaDocId != 'billing'
-          && metaDocId != 'nodeCount';
+          && metaDocId != 'nodeCount'
+          && metaDocId != 'featureRequests'
+          && !metaDocId.matches('rateLimit_.*');
       }
 
       // Client-maintained (unlike meta/billing) — the app increments this

@@ -29,10 +29,6 @@ const AuthAction: React.FC = () => {
     const [formError, setFormError] = useState("");
 
     useEffect(() => {
-        document.title = "Intraconnected";
-    }, []);
-
-    useEffect(() => {
         if (!mode || !oobCode) {
             setStatus("error");
             setErrorMessage("This link is missing information and can't be used.");
@@ -116,7 +112,8 @@ const AuthAction: React.FC = () => {
                 {status === "resetForm" && (
                     <form className="authActionForm" onSubmit={handleResetPassword}>
                         <h1 className="authActionTitle">Reset your password</h1>
-                        <p className="authActionText">for {resetEmail}</p>
+                        <p className="authActionText">Choose a new password for</p>
+                        <span className="authActionEmail">{resetEmail}</span>
                         <input
                             type="password"
                             className="input neobrutal-input"
@@ -134,6 +131,9 @@ const AuthAction: React.FC = () => {
                         {formError && <p className="authActionError">{formError}</p>}
                         <button type="submit" className="authActionBtn neobrutal-button leaf">
                             Set new password
+                        </button>
+                        <button type="button" className="authActionBack" onClick={() => navigate("/")}>
+                            Back to sign in
                         </button>
                     </form>
                 )}

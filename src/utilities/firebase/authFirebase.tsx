@@ -1,5 +1,6 @@
 import { auth } from "../../firebaseConfig";
 import { clearDEK } from "../dekStore";
+import { flushOutbox } from "../sync/outbox";
 import {
     EmailAuthProvider,
     reauthenticateWithCredential,
@@ -7,8 +8,15 @@ import {
     sendEmailVerification,
 } from "firebase/auth";
 
+// How long sign-out waits for unsent changes to reach the server. Anything
+// still unsent after this isn't lost — it stays in this account's outbox on
+// this device and goes out the next time the same account signs in here.
+const SIGN_OUT_FLUSH_MS = 5000;
+
 export async function signUserOut() {
     try {
+        // Before clearDEK — sending a change needs the key to encrypt it.
+        await flushOutbox(SIGN_OUT_FLUSH_MS);
         clearDEK();
         await auth.signOut();
         window.location.href = '/';

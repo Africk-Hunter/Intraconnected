@@ -4,7 +4,7 @@ const FOCUSABLE_SELECTOR =
     'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Minimal, dependency-free focus trap + Escape-to-close for a single modal.
-// Scoped to CheckoutModal/UpgradeModal (see programmer-docs/artifacts/launch-readiness-audit.md)
+// Scoped to CheckoutModal/UpgradeModal (see programmer-docs/artifacts/shipping-readiness.md, section G)
 // rather than folded into AnimatedOverlay, which every modal in the app
 // shares — changing behavior there would affect all of them at once.
 export function useModalFocusTrap(active: boolean, containerRef: RefObject<HTMLElement | null>, onClose: () => void) {

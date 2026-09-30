@@ -1,6 +1,6 @@
 import type { Context } from "@netlify/functions";
 import type Stripe from "stripe";
-import { verifyIdTokenDetailed } from "./lib/firebaseAdmin";
+import { verifyIdTokenDetailed, type VerifiedUser } from "./lib/firebaseAdmin";
 import { stripe } from "./lib/stripe";
 import { getBillingDoc, getLifetimePrice } from "./lib/lifetimePricing";
 import { preflightResponse, jsonResponse } from "./lib/cors";
@@ -27,10 +27,26 @@ const ACTIVE_SUBSCRIPTION_STATUSES: Stripe.Subscription.Status[] = ["active", "t
 const CHECKOUT_RATE_LIMIT = 10;
 const CHECKOUT_RATE_WINDOW_MS = 60 * 60 * 1000;
 
-// TEMP: step-by-step tracing while debugging the annual-upgrade 502 — safe
-// to leave in (dev-only visibility, no secrets logged), but fine to trim
-// once the cause is confirmed.
 const DEBUG = "[create-payment-intent]";
+
+// Reuses the Stripe Customer already on file (so repeated checkouts and a
+// later Lifetime purchase stay on one Customer — stripe-webhook.ts relies on
+// that to restore Annual if an upgrade is refunded), creating one only the
+// first time. Either way the Customer carries the account's verified email:
+// without one Stripe can't send receipts, failed-payment notices or renewal
+// reminders. Existing Customers are updated rather than trusted, so ones
+// created before this existed (or before an email change) get backfilled.
+async function resolveCustomer(existingId: string | null | undefined, uid: string, email: string | null): Promise<string> {
+    if (existingId) {
+        if (email) await stripe().customers.update(existingId, { email });
+        return existingId;
+    }
+    const created = await stripe().customers.create({
+        ...(email ? { email } : {}),
+        metadata: { firebaseUid: uid },
+    });
+    return created.id;
+}
 
 export default async (req: Request, _context: Context) => {
     const preflight = preflightResponse(req);
@@ -40,20 +56,17 @@ export default async (req: Request, _context: Context) => {
         return jsonResponse(req, { error: message }, status);
     }
 
-    console.log(DEBUG, "invoked", { method: req.method });
-
     if (req.method !== "POST") {
         return jsonError(405, "Method not allowed.");
     }
 
-    let user: { uid: string; emailVerified: boolean } | null;
+    let user: VerifiedUser | null;
     try {
         user = await verifyIdTokenDetailed(req);
     } catch (error) {
         console.error(DEBUG, "verifyIdToken threw", error);
         return jsonError(401, "You must be signed in to upgrade.");
     }
-    console.log(DEBUG, "verifyIdToken resolved", { signedIn: Boolean(user) });
     if (!user) {
         return jsonError(401, "You must be signed in to upgrade.");
     }
@@ -79,13 +92,11 @@ export default async (req: Request, _context: Context) => {
     }
 
     const plan = payload.plan;
-    console.log(DEBUG, "plan requested", { plan });
     if (plan !== "annual" && plan !== "lifetime") {
         return jsonError(400, "Plan must be 'annual' or 'lifetime'.");
     }
 
     const priceId = PRICE_IDS[plan];
-    console.log(DEBUG, "resolved priceId from env", { plan, hasPriceId: Boolean(priceId) });
     if (!priceId) {
         return jsonError(500, "Server misconfigured.");
     }
@@ -95,7 +106,6 @@ export default async (req: Request, _context: Context) => {
         // also what the double-billing/repurchase guards check against, so
         // it needs to happen before either branch commits to a Stripe call.
         const billing = await getBillingDoc(uid);
-        console.log(DEBUG, "billing doc fetched", { plan: billing?.plan ?? null, subscriptionStatus: billing?.subscriptionStatus ?? null });
 
         if (plan === "lifetime") {
             // Already own it outright — a second purchase would just be a
@@ -103,22 +113,16 @@ export default async (req: Request, _context: Context) => {
             // resolving a customer below, so a rejected request never costs
             // an extra Stripe call.
             if (billing?.plan === "lifetime") {
-                console.log(DEBUG, "lifetime checkout rejected — already lifetime");
                 return jsonError(409, "You already have Lifetime access.");
             }
 
             const { amount, currency } = await getLifetimePrice(uid, priceId);
-            console.log(DEBUG, "lifetime price resolved", { amount, currency });
 
-            // Reuse the Stripe Customer already on file rather than leaving
-            // this PaymentIntent anonymous — so a Lifetime purchase doesn't
-            // sever the relationship a prior Annual subscription already
-            // established. That relationship (and its saved payment method)
-            // is what lets stripe-webhook.ts resume Annual billing
-            // off-session if an annual→lifetime upgrade later gets refunded.
-            const customer = billing?.stripeCustomerId
-                ?? (await stripe().customers.create({ metadata: { firebaseUid: uid } })).id;
-            console.log(DEBUG, "customer resolved", { customer });
+            // Kept on the same Customer as any prior Annual subscription (see
+            // resolveCustomer) rather than left anonymous — that Customer's
+            // canceled subscription and saved card are what stripe-webhook.ts
+            // restores Annual from if an annual→lifetime upgrade is refunded.
+            const customer = await resolveCustomer(billing?.stripeCustomerId, uid, user.email);
 
             const paymentIntent = await stripe().paymentIntents.create({
                 amount,
@@ -129,9 +133,11 @@ export default async (req: Request, _context: Context) => {
                 // $5 purchase.
                 payment_method_types: ["card"],
                 customer,
+                // A one-time PaymentIntent doesn't pick up the Customer's
+                // email for receipts on its own.
+                ...(user.email ? { receipt_email: user.email } : {}),
                 metadata: { firebaseUid: uid, plan: "lifetime" },
             });
-            console.log(DEBUG, "lifetime PaymentIntent created", { id: paymentIntent.id, hasClientSecret: Boolean(paymentIntent.client_secret) });
 
             return jsonResponse(req, { clientSecret: paymentIntent.client_secret, amount, currency });
         }
@@ -141,15 +147,10 @@ export default async (req: Request, _context: Context) => {
         // silently create a second, independent one rather than reuse or
         // reject the existing one. Reject here instead of double-billing.
         if (billing?.subscriptionStatus && ACTIVE_SUBSCRIPTION_STATUSES.includes(billing.subscriptionStatus)) {
-            console.log(DEBUG, "annual checkout rejected — already has a live subscription", { status: billing.subscriptionStatus });
             return jsonError(409, "You already have an active Annual subscription.");
         }
 
-        // Reuse the Stripe Customer already on file so repeated subscribe
-        // attempts don't create duplicate Customer objects.
-        const customer = billing?.stripeCustomerId
-            ?? (await stripe().customers.create({ metadata: { firebaseUid: uid } })).id;
-        console.log(DEBUG, "customer resolved", { customer });
+        const customer = await resolveCustomer(billing?.stripeCustomerId, uid, user.email);
 
         const subscription = await stripe().subscriptions.create({
             customer,
@@ -169,20 +170,8 @@ export default async (req: Request, _context: Context) => {
             // of its own the way a Checkout Session did.
             metadata: { firebaseUid: uid },
         });
-        console.log(DEBUG, "subscription created", { id: subscription.id, status: subscription.status });
 
         const invoice = subscription.latest_invoice as Stripe.Invoice | null;
-        console.log(DEBUG, "latest_invoice on subscription", {
-            invoiceId: invoice?.id ?? null,
-            invoiceStatus: invoice?.status ?? null,
-            hasConfirmationSecret: Boolean(invoice?.confirmation_secret),
-            // Not in this SDK version's Invoice type (superseded by
-            // confirmation_secret) but logging the raw field in case it's
-            // still present on the wire — tells us whether this is a
-            // finalization-timing gap or a field-name mismatch.
-            legacyPaymentIntentField: (invoice as unknown as { payment_intent?: unknown })?.payment_intent ?? null,
-        });
-
         const clientSecret = invoice?.confirmation_secret?.client_secret;
         if (!clientSecret) {
             console.error(DEBUG, "no confirmation_secret.client_secret on latest_invoice — returning 502");

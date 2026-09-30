@@ -32,6 +32,21 @@
     }
 }
 
+// Explicit height set by useSmoothHeight; clips content while it animates.
+// align-self: stretch because the mobile modal uses align-items: start.
+.profile-resize {
+    align-self: stretch;
+    overflow: hidden;
+
+    &--animate {
+        transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
+    }
+}
+
 // ── Shared ──────────────────────────────────────────────
 
 .profile-heading {
@@ -122,6 +137,37 @@
     margin-bottom: 0.75rem;
     background: $neutral;
     outline: none;
+}
+
+// Markdown / OPML / JSON side by side; stacked full-width on mobile, where
+// .profile-mobile makes every .profile-action-btn width: 100%.
+.profile-export-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    @media (max-width: $mobile) {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+.profile-import-input {
+    display: none;
+}
+
+.profile-import-status {
+    font-size: 0.95rem;
+    margin: 0 0 0.8rem 0;
+    color: #111;
+    overflow-wrap: anywhere;
+}
+
+.profile-import-error {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.8rem 0;
+    color: $danger;
 }
 
 .profile-plan-actions {

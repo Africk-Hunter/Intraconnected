@@ -1,17 +1,15 @@
 import { IdeaType, ChecklistItem } from "../types";
-import { updateIdeaParentIdInFirebase, updateChecklistItemsInFirebase, updateIdeaPriorityInFirebase } from "../firebase/firebaseHelpers";
+import { updateIdeaParentIdInFirebase } from "../firebase/firebaseHelpers";
+import { enqueue } from "../sync/outbox";
 import { fetchFullIdeaList } from "./helpers";
 
-const _checklistTimers = new Map<number, ReturnType<typeof setTimeout>>();
-const _priorityTimers = new Map<number, ReturnType<typeof setTimeout>>();
+// Quick successive checklist ticks / priority taps are merged into one
+// write. The change is recorded in the outbox immediately (so closing the
+// tab inside the delay no longer loses it); only the *send* waits.
+const DEBOUNCE_MS = 1500;
 
 export function scheduleChecklistFirebaseWrite(id: number, items: ChecklistItem[]) {
-    const existing = _checklistTimers.get(id);
-    if (existing) clearTimeout(existing);
-    _checklistTimers.set(id, setTimeout(() => {
-        _checklistTimers.delete(id);
-        updateChecklistItemsInFirebase(id, items);
-    }, 1500));
+    enqueue({ kind: 'update', id, patch: { items } }, { debounceMs: DEBOUNCE_MS });
 }
 
 export function deleteFromLocalStorage(id: number) {
@@ -100,12 +98,7 @@ export function updateIdeaPriority(id: number, priority: 1 | 2 | 3 | undefined) 
 }
 
 export function schedulePriorityFirebaseWrite(id: number, priority: 1 | 2 | 3 | undefined) {
-    const existing = _priorityTimers.get(id);
-    if (existing) clearTimeout(existing);
-    _priorityTimers.set(id, setTimeout(() => {
-        _priorityTimers.delete(id);
-        updateIdeaPriorityInFirebase(id, priority);
-    }, 1500));
+    enqueue({ kind: 'update', id, patch: { priority: priority ?? null } }, { debounceMs: DEBOUNCE_MS });
 }
 
 export function updateChecklistItems(id: number, items: ChecklistItem[]) {

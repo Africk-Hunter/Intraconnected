@@ -25,7 +25,6 @@ import {
     handleIdeaCreation,
     handleChecklistCreation,
     handleNoteCreation,
-    fetchFromFirebaseAndOrganizeIdeas,
     getIdeasByParentID,
     IdeaType,
     updateIdeaParentId,
@@ -53,6 +52,9 @@ import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRe
 import { consumePendingCheckoutPlan } from '../utilities/billing/billing';
 import { useBillingPlanSync } from '../utilities/billing/useBillingPlanSync';
 import { useNodeCountResync } from '../utilities/billing/useNodeCountResync';
+import { syncOnLoad, startSyncListener } from '../utilities/sync/syncEngine';
+import { onSyncRefreshed } from '../utilities/sync/syncStore';
+import SyncStatusBanner from '../components/SyncStatusBanner';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -67,6 +69,10 @@ const restrictToTopLeftRight: Modifier = ({ transform, draggingNodeRect, windowR
 
 function Idea() {
     const [initialFetch, setInitialFetch] = useState(false);
+    // True once this session has a confirmed-current copy from the server —
+    // false while offline on load. Gates anything that would write local
+    // counts back to the server (useNodeCountResync).
+    const [serverSynced, setServerSynced] = useState(false);
     const [isLoadingIdeas, setIsLoadingIdeas] = useState(true);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
@@ -133,10 +139,29 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan } = useIdeaContext();
+    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan, setNewIdeaSwitch, checklistModalId, setChecklistModalId } = useIdeaContext();
 
     useBillingPlanSync(setBillingPlan);
-    useNodeCountResync(billingPlan, initialFetch);
+    useNodeCountResync(billingPlan, serverSynced);
+
+    // Live updates from other devices, once the initial load has settled.
+    useEffect(() => {
+        const uid = auth.currentUser?.uid;
+        if (!initialFetch || !uid) return;
+        return startSyncListener(uid);
+    }, [initialFetch]);
+
+    // After another device's changes are pulled in: re-read the local list,
+    // and step out of anything that was deleted over there.
+    useEffect(() => {
+        return onSyncRefreshed(() => {
+            setServerSynced(true);
+            const all = fetchFullIdeaList();
+            if (rootId !== 1 && !all.some((idea) => idea.id === rootId)) navigateToId(1);
+            if (checklistModalId !== null && !all.some((idea) => idea.id === checklistModalId)) setChecklistModalId(null);
+            setNewIdeaSwitch((prev) => !prev);
+        });
+    }, [rootId, checklistModalId, navigateToId, setChecklistModalId, setNewIdeaSwitch]);
 
     useEffect(() => {
         const handleVisibilityChange = async () => {
@@ -162,9 +187,12 @@ function Idea() {
                         return;
                     }
                 }
-                await fetchFromFirebaseAndOrganizeIdeas().then(() => {
-                    setInitialFetch(true);
-                });
+                // Never empties the local map: if the server can't be
+                // reached this shows the device's own copy and serverOk is
+                // false until a later pull succeeds (see onSyncRefreshed).
+                const { serverOk } = await syncOnLoad(auth.currentUser.uid);
+                setServerSynced(serverOk);
+                setInitialFetch(true);
             }
 
             const loadedIdeas = getIdeasByParentID(rootId);
@@ -422,6 +450,7 @@ function Idea() {
                 </section>
             </section>
             <MobileMindMap />
+            <SyncStatusBanner />
             <MindMap onClose={() => setShowMindMap(false)} visible={showMindMap} />
             <RenameModal />
             <LinkChangeModal />

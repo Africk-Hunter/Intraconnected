@@ -12,48 +12,73 @@ function jsonError(status: number, message: string) {
     return Response.json({ error: message }, { status });
 }
 
+// Stripe rejects a trial_end that's already (or about to be) in the past;
+// anything this close to the original renewal isn't worth restoring anyway.
+const MIN_RESTORE_SECONDS = 60;
+
 // Undoes the "canceled immediately" half of an Annual→Lifetime upgrade once
 // that specific upgrade is refunded (see deriveLifetimeRefundUpdate's docs)
 // — reverting `plan` to "annual" is meaningless on its own, since the
 // subscription that plan used to describe was already canceled at upgrade
-// time, not left to expire. This actually resumes billing: a fresh
-// subscription on the same Stripe Customer, off-session, reusing whatever
-// payment method that customer already has on file from the original
-// subscription (create-payment-intent.ts now keeps the Lifetime purchase on
-// the same customer specifically so this has something to reuse).
+// time, not left to expire.
+//
+// Restores exactly what the user had before upgrading, without charging
+// them again: a new subscription on the same Customer whose trial runs to
+// the end of the year they'd already paid for (read off the superseded,
+// now-canceled subscription), so it's `trialing` — which already grants
+// Annual — and first bills on the original renewal date with the same saved
+// card. Their cancel_at_period_end choice carries over too, so someone who'd
+// already cancelled isn't silently renewed. If that year has already run
+// out there's nothing left to restore, so this lands on "free" rather than
+// charging someone off-session right after they asked for a refund.
+//
+// (An earlier version created the subscription with
+// payment_behavior: "default_incomplete" and no trial — that first invoice
+// needs client-side confirmation nothing ever performed, so the restore
+// always ended up `incomplete` → "free".)
 //
 // Reuses deriveBillingUpdate's own customer.subscription.updated mapping —
 // by synthesizing the event Stripe would otherwise send for this same
-// subscription object — rather than duplicating its status-gating logic, so
-// a resume that comes back "incomplete" (a declined card, one that needs
-// 3DS, or was removed since) is handled exactly like a brand-new signup:
-// not granted access until a real active/trialing/past_due status is
-// confirmed, either here or by that subscription's own later webhook
-// events. Falls back to "free" — never to an ungated "annual" — if there's
-// no customer or price to resume against, or if Stripe rejects the attempt
-// outright (e.g. no payment method on file at all).
+// subscription object — rather than duplicating its status-gating logic.
+// Falls back to "free" — never to an ungated "annual" — if there's no
+// customer/price/prior subscription to restore from, or if Stripe rejects
+// the attempt outright.
 async function resumeAnnualSubscription(uid: string, refundResult: BillingEventResult): Promise<BillingEventResult> {
+    const toFree: BillingEventResult = { uid, update: { ...refundResult.update, plan: "free" } };
     const customerId = refundResult.update.stripeCustomerId;
     if (!customerId || !STRIPE_PRICE_ANNUAL) {
-        console.error("stripe-webhook: cannot resume Annual subscription on refund — missing customer or price env var", {
+        console.error("stripe-webhook: cannot restore Annual subscription on refund — missing customer or price env var", {
             uid,
             hasCustomer: Boolean(customerId),
         });
-        return { uid, update: { ...refundResult.update, plan: "free" } };
+        return toFree;
     }
     try {
+        // Most recent canceled subscription — the one the upgrade superseded
+        // (lists are newest-first).
+        const canceled = await stripe().subscriptions.list({ customer: customerId, status: "canceled", limit: 1 });
+        const previous = canceled.data[0];
+        const periodEnd = previous?.items.data[0]?.current_period_end;
+        if (!previous || !periodEnd || periodEnd <= Math.floor(Date.now() / 1000) + MIN_RESTORE_SECONDS) {
+            return toFree;
+        }
+        const paymentMethod = previous.default_payment_method;
         const subscription = await stripe().subscriptions.create({
             customer: customerId,
             items: [{ price: STRIPE_PRICE_ANNUAL }],
-            payment_behavior: "default_incomplete",
-            payment_settings: { save_default_payment_method: "on_subscription", payment_method_types: ["card"] },
+            trial_end: periodEnd,
+            cancel_at_period_end: previous.cancel_at_period_end,
+            ...(paymentMethod ? { default_payment_method: typeof paymentMethod === "string" ? paymentMethod : paymentMethod.id } : {}),
+            // No card left on file → end cleanly at the original renewal
+            // date instead of generating an invoice that can never be paid.
+            trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
             metadata: { firebaseUid: uid },
         });
         const resumedEvent = { type: "customer.subscription.updated", data: { object: subscription } } as unknown as Stripe.Event;
-        return deriveBillingUpdate(resumedEvent, refundResult.update) ?? { uid, update: { ...refundResult.update, plan: "free" } };
+        return deriveBillingUpdate(resumedEvent, refundResult.update) ?? toFree;
     } catch (err) {
-        console.error("stripe-webhook: failed to resume Annual subscription on refund", uid, err);
-        return { uid, update: { ...refundResult.update, plan: "free" } };
+        console.error("stripe-webhook: failed to restore Annual subscription on refund", uid, err);
+        return toFree;
     }
 }
 
@@ -166,7 +191,7 @@ export default async (req: Request, _context: Context) => {
         // The billing write above is what actually grants what was paid
         // for — if it (or anything before it) throws, that can't fail
         // silently. There's no external error-monitoring service wired up
-        // (see programmer-docs/launch-readiness-audit.md), so this is
+        // (see programmer-docs/artifacts/shipping-readiness.md, E5), so this is
         // logged AND persisted here, which is what makes a stuck charge
         // inspectable instead of surfacing for the first time as a
         // customer's "where's my upgrade" email. Returning 500 makes Stripe

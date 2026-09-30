@@ -202,6 +202,16 @@
     }
 }
 
+// Spans every grid column, so it sits under the feature cards at any width.
+.landingNoLockIn {
+    grid-column: 1 / -1;
+    margin: 8px 0 0;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #444;
+}
+
 .featureCard {
     padding: 32px 28px;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -258,4 +268,173 @@
     font-weight: 500;
     color: #555;
     line-height: 1.7;
+}
+
+// ── Security / encryption explainer ──────────────────────────────────────
+
+.landingSecurity {
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 24px 52px 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    @media (max-width: $tablet) {
+        padding: 8px 20px 64px;
+    }
+}
+
+.landingSecurityHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.landingSecurityIcon {
+    width: 52px;
+    height: 52px;
+    background: $link;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: $neo-btn-radius;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.landingSecurityTitle {
+    font-size: clamp(28px, 3.6vw, 44px);
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    line-height: 1.1;
+    color: #111;
+}
+
+.landingSecuritySubline {
+    font-size: 17px;
+    font-weight: 500;
+    color: #444;
+    margin-top: 12px;
+}
+
+.landingSecuritySteps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+
+    @media (max-width: $tablet) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.securityStep {
+    background: #fff;
+    box-shadow: $neo-card-shadow;
+    padding: 28px 26px 30px;
+
+    &--tradeoff {
+        background: $link;
+    }
+}
+
+.securityStepNumber {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: $leaf;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: 50%;
+    font-size: 17px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 16px;
+}
+
+.securityStepTitle {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 10px;
+    color: #111;
+}
+
+.securityStepBody {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    line-height: 1.7;
+}
+
+.securityScope {
+    width: 100%;
+    margin-top: 28px;
+    background: #fff;
+    box-shadow: $neo-card-shadow;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    @media (max-width: $tablet) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.securityScopeCol {
+    padding: 24px 28px;
+
+    ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    li {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        line-height: 1.8;
+    }
+
+    &--plain {
+        border-left: $neo-detail-border;
+        background: $background-color;
+
+        @media (max-width: $tablet) {
+            border-left: none;
+            border-top: $neo-detail-border;
+        }
+    }
+}
+
+.securityScopeTitle {
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+    color: #111;
+}
+
+.securityMoreLink {
+    margin-top: 28px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111;
+    text-decoration: none;
+    border-bottom: 2.5px solid #111;
+    padding-bottom: 2px;
+
+    &:hover {
+        border-bottom-color: $sky;
+    }
 }

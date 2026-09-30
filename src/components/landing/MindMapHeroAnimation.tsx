@@ -78,11 +78,11 @@ function TodoNodeContents() {
       <line x1="371" y1="301" x2="503" y2="301" stroke="#fff" strokeWidth="1" strokeOpacity="0.25" />
       <rect x="379" y="307" width="10" height="10" rx="2" fill="#fff" fillOpacity="0.25" stroke="#fff" strokeOpacity="0.6" strokeWidth="1" />
       <path d="M 381,312 L 383.5,314.5 L 387,309.5" stroke="#fff" strokeOpacity="0.6" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      <text x="393" y="312" dominantBaseline="middle" fontSize="11" fill="#fff" fillOpacity="0.42">Buy groceries</text>
+      <text x="393" y="312" dominantBaseline="middle" fontSize="11" fill="#fff" fillOpacity="0.42">Buy domain</text>
       <rect x="379" y="322" width="10" height="10" rx="2" fill="none" stroke="#fff" strokeOpacity="0.75" strokeWidth="1" />
-      <text x="393" y="327" dominantBaseline="middle" fontSize="11" fill="#fff">Call dentist</text>
+      <text x="393" y="327" dominantBaseline="middle" fontSize="11" fill="#fff">Design logo</text>
       <rect x="379" y="337" width="10" height="10" rx="2" fill="none" stroke="#fff" strokeOpacity="0.75" strokeWidth="1" />
-      <text x="393" y="342" dominantBaseline="middle" fontSize="11" fill="#fff">Fix bug #42</text>
+      <text x="393" y="342" dominantBaseline="middle" fontSize="11" fill="#fff">Ship MVP</text>
     </>
   );
 }

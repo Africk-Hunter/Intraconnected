@@ -37,10 +37,14 @@ export async function verifyIdToken(req: Request): Promise<string | null> {
 export interface VerifiedUser {
     uid: string;
     emailVerified: boolean;
+    // Stamped onto the Stripe Customer (create-payment-intent.ts) so Stripe
+    // can actually send receipts, failed-payment notices and renewal
+    // reminders — a Customer with no email gets none of them.
+    email: string | null;
 }
 
-// Like verifyIdToken, but also surfaces the token's email_verified claim —
-// for the one caller (create-payment-intent.ts) that needs to gate on it.
+// Like verifyIdToken, but also surfaces the token's email/email_verified
+// claims — for the one caller (create-payment-intent.ts) that needs them.
 // Everyone else keeps using the uid-only verifyIdToken above; account
 // deletion/cancellation in particular must never be blocked by this, since
 // re-auth with the password is already the real gate there.
@@ -50,7 +54,7 @@ export async function verifyIdTokenDetailed(req: Request): Promise<VerifiedUser 
     const token = header.slice("Bearer ".length);
     try {
         const decoded = await adminAuth().verifyIdToken(token);
-        return { uid: decoded.uid, emailVerified: decoded.email_verified === true };
+        return { uid: decoded.uid, emailVerified: decoded.email_verified === true, email: decoded.email ?? null };
     } catch {
         return null;
     }

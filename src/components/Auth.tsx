@@ -25,7 +25,7 @@ const Auth: React.FC = () => {
     const pendingUidRef = useRef("");
     const pendingEncDataRef = useRef<{ encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string } | null>(null);
 
-    const { setMessageBoxMessage, setMessageType, messageBoxMessage } = useIdeaContext();
+    const { setMessageBoxMessage, setMessageType } = useIdeaContext();
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -73,11 +73,9 @@ const Auth: React.FC = () => {
         // meaningful security control.
         if (password.length < 8) {
             displayMessage("Password must be at least 8 characters long", "bad");
-            console.log(messageBoxMessage);
             return false;
         } else if (password.length > 128) {
             displayMessage("Password must be less than 128 characters long", "bad");
-            console.log(messageBoxMessage);
             return false;
         }
         setMessageBoxMessage("");
@@ -103,14 +101,11 @@ const Auth: React.FC = () => {
         e.preventDefault();
         if (password !== confirmPassword) {
             displayMessage("Passwords do not match", "bad");
-            console.log(messageBoxMessage);
             return;
         }
         if (checkPassword(password)) {
             handleSignUp();
-            return;
         }
-        console.log('Password did not meet requirements.');
     }
 
     async function handleSignUp() {
@@ -146,7 +141,7 @@ const Auth: React.FC = () => {
                 if (error.code === 'auth/email-already-in-use') {
                     displayMessage('An account with that email already exists.', 'bad');
                 } else {
-                    console.log(error.message);
+                    displayMessage('Could not create account. Please try again.', 'bad');
                 }
             });
     }
@@ -173,10 +168,9 @@ const Auth: React.FC = () => {
         let userCredential;
         try {
             userCredential = await signInWithEmailAndPassword(auth, email, capturedPassword);
-        } catch (error) {
+        } catch {
             isSigningIn.current = false;
             displayMessage('Invalid email or password. Please try again', 'bad');
-            console.log(error);
             return;
         }
 
@@ -323,8 +317,8 @@ const Auth: React.FC = () => {
                 <div className="recoveryModal neobrutal">
                     <h2 className="recoveryTitle">Save Your Recovery Code</h2>
                     <p className="recoveryWarning">
-                        {recoveryCodeContext === 'signup' && <>Welcome to Intraconnected! Your ideas are encrypted end-to-end. Not even we can read them. Save this recovery code somewhere safe. If you ever forget your password, it's the <strong>only</strong> way to get your data back. It won't be shown again.</>}
-                        {recoveryCodeContext === 'migration' && <>We've added end-to-end encryption to Intraconnected. A recovery code has been generated for your account. Save it somewhere safe. If you ever forget your password, it's the <strong>only</strong> way to recover your ideas. It won't be shown again.</>}
+                        {recoveryCodeContext === 'signup' && <>Welcome to Intraconnected! Your ideas are encrypted on your device before they're stored. Save this recovery code somewhere safe. If you forget your password, you can usually reset it by email, but this code is your backup if that ever fails. It won't be shown again.</>}
+                        {recoveryCodeContext === 'migration' && <>We've added encryption to Intraconnected. A recovery code has been generated for your account. Save it somewhere safe. If you forget your password, you can usually reset it by email, but this code is your backup if that ever fails. It won't be shown again.</>}
                         {recoveryCodeContext === 'restore' && <>Your encryption key has been restored and a new recovery code has been generated. Save it somewhere safe. It won't be shown again.</>}
                     </p>
                     <div className="recoveryCodeBox">
@@ -382,6 +376,7 @@ const Auth: React.FC = () => {
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} />
             </section>
+            <a href="/landing" className="authLearnMore">New here? See what Intraconnected does →</a>
             <div className="legalLinks">
                 <a href="/terms" className="legalLink">Terms of Service</a>
                 <a href="/privacy" className="legalLink">Privacy Policy</a>
