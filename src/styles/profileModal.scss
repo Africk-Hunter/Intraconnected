@@ -1,6 +1,6 @@
 @use './variables' as *;
 
-.profile-modal {
+.neobrutal.modal.profile-modal {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -21,6 +21,29 @@
             linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
         background-size: 40px 40px;
         padding: 1rem 1rem 0rem 1rem !important;
+    }
+
+    @media (min-width: $desktop) {
+        width: min(64rem, 90vw);
+    }
+
+    @media (min-width: $large-desktop) {
+        width: min(64rem, 90vw);
+    }
+}
+
+// Explicit height set by useSmoothHeight; clips content while it animates.
+// align-self: stretch because the mobile modal uses align-items: start.
+.profile-resize {
+    align-self: stretch;
+    overflow: hidden;
+
+    &--animate {
+        transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
     }
 }
 
@@ -102,6 +125,17 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+
+    // Anchor variant (e.g. "Open Gmail") — yellow like other link actions.
+    &.profile-action-btn--link {
+        display: inline-block;
+        box-sizing: border-box;
+        margin-top: 0.75rem;
+        background: $link;
+        color: black;
+        text-align: center;
+        text-decoration: none;
+    }
 }
 
 .profile-input {
@@ -116,10 +150,91 @@
     outline: none;
 }
 
+// Markdown / OPML / JSON side by side; stacked full-width on mobile, where
+// .profile-mobile makes every .profile-action-btn width: 100%.
+.profile-export-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
+    @media (max-width: $mobile) {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+.profile-import-input {
+    display: none;
+}
+
+.profile-import-status {
+    font-size: 0.95rem;
+    margin: 0 0 0.8rem 0;
+    color: #111;
+    overflow-wrap: anywhere;
+}
+
+.profile-import-error {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 0.8rem 0;
+    color: $danger;
+}
+
+.profile-plan-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+// Desktop: "Upgrade to Lifetime" and "Cancel subscription" sit side by side
+// rather than stacked. Scoped to .profile-desktop (hidden on mobile) rather
+// than a width media query since it targets the desktop two-panel layout
+// specifically, not just wide viewports.
+.profile-desktop .profile-plan-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+
+    > .profile-action-btn {
+        width: auto;
+    }
+}
+
+.profile-plan-cancel-note {
+    margin: 0;
+}
+
+.profile-plan-cancel-confirm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 100%;
+}
+
+.profile-plan-cancel-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
 .profile-error {
     color: $danger;
     font-size: 0.9rem;
     margin: 0 0 0.75rem 0;
+}
+
+.profile-support {
+    font-size: 0.85rem;
+    color: #888;
+    text-align: center;
+    margin: 0.5rem 0 0;
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
 }
 
 .profile-close {
@@ -330,6 +445,10 @@
 
     .profile-section--reset .profile-action-btn {
         background: $leaf;
+
+        &.profile-action-btn--link {
+            background: $link;
+        }
     }
 
     .profile-section--logout .profile-action-btn {

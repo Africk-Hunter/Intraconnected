@@ -1,0 +1,100 @@
+@use "./variables" as *;
+
+// SyncStatusBanner — pinned to the top centre above every view (desktop and
+// mobile), clear of the phone's status bar.
+.syncBanner {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+    left: 50%;
+    translate: -50% 0;
+    z-index: 2000;
+    width: min(34rem, calc(100vw - 2rem));
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    pointer-events: none;
+    font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.syncBanner__item {
+    pointer-events: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 0.9rem;
+    padding: 0.75rem 1rem;
+    color: black;
+    border-radius: $neo-card-radius;
+    border: $neo-btn-border;
+    box-shadow: $neo-btn-shadow;
+
+    @media (max-width: $mobile) {
+        border: $neo-m-card-border;
+        box-shadow: $neo-m-card-shadow;
+    }
+
+    &--failed {
+        background: #FFD9D4;
+        border-color: $danger;
+        box-shadow: 4px 4px 0 1px $danger;
+    }
+
+    &--waiting {
+        background: $link;
+    }
+
+    &--notice {
+        background: white;
+    }
+}
+
+.syncBanner__text {
+    flex: 1 1 16rem;
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.syncBanner__actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.syncBanner__button {
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.9rem;
+    color: black;
+
+    &--retry {
+        background: $leaf;
+    }
+
+    &--discard {
+        background: $link;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
+}
+
+.syncBanner__dismiss {
+    font: inherit;
+    font-size: 1.3rem;
+    line-height: 1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.1rem 0.35rem;
+    color: black;
+
+    &:focus-visible {
+        outline: 3px solid $sky;
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+}

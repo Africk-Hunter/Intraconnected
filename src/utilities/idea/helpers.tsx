@@ -18,7 +18,7 @@ export function resolveIdeaLabel(idea: IdeaType | undefined): string {
     return idea.content;
 }
 
-export function fetchFullIdeaList() {
+export function fetchFullIdeaList(): IdeaType[] {
     const ideas = localStorage.getItem("ideas");
 
     if (!ideas) {

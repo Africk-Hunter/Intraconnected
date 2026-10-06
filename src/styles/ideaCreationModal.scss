@@ -536,7 +536,11 @@
 
 .checklist-creation-title {
     font-size: 1.4rem;
-    font-family: inherit;
+    // Matches .ideaContent (idea/note body textarea), which has no explicit
+    // font-family and falls back to the browser's textarea UA default
+    // (monospace) — inputs default to a different UA font, so this must be
+    // set explicitly to keep the tabs visually consistent.
+    font-family: monospace;
     padding: 0.75rem 1rem;
     border-radius: 10px;
     border: 2px solid black;
@@ -614,7 +618,9 @@
     justify-content: space-between;
     align-items: center;
     font-size: 1.1rem;
-    font-family: inherit;
+    // Matches .checklist-creation-item-input's monospace (see
+    // .checklist-creation-title above) so committed items don't shift font.
+    font-family: monospace;
     padding: 0.6rem 1rem;
     border-radius: 10px;
     border: 2px solid black;
@@ -652,7 +658,8 @@
 
 .checklist-creation-item-input {
     font-size: 1.1rem;
-    font-family: inherit;
+    // See .checklist-creation-title above.
+    font-family: monospace;
     padding: 0.6rem 1rem;
     border-radius: 10px;
     border: 2px solid black;
@@ -743,7 +750,8 @@
 
 .note-creation-title {
     font-size: 1.4rem;
-    font-family: inherit;
+    // See .checklist-creation-title above.
+    font-family: monospace;
     padding: 0.75rem 1rem;
     border-radius: 10px;
     border: 2px solid black;

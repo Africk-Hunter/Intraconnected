@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+stripe-testing.local.md
 
 # Editor directories and files
 .vscode/*
@@ -25,5 +26,8 @@ dist-ssr
 *.sw?
 
 .agents
-docs/
-/docs
+
+# Local Netlify folder
+.netlify
+
+.webtool/

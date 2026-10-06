@@ -39,10 +39,10 @@ function RenameModal() {
 
     const targetId = editRootOrNot ? rootId : currentNameChangeId;
     const allIdeas = fetchFullIdeaList();
-    const targetIdea = allIdeas.find((idea: any) => idea.id === targetId);
+    const targetIdea = allIdeas.find((idea) => idea.id === targetId);
     const isChecklist = targetIdea?.type === 'checklist';
     const noteMode = isNoteMode(targetIdea);
-    const hasChildren = allIdeas.some((idea: any) => idea.parentID === targetId);
+    const hasChildren = allIdeas.some((idea) => idea.parentID === targetId);
     const actionLabel = isChecklist ? 'Rename Checklist' : noteMode ? 'Name Note' : hasChildren ? 'Rename Idea' : 'Rewrite Idea';
 
     function handleIdeaRename(newName: string) {

@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { auth } from "../firebaseConfig";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence, sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
+import { isGmailAddress, gmailResetSearchUrl } from "../utilities/gmail";
 import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
-import { signUserOut } from "../utilities/firebase/authFirebase";
 
 const Auth: React.FC = () => {
 
@@ -20,19 +20,17 @@ const Auth: React.FC = () => {
     const [copied, setCopied] = useState(false);
     const [recoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
 
+    const [resetSentTo, setResetSentTo] = useState('');
+
     const isShowingRecoveryCode = useRef(false);
     const isSigningIn = useRef(false);
     const pendingPasswordRef = useRef("");
     const pendingUidRef = useRef("");
     const pendingEncDataRef = useRef<{ encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string } | null>(null);
 
-    const { setMessageBoxMessage, setMessageType, messageBoxMessage } = useIdeaContext();
+    const { setMessageBoxMessage, setMessageType } = useIdeaContext();
 
     useEffect(() => {
-        setPersistence(auth, browserLocalPersistence).catch((error) => {
-            console.error("Error setting persistence:", error);
-        });
-
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user && !isShowingRecoveryCode.current && !isSigningIn.current) {
                 const dekLoaded = await loadDEKFromSession();
@@ -70,42 +68,62 @@ const Auth: React.FC = () => {
     }
 
     function checkPassword(password: string) {
-        if (password.length < 6) {
-            displayMessage("Password must be at least 6 characters long", "bad");
-            console.log(messageBoxMessage);
+        // Length over arbitrary complexity rules (NIST 800-63B) — a longer
+        // minimum stops more real attacks than forcing symbols/digits does,
+        // and spaces are allowed rather than banned so a passphrase like
+        // "correct horse battery staple" isn't rejected. The upper bound is
+        // just a sanity cap against pathologically long input, not a
+        // meaningful security control.
+        if (password.length < 8) {
+            displayMessage("Password must be at least 8 characters long", "bad");
             return false;
-        } else if (password.length > 20) {
-            displayMessage("Password must be less than 20 characters long", "bad");
-            console.log(messageBoxMessage);
-            return false;
-        } else if (/\s/.test(password)) {
-            displayMessage("Password cannot contain spaces", "bad");
+        } else if (password.length > 128) {
+            displayMessage("Password must be less than 128 characters long", "bad");
             return false;
         }
         setMessageBoxMessage("");
         return true;
     }
 
+    // "Keep me signed in" gates both the Firebase Auth session itself and
+    // the encryption key (see setDEK(dek, rememberMe) below) — previously
+    // only the DEK honored this, while the Auth session always persisted
+    // via a hardcoded browserLocalPersistence regardless of the checkbox,
+    // so unchecking it didn't actually end the session on browser close.
+    // Must be applied before the sign-in/sign-up call for that call to pick
+    // it up.
+    async function applyPersistence() {
+        try {
+            await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+        } catch (error) {
+            console.error("Error setting persistence:", error);
+        }
+    }
+
     function defaultSignUp(e: React.MouseEvent<HTMLButtonElement>): void {
         e.preventDefault();
         if (password !== confirmPassword) {
             displayMessage("Passwords do not match", "bad");
-            console.log(messageBoxMessage);
             return;
         }
         if (checkPassword(password)) {
             handleSignUp();
-            return;
         }
-        console.log('Password did not meet requirements.');
     }
 
-    function handleSignUp() {
+    async function handleSignUp() {
         isSigningIn.current = true;
+        await applyPersistence();
         createUserWithEmailAndPassword(auth, email.trim(), password)
             .then(async (userCredential) => {
                 const user = userCredential.user;
                 const capturedPassword = password;
+
+                // Best-effort — a paying customer needs a real, confirmed
+                // email on file (see verifyIdTokenDetailed's check in
+                // create-payment-intent.ts), but a failure here shouldn't
+                // block account creation. Resend is available from Profile.
+                sendEmailVerification(user).catch(() => { /* non-critical */ });
 
                 const dek = await generateDEK();
                 const recoveryCode = generateRecoveryCode();
@@ -126,7 +144,7 @@ const Auth: React.FC = () => {
                 if (error.code === 'auth/email-already-in-use') {
                     displayMessage('An account with that email already exists.', 'bad');
                 } else {
-                    console.log(error.message);
+                    displayMessage('Could not create account. Please try again.', 'bad');
                 }
             });
     }
@@ -139,6 +157,7 @@ const Auth: React.FC = () => {
         try {
             await sendPasswordResetEmail(auth, email.trim());
             displayMessage('Password reset email sent!', 'good');
+            setResetSentTo(email.trim());
         } catch {
             displayMessage('Could not send reset email. Check your address.', 'bad');
         }
@@ -148,14 +167,14 @@ const Auth: React.FC = () => {
         e.preventDefault();
         const capturedPassword = password;
         isSigningIn.current = true;
+        await applyPersistence();
 
         let userCredential;
         try {
             userCredential = await signInWithEmailAndPassword(auth, email, capturedPassword);
-        } catch (error) {
+        } catch {
             isSigningIn.current = false;
             displayMessage('Invalid email or password. Please try again', 'bad');
-            console.log(error);
             return;
         }
 
@@ -229,7 +248,7 @@ const Auth: React.FC = () => {
         } catch (error) {
             isSigningIn.current = false;
             console.error('Encryption setup error:', error);
-            displayMessage('Login error — please try again.', 'bad');
+            displayMessage('Login error, please try again.', 'bad');
         }
     }
 
@@ -302,8 +321,8 @@ const Auth: React.FC = () => {
                 <div className="recoveryModal neobrutal">
                     <h2 className="recoveryTitle">Save Your Recovery Code</h2>
                     <p className="recoveryWarning">
-                        {recoveryCodeContext === 'signup' && <>Welcome to Intraconnected! Your ideas are encrypted end-to-end. Not even we can read them. Save this recovery code somewhere safe. If you ever forget your password, it's the <strong>only</strong> way to get your data back. It won't be shown again.</>}
-                        {recoveryCodeContext === 'migration' && <>We've added end-to-end encryption to Intraconnected. A recovery code has been generated for your account. Save it somewhere safe. If you ever forget your password, it's the <strong>only</strong> way to recover your ideas. It won't be shown again.</>}
+                        {recoveryCodeContext === 'signup' && <>Welcome to Intraconnected! Your ideas are encrypted on your device before they're stored. Save this recovery code somewhere safe. If you forget your password, you can usually reset it by email, but this code is your backup if that ever fails. It won't be shown again.</>}
+                        {recoveryCodeContext === 'migration' && <>We've added encryption to Intraconnected. A recovery code has been generated for your account. Save it somewhere safe. If you forget your password, you can usually reset it by email, but this code is your backup if that ever fails. It won't be shown again.</>}
                         {recoveryCodeContext === 'restore' && <>Your encryption key has been restored and a new recovery code has been generated. Save it somewhere safe. It won't be shown again.</>}
                     </p>
                     <div className="recoveryCodeBox">
@@ -340,9 +359,20 @@ const Auth: React.FC = () => {
                                 <span className="rememberMeBox" aria-hidden="true" />
                                 Keep me signed in
                             </label>
-                            <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
-                                Forgot password?
-                            </button>
+                            {resetSentTo && isGmailAddress(resetSentTo) && email.trim() === resetSentTo ? (
+                                <a
+                                    className={`openGmail neobrutal-button ${showConfirmPassword ? "hidden" : ""}`}
+                                    href={gmailResetSearchUrl(resetSentTo)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Open Gmail ↗
+                                </a>
+                            ) : (
+                                <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
+                                    Forgot password?
+                                </button>
+                            )}
                         </div>
                     </div>
                     <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
@@ -361,6 +391,7 @@ const Auth: React.FC = () => {
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} />
             </section>
+            <a href="/" className="authLearnMore">New here? See what Intraconnected does →</a>
             <div className="legalLinks">
                 <a href="/terms" className="legalLink">Terms of Service</a>
                 <a href="/privacy" className="legalLink">Privacy Policy</a>

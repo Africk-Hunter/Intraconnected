@@ -1,12 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { SUPPORT_EMAIL } from "../utilities/support";
+import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../utilities/billing/pricingDisplay";
 
 const Terms: React.FC = () => {
     const navigate = useNavigate();
-
-    useEffect(() => {
-        document.title = 'Terms of Service | Intraconnected';
-    }, []);
 
     return (
         <div className="legalPage">
@@ -15,7 +13,7 @@ const Terms: React.FC = () => {
                     ← Back
                 </button>
                 <h1 className="legalTitle">Terms of Service</h1>
-                <p className="legalMeta">Intraconnected &mdash; Last updated August 10, 2026</p>
+                <p className="legalMeta">Intraconnected | Last updated September 29, 2026</p>
 
                 <section className="legalSection">
                     <h2>1. Who We Are</h2>
@@ -51,8 +49,10 @@ const Terms: React.FC = () => {
                     <h2>4. Encryption and Data Loss (Please Read)</h2>
                     <p>
                         Your idea content is encrypted on your device before it's sent to our
-                        servers, and we do not hold a copy of your password. This is a deliberate
-                        design choice that protects your privacy, but it has a real consequence:
+                        servers, and we do not hold a copy of your password. To support recovery by
+                        email, we also store a recovery copy of your encryption key tied to your
+                        account details (see the <a href="/privacy">Privacy Policy</a>), so this is
+                        not strict end-to-end encryption. This design has real consequences:
                     </p>
                     <ul>
                         <li>
@@ -63,8 +63,8 @@ const Terms: React.FC = () => {
                         </li>
                         <li>
                             If you lose access to both your password and the email address on your
-                            account, your content is permanently and irrecoverably lost. There is no
-                            other way to recover it, not for us, and not for anyone else.
+                            account, you will not be able to sign in to recover your content, and we
+                            do not offer a manual recovery process.
                         </li>
                         <li>
                             We are not liable for data loss resulting from losing access to both your
@@ -79,8 +79,8 @@ const Terms: React.FC = () => {
                     <h2>5. Your Content</h2>
                     <p>
                         You own the ideas, notes, and content you create in Intraconnected. We don't
-                        claim any ownership over it, and because it's end-to-end encrypted, we can't
-                        read it. You're solely responsible for what you store in the Service.
+                        claim any ownership over it, and we don't read it. You're solely responsible
+                        for what you store in the Service.
                     </p>
                 </section>
 
@@ -112,13 +112,34 @@ const Terms: React.FC = () => {
                 <section className="legalSection">
                     <h2>8. Paid Features</h2>
                     <p>
-                        Intraconnected is currently free to use. We may introduce paid plans or
-                        paid features in the future. If we do, the applicable price, billing
-                        frequency, and cancellation and refund terms will be shown to you before you
-                        pay for anything, and those terms will apply in addition to this section. You
-                        can cancel a paid plan at any time; unless stated otherwise when you
-                        subscribe, cancellation stops future billing but does not refund amounts
-                        already paid.
+                        Intraconnected is free to use up to a limited number of ideas. Beyond that,
+                        we offer two paid plans, billed through Stripe, our payment processor (see
+                        our <a href="/privacy">Privacy Policy</a> for what Stripe receives):
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Annual ({ANNUAL_PRICE_DISPLAY}/year).</strong> A recurring
+                            subscription that renews automatically each year at the then-current
+                            price. You can cancel at any time from Profile → Account; cancellation
+                            stops future renewal but does not refund the current billing period,
+                            you keep full access through the end of the period you already paid
+                            for.
+                        </li>
+                        <li>
+                            <strong>Lifetime ({LIFETIME_PRICE_DISPLAY} one time).</strong> A single
+                            payment for permanent access, with no recurring charges. If you change
+                            your mind, you can request a full, self-serve refund from Profile →
+                            Account within 14 days of purchase, no questions asked; after that
+                            window, email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>{" "}
+                            and we'll take it case by case.
+                        </li>
+                    </ul>
+                    <p>
+                        Prices are shown to you before you pay, and may change for future
+                        purchases, a change never affects a plan you've already paid for. If we
+                        introduce additional paid plans or features, their price and terms will be
+                        shown to you before you pay for anything, and will apply in addition to
+                        this section.
                     </p>
                 </section>
 
@@ -179,7 +200,7 @@ const Terms: React.FC = () => {
                     <h2>14. Contact</h2>
                     <p>
                         Questions about these Terms? Reach us at{" "}
-                        <a href="mailto:gamehunter5879@gmail.com">gamehunter5879@gmail.com</a>.
+                        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
                     </p>
                 </section>
             </div>

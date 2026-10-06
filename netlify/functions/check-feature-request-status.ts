@@ -1,5 +1,6 @@
 import type { Context } from "@netlify/functions";
 import { firestore, verifyIdToken } from "./lib/firebaseAdmin";
+import { preflightResponse, jsonResponse } from "./lib/cors";
 
 const GITHUB_REPO = process.env.GITHUB_REPO ?? "Africk-Hunter/Intraconnected";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -11,11 +12,14 @@ interface TrackedIssue {
     createdAt: number;
 }
 
-function jsonError(status: number, message: string) {
-    return Response.json({ error: message }, { status });
-}
-
 export default async (req: Request, _context: Context) => {
+    const preflight = preflightResponse(req);
+    if (preflight) return preflight;
+
+    function jsonError(status: number, message: string) {
+        return jsonResponse(req, { error: message }, status);
+    }
+
     if (!GITHUB_TOKEN) {
         return jsonError(500, "Server misconfigured.");
     }
@@ -28,11 +32,11 @@ export default async (req: Request, _context: Context) => {
     const db = firestore();
     const ref = db.collection("users").doc(uid).collection("meta").doc("featureRequests");
     const snap = await ref.get();
-    if (!snap.exists) return Response.json(null);
+    if (!snap.exists) return jsonResponse(req, null);
 
     const issues: TrackedIssue[] = snap.data()?.issues ?? [];
     const pending = issues.filter((i) => !i.seenClosed);
-    if (pending.length === 0) return Response.json(null);
+    if (pending.length === 0) return jsonResponse(req, null);
 
     const implemented: TrackedIssue[] = [];
 
@@ -56,12 +60,12 @@ export default async (req: Request, _context: Context) => {
         })
     );
 
-    if (implemented.length === 0) return Response.json(null);
+    if (implemented.length === 0) return jsonResponse(req, null);
 
     const updated = issues.map((i) =>
         implemented.some((impl) => impl.issueNumber === i.issueNumber) ? { ...i, seenClosed: true } : i
     );
     await ref.set({ issues: updated });
 
-    return Response.json(implemented.map((i) => i.title));
+    return jsonResponse(req, implemented.map((i) => i.title));
 };

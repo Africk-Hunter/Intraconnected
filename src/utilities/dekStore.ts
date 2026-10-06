@@ -35,7 +35,7 @@ export async function loadDEKFromSession(): Promise<boolean> {
 }
 
 export function getDEK(): CryptoKey {
-    if (!_dek) throw new Error('Encryption key not initialized — please log in again.');
+    if (!_dek) throw new Error('Encryption key not initialized, please log in again.');
     return _dek;
 }
 

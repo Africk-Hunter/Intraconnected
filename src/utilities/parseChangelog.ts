@@ -9,7 +9,7 @@ export function parseChangelog(raw: string): ChangelogEntry[] {
     return raw
         .split(/^## /m)
         .slice(1)
-        .map(section => {
+        .map((section): ChangelogEntry | null => {
             const lines = section.trim().split('\n');
             const pipeIdx = lines[0].indexOf('|');
             if (pipeIdx === -1) return null;

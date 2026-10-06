@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useRef, useState } from "react";
-import { IdeaType } from "../utilities/types";
+import type { IdeaType } from "../utilities/types";
 import { buildAncestorPath, fetchFullIdeaList } from "../utilities/idea/helpers";
+// Type-only: this context wraps every route, so a value import here would
+// pull Firebase into the marketing pages' initial bundle.
+import type { BillingPlan } from "../utilities/firebase/firebaseHelpers";
+import type { CheckoutPlan } from "../utilities/billing/billing";
 
 interface IdeaContextType {
     ideas: IdeaType[];
@@ -45,6 +49,16 @@ interface IdeaContextType {
     setDeleteModalOrigin: (origin: { x: number; y: number } | null) => void;
     profileModalOpen: boolean;
     setProfileModalOpen: (open: boolean) => void;
+    billingPlan: BillingPlan;
+    setBillingPlan: (plan: BillingPlan) => void;
+    upgradeModalOpen: boolean;
+    setUpgradeModalOpen: (open: boolean) => void;
+    upgradeModalReason: 'limit' | null;
+    setUpgradeModalReason: (reason: 'limit' | null) => void;
+    checkoutPlan: CheckoutPlan | null;
+    setCheckoutPlan: (plan: CheckoutPlan | null) => void;
+    celebrationPlan: CheckoutPlan | null;
+    setCelebrationPlan: (plan: CheckoutPlan | null) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -73,6 +87,11 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [checklistModalId, setChecklistModalId] = useState<number | null>(null);
     const [deleteModalOrigin, setDeleteModalOrigin] = useState<{ x: number; y: number } | null>(null);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [billingPlan, setBillingPlan] = useState<BillingPlan>('free');
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [upgradeModalReason, setUpgradeModalReason] = useState<'limit' | null>(null);
+    const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
+    const [celebrationPlan, setCelebrationPlan] = useState<CheckoutPlan | null>(null);
 
     const rootIdStack = useRef<number[]>([]);
 
@@ -140,6 +159,16 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setDeleteModalOrigin,
                 profileModalOpen,
                 setProfileModalOpen,
+                billingPlan,
+                setBillingPlan,
+                upgradeModalOpen,
+                setUpgradeModalOpen,
+                upgradeModalReason,
+                setUpgradeModalReason,
+                checkoutPlan,
+                setCheckoutPlan,
+                celebrationPlan,
+                setCelebrationPlan,
             }}>
             {children}
         </IdeaContext.Provider>

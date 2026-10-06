@@ -4,21 +4,29 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "dev:functions": "netlify dev",
+    "dev:stripe": "concurrently -n netlify,stripe -c blue,magenta \"netlify dev\" \"stripe listen --forward-to localhost:8888/.netlify/functions/stripe-webhook\"",
+    "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc -b && tsc -p tsconfig.functions.json",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@stripe/react-stripe-js": "^6.8.1",
+    "@stripe/stripe-js": "^9.13.0",
     "firebase": "^11.6.1",
+    "firebase-admin": "^14.2.0",
     "normalize.css": "^8.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.5.2",
-    "sass": "^1.87.0"
+    "react-router-dom": "^7.18.2",
+    "sass": "^1.87.0",
+    "stripe": "^22.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
@@ -27,14 +35,19 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^6.0.2",
+    "concurrently": "^10.0.4",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
-    "firebase-admin": "^14.2.0",
     "globals": "^16.0.0",
+    "netlify-cli": "^27.1.1",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.26.1",
     "vite": "^8.0.16",
-    "vitest": "^3.2.6"
+    "vitest": "^3.2.6",
+    "webtool-devtool": "^0.1.1"
+  },
+  "overrides": {
+    "jose": "^4.15.9"
   }
 }

@@ -1,6 +1,7 @@
 import type { Context } from "@netlify/functions";
 import { firestore, verifyIdToken } from "./lib/firebaseAdmin";
 import { containsProfanity } from "./lib/profanityFilter";
+import { preflightResponse, jsonResponse } from "./lib/cors";
 
 const GITHUB_REPO = process.env.GITHUB_REPO ?? "Africk-Hunter/Intraconnected";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -17,11 +18,14 @@ interface TrackedIssue {
     createdAt: number;
 }
 
-function jsonError(status: number, message: string) {
-    return Response.json({ error: message }, { status });
-}
-
 export default async (req: Request, _context: Context) => {
+    const preflight = preflightResponse(req);
+    if (preflight) return preflight;
+
+    function jsonError(status: number, message: string) {
+        return jsonResponse(req, { error: message }, status);
+    }
+
     if (req.method !== "POST") {
         return jsonError(405, "Method not allowed.");
     }
@@ -85,5 +89,5 @@ export default async (req: Request, _context: Context) => {
         issues: [...existing, { issueNumber, title, seenClosed: false, createdAt: Date.now() }],
     });
 
-    return Response.json({ issueNumber });
+    return jsonResponse(req, { issueNumber });
 };

@@ -1,0 +1,504 @@
+@use './variables' as *;
+
+.landingPage {
+    min-height: 100vh;
+    font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif;
+    color: #111;
+    @include landing-grid-bg;
+    @include marketing-tokens;
+}
+
+// ── Navbar ────────────────────────────────────────────────────────────────
+
+.landingNavbar {
+    height: 72px;
+    @include landing-grid-bg;
+    border-bottom: $neo-card-border;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    @media (max-width: $mobile) {
+        padding: 0 20px;
+    }
+}
+
+.landingNavbarBrand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #111;
+}
+
+.landingNavbarBrandText {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    color: #111;
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.landingNavbarLinks {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.landingNavLink {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    text-decoration: none;
+    padding-bottom: 2px;
+    border-bottom: 2.5px solid transparent;
+    transition: border-color 0.15s;
+
+    &:hover {
+        border-bottom-color: #111;
+    }
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.landingNavCta {
+    display: inline-block;
+    padding: 10px 24px;
+    background: $link;
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────
+
+.landingHero {
+    position: relative;
+    overflow-x: clip;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 76px 48px 52px;
+    text-align: center;
+
+    @media (max-width: $mobile) {
+        padding: 48px 20px 36px;
+    }
+}
+
+.landingHeroTitle {
+    font-size: clamp(38px, 5.2vw, 68px);
+    font-weight: 800;
+    line-height: 1.07;
+    letter-spacing: -2px;
+    color: #111;
+    max-width: 840px;
+}
+
+// Marker-style highlights behind each headline line.
+.heroMark {
+    display: inline-block;
+    padding: 0 14px;
+    margin: 4px 0;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: $neo-detail-radius;
+
+    &--leaf {
+        background: $leaf;
+        transform: rotate(-1.5deg);
+    }
+
+    &--sky {
+        background: $sky;
+        transform: rotate(1deg);
+    }
+
+    @media (max-width: $mobile) {
+        padding: 0 8px;
+    }
+}
+
+// Decorative mini nodes drifting around the headline; desktop only.
+.heroFloater {
+    position: absolute;
+    padding: 6px 16px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #111;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: $neo-detail-radius;
+    animation: heroBob 5s ease-in-out infinite;
+    pointer-events: none;
+
+    &--leaf { top: 84px; left: 6%; background: $leaf; --tilt: -8deg; }
+    &--sky { top: 170px; right: 7%; background: $sky; --tilt: 6deg; animation-delay: -1.5s; }
+    &--link { top: 330px; left: 3%; background: $link; --tilt: 5deg; animation-delay: -3s; }
+    &--indigo { top: 400px; right: 3%; background: $indigo; color: #fff; --tilt: -5deg; animation-delay: -2s; }
+
+    @media (max-width: $desktop) {
+        display: none;
+    }
+}
+
+@keyframes heroBob {
+    0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+    50% { transform: translateY(-12px) rotate(calc(var(--tilt, 0deg) * -0.6)); }
+}
+
+.landingHeroSubline {
+    font-size: 19px;
+    font-weight: 500;
+    color: #444;
+    margin-top: 22px;
+    max-width: 480px;
+    line-height: 1.7;
+}
+
+.landingMindMapBox {
+    margin: 52px auto 44px;
+    width: 100%;
+    max-width: 760px;
+    border: $neo-card-border;
+    box-shadow: $neo-card-shadow;
+    border-radius: $neo-card-radius;
+    @include landing-grid-bg;
+    overflow: hidden;
+    padding: 24px;
+
+    @media (max-width: $mobile) {
+        margin: 36px auto 32px;
+        padding: 14px;
+    }
+}
+
+.mmSvg {
+    display: block;
+}
+
+.mmGroup {
+    opacity: 1;
+
+    // Transition lives only on the --fading rule: fading in (class removed on
+    // loop reset) must be instant, fading out (class added) animates 0.8s.
+    &.mmGroup--fading {
+        opacity: 0;
+        transition: opacity 0.8s ease-in-out;
+    }
+}
+
+// Transition lives only on the --visible/--drawn rule so popping in animates
+// but the per-loop reset (class removed) snaps back instantly, matching the
+// reference implementation's explicit transition:none-then-reenable dance.
+.mmNode {
+    opacity: 0;
+    transform: scale(0.3);
+
+    &.mmNode--visible {
+        opacity: 1;
+        transform: scale(1);
+        transition: opacity 0.3s ease, transform 0.48s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+}
+
+.mmLine {
+    // opacity:0 (not just dashoffset) hides the round-linecap dot that
+    // otherwise peeks through at the path's start point before it draws.
+    opacity: 0;
+    stroke-dasharray: var(--mm-len, 0);
+    stroke-dashoffset: var(--mm-len, 0);
+
+    &.mmLine--drawn {
+        opacity: 1;
+        stroke-dashoffset: 0;
+        transition: stroke-dashoffset 0.5s ease-out;
+    }
+}
+
+.landingCta {
+    display: inline-block;
+    padding: 18px 54px;
+    background: $leaf;
+    font-size: 20px;
+    font-weight: 800;
+    color: #111;
+    text-decoration: none;
+    letter-spacing: -0.4px;
+    white-space: nowrap;
+}
+
+// ── How it works ─────────────────────────────────────────────────────────
+
+.landingHowItWorks {
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 56px 52px 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    @media (max-width: $tablet) {
+        padding: 40px 20px 64px;
+    }
+}
+
+.landingHowHeader {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.landingHowTitle {
+    font-size: clamp(28px, 3.6vw, 44px);
+    font-weight: 800;
+    letter-spacing: -1.2px;
+    line-height: 1.1;
+    color: #111;
+}
+
+.landingHowSteps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+
+    @media (max-width: $tablet) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.howStep {
+    background: #fff;
+    box-shadow: $neo-card-shadow;
+    padding: 20px 22px 28px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:nth-child(1) { --step-color: #{$leaf}; }
+    &:nth-child(2) { --step-color: #{$sky}; }
+    &:nth-child(3) { --step-color: #{$link}; }
+
+    @media (min-width: $tablet) {
+        &:nth-child(1) { transform: rotate(-1deg); }
+        &:nth-child(3) { transform: rotate(1deg); }
+    }
+
+    &:hover {
+        transform: translate(-2px, -4px) rotate(0deg);
+        box-shadow: 7px 7px 0 2px black;
+    }
+}
+
+.howScene {
+    border: $neo-detail-border;
+    border-radius: $neo-btn-radius;
+    @include landing-grid-bg;
+    margin-bottom: 20px;
+    overflow: hidden;
+
+    svg {
+        display: block;
+    }
+}
+
+.howStepNumber {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--step-color, #{$leaf});
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: 50%;
+    font-size: 17px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 14px;
+}
+
+.howStepTitle {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    margin-bottom: 10px;
+    color: #111;
+}
+
+.howStepBody {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    line-height: 1.7;
+}
+
+// ── Closing call to action ───────────────────────────────────────────────
+
+.landingFinalCta {
+    max-width: 1120px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 0 52px 96px;
+
+    @media (max-width: $tablet) {
+        padding: 0 20px 64px;
+    }
+}
+
+.landingFinalCtaCard {
+    background: $link;
+    box-shadow: $neo-card-shadow;
+    padding: 48px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    text-align: center;
+}
+
+.landingFinalCtaTitle {
+    font-size: clamp(26px, 3.4vw, 40px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.12;
+    color: #111;
+}
+
+// Every animated piece shares one loop length so the scenes stay in step; each
+// keyframe set holds hidden until its start %, shows, then fades out together
+// at the end of the loop (no per-element delays, which would desync the reset).
+$howLoop: 6s;
+
+@mixin howPop($name, $at) {
+    @keyframes #{$name} {
+        0%, #{$at - 2%} { opacity: 0; transform: scale(0.3); }
+        #{$at}, 90% { opacity: 1; transform: scale(1); }
+        96%, 100% { opacity: 0; transform: scale(1); }
+    }
+}
+
+@mixin howDraw($name, $at) {
+    @keyframes #{$name} {
+        0%, #{$at - 8%} { opacity: 0; stroke-dashoffset: 1; }
+        #{$at - 7%} { opacity: 1; stroke-dashoffset: 1; }
+        #{$at}, 90% { opacity: 1; stroke-dashoffset: 0; }
+        96%, 100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+}
+
+@include howPop(howPop15, 15%);
+@include howPop(howPop32, 32%);
+@include howPop(howPop62, 62%);
+@include howPop(howPop70, 70%);
+@include howDraw(howDraw12, 12%);
+@include howDraw(howDraw29, 29%);
+@include howDraw(howDraw70, 70%);
+
+.howS1-node1,
+.howS1-node2,
+.howS2-b1,
+.howS2-b2 {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-duration: $howLoop;
+    animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.howS1-node1 { animation-name: howPop15; }
+.howS1-node2 { animation-name: howPop32; }
+.howS2-b1 { animation-name: howPop62; }
+.howS2-b2 { animation-name: howPop70; }
+
+.howS1-line1,
+.howS1-line2,
+.howS3-line {
+    stroke-dasharray: 1;
+    animation-duration: $howLoop;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+}
+
+.howS1-line1 { animation-name: howDraw12; }
+.howS1-line2 { animation-name: howDraw29; }
+.howS3-line { animation-name: howDraw70; }
+
+// Scene 2: the parent view hands over to the zoomed-in view after a click.
+.howS2-a,
+.howS2-b,
+.howS2-cursor,
+.howS3-drag {
+    animation-duration: $howLoop;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+.howS2-a { animation-name: howViewA; }
+.howS2-b { animation-name: howViewB; }
+.howS2-cursor { animation-name: howCursor2; }
+
+@keyframes howViewA {
+    0%, 40% { opacity: 1; }
+    46%, 94% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes howViewB {
+    0%, 46% { opacity: 0; }
+    52%, 90% { opacity: 1; }
+    96%, 100% { opacity: 0; }
+}
+
+@keyframes howCursor2 {
+    0% { opacity: 0; transform: translate(70px, -26px); }
+    10% { opacity: 1; transform: translate(70px, -26px); }
+    30% { opacity: 1; transform: translate(0, 0); }
+    35% { opacity: 1; transform: translate(0, 0) scale(0.85); }
+    39% { opacity: 1; transform: translate(0, 0) scale(1); }
+    46%, 100% { opacity: 0; transform: translate(0, 0); }
+}
+
+// Scene 3: Guitar (and its cursor) is dragged under Music, then a line joins them.
+.howS3-drag { animation-name: howDrag; }
+
+@keyframes howDrag {
+    0%, 20% { opacity: 1; transform: translate(0, 0) scale(1); }
+    28% { opacity: 1; transform: translate(0, 0) scale(1.06); }
+    58% { opacity: 1; transform: translate(-120px, 0) scale(1.06); }
+    64%, 90% { opacity: 1; transform: translate(-120px, 0) scale(1); }
+    96%, 100% { opacity: 0; transform: translate(-120px, 0) scale(1); }
+}
+
+.howS3-drag,
+.howS3-cursor {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .heroFloater { animation: none; transform: rotate(var(--tilt, 0deg)); }
+
+    .howS1-node1, .howS1-node2, .howS1-line1, .howS1-line2,
+    .howS2-b, .howS2-b1, .howS2-b2, .howS3-line, .howS3-drag {
+        animation: none;
+    }
+
+    // Static end states: zoomed-in view, Guitar already moved under Music.
+    .howS2-a, .howS2-cursor, .howS3-cursor { display: none; }
+    .howS2-b { opacity: 1; }
+    .howS3-drag { transform: translate(-120px, 0); }
+}

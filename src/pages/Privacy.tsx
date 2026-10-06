@@ -1,12 +1,9 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { SUPPORT_EMAIL } from "../utilities/support";
 
 const Privacy: React.FC = () => {
     const navigate = useNavigate();
-
-    useEffect(() => {
-        document.title = 'Privacy Policy | Intraconnected';
-    }, []);
 
     return (
         <div className="legalPage">
@@ -15,15 +12,17 @@ const Privacy: React.FC = () => {
                     ← Back
                 </button>
                 <h1 className="legalTitle">Privacy Policy</h1>
-                <p className="legalMeta">Intraconnected &mdash; Last updated August 10, 2026</p>
+                <p className="legalMeta">Intraconnected | Last updated September 29, 2026</p>
 
                 <section className="legalSection">
                     <h2>Overview</h2>
                     <p>
                         Intraconnected is a personal mind-mapping app, operated by an individual
                         (Hunter Africk), not a company. We take privacy seriously: your ideas are
-                        encrypted on your device before they ever leave it, which means we cannot
-                        read your ideas even if we wanted to.
+                        encrypted on your device before they ever leave it, and we do not look at
+                        your ideas. Because we also let you recover your ideas by email if you
+                        forget your password, this is not strict end-to-end encryption; see "How
+                        Your Data Is Protected" below for exactly what that means.
                     </p>
                 </section>
 
@@ -35,11 +34,19 @@ const Privacy: React.FC = () => {
                     </p>
                     <p>
                         <strong>Your ideas.</strong> Encrypted on your device before being stored.
-                        We cannot read them.
+                        We do not read them.
+                    </p>
+                    <p>
+                        <strong>Payment information, if you upgrade.</strong> If you choose a paid
+                        plan, your card details are collected and processed directly by Stripe, our
+                        payment processor, we never see or store your card number. Stripe shares
+                        back with us only what's needed to run your account: your plan, purchase
+                        date, and subscription status.
                     </p>
                     <p>
                         <strong>Nothing else.</strong> We do not use analytics, advertising trackers,
-                        cookies, or any third-party tracking services beyond Firebase.
+                        or cookies of our own. We do not sell or share any of the above for
+                        marketing purposes.
                     </p>
                 </section>
 
@@ -50,10 +57,10 @@ const Privacy: React.FC = () => {
                         This means:
                     </p>
                     <ul>
-                        <li>Only you can decrypt your ideas.</li>
+                        <li>What we store on our servers is encrypted, not your readable ideas.</li>
                         <li>If you forget your password, use "Forgot password" to reset it by email. As long as you still control the email address on your account, your ideas are automatically recovered when you reset your password.</li>
-                        <li>If you lose access to both your password and your email account, your ideas cannot be recovered, by you or by us.</li>
-                        <li>Even in the event of a data breach, your ideas remain unreadable without your password or access to your email account.</li>
+                        <li>To make that email recovery possible, we also store a recovery copy of your encryption key, locked with information tied to your account (your email address and account ID) rather than your password. This is a trade-off: it means someone with access to both our database and your account details, including us, could technically decrypt your ideas. We do not do this, and we will not do so unless required by law.</li>
+                        <li>If you lose access to both your password and your email account, you will not be able to sign in to recover your ideas yourself.</li>
                     </ul>
                 </section>
 
@@ -67,6 +74,17 @@ const Privacy: React.FC = () => {
                         </a>
                         . Your email address is handled by Firebase Authentication. Your encrypted idea
                         data is stored in Firebase Firestore.
+                    </p>
+                    <p>
+                        If you upgrade to a paid plan, we use <strong>Stripe</strong> to process your
+                        payment. Stripe is subject to{" "}
+                        <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">
+                            Stripe's Privacy Policy
+                        </a>
+                        . Your card details go directly to Stripe, we never see or store them.
+                        Stripe also uses cookies and device information of its own for fraud
+                        prevention while checkout is open; that's Stripe's processing, not ours, and
+                        is covered by their policy above.
                     </p>
                 </section>
 
@@ -96,10 +114,16 @@ const Privacy: React.FC = () => {
                 <section className="legalSection">
                     <h2>Your Rights</h2>
                     <p>
+                        You can download a copy of your data at any time from Profile → Export Your
+                        Data, on any plan. You can choose Markdown or OPML (your decrypted ideas,
+                        for use in other notes, outliner or mind-map apps) or JSON (your decrypted
+                        ideas plus basic account information, as a full backup).
+                    </p>
+                    <p>
                         You can permanently delete your account and all associated data at any time,
                         yourself, from Profile → Delete Account in the app. No need to contact us.
-                        Because your idea content is end-to-end encrypted, deleting your account
-                        permanently destroys any possibility of recovering that data. If you'd rather
+                        Deleting your account permanently erases your ideas and every copy of your
+                        encryption key from our servers, so that data cannot be recovered afterward. If you'd rather
                         we do it for you, or you can't access the app, email us at the address below.
                     </p>
                 </section>
@@ -125,7 +149,7 @@ const Privacy: React.FC = () => {
                     <h2>Contact</h2>
                     <p>
                         Questions? Reach us at{" "}
-                        <a href="mailto:gamehunter5879@gmail.com">gamehunter5879@gmail.com</a>. See
+                        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. See
                         also our <a href="/terms">Terms of Service</a>.
                     </p>
                 </section>
