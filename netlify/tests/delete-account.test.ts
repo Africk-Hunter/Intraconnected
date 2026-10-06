@@ -1,26 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fakeDocRef, fakeRequest } from "./lib/testUtils";
+import { fakeDocRef, fakeRequest } from "../functions/lib/testUtils";
 
 const { verifyIdToken, firestoreMock, deleteUser } = vi.hoisted(() => ({
     verifyIdToken: vi.fn(),
     firestoreMock: vi.fn(),
     deleteUser: vi.fn(),
 }));
-vi.mock("./lib/firebaseAdmin", () => ({
+vi.mock("../functions/lib/firebaseAdmin", () => ({
     verifyIdToken,
     firestore: firestoreMock,
     adminAuth: () => ({ deleteUser }),
 }));
 
 const { subscriptionsCancel } = vi.hoisted(() => ({ subscriptionsCancel: vi.fn() }));
-vi.mock("./lib/stripe", () => ({
+vi.mock("../functions/lib/stripe", () => ({
     stripe: () => ({ subscriptions: { cancel: subscriptionsCancel } }),
 }));
 
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
-vi.mock("./lib/rateLimit", () => ({ checkRateLimit }));
+vi.mock("../functions/lib/rateLimit", () => ({ checkRateLimit }));
 
-import handler from "./delete-account";
+import handler from "../functions/delete-account";
 
 function mockDb({
     billingData,

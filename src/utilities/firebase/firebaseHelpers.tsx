@@ -62,18 +62,11 @@ function authCheck() {
     return user;
 }
 
-export async function storeEncryptedDEK(encryptedDEK: string, recoveryEncryptedDEK: string, emailEncryptedDEK: string): Promise<void> {
+export async function storeEncryptedDEK(encryptedDEK: string, emailEncryptedDEK: string): Promise<void> {
     const user = authCheck();
     if (!user) return;
     const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
-    await setDoc(metaDoc, { encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK, recoveryCodeAcknowledged: false });
-}
-
-export async function markRecoveryCodeAcknowledged(): Promise<void> {
-    const user = authCheck();
-    if (!user) return;
-    const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
-    await setDoc(metaDoc, { recoveryCodeAcknowledged: true }, { merge: true });
+    await setDoc(metaDoc, { encryptedDEK, emailEncryptedDEK });
 }
 
 export async function addEmailEncryptedDEK(emailEncryptedDEK: string): Promise<void> {
@@ -83,13 +76,13 @@ export async function addEmailEncryptedDEK(emailEncryptedDEK: string): Promise<v
     await setDoc(metaDoc, { emailEncryptedDEK }, { merge: true });
 }
 
-export async function fetchEncryptedDEK(): Promise<{ encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string; recoveryCodeAcknowledged?: boolean } | null> {
+export async function fetchEncryptedDEK(): Promise<{ encryptedDEK: string; emailEncryptedDEK?: string } | null> {
     const user = authCheck();
     if (!user) return null;
     const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
     const snap = await getDoc(metaDoc);
     if (!snap.exists()) return null;
-    return snap.data() as { encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string; recoveryCodeAcknowledged?: boolean };
+    return snap.data() as { encryptedDEK: string; emailEncryptedDEK?: string };
 }
 
 // Overwrites meta/nodeCount with the true current count — see

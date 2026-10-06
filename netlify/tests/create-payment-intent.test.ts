@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fakeRequest } from "./lib/testUtils";
+import { fakeRequest } from "../functions/lib/testUtils";
 
 vi.hoisted(() => {
     process.env.STRIPE_PRICE_ANNUAL = "price_annual_test";
@@ -7,7 +7,7 @@ vi.hoisted(() => {
 });
 
 const { verifyIdTokenDetailed } = vi.hoisted(() => ({ verifyIdTokenDetailed: vi.fn() }));
-vi.mock("./lib/firebaseAdmin", () => ({ verifyIdTokenDetailed }));
+vi.mock("../functions/lib/firebaseAdmin", () => ({ verifyIdTokenDetailed }));
 
 const { paymentIntentsCreate, customersCreate, customersUpdate, subscriptionsCreate } = vi.hoisted(() => ({
     paymentIntentsCreate: vi.fn(),
@@ -15,7 +15,7 @@ const { paymentIntentsCreate, customersCreate, customersUpdate, subscriptionsCre
     customersUpdate: vi.fn(),
     subscriptionsCreate: vi.fn(),
 }));
-vi.mock("./lib/stripe", () => ({
+vi.mock("../functions/lib/stripe", () => ({
     stripe: () => ({
         paymentIntents: { create: paymentIntentsCreate },
         customers: { create: customersCreate, update: customersUpdate },
@@ -27,12 +27,12 @@ const { getBillingDoc, getLifetimePrice } = vi.hoisted(() => ({
     getBillingDoc: vi.fn(),
     getLifetimePrice: vi.fn(),
 }));
-vi.mock("./lib/lifetimePricing", () => ({ getBillingDoc, getLifetimePrice }));
+vi.mock("../functions/lib/lifetimePricing", () => ({ getBillingDoc, getLifetimePrice }));
 
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
-vi.mock("./lib/rateLimit", () => ({ checkRateLimit }));
+vi.mock("../functions/lib/rateLimit", () => ({ checkRateLimit }));
 
-import handler from "./create-payment-intent";
+import handler from "../functions/create-payment-intent";
 
 describe("create-payment-intent", () => {
     beforeEach(() => {
@@ -136,7 +136,7 @@ describe("create-payment-intent", () => {
         verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         customersCreate.mockResolvedValue({ id: "cus_new" });
         subscriptionsCreate.mockResolvedValue({
-            latest_invoice: { confirmation_secret: { client_secret: "secret_sub" }, amount_due: 199, currency: "usd" },
+            latest_invoice: { confirmation_secret: { client_secret: "secret_sub" }, amount_due: 1499, currency: "usd" },
         });
 
         const res = await handler(fakeRequest({ plan: "annual" }), {} as never);

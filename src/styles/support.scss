@@ -1,0 +1,239 @@
+@use './variables' as *;
+
+.supportPage {
+    min-height: calc(100vh - 72px);
+    font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif;
+    color: #111;
+    @include landing-grid-bg;
+    @include marketing-tokens;
+    scroll-behavior: smooth;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────
+
+.supportHero {
+    text-align: center;
+    padding: 76px 48px 44px;
+
+    @media (max-width: $mobile) {
+        padding: 48px 20px 32px;
+    }
+}
+
+.supportHeroTitle {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    line-height: 1.07;
+    letter-spacing: -2px;
+}
+
+.supportHeroSubline {
+    font-size: 18px;
+    font-weight: 500;
+    color: #444;
+    margin: 20px auto 0;
+    max-width: 480px;
+    line-height: 1.7;
+}
+
+// ── Topic cards ───────────────────────────────────────────────────────────
+
+.supportTopics {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 52px 56px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+
+    @media (max-width: $desktop) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: $mobile) {
+        grid-template-columns: 1fr;
+        padding: 0 20px 40px;
+    }
+}
+
+.supportTopic {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 28px 24px;
+    background: #fff;
+    color: #111;
+    text-decoration: none;
+    transition: transform 0.12s, box-shadow 0.12s;
+
+    &:hover {
+        transform: translate(-2px, -2px);
+    }
+
+    svg {
+        margin-bottom: 10px;
+    }
+}
+
+.supportTopicTitle {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+.supportTopicBody {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    line-height: 1.55;
+}
+
+// ── FAQ ───────────────────────────────────────────────────────────────────
+
+.supportFaq {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+}
+
+.supportGroup {
+    scroll-margin-top: 96px;
+}
+
+.supportGroupTitle {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #444;
+    margin-bottom: 16px;
+}
+
+.supportQuestions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.supportQuestion {
+    background: #fff;
+
+    summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        list-style: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+    }
+
+    &[open] {
+        background: $background-color;
+
+        .supportChevron {
+            transform: rotate(180deg);
+        }
+    }
+}
+
+.supportChevron {
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+.supportAnswer {
+    padding: 0 22px 20px;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.7;
+    color: #333;
+
+    a {
+        color: #111;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+}
+
+// ── Contact ───────────────────────────────────────────────────────────────
+
+.supportContact {
+    max-width: 780px;
+    margin: 64px auto 0;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    background: $link;
+    width: calc(100% - 40px);
+    box-sizing: border-box;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    @media (max-width: $tablet) {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 24px 20px;
+    }
+}
+
+.supportContactText {
+    flex: 1;
+}
+
+.supportContactTitle {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.supportContactBody {
+    margin-top: 6px;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: #333;
+}
+
+.supportContactCta {
+    display: inline-block;
+    padding: 12px 22px;
+    background: $leaf;
+    color: #111;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+
+    @media (max-width: $mobile) {
+        white-space: normal;
+        word-break: break-all;
+    }
+}
+
+.supportLegal {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px 20px 64px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #888;
+
+    a {
+        color: inherit;
+        text-decoration: underline;
+    }
+}

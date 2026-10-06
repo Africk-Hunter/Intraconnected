@@ -99,7 +99,10 @@ and the C2 decision. None of the 8 native-app phases have been started.
   `interconnectedness-3a37b`, including the A2 fix. Clients can no longer write `meta/billing`, the
   50-idea free cap is enforced on the server, and the rate-limit docs are locked. Any future edit to
   `firestore.rules` has to be re-published by hand.
-- **B2 — Switch Stripe to live mode.** `.env` still holds `pk_test_…`. Set the live values of
+- **B2 — Switch Stripe to live mode.** `.env` still holds `pk_test_…`. **Prices changed Oct 6:**
+  Annual is now $14.99/yr and Lifetime $39 (see `pricingDisplay.ts`), and Stripe prices can't be
+  edited, so create a new recurring $14.99/yr Price and a new one-time $39 Price in each mode and use
+  their ids for `STRIPE_PRICE_ANNUAL` / `STRIPE_PRICE_LIFETIME`. Set the live values of
   `VITE_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ANNUAL`
   and `STRIPE_PRICE_LIFETIME` in Netlify's production environment. Register a live webhook endpoint
   subscribed to `payment_intent.succeeded`, `customer.subscription.updated`,

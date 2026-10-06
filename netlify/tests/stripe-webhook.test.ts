@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fakeDocRef } from "./lib/testUtils";
+import { fakeDocRef } from "../functions/lib/testUtils";
 
 vi.hoisted(() => {
     process.env.STRIPE_WEBHOOK_SECRET = "whsec_test";
@@ -7,7 +7,7 @@ vi.hoisted(() => {
 });
 
 const { firestoreMock } = vi.hoisted(() => ({ firestoreMock: vi.fn() }));
-vi.mock("./lib/firebaseAdmin", () => ({ firestore: firestoreMock }));
+vi.mock("../functions/lib/firebaseAdmin", () => ({ firestore: firestoreMock }));
 
 const { constructEvent, paymentIntentsRetrieve, subscriptionsCancel, subscriptionsCreate, subscriptionsList } = vi.hoisted(() => ({
     constructEvent: vi.fn(),
@@ -16,7 +16,7 @@ const { constructEvent, paymentIntentsRetrieve, subscriptionsCancel, subscriptio
     subscriptionsCreate: vi.fn(),
     subscriptionsList: vi.fn(),
 }));
-vi.mock("./lib/stripe", () => ({
+vi.mock("../functions/lib/stripe", () => ({
     stripe: () => ({
         webhooks: { constructEvent },
         paymentIntents: { retrieve: paymentIntentsRetrieve },
@@ -29,12 +29,12 @@ const { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent } =
     deriveLifetimeRefundUpdate: vi.fn(),
     extractUidFromEvent: vi.fn(),
 }));
-vi.mock("./lib/billingEvents", () => ({ deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent }));
+vi.mock("../functions/lib/billingEvents", () => ({ deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent }));
 
 const { getBillingDoc } = vi.hoisted(() => ({ getBillingDoc: vi.fn() }));
-vi.mock("./lib/lifetimePricing", () => ({ getBillingDoc }));
+vi.mock("../functions/lib/lifetimePricing", () => ({ getBillingDoc }));
 
-import handler from "./stripe-webhook";
+import handler from "../functions/stripe-webhook";
 
 function fakeWebhookRequest(): Request {
     return new Request("https://example.test/.netlify/functions/stripe-webhook", {

@@ -4,10 +4,10 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersiste
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
-import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
+import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
 import { isGmailAddress, gmailResetSearchUrl } from "../utilities/gmail";
-import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
+import { storeEncryptedDEK, fetchEncryptedDEK, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
 
 const Auth: React.FC = () => {
 
@@ -16,23 +16,19 @@ const Auth: React.FC = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-    const [pendingRecoveryCode, setPendingRecoveryCode] = useState("");
-    const [copied, setCopied] = useState(false);
-    const [recoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
 
     const [resetSentTo, setResetSentTo] = useState('');
 
-    const isShowingRecoveryCode = useRef(false);
     const isSigningIn = useRef(false);
     const pendingPasswordRef = useRef("");
     const pendingUidRef = useRef("");
-    const pendingEncDataRef = useRef<{ encryptedDEK: string; recoveryEncryptedDEK: string; emailEncryptedDEK?: string } | null>(null);
+    const pendingEncDataRef = useRef<{ encryptedDEK: string; emailEncryptedDEK?: string } | null>(null);
 
     const { setMessageBoxMessage, setMessageType } = useIdeaContext();
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user && !isShowingRecoveryCode.current && !isSigningIn.current) {
+            if (user && !isSigningIn.current) {
                 const dekLoaded = await loadDEKFromSession();
                 if (dekLoaded) window.location.href = '/main';
             }
@@ -126,17 +122,14 @@ const Auth: React.FC = () => {
                 sendEmailVerification(user).catch(() => { /* non-critical */ });
 
                 const dek = await generateDEK();
-                const recoveryCode = generateRecoveryCode();
                 const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
-                const recoveryEncryptedDEK = await wrapDEKWithRecovery(dek, recoveryCode, user.uid);
                 const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
 
-                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
+                await storeEncryptedDEK(encryptedDEK, emailEncryptedDEK);
                 await setDEK(dek, rememberMe);
 
                 sessionStorage.setItem('new_user', 'true');
                 isSigningIn.current = false;
-                try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
                 window.location.href = '/main';
             })
             .catch((error) => {
@@ -192,37 +185,12 @@ const Auth: React.FC = () => {
                     const emailEncryptedDEK = encData.emailEncryptedDEK
                         ?? await wrapDEKWithEmail(dek, emailForDEK, user.uid);
 
-                    if (!encData.recoveryCodeAcknowledged) {
-                        // Isolated try/catch: failures here must not fall into the unwrapDEK catch below
-                        try {
-                            const newRecoveryCode = generateRecoveryCode();
-                            const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, user.uid);
-                            await storeEncryptedDEK(encData.encryptedDEK, newRecoveryEncryptedDEK, emailEncryptedDEK);
-
-                            // Verify we won the concurrent-login race — another device may have written last
-                            const verify = await fetchEncryptedDEK();
-                            if (verify?.recoveryEncryptedDEK !== newRecoveryEncryptedDEK) {
-                                isSigningIn.current = false;
-                                window.location.href = '/main';
-                                return;
-                            }
-
-                            isSigningIn.current = false;
-                            try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
-                            window.location.href = '/main';
-                        } catch {
-                            // Write failed — proceed to app, will prompt again next login
-                            isSigningIn.current = false;
-                            window.location.href = '/main';
-                        }
-                    } else {
-                        // Silently backfill emailEncryptedDEK for accounts that predate email recovery
-                        if (!encData.emailEncryptedDEK) {
-                            try { await addEmailEncryptedDEK(emailEncryptedDEK); } catch { /* non-critical */ }
-                        }
-                        isSigningIn.current = false;
-                        window.location.href = '/main';
+                    // Silently backfill emailEncryptedDEK for accounts that predate email recovery
+                    if (!encData.emailEncryptedDEK) {
+                        try { await addEmailEncryptedDEK(emailEncryptedDEK); } catch { /* non-critical */ }
                     }
+                    isSigningIn.current = false;
+                    window.location.href = '/main';
                 } catch {
                     // DEK decryption failed — password was reset; auto-recover via email
                     pendingPasswordRef.current = capturedPassword;
@@ -234,15 +202,12 @@ const Auth: React.FC = () => {
             } else {
                 // No DEK yet — account predates encryption
                 const dek = await generateDEK();
-                const recoveryCode = generateRecoveryCode();
                 const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
-                const recoveryEncryptedDEK = await wrapDEKWithRecovery(dek, recoveryCode, user.uid);
                 const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
-                await storeEncryptedDEK(encryptedDEK, recoveryEncryptedDEK, emailEncryptedDEK);
+                await storeEncryptedDEK(encryptedDEK, emailEncryptedDEK);
                 await setDEK(dek, rememberMe);
 
                 isSigningIn.current = false;
-                try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
                 window.location.href = '/main';
             }
         } catch (error) {
@@ -259,7 +224,7 @@ const Auth: React.FC = () => {
         const userEmail = auth.currentUser?.email;
 
         if (!encData?.emailEncryptedDEK || !userEmail) {
-            displayMessage('Email recovery is not set up for this account. Use your recovery code.', 'bad');
+            displayMessage('Email recovery is not set up for this account. Please contact support.', 'bad');
             return;
         }
 
@@ -273,75 +238,14 @@ const Auth: React.FC = () => {
 
         try {
             const newEncryptedDEK = await wrapDEK(dek, newPassword, uid);
-            const newRecoveryCode = generateRecoveryCode();
-            const newRecoveryEncryptedDEK = await wrapDEKWithRecovery(dek, newRecoveryCode, uid);
             const newEmailEncryptedDEK = await wrapDEKWithEmail(dek, userEmail, uid);
-            await storeEncryptedDEK(newEncryptedDEK, newRecoveryEncryptedDEK, newEmailEncryptedDEK);
+            await storeEncryptedDEK(newEncryptedDEK, newEmailEncryptedDEK);
             await setDEK(dek, rememberMe);
 
-            try { await markRecoveryCodeAcknowledged(); } catch { /* non-critical */ }
             window.location.href = '/main';
         } catch {
             displayMessage('Could not save your new keys. Please try again.', 'bad');
         }
-    }
-
-    async function handleRecoveryAcknowledged() {
-        isShowingRecoveryCode.current = false;
-        setPendingRecoveryCode("");
-        try {
-            await markRecoveryCodeAcknowledged();
-        } catch {
-            // Navigate anyway — worst case they're prompted again next login
-        }
-        window.location.href = '/main';
-    }
-
-    function handleCopyRecoveryCode() {
-        navigator.clipboard.writeText(pendingRecoveryCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    }
-
-    function handleDownloadRecoveryCode() {
-        const content = `Intraconnected Recovery Code\n\n${pendingRecoveryCode}\n\nKeep this file safe. It is the only way to recover your data if you lose your password.`;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'intraconnected-recovery-code.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-    }
-
-    // New recovery code display screen (after signup or after successful restore)
-    if (pendingRecoveryCode) {
-        return (
-            <div className="recoveryOverlay">
-                <div className="recoveryModal neobrutal">
-                    <h2 className="recoveryTitle">Save Your Recovery Code</h2>
-                    <p className="recoveryWarning">
-                        {recoveryCodeContext === 'signup' && <>Welcome to Intraconnected! Your ideas are encrypted on your device before they're stored. Save this recovery code somewhere safe. If you forget your password, you can usually reset it by email, but this code is your backup if that ever fails. It won't be shown again.</>}
-                        {recoveryCodeContext === 'migration' && <>We've added encryption to Intraconnected. A recovery code has been generated for your account. Save it somewhere safe. If you forget your password, you can usually reset it by email, but this code is your backup if that ever fails. It won't be shown again.</>}
-                        {recoveryCodeContext === 'restore' && <>Your encryption key has been restored and a new recovery code has been generated. Save it somewhere safe. It won't be shown again.</>}
-                    </p>
-                    <div className="recoveryCodeBox">
-                        <span className="recoveryCodeText">{pendingRecoveryCode}</span>
-                    </div>
-                    <div className="recoveryActions">
-                        <button className="recoveryCopyBtn neobrutal-button" onClick={handleCopyRecoveryCode}>
-                            {copied ? "Copied!" : "Copy"}
-                        </button>
-                        <button className="recoveryDownloadBtn neobrutal-button" onClick={handleDownloadRecoveryCode}>
-                            Download .txt
-                        </button>
-                    </div>
-                    <button className="recoveryConfirmBtn neobrutal-button" onClick={handleRecoveryAcknowledged}>
-                        I've saved my recovery code
-                    </button>
-                </div>
-            </div>
-        );
     }
 
     return (

@@ -9,7 +9,7 @@ import { isEligibleForLifetimeUpgradeDiscount, type BillingDoc } from "./billing
 // import) rather than an env var, since env vars aren't committed and this
 // needs to just work in every environment without extra setup. Keep in sync
 // with ANNUAL_PRICE_DISPLAY if the annual price ever changes.
-const LIFETIME_UPGRADE_DISCOUNT_CENTS = 199;
+const LIFETIME_UPGRADE_DISCOUNT_CENTS = 1499;
 
 export async function getBillingDoc(uid: string): Promise<BillingDoc | null> {
     const doc = await firestore().collection("users").doc(uid).collection("meta").doc("billing").get();

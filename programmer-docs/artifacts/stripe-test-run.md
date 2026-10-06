@@ -86,7 +86,7 @@ the webhook-events part of B2, and a local practice run of B4 from `shipping-rea
 ## 6. Annual → Lifetime upgrade
 
 1. Reset, then buy Annual.
-2. Open the upgrade picker. The Lifetime price should be $1.99 less (the `get-lifetime-price`
+2. Open the upgrade picker. The Lifetime price should be $14.99 less (the `get-lifetime-price`
    preview).
 3. Buy Lifetime.
    - The charged amount in Stripe should match the discounted price.

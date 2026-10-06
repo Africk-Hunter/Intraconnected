@@ -77,16 +77,6 @@ export async function unwrapDEK(encryptedDEK: string, password: string, uid: str
     return importKey(await aesDecrypt(encryptedDEK, kek));
 }
 
-export async function wrapDEKWithRecovery(dek: CryptoKey, recoveryCode: string, uid: string): Promise<string> {
-    const kek = await deriveKEK(recoveryCode, uid, '-recovery');
-    return aesEncrypt(await exportKey(dek), kek);
-}
-
-export async function unwrapDEKWithRecovery(encryptedDEK: string, recoveryCode: string, uid: string): Promise<CryptoKey> {
-    const kek = await deriveKEK(recoveryCode, uid, '-recovery');
-    return importKey(await aesDecrypt(encryptedDEK, kek));
-}
-
 export async function wrapDEKWithEmail(dek: CryptoKey, email: string, uid: string): Promise<string> {
     const kek = await deriveKEK(email, uid, '-email');
     return aesEncrypt(await exportKey(dek), kek);
@@ -97,8 +87,3 @@ export async function unwrapDEKWithEmail(encryptedDEK: string, email: string, ui
     return importKey(await aesDecrypt(encryptedDEK, kek));
 }
 
-export function generateRecoveryCode(): string {
-    const bytes = crypto.getRandomValues(new Uint8Array(20));
-    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-    return [0, 10, 20, 30].map(i => hex.slice(i, i + 10)).join('-');
-}

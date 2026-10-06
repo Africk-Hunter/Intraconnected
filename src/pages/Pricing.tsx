@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import PriceCard from '../components/landing/PriceCard';
 import type { CheckoutPlan } from '../utilities/billing/billing';
 import { useLifetimePrice } from '../utilities/billing/useLifetimePrice';
-import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY, formatMoney } from '../utilities/billing/pricingDisplay';
+import { ANNUAL_PRICE_DISPLAY, ANNUAL_PRICE_PER_MONTH_DISPLAY, LIFETIME_PRICE_DISPLAY, formatMoney } from '../utilities/billing/pricingDisplay';
 import { useIdeaContext } from '../context/IdeaContext';
 import { SUPPORT_EMAIL } from '../utilities/support';
 
@@ -32,10 +32,14 @@ const Pricing: React.FC = () => {
   return (
     <div className="pricingPage">
       <section className="pricingHero">
-        <h1 className="pricingHeroTitle">Big ideas,<br />tiny price.</h1>
+        <span className="pricingHeroNode pricingHeroNode--leaf" aria-hidden="true">idea!</span>
+        <span className="pricingHeroNode pricingHeroNode--sky" aria-hidden="true">sub-idea</span>
+        <span className="pricingHeroNode pricingHeroNode--link" aria-hidden="true">tangent</span>
+        <div className="pricingHeroSticker">Cheaper than a latte ☕</div>
+        <h1 className="pricingHeroTitle">Big ideas,<br /><span className="pricingHeroTitleHighlight">tiny</span> price.</h1>
         <p className="pricingHeroSubline">
-          50 nodes free, no card needed. Go annual for {ANNUAL_PRICE_DISPLAY}/yr, or grab lifetime access
-          for the price of a sandwich.
+          50 nodes free, no card needed. Go annual for {ANNUAL_PRICE_DISPLAY}/yr, or pay once
+          for lifetime access.
         </p>
       </section>
 
@@ -62,7 +66,7 @@ const Pricing: React.FC = () => {
             tier="Annual"
             price={ANNUAL_PRICE_DISPLAY}
             priceSuffix="/ year"
-            subtitle="Billed once a year"
+            subtitle={`That's ${ANNUAL_PRICE_PER_MONTH_DISPLAY} a month, billed once a year`}
             note="Cancel anytime."
             features={[
               { label: 'Unlimited nodes', bold: true },
@@ -111,7 +115,7 @@ const Pricing: React.FC = () => {
       </section>
 
       <div className="pricingTaglineWrap">
-        <div className="pricingTagline">Less than a cup of coffee. Your ideas last forever.</div>
+        <div className="pricingTagline">Under $1.25 a month. Your ideas last forever.</div>
         <p className="pricingNoLockIn">
           Your data is never locked in. Export to Markdown, OPML or JSON anytime, on any plan.
         </p>

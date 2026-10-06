@@ -301,7 +301,7 @@ const LIFETIME_UPGRADE_DISCOUNT_ELIGIBLE_STATUSES: Stripe.Subscription.Status[] 
 
 // Annual subscribers already paid for the current term, so they get a flat
 // credit toward Lifetime regardless of how far into the year they are (not
-// day-prorated — the whole annual price is ~$2, not worth date math for).
+// day-prorated — the whole annual price is ~$15, not worth date math for).
 // cancelAtPeriodEnd is deliberately not checked: a cancel-pending sub is
 // still paid-through and stays eligible until access actually lapses.
 // Cancel/resubscribe discount-farming is an accepted risk given the amounts.
