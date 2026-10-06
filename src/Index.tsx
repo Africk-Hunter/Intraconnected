@@ -16,6 +16,7 @@ const Idea = lazy(() => import('./pages/Idea'));
 const Login = lazy(() => import('./pages/Login'));
 const Privacy = lazy(() => import('./pages/Privacy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const Support = lazy(() => import('./pages/Support'));
 const AuthAction = lazy(() => import('./pages/AuthAction'));
 const MarketingTransition = lazy(() => import('./components/landing/MarketingTransition'));
 
@@ -35,6 +36,7 @@ root.render(
             <Route path="/main" element={<Idea />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/support" element={<Support />} />
             <Route path="/auth/action" element={<AuthAction />} />
             <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="/pricing" element={<MarketingTransition />} />

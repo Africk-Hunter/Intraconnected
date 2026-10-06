@@ -18,5 +18,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["netlify/functions"]
+  "include": ["netlify/functions", "netlify/tests"]
 }

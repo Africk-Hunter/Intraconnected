@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/readme/hero.svg" alt="Intraconnected: map your thinking as a tree of ideas" width="900">
+</p>
+
 # Intraconnected
 
 Intraconnected is a general-purpose idea tracking tool that helps users organize thoughts, concepts, and hierarchies using a visual, node-based layout. It combines the flexibility of a mind map with the structure of a non-linear document builder, enabling users to explore and manage their ideas intuitively.
@@ -8,6 +12,20 @@ Intraconnected is a general-purpose idea tracking tool that helps users organize
 - **Zoom and Explore**: Click on a node to zoom in and treat it as the current "root," allowing focused exploration of ideas.
 - **Tree Navigation**: Navigate back up the hierarchy using the Back button for seamless movement between ideas.
 - **Add New Ideas**: Use the plus button on the left to quickly add new ideas and expand your network.
+
+## See it in action
+
+**Zoom into any idea, then step back out.** Click a node to make it the current root; Home returns you to the top.
+
+<img src="docs/readme/zoom.svg" alt="Clicking the Travel node zooms in to show its ideas, then Home zooms back out" width="800">
+
+**Drag to reorganize.** Drop a node onto another to move it underneath, or onto the trash to delete it.
+
+<img src="docs/readme/drag.svg" alt="Dragging Recipes onto Cooking moves it, and dragging Old draft to the trash deletes it" width="800">
+
+**Four kinds of nodes.** Plain ideas, parents, links and checklists, each with an optional priority.
+
+<img src="docs/readme/types.svg" alt="Idea, parent, link and checklist nodes with P1 to P3 priority tags" width="800">
 
 ## Building and Running the Project Locally
 

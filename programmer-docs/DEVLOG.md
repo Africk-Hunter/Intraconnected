@@ -4,6 +4,16 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Pricing Raised: Annual $14.99, Lifetime $39 — 2026-10-06
+- Was $1.99/yr and $4.99 lifetime; Stripe's $0.30 fixed fee took ~18% of Annual, and Lifetime was only 2.5 years of Annual with Firestore costs forever. New prices target meaningful side income (~335 Annual subscribers ≈ $400/mo after fees).
+- `pricingDisplay.ts` (`$14.99`, `$39`) feeds Pricing, UpgradeModal, CheckoutForm and Terms. `LIFETIME_UPGRADE_DISCOUNT_CENTS` in `lifetimePricing.ts` is now 1499 so an Annual subscriber's credit still equals what they paid (Lifetime then costs them $24.01).
+- Pricing page copy: removed "price of a sandwich" and "less than a cup of coffee" (no longer true for Lifetime); tagline now "Under $1.25 a month."
+- **Not done in code, required before taking payments:** Stripe prices are immutable, so create a new $14.99/yr recurring and a new $39 one-time Price (test and live) and update `STRIPE_PRICE_ANNUAL`/`STRIPE_PRICE_LIFETIME` in `.env` and Netlify. Until then the real charge is still the old Stripe amount; the page and the checkout would disagree.
+
+## Support Page; Recovery Code Removed — 2026-10-06
+- New `/support` page (`pages/Support.tsx`, `support.scss`, `SupportIcons.tsx`): topic cards, FAQ, contact card. Standalone route with `LandingNavbar`, listed in the sitemap.
+- Removed the recovery code entirely. The entry screen was already gone, so the code was generated and discarded on every signup and sign-in and nothing could ever unwrap it. Dropped `generateRecoveryCode`/`wrapDEKWithRecovery`/`unwrapDEKWithRecovery`, `markRecoveryCodeAcknowledged`, the dead recovery overlay in `Auth.tsx` and its styles. `storeEncryptedDEK` now writes only `encryptedDEK` + `emailEncryptedDEK`. Existing `meta/encryption` docs keep a harmless leftover `recoveryEncryptedDEK` until their next password-recovery rewrite.
+
 ## Landing: "How it works" Replaces Encryption Explainer — 2026-10-06
 - Removed the "How your ideas are protected" section from the landing page (and its styles); the Privacy page still carries the full explanation. Replaced it with `HowItWorks.tsx`: three looping CSS-only mini animations (add an idea, zoom into a branch, drag to reparent). Static end states under `prefers-reduced-motion`.
 

@@ -1,18 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fakeDocRef, fakeRequest } from "./lib/testUtils";
+import { fakeDocRef, fakeRequest } from "../functions/lib/testUtils";
 
 const { verifyIdToken, firestoreMock } = vi.hoisted(() => ({
     verifyIdToken: vi.fn(),
     firestoreMock: vi.fn(),
 }));
-vi.mock("./lib/firebaseAdmin", () => ({ verifyIdToken, firestore: firestoreMock }));
+vi.mock("../functions/lib/firebaseAdmin", () => ({ verifyIdToken, firestore: firestoreMock }));
 
 const { subscriptionsCancel } = vi.hoisted(() => ({ subscriptionsCancel: vi.fn() }));
-vi.mock("./lib/stripe", () => ({
+vi.mock("../functions/lib/stripe", () => ({
     stripe: () => ({ subscriptions: { cancel: subscriptionsCancel } }),
 }));
 
-import handler from "./reset-subscription-test";
+import handler from "../functions/reset-subscription-test";
 
 describe("reset-subscription-test", () => {
     const originalEnv = process.env.ALLOW_TEST_RESET;

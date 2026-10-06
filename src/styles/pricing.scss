@@ -10,12 +10,80 @@
 
 // ── Hero ──────────────────────────────────────────────────────────────────
 
+@keyframes pricingBob {
+    0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+    50% { transform: translateY(-10px) rotate(var(--rot, 0deg)); }
+}
+
+@keyframes pricingWiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+}
+
 .pricingHero {
+    position: relative;
     text-align: center;
     padding: 76px 48px 52px;
 
     @media (max-width: $mobile) {
         padding: 48px 20px 36px;
+    }
+}
+
+.pricingHeroSticker {
+    display: inline-block;
+    margin-bottom: 18px;
+    padding: 6px 14px;
+    background: $link;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    animation: pricingWiggle 2.4s ease-in-out infinite;
+}
+
+.pricingHeroTitleHighlight {
+    display: inline-block;
+    padding: 0 12px;
+    background: $leaf;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: 8px;
+    transform: rotate(-2deg);
+}
+
+// Decorative floating nodes, echoing the app's own node colors.
+.pricingHeroNode {
+    position: absolute;
+    padding: 8px 14px;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: $neo-detail-radius;
+    font-size: 14px;
+    font-weight: 700;
+    animation: pricingBob 4s ease-in-out infinite;
+    pointer-events: none;
+
+    &--leaf { top: 18%; left: 8%; background: $leaf; --rot: -6deg; }
+    &--sky { top: 52%; right: 7%; background: $sky; --rot: 5deg; animation-delay: 1s; }
+    &--link { top: 70%; left: 14%; background: $link; --rot: 3deg; animation-delay: 2s; }
+
+    @media (max-width: $tablet) {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pricingHeroNode,
+    .pricingHeroSticker {
+        animation: none;
+    }
+
+    .priceCard:hover {
+        transform: none;
     }
 }
 
@@ -70,6 +138,12 @@
 }
 
 .priceCard {
+    transition: transform 0.15s ease;
+
+    &:hover {
+        transform: translateY(-6px) rotate(-0.8deg);
+    }
+
     padding: 40px 36px;
     display: flex;
     flex-direction: column;

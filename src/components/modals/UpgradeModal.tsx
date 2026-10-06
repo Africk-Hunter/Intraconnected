@@ -5,7 +5,7 @@ import PriceCard from "../landing/PriceCard";
 import { startCheckout, formatMoney } from "../../utilities/billing/billing";
 import { useLifetimePrice } from "../../utilities/billing/useLifetimePrice";
 import { FREE_NODE_LIMIT } from "../../utilities/billing/limits";
-import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../../utilities/billing/pricingDisplay";
+import { ANNUAL_PRICE_DISPLAY, ANNUAL_PRICE_PER_MONTH_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../../utilities/billing/pricingDisplay";
 import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
 
 function UpgradeModal() {
@@ -68,7 +68,7 @@ function UpgradeModal() {
                             tier="Annual"
                             price={ANNUAL_PRICE_DISPLAY}
                             priceSuffix="/ year"
-                            subtitle="Billed once a year"
+                            subtitle={`That's ${ANNUAL_PRICE_PER_MONTH_DISPLAY} a month, billed once a year`}
                             note="Cancel anytime."
                             features={[
                                 { label: 'Unlimited nodes', bold: true },

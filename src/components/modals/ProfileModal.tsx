@@ -45,6 +45,7 @@ function ProfileModal() {
     const [deleteConfirm, setDeleteConfirm] = useState('');
     const [deleteError, setDeleteError] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [billingStatus, setBillingStatus] = useState<BillingStatus>(getCachedBillingStatus());
     const [cancelStep, setCancelStep] = useState<'idle' | 'confirm'>('idle');
     const [isCancelling, setIsCancelling] = useState(false);
@@ -189,8 +190,7 @@ function ProfileModal() {
     // in the browser (see E2E Encryption in CLAUDE.md), and fetchFullIdeaList()
     // already reads the decrypted copy straight out of localStorage, so
     // there's nothing for a server export endpoint to add here. Mirrors the
-    // Blob/object-URL download pattern already used for the recovery code
-    // in Auth.tsx. Never plan-gated — exporting is the no-lock-in promise.
+    // Blob/object-URL download pattern. Never plan-gated — exporting is the no-lock-in promise.
     function handleExportData(format: ExportFormat) {
         const now = new Date();
         const ideas = fetchFullIdeaList();
@@ -428,7 +428,7 @@ function ProfileModal() {
                 {deleteError && <p className="profile-error">{deleteError}</p>}
                 <button
                     className="profile-action-btn danger neobrutal-button"
-                    onClick={handleDeleteAccount}
+                    onClick={() => setDeleteConfirmOpen(true)}
                     disabled={!deleteEnabled}
                 >
                     {isDeleting ? 'Deleting…' : 'Delete account'}
@@ -496,6 +496,7 @@ function ProfileModal() {
     };
 
     return (
+        <>
         <AnimatedOverlay open={profileModalOpen}>
             <div className="modal neobrutal profile-modal">
                 {/* Height animates between tabs / content changes (see useSmoothHeight) */}
@@ -575,6 +576,22 @@ function ProfileModal() {
                 <button className="profile-close neobrutal-button" onClick={handleClose}>✕</button>
             </div>
         </AnimatedOverlay>
+
+            <AnimatedOverlay open={deleteConfirmOpen}>
+                <div className="modal neobrutal confirmModal">
+                    <p className="confirmText">Are you sure you want to permanently delete your account and all your data? This cannot be undone.</p>
+                    <section className="modalButtons">
+                        <button className="modalButton cancel neobrutal-button" onClick={() => setDeleteConfirmOpen(false)}>Cancel</button>
+                        <button
+                            className="modalButton delete neobrutal-button"
+                            onClick={() => { setDeleteConfirmOpen(false); handleDeleteAccount(); }}
+                        >
+                            Delete
+                        </button>
+                    </section>
+                </div>
+            </AnimatedOverlay>
+        </>
     );
 }
 

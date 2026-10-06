@@ -1,24 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fakeDocRef, fakeRequest } from "./lib/testUtils";
+import { fakeDocRef, fakeRequest } from "../functions/lib/testUtils";
 
 const { verifyIdToken, firestoreMock } = vi.hoisted(() => ({
     verifyIdToken: vi.fn(),
     firestoreMock: vi.fn(),
 }));
-vi.mock("./lib/firebaseAdmin", () => ({
+vi.mock("../functions/lib/firebaseAdmin", () => ({
     verifyIdToken,
     firestore: firestoreMock,
 }));
 
 const { refundsCreate } = vi.hoisted(() => ({ refundsCreate: vi.fn() }));
-vi.mock("./lib/stripe", () => ({
+vi.mock("../functions/lib/stripe", () => ({
     stripe: () => ({ refunds: { create: refundsCreate } }),
 }));
 
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
-vi.mock("./lib/rateLimit", () => ({ checkRateLimit }));
+vi.mock("../functions/lib/rateLimit", () => ({ checkRateLimit }));
 
-import handler from "./refund-lifetime";
+import handler from "../functions/refund-lifetime";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

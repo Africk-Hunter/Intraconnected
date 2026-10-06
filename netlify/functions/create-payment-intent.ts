@@ -136,7 +136,7 @@ export default async (req: Request, _context: Context) => {
                 // Card only — automatic_payment_methods pulls in every method
                 // enabled on the account (bank, Klarna, Cash App, Link's
                 // signup fields...), which is a lot of vertical space for a
-                // $5 purchase.
+                // small one-time purchase.
                 payment_method_types: ["card"],
                 customer,
                 // A one-time PaymentIntent doesn't pick up the Customer's
