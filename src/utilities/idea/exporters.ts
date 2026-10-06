@@ -191,7 +191,7 @@ export function ideasToOpml(ideas: IdeaType[], options: ExportOptions = {}): str
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<opml version="2.0">',
         '  <head>',
-        `    <title>${escapeXmlAttribute(`${tree.title} — Intraconnected export ${exportedAt.toISOString().slice(0, 10)}`)}</title>`,
+        `    <title>${escapeXmlAttribute(`${tree.title} - Intraconnected export ${exportedAt.toISOString().slice(0, 10)}`)}</title>`,
         `    <dateCreated>${exportedAt.toUTCString()}</dateCreated>`,
         '  </head>',
         '  <body>',

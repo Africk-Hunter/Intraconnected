@@ -108,6 +108,44 @@ describe("stripe-webhook", () => {
         expect(deriveBillingUpdate).not.toHaveBeenCalled();
     });
 
+    it("is a no-op when another delivery of the same event is still processing", async () => {
+        constructEvent.mockReturnValue({ id: "evt_1", type: "charge.refunded", data: { object: {} } });
+        mockDb({ eventData: { status: "processing", claimedAt: Date.now() } });
+
+        const res = await handler(fakeWebhookRequest(), {} as never);
+        const body = (await res.json()) as { duplicate: boolean };
+
+        expect(body.duplicate).toBe(true);
+        expect(deriveBillingUpdate).not.toHaveBeenCalled();
+        expect(deriveLifetimeRefundUpdate).not.toHaveBeenCalled();
+    });
+
+    it("lets only one of several simultaneous deliveries of an event do the work", async () => {
+        constructEvent.mockReturnValue({ id: "evt_9", type: "customer.subscription.updated", data: { object: {} } });
+        extractUidFromEvent.mockReturnValue("uid-1");
+        deriveBillingUpdate.mockReturnValue({ uid: "uid-1", update: { plan: "annual" } });
+        const { billingSet } = mockDb({ eventData: null });
+
+        await Promise.all([1, 2, 3, 4].map(() => handler(fakeWebhookRequest(), {} as never)));
+
+        expect(deriveBillingUpdate).toHaveBeenCalledTimes(1);
+        expect(billingSet).toHaveBeenCalledTimes(1);
+    });
+
+    it("takes over a failed or long-stale claim so Stripe's retry can finish the work", async () => {
+        constructEvent.mockReturnValue({ id: "evt_8", type: "customer.subscription.updated", data: { object: {} } });
+        extractUidFromEvent.mockReturnValue("uid-1");
+        deriveBillingUpdate.mockReturnValue({ uid: "uid-1", update: { plan: "annual" } });
+
+        mockDb({ eventData: { status: "failed", error: "boom" } });
+        await handler(fakeWebhookRequest(), {} as never);
+        expect(deriveBillingUpdate).toHaveBeenCalledTimes(1);
+
+        mockDb({ eventData: { status: "processing", claimedAt: Date.now() - 10 * 60 * 1000 } });
+        await handler(fakeWebhookRequest(), {} as never);
+        expect(deriveBillingUpdate).toHaveBeenCalledTimes(2);
+    });
+
     it("processes a new event and marks it processed", async () => {
         constructEvent.mockReturnValue({ id: "evt_2", type: "customer.subscription.updated", data: { object: {} } });
         extractUidFromEvent.mockReturnValue("uid-1");

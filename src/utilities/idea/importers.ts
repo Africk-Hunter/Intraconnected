@@ -137,7 +137,7 @@ export function parseOpml(xml: string): ImportDoc {
     if (localName(root.name).toLowerCase() !== 'opml') throw new ImportError('This file isn’t OPML.');
     const head = firstChild(root, 'head');
     const titleEl = head && firstChild(head, 'title');
-    const headTitle = titleEl ? textContent(titleEl).replace(/\s+—\s+Intraconnected export .*$/, '').trim() : undefined;
+    const headTitle = titleEl ? textContent(titleEl).replace(/\s+[—-]\s+Intraconnected export .*$/, '').trim() : undefined;
     const body = firstChild(root, 'body');
     const nodes = body ? childElements(body, 'outline').map(outlineToNode) : [];
     return unwrapSingleRoot(nodes, headTitle || undefined);

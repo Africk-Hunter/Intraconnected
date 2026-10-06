@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { signUserOut, deleteUserAccount, sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
+import { isGmailAddress, gmailResetSearchUrl } from '../../utilities/gmail';
+import { signUserOut,deleteUserAccount, sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
 import { auth } from '../../firebaseConfig';
 import { fetchFullIdeaList } from '../../utilities/idea/helpers';
 import { cancelSubscription, resetSubscriptionForTesting, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
@@ -110,7 +111,7 @@ function ProfileModal() {
         try {
             const verified = await refreshEmailVerified();
             setEmailVerified(verified);
-            if (!verified) setVerifyError("Still not verified — check your inbox, or resend the email.");
+            if (!verified) setVerifyError("Still not verified, check your inbox, or resend the email.");
         } catch {
             setVerifyError('Could not check verification status. Please try again.');
         } finally {
@@ -300,7 +301,7 @@ function ProfileModal() {
                     <div className="profile-plan-actions">
                         {refundStep === 'done' ? (
                             <p className="profile-section-desc">
-                                Refund submitted — your plan will update automatically once Stripe confirms it.
+                                Refund submitted, your plan will update automatically once Stripe confirms it.
                             </p>
                         ) : !isLifetimeRefundEligible(billingStatus.updatedAt) ? (
                             <p className="profile-section-desc">
@@ -347,7 +348,7 @@ function ProfileModal() {
                 <section className="profile-section profile-section--verify">
                     <h3 className="profile-section-title">Verify Your Email</h3>
                     <p className="profile-section-desc">
-                        Confirm your email address — it's required before you can upgrade, and it's how we'd reach you about your account.
+                        Confirm your email address, it's required before you can upgrade, and it's how we'd reach you about your account.
                     </p>
                     <div className="profile-plan-actions">
                         <button
@@ -362,7 +363,7 @@ function ProfileModal() {
                             onClick={handleCheckVerified}
                             disabled={isCheckingVerified}
                         >
-                            {isCheckingVerified ? 'Checking…' : "I've verified — refresh"}
+                            {isCheckingVerified ? 'Checking…' : "I've verified, refresh"}
                         </button>
                     </div>
                     {verifyError && <p className="profile-error">{verifyError}</p>}
@@ -379,6 +380,16 @@ function ProfileModal() {
                 >
                     {resetSent ? 'Link sent to email' : 'Send reset link'}
                 </button>
+                {resetSent && auth.currentUser?.email && isGmailAddress(auth.currentUser.email) && (
+                    <a
+                        className="profile-action-btn profile-action-btn--link neobrutal-button"
+                        href={gmailResetSearchUrl(auth.currentUser.email)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Open Gmail
+                    </a>
+                )}
                 {resetError && <p className="profile-error">{resetError}</p>}
             </section>
 

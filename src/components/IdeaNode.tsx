@@ -770,7 +770,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {...attributes}
                 {...listeners}
             >
-                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority} — click to change` : 'Click to set priority'} />
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}, click to change` : 'Click to set priority'} />
                 <div className="checklist-header" onClick={() => setChecklistModalId(id)}>
                     <span className="checklist-title-text">{title}</span>
                     <button className="renameButtonNode copy" onClick={changeName}>
@@ -839,7 +839,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {...attributes}
                 {...listeners}
             >
-                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority} — click to change` : 'Click to set priority'} />
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}, click to change` : 'Click to set priority'} />
                 <div className="note-main">
                     <div className="note-header">
                         <div className="note-header-main">
@@ -907,7 +907,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
 
     return (
         <div onClick={handleNodeClick} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} onMouseLeave={flushResort} {...attributes} {...listeners}>
-            <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} title={priority ? `Priority ${priority} — click to change` : 'Click to set priority'} />
+            <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} title={priority ? `Priority ${priority}, click to change` : 'Click to set priority'} />
             <div className="ideaNode-content">
                 {isLeaf && link === '' ? (
                     <div

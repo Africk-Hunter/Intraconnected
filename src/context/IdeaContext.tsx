@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useRef, useState } from "react";
-import { IdeaType } from "../utilities/types";
+import type { IdeaType } from "../utilities/types";
 import { buildAncestorPath, fetchFullIdeaList } from "../utilities/idea/helpers";
-import { BillingPlan } from "../utilities/firebase/firebaseHelpers";
-import { CheckoutPlan } from "../utilities/billing/billing";
+// Type-only: this context wraps every route, so a value import here would
+// pull Firebase into the marketing pages' initial bundle.
+import type { BillingPlan } from "../utilities/firebase/firebaseHelpers";
+import type { CheckoutPlan } from "../utilities/billing/billing";
 
 interface IdeaContextType {
     ideas: IdeaType[];

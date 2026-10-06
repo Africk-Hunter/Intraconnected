@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import PriceCard from '../components/landing/PriceCard';
-import { startCheckout } from '../utilities/billing/billing';
-import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY } from '../utilities/billing/pricingDisplay';
+import type { CheckoutPlan } from '../utilities/billing/billing';
+import { useLifetimePrice } from '../utilities/billing/useLifetimePrice';
+import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY, formatMoney } from '../utilities/billing/pricingDisplay';
 import { useIdeaContext } from '../context/IdeaContext';
 import { SUPPORT_EMAIL } from '../utilities/support';
 
@@ -20,6 +21,13 @@ const Pricing: React.FC = () => {
   const showAnnual = billingPlan !== 'annual' && billingPlan !== 'lifetime';
   const showLifetime = billingPlan !== 'lifetime';
   const visibleCount = 1 + Number(showAnnual) + Number(showLifetime);
+  const { preview: lifetimePreview, loading: lifetimeLoading } = useLifetimePrice(true, billingPlan === 'annual');
+
+  // billing.tsx imports Firebase Auth — loaded on click rather than with the
+  // page so it stays out of the marketing bundle.
+  const beginCheckout = (plan: CheckoutPlan) => {
+    void import('../utilities/billing/billing').then(({ startCheckout }) => startCheckout(plan, setCheckoutPlan));
+  };
 
   return (
     <div className="pricingPage">
@@ -45,7 +53,7 @@ const Pricing: React.FC = () => {
             { label: 'Export anytime (Markdown, OPML, JSON)' },
           ]}
           ctaLabel="Get Started Free"
-          onCtaClick={() => navigate('/')}
+          onCtaClick={() => navigate('/login')}
           footNote="No card required"
         />
         {showAnnual && (
@@ -64,7 +72,7 @@ const Pricing: React.FC = () => {
               { label: 'Suggest new features' },
             ]}
             ctaLabel="Start Annual Plan"
-            onCtaClick={() => startCheckout('annual', setCheckoutPlan)}
+            onCtaClick={() => beginCheckout('annual')}
             footNote={`Renews at ${ANNUAL_PRICE_DISPLAY}/yr · Cancel anytime`}
           />
         )}
@@ -73,10 +81,21 @@ const Pricing: React.FC = () => {
             variant="lifetime"
             badge="LIFETIME"
             tier="Lifetime"
-            price={LIFETIME_PRICE_DISPLAY}
+            price={lifetimeLoading
+              ? '…'
+              : lifetimePreview && lifetimePreview.discountCents > 0
+                ? formatMoney(lifetimePreview.amount, lifetimePreview.currency)
+                : LIFETIME_PRICE_DISPLAY}
+            ctaDisabled={lifetimeLoading}
             priceSuffix="one time"
             subtitle="Pay once, yours forever"
-            note="No renewals. No surprises."
+            note={billingPlan === 'annual'
+              ? lifetimeLoading
+                ? 'Applying your Annual credit…'
+                : lifetimePreview && lifetimePreview.discountCents > 0
+                  ? `Your Annual payment is credited, ${formatMoney(lifetimePreview.discountCents, lifetimePreview.currency)} off, already applied above.`
+                  : "You've already paid for this year, that's credited at checkout."
+              : 'No renewals. No surprises.'}
             features={[
               { label: 'Unlimited nodes', bold: true },
               { label: 'Full feature access' },
@@ -85,7 +104,7 @@ const Pricing: React.FC = () => {
               { label: 'Suggest new features' },
             ]}
             ctaLabel="Unlock Lifetime Access"
-            onCtaClick={() => startCheckout('lifetime', setCheckoutPlan)}
+            onCtaClick={() => beginCheckout('lifetime')}
             footNote="Access Forever"
           />
         )}

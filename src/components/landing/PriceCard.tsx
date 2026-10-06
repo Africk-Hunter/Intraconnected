@@ -18,6 +18,7 @@ interface PriceCardProps {
   ctaLabel: string;
   onCtaClick: () => void;
   footNote: string;
+  ctaDisabled?: boolean;
 }
 
 const PriceCard: React.FC<PriceCardProps> = ({
@@ -32,6 +33,7 @@ const PriceCard: React.FC<PriceCardProps> = ({
   ctaLabel,
   onCtaClick,
   footNote,
+  ctaDisabled,
 }) => {
   const checkStyle = variant === 'free' ? 'green' : 'white';
 
@@ -61,7 +63,7 @@ const PriceCard: React.FC<PriceCardProps> = ({
         ))}
       </div>
 
-      <button type="button" className="priceCardCta neobrutal-button" onClick={onCtaClick}>
+      <button type="button" className="priceCardCta neobrutal-button" onClick={onCtaClick} disabled={ctaDisabled}>
         {ctaLabel}
       </button>
       <div className="priceCardFootNote">{footNote}</div>

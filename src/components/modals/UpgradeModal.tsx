@@ -1,36 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { useIdeaContext } from "../../context/IdeaContext";
 import AnimatedOverlay from "../AnimatedOverlay";
 import PriceCard from "../landing/PriceCard";
-import { startCheckout, fetchLifetimePricePreview, formatMoney, type LifetimePricePreview } from "../../utilities/billing/billing";
+import { startCheckout, formatMoney } from "../../utilities/billing/billing";
+import { useLifetimePrice } from "../../utilities/billing/useLifetimePrice";
 import { FREE_NODE_LIMIT } from "../../utilities/billing/limits";
 import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../../utilities/billing/pricingDisplay";
 import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
 
 function UpgradeModal() {
     const { upgradeModalOpen, setUpgradeModalOpen, billingPlan, upgradeModalReason, setCheckoutPlan } = useIdeaContext();
-    const [lifetimePreview, setLifetimePreview] = useState<LifetimePricePreview | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-
-    // Only Annual subscribers are ever eligible for the Lifetime-upgrade
-    // credit (see isEligibleForLifetimeUpgradeDiscount) — skip the request
-    // otherwise. Best-effort: a failed fetch just falls back to the flat
-    // price, same as create-payment-intent.ts does server-side.
-    useEffect(() => {
-        if (!upgradeModalOpen || billingPlan !== 'annual') {
-            setLifetimePreview(null);
-            return;
-        }
-        let cancelled = false;
-        fetchLifetimePricePreview()
-            .then(preview => {
-                if (!cancelled) setLifetimePreview(preview);
-            })
-            .catch(() => {});
-        return () => {
-            cancelled = true;
-        };
-    }, [upgradeModalOpen, billingPlan]);
+    const { preview: lifetimePreview, loading: lifetimeLoading } = useLifetimePrice(upgradeModalOpen, billingPlan === 'annual');
 
     function handleClose() {
         setUpgradeModalOpen(false);
@@ -75,7 +56,7 @@ function UpgradeModal() {
                 {forced ? (
                     <p className="upgradeModalNotice">
                         <span className="upgradeModalNotice-icon" aria-hidden="true">⚠</span>
-                        Your idea tree has reached {FREE_NODE_LIMIT} nodes—the max the Free plan allows. New ideas are paused until you upgrade.
+                        Your idea tree has reached {FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused until you upgrade.
                     </p>
                 ) : (
                     <p className="upgradeModalSubtitle">{subtitle}</p>
@@ -104,15 +85,20 @@ function UpgradeModal() {
                         variant="lifetime"
                         badge="LIFETIME"
                         tier="Lifetime"
-                        price={lifetimePreview && lifetimePreview.discountCents > 0
-                            ? formatMoney(lifetimePreview.amount, lifetimePreview.currency)
-                            : LIFETIME_PRICE_DISPLAY}
+                        price={lifetimeLoading
+                            ? '…'
+                            : lifetimePreview && lifetimePreview.discountCents > 0
+                                ? formatMoney(lifetimePreview.amount, lifetimePreview.currency)
+                                : LIFETIME_PRICE_DISPLAY}
+                        ctaDisabled={lifetimeLoading}
                         priceSuffix="one time"
                         subtitle="Pay once, yours forever"
                         note={billingPlan === 'annual'
-                            ? lifetimePreview && lifetimePreview.discountCents > 0
-                                ? `Your Annual payment is credited — ${formatMoney(lifetimePreview.discountCents, lifetimePreview.currency)} off, already applied above.`
-                                : "You've already paid for this year — that's credited at checkout."
+                            ? lifetimeLoading
+                                ? 'Applying your Annual credit…'
+                                : lifetimePreview && lifetimePreview.discountCents > 0
+                                ? `Your Annual payment is credited, ${formatMoney(lifetimePreview.discountCents, lifetimePreview.currency)} off, already applied above.`
+                                : "You've already paid for this year, that's credited at checkout."
                             : 'No renewals. No surprises.'}
                         features={[
                             { label: 'Unlimited nodes', bold: true },

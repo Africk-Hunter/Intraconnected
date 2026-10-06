@@ -12,7 +12,7 @@ const Privacy: React.FC = () => {
                     ← Back
                 </button>
                 <h1 className="legalTitle">Privacy Policy</h1>
-                <p className="legalMeta">Intraconnected &mdash; Last updated September 29, 2026</p>
+                <p className="legalMeta">Intraconnected | Last updated September 29, 2026</p>
 
                 <section className="legalSection">
                     <h2>Overview</h2>
@@ -39,7 +39,7 @@ const Privacy: React.FC = () => {
                     <p>
                         <strong>Payment information, if you upgrade.</strong> If you choose a paid
                         plan, your card details are collected and processed directly by Stripe, our
-                        payment processor — we never see or store your card number. Stripe shares
+                        payment processor, we never see or store your card number. Stripe shares
                         back with us only what's needed to run your account: your plan, purchase
                         date, and subscription status.
                     </p>
@@ -81,7 +81,7 @@ const Privacy: React.FC = () => {
                         <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer">
                             Stripe's Privacy Policy
                         </a>
-                        . Your card details go directly to Stripe — we never see or store them.
+                        . Your card details go directly to Stripe, we never see or store them.
                         Stripe also uses cookies and device information of its own for fraud
                         prevention while checkout is open; that's Stripe's processing, not ours, and
                         is covered by their policy above.

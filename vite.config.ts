@@ -1,5 +1,6 @@
 import { defineConfig, configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import webtool from 'webtool-devtool'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,7 +11,7 @@ export default defineConfig({
   // instead), not an actual config error. Once vitest ships a version
   // compatible with vite 8 this cast can go away.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  plugins: [react()] as any,
+  plugins: [react(), webtool()] as any,
   server: {
     host: true,
     allowedHosts: ['cobalt-salaried-aluminum.ngrok-free.dev'],

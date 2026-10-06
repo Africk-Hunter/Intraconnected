@@ -6,6 +6,7 @@ import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, generateRecoveryCode, wrapDEK, wrapDEKWithRecovery, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
+import { isGmailAddress, gmailResetSearchUrl } from "../utilities/gmail";
 import { storeEncryptedDEK, fetchEncryptedDEK, markRecoveryCodeAcknowledged, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
 
 const Auth: React.FC = () => {
@@ -18,6 +19,8 @@ const Auth: React.FC = () => {
     const [pendingRecoveryCode, setPendingRecoveryCode] = useState("");
     const [copied, setCopied] = useState(false);
     const [recoveryCodeContext] = useState<'signup' | 'migration' | 'restore'>('signup');
+
+    const [resetSentTo, setResetSentTo] = useState('');
 
     const isShowingRecoveryCode = useRef(false);
     const isSigningIn = useRef(false);
@@ -154,6 +157,7 @@ const Auth: React.FC = () => {
         try {
             await sendPasswordResetEmail(auth, email.trim());
             displayMessage('Password reset email sent!', 'good');
+            setResetSentTo(email.trim());
         } catch {
             displayMessage('Could not send reset email. Check your address.', 'bad');
         }
@@ -244,7 +248,7 @@ const Auth: React.FC = () => {
         } catch (error) {
             isSigningIn.current = false;
             console.error('Encryption setup error:', error);
-            displayMessage('Login error — please try again.', 'bad');
+            displayMessage('Login error, please try again.', 'bad');
         }
     }
 
@@ -355,9 +359,20 @@ const Auth: React.FC = () => {
                                 <span className="rememberMeBox" aria-hidden="true" />
                                 Keep me signed in
                             </label>
-                            <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
-                                Forgot password?
-                            </button>
+                            {resetSentTo && isGmailAddress(resetSentTo) && email.trim() === resetSentTo ? (
+                                <a
+                                    className={`openGmail neobrutal-button ${showConfirmPassword ? "hidden" : ""}`}
+                                    href={gmailResetSearchUrl(resetSentTo)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Open Gmail ↗
+                                </a>
+                            ) : (
+                                <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
+                                    Forgot password?
+                                </button>
+                            )}
                         </div>
                     </div>
                     <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
@@ -376,7 +391,7 @@ const Auth: React.FC = () => {
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} />
             </section>
-            <a href="/landing" className="authLearnMore">New here? See what Intraconnected does →</a>
+            <a href="/" className="authLearnMore">New here? See what Intraconnected does →</a>
             <div className="legalLinks">
                 <a href="/terms" className="legalLink">Terms of Service</a>
                 <a href="/privacy" className="legalLink">Privacy Policy</a>

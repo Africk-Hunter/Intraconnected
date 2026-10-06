@@ -13,7 +13,7 @@ export function startCheckout(plan: CheckoutPlan, onReady: (plan: CheckoutPlan) 
     const user = auth.currentUser;
     if (!user) {
         sessionStorage.setItem(PENDING_CHECKOUT_KEY, plan);
-        window.location.href = '/';
+        window.location.href = '/login';
         return;
     }
 
@@ -30,6 +30,13 @@ export interface CheckoutIntent {
 // and returns its client secret — what <Elements> needs to mount the
 // Payment Element — plus the actual amount that will be charged (Lifetime's
 // may be discounted; see fetchLifetimePricePreview).
+export class EmailNotVerifiedError extends Error {
+    constructor() {
+        super('Please verify your email address before upgrading.');
+        this.name = 'EmailNotVerifiedError';
+    }
+}
+
 export async function fetchCheckoutIntent(plan: CheckoutPlan): Promise<CheckoutIntent> {
     const user = auth.currentUser;
     if (!user) {
@@ -42,6 +49,11 @@ export async function fetchCheckoutIntent(plan: CheckoutPlan): Promise<CheckoutI
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: JSON.stringify({ plan }),
     });
+
+    if (res.status === 403) {
+        // The only 403 this endpoint returns is "email not verified".
+        throw new EmailNotVerifiedError();
+    }
 
     if (!res.ok) {
         // Server errors here are JSON ({ error: "..." }, see jsonError in
@@ -88,9 +100,28 @@ export async function fetchLifetimePricePreview(): Promise<LifetimePricePreview>
     return (await res.json()) as LifetimePricePreview;
 }
 
-export function formatMoney(amountCents: number, currency: string): string {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase() }).format(amountCents / 100);
+// Memoized so the prefetch (fired as soon as the plan is known to be Annual,
+// see useBillingPlanSync) and the modal/pricing card share one request. Short
+// TTL because the credit changes with time; failures aren't cached.
+const PREVIEW_TTL_MS = 5 * 60 * 1000;
+let previewCache: { uid: string; at: number; promise: Promise<LifetimePricePreview> } | null = null;
+
+export function getLifetimePricePreview(): Promise<LifetimePricePreview> {
+    const uid = auth.currentUser?.uid;
+    if (uid && previewCache && previewCache.uid === uid && Date.now() - previewCache.at < PREVIEW_TTL_MS) {
+        return previewCache.promise;
+    }
+    const promise = fetchLifetimePricePreview();
+    if (uid) {
+        previewCache = { uid, at: Date.now(), promise };
+        promise.catch(() => {
+            if (previewCache?.promise === promise) previewCache = null;
+        });
+    }
+    return promise;
 }
+
+export { formatMoney } from './pricingDisplay';
 
 // Mirrors REFUND_WINDOW_MS in refund-lifetime.ts — duplicated rather than
 // shared (Netlify Functions can't import from src/, same constraint as

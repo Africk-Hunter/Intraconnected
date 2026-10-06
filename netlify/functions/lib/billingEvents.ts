@@ -74,6 +74,18 @@ export function extractUidFromEvent(event: Stripe.Event): string | null {
 // payment is another.
 const ANNUAL_ACCESS_STATUSES: Stripe.Subscription.Status[] = ["active", "trialing", "past_due"];
 
+// A non-access-granting subscription that isn't the one the account currently
+// tracks (and the account is on Annual) — an abandoned checkout, not news
+// about the real plan.
+function isStrayInactiveSubscription(sub: Stripe.Subscription, currentBilling: BillingDoc | null | undefined): boolean {
+    return (
+        !!currentBilling?.stripeSubscriptionId &&
+        currentBilling.stripeSubscriptionId !== sub.id &&
+        currentBilling.plan === "annual" &&
+        !ANNUAL_ACCESS_STATUSES.includes(sub.status)
+    );
+}
+
 // Pure mapping from an already-signature-verified Stripe event, plus the
 // user's current billing doc (fetched by the caller — see
 // extractUidFromEvent above), to the Firestore write it implies. Kept free
@@ -143,6 +155,10 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
             // (customer.subscription.deleted below handles the actual
             // cleanup once that cancellation completes.)
             if (currentBilling?.plan === "lifetime") return null;
+            // An abandoned checkout leaves its own `incomplete` subscription
+            // behind, which later flips to `incomplete_expired`. That's not
+            // the subscription the account is on — it must not revoke it.
+            if (isStrayInactiveSubscription(sub, currentBilling)) return null;
             return {
                 uid,
                 update: {
@@ -181,6 +197,15 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
             // longer exists" signal, so — unlike .updated, which can just
             // no-op — the now-defunct subscription-tracking fields still
             // need clearing even though `plan` itself must stay "lifetime".
+            // Deleting a subscription the account isn't tracking (e.g. an
+            // expired abandoned checkout) says nothing about its real plan.
+            if (
+                currentBilling?.stripeSubscriptionId &&
+                currentBilling.stripeSubscriptionId !== sub.id &&
+                currentBilling.plan === "annual"
+            ) {
+                return null;
+            }
             if (currentBilling?.plan === "lifetime") {
                 return {
                     uid,

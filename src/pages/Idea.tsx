@@ -44,7 +44,7 @@ import FeatureImplementedModal from '../components/modals/FeatureImplementedModa
 import OnboardingModal from '../components/modals/OnboardingModal';
 import ProfileModal from '../components/modals/ProfileModal';
 import UpgradeModal from '../components/modals/UpgradeModal';
-import CheckoutModal from '../components/modals/CheckoutModal';
+import LazyCheckoutModal from '../components/modals/LazyCheckoutModal';
 import UpgradeCelebrationModal from '../components/modals/UpgradeCelebrationModal';
 import MobileMindMap from '../components/MobileMindMap';
 import MindMap from '../components/MindMap';
@@ -168,7 +168,7 @@ function Idea() {
             if (document.visibilityState === 'visible') {
                 try { getDEK(); return; } catch { /* not in memory — check session */ }
                 const dekLoaded = await loadDEKFromSession();
-                if (!dekLoaded) window.location.href = '/';
+                if (!dekLoaded) window.location.href = '/login';
             }
         };
         document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -183,7 +183,7 @@ function Idea() {
                 } catch {
                     const restored = await loadDEKFromSession();
                     if (!restored) {
-                        window.location.href = '/';
+                        window.location.href = '/login';
                         return;
                     }
                 }
@@ -460,7 +460,7 @@ function Idea() {
             <OnboardingModal />
             <ProfileModal />
             <UpgradeModal />
-            <CheckoutModal />
+            <LazyCheckoutModal />
             {celebrationPlan && (
                 <UpgradeCelebrationModal plan={celebrationPlan} onClose={() => setCelebrationPlan(null)} />
             )}

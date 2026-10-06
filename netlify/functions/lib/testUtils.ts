@@ -12,6 +12,11 @@ export function fakeDocRef(initialData: Record<string, unknown> | null = null) {
             exists: data !== null,
             data: () => data,
         })),
+        // Firestore's create() rejects with gRPC ALREADY_EXISTS (6) when the doc exists.
+        create: vi.fn(async (next: Record<string, unknown>) => {
+            if (data !== null) throw Object.assign(new Error("ALREADY_EXISTS"), { code: 6 });
+            data = next;
+        }),
         set: vi.fn(async (next: Record<string, unknown>, opts?: { merge?: boolean }) => {
             data = opts?.merge && data ? { ...data, ...next } : next;
         }),

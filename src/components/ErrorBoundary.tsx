@@ -30,7 +30,7 @@ class ErrorBoundary extends Component<Props, State> {
                 <section className="overlay">
                     <div className="modal neobrutal confirmModal">
                         <h2>Something went wrong</h2>
-                        <p>Sorry about that — please reload the page. Your ideas are saved and encrypted; nothing was lost.</p>
+                        <p>Sorry about that, please reload the page. Your ideas are saved and encrypted; nothing was lost.</p>
                         <section className="modalButtons">
                             <button className="modalButton continue neobrutal-button" onClick={() => window.location.reload()}>
                                 Reload

@@ -1,11 +1,10 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import LandingNavbar from './LandingNavbar';
 import Landing from '../../pages/Landing';
 import Pricing from '../../pages/Pricing';
-import CheckoutModal from '../modals/CheckoutModal';
+import LazyCheckoutModal from '../modals/LazyCheckoutModal';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { useBillingPlanSync } from '../../utilities/billing/useBillingPlanSync';
 
 type PageKey = 'landing' | 'pricing';
 
@@ -39,7 +38,36 @@ const MarketingTransition: React.FC = () => {
   // here), so without this an already-Annual user landing on /pricing
   // directly would see billingPlan stuck at its default 'free' and be
   // shown "Start Annual Plan" again — see Pricing.tsx's use of billingPlan.
-  useBillingPlanSync(setBillingPlan);
+  // Imported dynamically so Firebase stays out of the marketing pages'
+  // initial bundle; it loads right after first paint instead.
+  useEffect(() => {
+    let cancelled = false;
+    let stop: (() => void) | undefined;
+    import('../../utilities/billing/useBillingPlanSync').then(({ watchBillingPlan }) => {
+      if (!cancelled) stop = watchBillingPlan(setBillingPlan);
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [setBillingPlan]);
+
+  // The bare domain is the landing page; a returning, signed-in visitor
+  // goes straight to their map. Not on /pricing, which signed-in users
+  // visit on purpose to buy.
+  const isHome = location.pathname === '/';
+  useEffect(() => {
+    if (!isHome) return;
+    let cancelled = false;
+    let stop: (() => void) | undefined;
+    import('../../utilities/firebase/homeRedirect').then(({ redirectIfSignedIn }) => {
+      if (!cancelled) stop = redirectIfSignedIn(() => { window.location.href = '/main'; });
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [isHome]);
 
   const [currentKey, setCurrentKey] = useState<PageKey>(targetKey);
   const [transition, setTransition] = useState<Transition | null>(null);
@@ -83,7 +111,7 @@ const MarketingTransition: React.FC = () => {
   return (
     <div className="marketingPage">
       <LandingNavbar page={targetKey} />
-      <CheckoutModal />
+      <LazyCheckoutModal />
 
       {!transition ? (
         renderPage(currentKey)

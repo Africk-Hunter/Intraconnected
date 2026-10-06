@@ -84,6 +84,28 @@ async function resumeAnnualSubscription(uid: string, refundResult: BillingEventR
 
 // Called by Stripe, not a signed-in user — auth is the signature check
 // below, not verifyIdToken.
+const CLAIM_STALE_MS = 2 * 60 * 1000;
+const FIRESTORE_ALREADY_EXISTS = 6;
+
+// True when this delivery now owns the event and should process it.
+async function claimEvent(
+    eventRef: FirebaseFirestore.DocumentReference,
+    type: string
+): Promise<boolean> {
+    const claim = { type, status: "processing", claimedAt: Date.now() };
+    try {
+        await eventRef.create(claim);
+        return true;
+    } catch (err) {
+        if ((err as { code?: number }).code !== FIRESTORE_ALREADY_EXISTS) throw err;
+    }
+    const existing = (await eventRef.get()).data();
+    if (existing?.status === "processed") return false;
+    if (existing?.status === "processing" && Date.now() - (existing.claimedAt ?? 0) < CLAIM_STALE_MS) return false;
+    await eventRef.set(claim);
+    return true;
+}
+
 export default async (req: Request, _context: Context) => {
     if (req.method !== "POST") {
         return jsonError(405, "Method not allowed.");
@@ -122,8 +144,14 @@ export default async (req: Request, _context: Context) => {
     // below on a transient failure — so a redelivered event has to be a
     // safe no-op, not a second write attempt over billing state that may
     // already be newer than what this stale delivery describes.
-    const existingEvent = await eventRef.get();
-    if (existingEvent.exists && existingEvent.data()?.status === "processed") {
+    //
+    // The event is claimed atomically (create() fails if the doc exists)
+    // before any work starts, not just checked: duplicate deliveries often
+    // overlap in time, and a plain get-then-process lets every one of them
+    // through. Several overlapping refund deliveries each created their own
+    // restored Annual subscription that way. A "failed" or long-stale
+    // "processing" claim is taken over so Stripe's retry can still heal it.
+    if (!(await claimEvent(eventRef, event.type))) {
         return Response.json({ received: true, duplicate: true });
     }
 

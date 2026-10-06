@@ -125,6 +125,17 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+
+    // Anchor variant (e.g. "Open Gmail") — yellow like other link actions.
+    &.profile-action-btn--link {
+        display: inline-block;
+        box-sizing: border-box;
+        margin-top: 0.75rem;
+        background: $link;
+        color: black;
+        text-align: center;
+        text-decoration: none;
+    }
 }
 
 .profile-input {
@@ -434,6 +445,10 @@
 
     .profile-section--reset .profile-action-btn {
         background: $leaf;
+
+        &.profile-action-btn--link {
+            background: $link;
+        }
     }
 
     .profile-section--logout .profile-action-btn {

@@ -3,6 +3,7 @@ import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import type { CheckoutIntent, CheckoutPlan } from "../../utilities/billing/billing";
 import { formatMoney } from "../../utilities/billing/billing";
 import { getCardElementStyle } from "../../utilities/billing/stripeAppearance";
+import NodeLoader from "./NodeLoader";
 
 const PLAN_LABEL: Record<CheckoutPlan, { label: string; suffix: string }> = {
     annual: { label: "Annual Plan", suffix: "/year" },
@@ -62,7 +63,7 @@ function CheckoutForm({ plan, intent, onDone }: Props) {
                 className="modalButton continue neobrutal-button checkoutFormSubmit"
                 disabled={!stripe || submitting}
             >
-                {submitting ? "Processing…" : "Pay now"}
+                {submitting ? <><NodeLoader className="small" />Processing…</> : "Pay now"}
             </button>
             <p className="checkoutFormTrust">🔒 Payments secured by Stripe</p>
         </form>
@@ -70,3 +71,4 @@ function CheckoutForm({ plan, intent, onDone }: Props) {
 }
 
 export default CheckoutForm;
+

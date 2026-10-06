@@ -86,7 +86,7 @@ describe("ideasToOpml", () => {
     it("is an OPML 2.0 document with a dated title and one root outline", () => {
         const opml = ideasToOpml([idea(2)], { exportedAt });
         expect(opml.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<opml version="2.0">\n  <head>\n')).toBe(true);
-        expect(opml).toContain("<title>Ideas — Intraconnected export 2026-09-29</title>");
+        expect(opml).toContain("<title>Ideas - Intraconnected export 2026-09-29</title>");
         expect(opml).toContain("<dateCreated>Tue, 29 Sep 2026 12:00:00 GMT</dateCreated>");
         expect(opml.trimEnd().endsWith("</body>\n</opml>")).toBe(true);
         expect(outlines(opml)).toEqual(["0:Ideas", "1:idea 2"]);

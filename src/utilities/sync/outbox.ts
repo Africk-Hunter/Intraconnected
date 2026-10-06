@@ -125,7 +125,7 @@ export function bindOutbox(uid: string): void {
 export function enqueue(op: SyncOp, options: { debounceMs?: number } = {}): void {
     const uid = auth.currentUser?.uid;
     if (!uid) {
-        console.error("Sync: not signed in — change was not queued.");
+        console.error("Sync: not signed in, change was not queued.");
         return;
     }
     bindOutbox(uid);
@@ -142,7 +142,7 @@ export function enqueue(op: SyncOp, options: { debounceMs?: number } = {}): void
 export function enqueueMany(ops: SyncOp[]): void {
     const uid = auth.currentUser?.uid;
     if (!uid) {
-        console.error("Sync: not signed in — changes were not queued.");
+        console.error("Sync: not signed in, changes were not queued.");
         return;
     }
     if (ops.length === 0) return;

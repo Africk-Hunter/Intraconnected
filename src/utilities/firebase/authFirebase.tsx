@@ -19,7 +19,7 @@ export async function signUserOut() {
         await flushOutbox(SIGN_OUT_FLUSH_MS);
         clearDEK();
         await auth.signOut();
-        window.location.href = '/';
+        window.location.href = '/login';
     } catch (error) {
         console.error("Sign out error:", error);
     }

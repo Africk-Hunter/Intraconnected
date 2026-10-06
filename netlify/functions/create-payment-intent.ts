@@ -38,8 +38,14 @@ const DEBUG = "[create-payment-intent]";
 // created before this existed (or before an email change) get backfilled.
 async function resolveCustomer(existingId: string | null | undefined, uid: string, email: string | null): Promise<string> {
     if (existingId) {
-        if (email) await stripe().customers.update(existingId, { email });
-        return existingId;
+        try {
+            if (email) await stripe().customers.update(existingId, { email });
+            return existingId;
+        } catch (err) {
+            // A Customer deleted in the Dashboard still sits in meta/billing;
+            // fall through and make a new one instead of failing checkout.
+            if ((err as { code?: string }).code !== "resource_missing") throw err;
+        }
     }
     const created = await stripe().customers.create({
         ...(email ? { email } : {}),

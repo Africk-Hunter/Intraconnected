@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { useIdeaContext } from "../../context/IdeaContext";
 import AnimatedOverlay from "../AnimatedOverlay";
-import { fetchCheckoutIntent, type CheckoutIntent } from "../../utilities/billing/billing";
+import { fetchCheckoutIntent, EmailNotVerifiedError, type CheckoutIntent } from "../../utilities/billing/billing";
+import CheckoutVerifyEmail from "./CheckoutVerifyEmail";
 import { getStripe } from "../../utilities/billing/stripeClient";
 import { checkoutFonts } from "../../utilities/billing/stripeAppearance";
 import { SUPPORT_EMAIL } from "../../utilities/support";
 import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
 import CheckoutForm from "./CheckoutForm";
+import NodeLoader from "./NodeLoader";
 
 // How long to wait for the stripe-webhook Netlify Function to land the
 // Firestore plan flip before giving up on the "confirming" UI and just
@@ -30,6 +32,8 @@ function CheckoutModal() {
     const { checkoutPlan, setCheckoutPlan, billingPlan, setCelebrationPlan } = useIdeaContext();
     const [intent, setIntent] = useState<CheckoutIntent | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [needsVerification, setNeedsVerification] = useState(false);
+    const [attempt, setAttempt] = useState(0);
     const [confirming, setConfirming] = useState(false);
     const [confirmSlow, setConfirmSlow] = useState(false);
     const [confirmStuck, setConfirmStuck] = useState(false);
@@ -54,6 +58,7 @@ function CheckoutModal() {
         let cancelled = false;
         setIntent(null);
         setError(null);
+        setNeedsVerification(false);
 
         fetchCheckoutIntent(checkoutPlan)
             .then(result => {
@@ -61,6 +66,10 @@ function CheckoutModal() {
             })
             .catch((err: unknown) => {
                 if (cancelled) return;
+                if (err instanceof EmailNotVerifiedError) {
+                    setNeedsVerification(true);
+                    return;
+                }
                 const message = err instanceof Error && err.message ? err.message : "Couldn't start checkout. Please try again.";
                 setError(message);
             });
@@ -68,7 +77,7 @@ function CheckoutModal() {
         return () => {
             cancelled = true;
         };
-    }, [checkoutPlan]);
+    }, [checkoutPlan, attempt]);
 
     // Stripe confirming the card charge client-side isn't the same as the
     // plan actually updating — that only happens once stripe-webhook
@@ -115,22 +124,25 @@ function CheckoutModal() {
                 <button className="checkoutModal-close neobrutal-button" onClick={handleClose} aria-label="Close">✕</button>
                 {confirming ? (
                     <p className="checkoutModalLoading">
+                        {!confirmStuck && <NodeLoader />}
                         {confirmStuck ? (
                             <>
-                                Your payment went through, but your plan is taking unusually long to update — sorry about that.
+                                Your payment went through, but your plan is taking unusually long to update, sorry about that.
                                 You won't be charged again. If it hasn't updated in a few minutes, email{' '}
                                 <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and we'll sort it out. Safe to close this.
                             </>
                         ) : confirmSlow ? (
-                            "Still finalizing — your payment went through, this is just taking longer than usual. Safe to close; it'll catch up shortly."
+                            "Still finalizing, your payment went through, this is just taking longer than usual. Safe to close; it'll catch up shortly."
                         ) : (
-                            'Payment received — finalizing your upgrade…'
+                            'Payment received, finalizing your upgrade…'
                         )}
                     </p>
+                ) : needsVerification ? (
+                    <CheckoutVerifyEmail onVerified={() => setAttempt(a => a + 1)} />
                 ) : error ? (
                     <p className="checkoutModalError">{error}</p>
                 ) : !checkoutPlan || !intent ? (
-                    <p className="checkoutModalLoading">Loading checkout…</p>
+                    <p className="checkoutModalLoading"><NodeLoader />Loading checkout…</p>
                 ) : (
                     <Elements key={checkoutPlan} stripe={getStripe()} options={{ fonts: checkoutFonts }}>
                         <CheckoutForm plan={checkoutPlan} intent={intent} onDone={handleDone} />

@@ -11,16 +11,16 @@ Build health as of Sep 29 (branch `Landing`, with uncommitted work): typecheck i
 123/123 tests pass, the production build succeeds, and lint reports 0 errors and 17 warnings. This
 is a code review only. No live Stripe or Firebase calls were made.
 
-**Status, end of Sep 29:** A1–A6 are all fixed in code. None of it is committed or deployed yet, and
-some pieces still need work outside the code:
-- A2 needs B1 (publishing the rules).
+**Status, end of Sep 29:** A1–A6 are all fixed in code. The code isn't committed or deployed yet,
+but the Firestore rules are now live (B1, so A2 is in effect). A few pieces still need work outside
+the code:
 - A5 needs the Stripe Dashboard email settings.
 - A6 needs a test-mode run.
-- A3/A4 need a manual two-device check.
+- A3/A4 were checked by hand with two signed-in windows on Sep 29 and work.
 
 C1, C3 and C4 are decided; C2 awaits confirmation.
 
-**Verdict: not ready to take payments.** Left: the checks above, the 6 steps outside the repo (B),
+**Verdict: not ready to take payments.** Left: the checks above, the 5 remaining steps outside the repo (B2–B6),
 and the C2 decision. None of the 8 native-app phases have been started.
 
 ## A. Fix in code before charging anyone
@@ -40,8 +40,8 @@ and the C2 decision. None of the 8 native-app phases have been started.
   `refundLifetime`. It also includes `featureRequests`, the 5-per-day cap on creating GitHub issues
   with your `GITHUB_TOKEN`. **Fix:** exclude both from the rule and give the client no write access.
   Only Netlify Functions touch these docs. Do this before B1. **Fixed in code Sep 29:** the
-  wildcard now also excludes `featureRequests` and `rateLimit_*`, with no grant-back block. Takes
-  effect only once B1 publishes the rules.
+  wildcard now also excludes `featureRequests` and `rateLimit_*`, with no grant-back block. Live
+  since the rules were published on Sep 29 (B1).
 - **A3 — One failed load leaves a user's map empty, and it stays empty.** `organizers.tsx` clears the
   local ideas *before* it fetches, then saves the sync timestamp even if the fetch failed. Every
   later load then skips the fetch. The fetch fails on a network error, or when a single doc won't
@@ -70,7 +70,7 @@ and the C2 decision. None of the 8 native-app phases have been started.
     pulls in other devices' changes, but only while the app is visible, and 3 s after edits pause.
   - Ideas left without a parent are moved to the top level.
   - Cost: about 1 extra read per page load plus 1 per edit, and no extra writes.
-  - Not yet checked in a running app with two signed-in devices (see the plan's manual checklist).
+  - Checked by hand Sep 29 with two signed-in windows (live sync, blocked connection + reload, refused save, stale edit): all passed. A quick check on a real phone is still worth doing before the native app.
 - **A5 — Stripe customers have no email address.** `create-payment-intent.ts` creates customers with
   only `metadata`. Without an email, Stripe can't send receipts, failed-payment notices or renewal
   reminders, and several US states' auto-renewal laws require those reminders for annual plans.
@@ -95,9 +95,10 @@ and the C2 decision. None of the 8 native-app phases have been started.
 
 ## B. Outside the repo, before charging anyone
 
-- **B1 — Publish `firestore.rules`** in Firebase Console → Firestore → Rules for project
-  `interconnectedness-3a37b`, after fixing A2. Until then, any user can grant themselves Lifetime, and
-  the node cap isn't enforced on the server. This has been open since Aug 17.
+- **B1 — Publish `firestore.rules`.** **Done Sep 29:** published to the Firebase Console for project
+  `interconnectedness-3a37b`, including the A2 fix. Clients can no longer write `meta/billing`, the
+  50-idea free cap is enforced on the server, and the rate-limit docs are locked. Any future edit to
+  `firestore.rules` has to be re-published by hand.
 - **B2 — Switch Stripe to live mode.** `.env` still holds `pk_test_…`. Set the live values of
   `VITE_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ANNUAL`
   and `STRIPE_PRICE_LIFETIME` in Netlify's production environment. Register a live webhook endpoint
@@ -181,7 +182,8 @@ The phases:
    - Release to internal testing first, then production.
 6. **D6 — iOS and App Store (needs C3).**
    - Enroll in the Apple Developer Program ($99 a year), build and sign with Codemagic (C3), and
-     go through TestFlight to review. Setup:
+     go through TestFlight to review. Full step-by-step guide:
+     https://claude.ai/artifact/15b9a7XREbhUHF5dzejRKR. Summary:
      1. Register the bundle ID `com.intraconnected.app` and create the app record in App Store
         Connect.
      2. Create an App Store Connect API key (App Manager role) and connect it in Codemagic →
@@ -216,7 +218,7 @@ The phases:
 - **E6 — The client can set `meta/nodeCount` to any number.** This is accepted and disclosed; a real
   fix needs a Cloud Function.
 - **E7 — No end-to-end or UI tests** cover the checkout screens or the sync layer.
-- **E8 — `/` shows the login form, not the landing page.** Deferred; see CLAUDE.md → Marketing Site
+- **E8 — `/` showed the login form, not the landing page.** **Done Oct 6:** `/` is the landing page and the login form is at `/login`; see CLAUDE.md → Marketing Site
   Routing & SEO.
 - **E9 — 17 `react-hooks/exhaustive-deps` lint warnings.** Each needs individual review.
 
@@ -262,8 +264,7 @@ The phases:
   - The Pricing call-to-action uses client-side navigation.
   - `.netlify/` was excluded from tests and lint (lint warnings went from 47 to 17).
   - Refunds were documented in CLAUDE.md.
-- **Aug 13:** `firestore.rules` stops clients from writing `meta/billing`. It isn't published yet
-  (B1).
+- **Aug 13:** `firestore.rules` stops clients from writing `meta/billing`. Published Sep 29 (B1).
 
 ## H. Already solid (re-checked Sep 29)
 

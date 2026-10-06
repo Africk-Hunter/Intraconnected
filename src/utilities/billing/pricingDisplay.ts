@@ -6,3 +6,7 @@
 // itself if the Stripe price is ever changed.
 export const ANNUAL_PRICE_DISPLAY = '$1.99';
 export const LIFETIME_PRICE_DISPLAY = '$4.99';
+
+export function formatMoney(amountCents: number, currency: string): string {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase() }).format(amountCents / 100);
+}

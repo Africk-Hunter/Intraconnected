@@ -86,7 +86,7 @@ const AuthAction: React.FC = () => {
             await confirmPasswordReset(auth, oobCode!, newPassword);
             setStatus("resetDone");
         } catch {
-            setFormError("Could not reset your password. The link may have expired — request a new one.");
+            setFormError("Could not reset your password. The link may have expired, request a new one.");
         }
     }
 
@@ -132,7 +132,7 @@ const AuthAction: React.FC = () => {
                         <button type="submit" className="authActionBtn neobrutal-button leaf">
                             Set new password
                         </button>
-                        <button type="button" className="authActionBack" onClick={() => navigate("/")}>
+                        <button type="button" className="authActionBack" onClick={() => navigate("/login")}>
                             Back to sign in
                         </button>
                     </form>
@@ -142,7 +142,7 @@ const AuthAction: React.FC = () => {
                     <>
                         <h1 className="authActionTitle">Password updated</h1>
                         <p className="authActionText">You can now sign in with your new password.</p>
-                        <button className="authActionBtn neobrutal-button leaf" onClick={() => navigate("/")}>
+                        <button className="authActionBtn neobrutal-button leaf" onClick={() => navigate("/login")}>
                             Go to sign in
                         </button>
                     </>
@@ -152,7 +152,7 @@ const AuthAction: React.FC = () => {
                     <>
                         <h1 className="authActionTitle">Email restored</h1>
                         <p className="authActionText">Your email address has been reverted. If you didn't request this change, reset your password right away.</p>
-                        <button className="authActionBtn neobrutal-button leaf" onClick={() => navigate("/")}>
+                        <button className="authActionBtn neobrutal-button leaf" onClick={() => navigate("/login")}>
                             Go to sign in
                         </button>
                     </>
@@ -162,7 +162,7 @@ const AuthAction: React.FC = () => {
                     <>
                         <h1 className="authActionTitle">Link not valid</h1>
                         <p className="authActionText">{errorMessage}</p>
-                        <button className="authActionBtn neobrutal-button neutral" onClick={() => navigate("/")}>
+                        <button className="authActionBtn neobrutal-button neutral" onClick={() => navigate("/login")}>
                             Back to sign in
                         </button>
                     </>

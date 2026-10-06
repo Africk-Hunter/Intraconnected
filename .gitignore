@@ -29,3 +29,5 @@ stripe-testing.local.md
 
 # Local Netlify folder
 .netlify
+
+.webtool/

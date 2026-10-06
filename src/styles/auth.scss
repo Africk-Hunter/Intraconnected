@@ -243,6 +243,43 @@
     }
 }
 
+// Takes the place of .forgotPassword in the same row once a reset email is
+// sent, so it adds no height and the login-mode translateY offsets still hold.
+// Shadow scaled down like the modal close buttons — the default is sized for
+// full-width buttons.
+.openGmail {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.35rem 0.8rem;
+    background: $link;
+    color: black;
+    text-decoration: none;
+    white-space: nowrap;
+    user-select: none;
+    box-shadow: 2px 2px 0 1px black;
+    max-height: 2rem;
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.3s ease, max-height 0.3s ease, box-shadow 0.3s ease, translate 0.3s ease;
+
+    &:hover, &:active {
+        box-shadow: 0 0 0 1px black;
+        translate: 2px 2px;
+    }
+
+    &.hidden {
+        max-height: 0;
+        padding-block: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    @media (max-width: $mobile) {
+        font-size: 1rem;
+    }
+}
+
 .rememberMe {
     display: flex;
     align-items: center;

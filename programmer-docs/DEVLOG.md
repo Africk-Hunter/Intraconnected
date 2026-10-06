@@ -4,6 +4,33 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Landing: "How it works" Replaces Encryption Explainer — 2026-10-06
+- Removed the "How your ideas are protected" section from the landing page (and its styles); the Privacy page still carries the full explanation. Replaced it with `HowItWorks.tsx`: three looping CSS-only mini animations (add an idea, zoom into a branch, drag to reparent). Static end states under `prefers-reduced-motion`.
+
+## Landing Page at `/`, Login at `/login` — 2026-10-06
+- `/` now renders the landing page (via `MarketingTransition`) and the sign-in/up form moved to `/login` (shipping-readiness E8). Reason: Stripe's website check and search crawlers load the bare domain, which used to be a bare login form.
+- A signed-in visitor on `/` is sent to `/main` (`utilities/firebase/homeRedirect.ts`, dynamically imported after first paint so the landing bundle still has no Firebase). `/pricing` is not redirected. `/landing` redirects to `/`.
+- Sign-in redirects updated to `/login`: `signUserOut`, `Idea.tsx` (two places), `startCheckout`, landing and pricing CTAs, navbar "Log In", `AuthAction.tsx` (four buttons). Terms/Privacy back buttons and account deletion go to `/`. The login screen's "New here?" link now goes to `/`.
+- `index.html` canonical/Open Graph/Twitter/JSON-LD URLs and `sitemap.xml` use `/` (the sitemap no longer lists `/landing`; `/login` is left out on purpose).
+- Typecheck, lint (0 errors), 175 tests and the build all pass. Not yet clicked through by hand: sign-in, sign-out, a signed-out checkout bounce, password reset and email verification should each be tried once.
+
+## Stripe Test Run Fixes — 2026-10-06
+- **Webhook dedupe was not atomic.** `stripe-webhook.ts` only checked whether an event was already `processed`, which is written at the end, so overlapping deliveries of one event all did the work. In the A6 test one `charge.refunded` (delivered through four local `stripe listen` processes) created four restored Annual subscriptions. Events are now claimed up front with Firestore `create()` (`claimEvent`); overlapping deliveries are no-ops, and a `failed` or over-2-minute-old `processing` claim is taken over so Stripe's retry can still finish. New tests cover overlap, simultaneous deliveries and takeover; `fakeDocRef` gained `create()`.
+- **Checkout failed after a Customer was deleted in the Stripe Dashboard.** `resolveCustomer` (`create-payment-intent.ts`) now falls back to creating a new Customer when the one in `meta/billing` returns `resource_missing`.
+- Known, not changed: opening Annual checkout creates a Stripe Customer and an incomplete subscription each time (the Customer id is only saved after a payment), so abandoned checkouts leave orphans. A lookup by `metadata.firebaseUid` before creating would stop that.
+- CSP in `netlify.toml` now also allows `https://*.js.stripe.com` in `script-src` and `frame-src` (Stripe's CSP guide; shipping-readiness B4). Takes effect on the next deploy. Console check of a test checkout also showed Stripe.js fetching the Google Fonts CSS for the card field (`Elements` `fonts` option) and being blocked by `connect-src`; `https://fonts.googleapis.com` is now allowed there too. The other CSP lines in that log come from Stripe's own iframes (their policies, not ours).
+- Found: Netlify has no `VITE_STRIPE_PUBLISHABLE_KEY` (only the local `.env` does), so a production build would have no Stripe key. Must be set with the live key before launch.
+- Checkout is limited to 10 attempts per hour per account (`rateLimit_checkout`); heavy manual testing hits it. Delete that doc in the Firebase Console to reset.
+
+## Firestore Rules Published + Sync Verified — 2026-09-29
+- `firestore.rules` published to the Firebase Console (shipping-readiness B1). Clients can no longer write `meta/billing`, the 50-idea free cap is enforced on the server, and `meta/featureRequests` / `meta/rateLimit_*` are locked (A2). Future rules edits need a manual re-publish.
+- Sync layer (A3/A4) checked by hand with two signed-in windows: live sync, blocked connection + reload, refused save, and a stale edit to a deleted idea all behaved as intended. The test steps are kept in the readiness page under P1 item 2.
+
+## Bundle Splitting — 2026-09-29
+- Every route is now `lazy()` in `Index.tsx`, so `/landing` no longer downloads the app, Firebase or Stripe before first paint. Initial JS for `/landing` went from one 849 KB chunk (254 KB gzipped) to about 252 KB (about 81 KB gzipped). Firebase is its own chunk (105 KB gzipped).
+- Marketing pages load Firebase only after paint: `MarketingTransition` dynamically imports `watchBillingPlan` (the listener that used to live only in `useBillingPlanSync`), and Pricing's buttons import `startCheckout` on click. The imports in `IdeaContext` are now type-only; a value import there would pull Firebase back into every route.
+- New `LazyCheckoutModal` (used by `MarketingTransition` and `Idea.tsx`) loads `CheckoutModal` and Stripe only when checkout first opens, then stays mounted so the close animation still plays.
+
 ## Import & Markdown/OPML Export — 2026-09-29
 - **Import (Profile → Data).** Reads OPML (Workflowy, Dynalist, MindNode, OmniOutliner, MindMeister), Markdown (Obsidian, Logseq, Bear), Notion's zipped export, indented plain text, FreeMind/Freeplane `.mm`, XMind `.xmind` (new `content.json` and legacy `content.xml`) and our own JSON. Several files at once are fine. Everything lands under one new top-level idea named after the file, so an import never mixes into existing ideas.
   - Pure parsers in `idea/importers.ts` → a shared `ImportNode` tree → `importToIdeas()`. Tasks-only children become a checklist; a noted leaf becomes a note idea (a noted parent gets a "Note" child); a link on a node with children moves to a first child, since clicking a link node opens the URL instead of zooming in. Round-trip tests import our own Markdown, OPML and JSON exports.
@@ -31,7 +58,7 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 - **A2:** `firestore.rules` stops clients writing `meta/featureRequests` and `meta/rateLimit_*`. Still needs publishing.
 - **A5:** Stripe Customers now carry the account email (created or updated on every checkout), and Lifetime PaymentIntents set `receipt_email`.
 - **A6:** refunding an Annual→Lifetime upgrade restores Annual as a trial to the original period end, with the saved card and the prior `cancel_at_period_end`, and no charge now. If that date has passed, the account goes to Free.
-- Tests went from 102 to 123. Not yet exercised in a running app or in Stripe test mode.
+- Tests went from 102 to 123. The sync layer was later checked by hand with two signed-in windows (see the entry above); A6 still needs a Stripe test-mode run.
 - The "N ideas couldn't be read" notice stays dismissed. The dismissed idea IDs are saved per account (`sync_unreadable_dismissed_<uid>`), so it only comes back for a newly unreadable idea. Repeat pulls replace the notice instead of stacking copies.
 - **Email action page (`AuthAction.tsx`) restyled** to match the app's modals: card shadow and pop-in, heavier title, the reset email shown as a chip, DM Sans inputs and buttons, a boxed error callout, and a "Back to sign in" link under the reset form.
 - **Scroll resets on route change.** New `ScrollToTop` in `Index.tsx`, so going from a scrolled-down `/landing` to `/` opens at the top.

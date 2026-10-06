@@ -13,7 +13,7 @@ const Terms: React.FC = () => {
                     ← Back
                 </button>
                 <h1 className="legalTitle">Terms of Service</h1>
-                <p className="legalMeta">Intraconnected &mdash; Last updated September 29, 2026</p>
+                <p className="legalMeta">Intraconnected | Last updated September 29, 2026</p>
 
                 <section className="legalSection">
                     <h2>1. Who We Are</h2>
@@ -121,7 +121,7 @@ const Terms: React.FC = () => {
                             <strong>Annual ({ANNUAL_PRICE_DISPLAY}/year).</strong> A recurring
                             subscription that renews automatically each year at the then-current
                             price. You can cancel at any time from Profile → Account; cancellation
-                            stops future renewal but does not refund the current billing period —
+                            stops future renewal but does not refund the current billing period,
                             you keep full access through the end of the period you already paid
                             for.
                         </li>
@@ -136,7 +136,7 @@ const Terms: React.FC = () => {
                     </ul>
                     <p>
                         Prices are shown to you before you pay, and may change for future
-                        purchases — a change never affects a plan you've already paid for. If we
+                        purchases, a change never affects a plan you've already paid for. If we
                         introduce additional paid plans or features, their price and terms will be
                         shown to you before you pay for anything, and will apply in addition to
                         this section.
