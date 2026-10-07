@@ -159,7 +159,7 @@ pre.code { margin: 0; padding: 10px 12px; max-width: 100%; overflow-x: auto; bac
   <header class="hero">
     <div class="eyebrow">Intraconnected · Pre-launch · Oct 6, 2026</div>
     <h1>Launch <mark>checklist</mark></h1>
-    <p class="lede">Everything between here and paying customers, in order: a Stripe test-mode run (sections 00 to 09), going live (10 to 14), the native apps (15 to 18), later fixes (19) and finished work (20). Codes like A5, S12 or C2 are links. Done sections start collapsed; click a heading to open one. Your ticks stay in this browser only.</p>
+    <p class="lede">Everything between here and paying customers, in order: a Stripe test-mode run (sections 00 to 09), going live (10 to 14), the native apps (15 to 18), later fixes (19) and finished work (20). Codes like A5, S12 or C2 are links. Done sections start collapsed; click a heading to open one. Your ticks sync across your devices (the Live IDs boxes stay in this browser only).</p>
   </header>
 
   <div class="bar"><div class="bar-inner">
@@ -514,7 +514,7 @@ PHASES.forEach((p, pi) => {
     if (rs.length) { li.id = "ref-" + rs[0]; rs.forEach(r => { refs[r] = li.id; }); }
     const cb = li.querySelector("input");
     cb.checked = id in state ? !!state[id] : !!st.d;
-    cb.addEventListener("change", () => { state[id] = cb.checked; save(); refresh(); });
+    cb.addEventListener("change", () => { state[id] = cb.checked; save(); refresh(); pushTick(id, cb.checked); });
     ol.appendChild(li);
   });
   root.appendChild(sec);
@@ -619,7 +619,41 @@ resetBtn.addEventListener("click", () => {
   save();
   resetBtn.classList.remove("armed"); resetBtn.textContent = "Clear ticks";
   refresh();
+  pushAll();
 });
+
+// Cross-device sync: ticks live in the artifact db (doc checklist/ticks); localStorage stays as the offline fallback.
+let tickDoc = null, writeChain = Promise.resolve();
+const queueWrite = fn => { writeChain = writeChain.then(fn).catch(() => {}); };
+function pushTick(id, val) {
+  if (!tickDoc) return;
+  queueWrite(() => tickDoc.update({ [id]: val }).catch(() => tickDoc.set({ ...state })));
+}
+function pushAll() {
+  if (!tickDoc) return;
+  queueWrite(() => tickDoc.set({ ...state }));
+}
+function applyRemote(data) {
+  state = { ...data };
+  PHASES.forEach((p, pi) => p.steps.forEach((st, si) => {
+    const id = `s-${pi}-${si}`, cb = document.getElementById(id);
+    if (cb) cb.checked = id in state ? !!state[id] : !!st.d;
+  }));
+  save(); refresh();
+}
+(async () => {
+  try {
+    const db = window.claude && await window.claude.use("db");
+    if (!db) return;
+    tickDoc = db.doc("checklist/ticks");
+    let first = true;
+    tickDoc.onSnapshot(snap => {
+      if (snap.exists) { applyRemote(snap.data()); }
+      else if (first && Object.keys(state).length) { pushAll(); } // seed from this browser's existing ticks
+      first = false;
+    }, () => {});
+  } catch (_) {}
+})();
 
 document.querySelectorAll(".copy[data-copy]").forEach(btn => {
   btn.addEventListener("click", () => {
