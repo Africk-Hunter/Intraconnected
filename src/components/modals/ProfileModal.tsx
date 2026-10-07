@@ -5,7 +5,8 @@ import { isGmailAddress, gmailResetSearchUrl } from '../../utilities/gmail';
 import { signUserOut,deleteUserAccount, sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
 import { auth } from '../../firebaseConfig';
 import { fetchFullIdeaList } from '../../utilities/idea/helpers';
-import { cancelSubscription, resetSubscriptionForTesting, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
+import { checkDevPassword } from '../../utilities/devPassword';
+import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
 import { getCachedBillingStatus, BillingStatus } from '../../utilities/firebase/firebaseHelpers';
 import { SUPPORT_EMAIL } from '../../utilities/support';
 import { ideasToMarkdown, ideasToOpml } from '../../utilities/idea/exporters';
@@ -55,6 +56,11 @@ function ProfileModal() {
     const [refundStep, setRefundStep] = useState<'idle' | 'confirm' | 'done'>('idle');
     const [isRefunding, setIsRefunding] = useState(false);
     const [refundError, setRefundError] = useState('');
+    const [devUnlocked, setDevUnlocked] = useState(false);
+    const [devPasswordInput, setDevPasswordInput] = useState('');
+    const [devPasswordError, setDevPasswordError] = useState('');
+    const [isSettingPlan, setIsSettingPlan] = useState(false);
+    const [setPlanError, setSetPlanError] = useState('');
     const [emailVerified, setEmailVerified] = useState(true);
     const [verifyResendSent, setVerifyResendSent] = useState(false);
     const [verifyError, setVerifyError] = useState('');
@@ -94,6 +100,11 @@ function ProfileModal() {
         setRefundStep('idle');
         setIsRefunding(false);
         setRefundError('');
+        setDevUnlocked(false);
+        setDevPasswordInput('');
+        setDevPasswordError('');
+        setIsSettingPlan(false);
+        setSetPlanError('');
     }
 
     async function handleResendVerification() {
@@ -139,6 +150,36 @@ function ProfileModal() {
             setResetPlanError('Failed to reset plan. Please try again.');
         } finally {
             setIsResettingPlan(false);
+        }
+    }
+
+    async function handleDevUnlock() {
+        if (await checkDevPassword(devPasswordInput)) {
+            setDevUnlocked(true);
+            setDevPasswordError('');
+        } else {
+            setDevPasswordError('Incorrect password.');
+        }
+        setDevPasswordInput('');
+    }
+
+    async function handleSetPlanForTesting(plan: 'annual' | 'lifetime') {
+        setIsSettingPlan(true);
+        setSetPlanError('');
+        try {
+            await setPlanForTesting(plan);
+            setBillingPlan(plan);
+            setBillingStatus(prev => ({
+                ...prev,
+                plan,
+                stripeSubscriptionId: null,
+                subscriptionStatus: plan === 'annual' ? 'active' : null,
+                cancelAtPeriodEnd: false,
+            }));
+        } catch {
+            setSetPlanError('Failed to set plan. Is ALLOW_TEST_RESET=true set in your local .env?');
+        } finally {
+            setIsSettingPlan(false);
         }
     }
 
@@ -470,8 +511,61 @@ function ProfileModal() {
     );
 
     // Dev builds only — the tab itself is omitted from TABS in prod
-    const developerContent = (
+    const developerContent = !devUnlocked ? (
         <div className="profile-account-content">
+            <section className="profile-section profile-section--dev">
+                <h3 className="profile-section-title">Password Required</h3>
+                <p className="profile-section-desc">Enter the developer password to use these tools.</p>
+                <form
+                    onSubmit={e => {
+                        e.preventDefault();
+                        void handleDevUnlock();
+                    }}
+                >
+                    <input
+                        className="profile-input"
+                        type="password"
+                        placeholder="Developer password"
+                        value={devPasswordInput}
+                        onChange={e => setDevPasswordInput(e.target.value)}
+                        autoComplete="off"
+                    />
+                    <button
+                        type="submit"
+                        className="profile-action-btn neobrutal-button"
+                        disabled={!devPasswordInput}
+                    >
+                        Unlock
+                    </button>
+                </form>
+                {devPasswordError && <p className="profile-error">{devPasswordError}</p>}
+            </section>
+        </div>
+    ) : (
+        <div className="profile-account-content">
+            <section className="profile-section profile-section--dev">
+                <h3 className="profile-section-title">Set Plan</h3>
+                <p className="profile-section-desc">
+                    Sets your plan directly with no payment or Stripe objects. Dev-only.
+                </p>
+                <div className="profile-export-buttons">
+                    <button
+                        className="profile-action-btn neobrutal-button"
+                        onClick={() => handleSetPlanForTesting('annual')}
+                        disabled={isSettingPlan || billingPlan === 'annual'}
+                    >
+                        Upgrade to Annual
+                    </button>
+                    <button
+                        className="profile-action-btn neobrutal-button"
+                        onClick={() => handleSetPlanForTesting('lifetime')}
+                        disabled={isSettingPlan || billingPlan === 'lifetime'}
+                    >
+                        Upgrade to Lifetime
+                    </button>
+                </div>
+                {setPlanError && <p className="profile-error">{setPlanError}</p>}
+            </section>
             <section className="profile-section profile-section--dev">
                 <h3 className="profile-section-title">Reset Plan</h3>
                 <p className="profile-section-desc">

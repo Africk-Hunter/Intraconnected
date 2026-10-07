@@ -5,7 +5,7 @@
 // these here just stops the marketing copy from drifting out of sync with
 // itself if the Stripe price is ever changed.
 export const ANNUAL_PRICE_DISPLAY = '$14.99';
-export const LIFETIME_PRICE_DISPLAY = '$39';
+export const LIFETIME_PRICE_DISPLAY = '$39.99';
 
 // Numeric twin of ANNUAL_PRICE_DISPLAY, only used to work out the per-month
 // figure. pricingDisplay.test.ts fails if the two drift.

@@ -20,7 +20,7 @@ const CONFIRM_TIMEOUT_MS = 20_000;
 
 // If it's still not landed several minutes later, "just wait" stops being
 // honest — either the webhook is stuck or it failed outright (see
-// programmer-docs/artifacts/shipping-readiness.md, section G). There's a live Firestore
+// programmer-docs/artifacts/launch-checklist.html, section 20). There's a live Firestore
 // listener already running (useBillingPlanSync, subscribed in Idea.tsx) that
 // will flip this modal to the celebration screen automatically the moment
 // the write actually lands, however late — this second timeout only changes

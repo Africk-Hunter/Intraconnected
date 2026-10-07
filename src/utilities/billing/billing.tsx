@@ -194,6 +194,26 @@ export async function resetSubscriptionForTesting(): Promise<void> {
     }
 }
 
+// Testing-only helper (see set-plan-test.ts) — sets the billing doc straight to
+// annual/lifetime with no payment. 404s unless ALLOW_TEST_RESET is set locally.
+export async function setPlanForTesting(plan: 'annual' | 'lifetime'): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error('You must be signed in.');
+    }
+
+    const idToken = await user.getIdToken();
+    const res = await fetch('/.netlify/functions/set-plan-test', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+    });
+
+    if (!res.ok) {
+        throw new Error(await res.text());
+    }
+}
+
 export function consumePendingCheckoutPlan(): CheckoutPlan | null {
     const plan = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
     if (plan !== 'annual' && plan !== 'lifetime') return null;

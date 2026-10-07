@@ -4,6 +4,11 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Launch Checklist Consolidation — 2026-10-06
+- Merged `shipping-readiness.md`, `stripe-test-run.md` and `ios-build-guide.md` into one page, `programmer-docs/artifacts/launch-checklist.html` (the old stripe-test-run artifact, updated in place so its URL and saved ticks carry over). Sections 00 to 14 are the test run and go-live steps, 15 to 18 the native app (Capacitor setup, Android, iOS/TestFlight, store review), 19 the later fixes (E1 to E9) and 20 the finished work, collapsed. Codes like A5, S12 and C2 are links that open and jump to their target.
+- Updated for Oct 6: new prices ($14.99 / $39.99, new test and live Price ids needed), the A6 re-run after the webhook dedupe fix, support page URL, `/` landing page, 177 tests. Old references in code comments, CLAUDE.md and netlify.toml now point at the new file. Older DEVLOG entries still name the deleted files, kept as history.
+- Open question: DEVLOG says Lifetime is $39 but the uncommitted `pricingDisplay.ts` says $39.99.
+
 ## Pricing Raised: Annual $14.99, Lifetime $39 — 2026-10-06
 - Was $1.99/yr and $4.99 lifetime; Stripe's $0.30 fixed fee took ~18% of Annual, and Lifetime was only 2.5 years of Annual with Firestore costs forever. New prices target meaningful side income (~335 Annual subscribers ≈ $400/mo after fees).
 - `pricingDisplay.ts` (`$14.99`, `$39`) feeds Pricing, UpgradeModal, CheckoutForm and Terms. `LIFETIME_UPGRADE_DISCOUNT_CENTS` in `lifetimePricing.ts` is now 1499 so an Annual subscriber's credit still equals what they paid (Lifetime then costs them $24.01).

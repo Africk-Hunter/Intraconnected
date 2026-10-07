@@ -58,6 +58,12 @@ function CheckoutForm({ plan, intent, onDone }: Props) {
                 </div>
             </div>
             {error && <p className="checkoutModalError">{error}</p>}
+            {plan === "annual" && (
+                <p className="checkoutFormRenewal">
+                    Your subscription renews automatically every year at {formatMoney(intent.amount, intent.currency)} until you cancel.
+                    Cancel anytime in Profile → Account; you keep access through the period you've paid for.
+                </p>
+            )}
             <button
                 type="submit"
                 className="modalButton continue neobrutal-button checkoutFormSubmit"

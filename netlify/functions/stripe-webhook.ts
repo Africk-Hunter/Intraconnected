@@ -219,7 +219,7 @@ export default async (req: Request, _context: Context) => {
         // The billing write above is what actually grants what was paid
         // for — if it (or anything before it) throws, that can't fail
         // silently. There's no external error-monitoring service wired up
-        // (see programmer-docs/artifacts/shipping-readiness.md, E5), so this is
+        // (see programmer-docs/artifacts/launch-checklist.html, E5), so this is
         // logged AND persisted here, which is what makes a stuck charge
         // inspectable instead of surfacing for the first time as a
         // customer's "where's my upgrade" email. Returning 500 makes Stripe

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import PriceCard from '../components/landing/PriceCard';
+import CoffeeIcon from '../components/landing/CoffeeIcon';
 import type { CheckoutPlan } from '../utilities/billing/billing';
 import { useLifetimePrice } from '../utilities/billing/useLifetimePrice';
 import { ANNUAL_PRICE_DISPLAY, ANNUAL_PRICE_PER_MONTH_DISPLAY, LIFETIME_PRICE_DISPLAY, formatMoney } from '../utilities/billing/pricingDisplay';
@@ -35,7 +36,7 @@ const Pricing: React.FC = () => {
         <span className="pricingHeroNode pricingHeroNode--leaf" aria-hidden="true">idea!</span>
         <span className="pricingHeroNode pricingHeroNode--sky" aria-hidden="true">sub-idea</span>
         <span className="pricingHeroNode pricingHeroNode--link" aria-hidden="true">tangent</span>
-        <div className="pricingHeroSticker">Cheaper than a latte ☕</div>
+        <div className="pricingHeroSticker">Cheaper than a latte <CoffeeIcon /></div>
         <h1 className="pricingHeroTitle">Big ideas,<br /><span className="pricingHeroTitleHighlight">tiny</span> price.</h1>
         <p className="pricingHeroSubline">
           50 nodes free, no card needed. Go annual for {ANNUAL_PRICE_DISPLAY}/yr, or pay once

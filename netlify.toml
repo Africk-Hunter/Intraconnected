@@ -12,7 +12,7 @@
 # per the CSP spec, which is exactly what broke — so this drops the hash
 # instead of adding one. Acceptable trade: this app has no XSS sinks anywhere
 # (no dangerouslySetInnerHTML, no raw innerHTML — see the ship-readiness
-# audit, programmer-docs/artifacts/shipping-readiness.md), so the marginal protection an inline-script block would add here is
+# audit, programmer-docs/artifacts/launch-checklist.html, section 20), so the marginal protection an inline-script block would add here is
 # smaller than the cost of a CSP that's confirmed broken in a documented dev
 # workflow (`npm run dev:functions` / `dev:stripe`, both `netlify dev`).
 [[headers]]

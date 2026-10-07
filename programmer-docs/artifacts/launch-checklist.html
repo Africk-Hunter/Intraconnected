@@ -1,0 +1,713 @@
+<!-- Live version: https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag -->
+<title>Launch Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Work+Sans:wght@400;500;600&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* Layout: one neobrutal column of numbered phase cards, sticky progress bar on top. Palette borrowed from Intraconnected's SCSS. */
+:root {
+  --bg: #E9F9E5;
+  --card: #FFFFFF;
+  --ink: #111111;
+  --muted: #4A5A47;
+  --line: #111111;
+  --leaf: #41BC28;
+  --sky: #00A9D8;
+  --link: #E8E879;
+  --danger: #C80000;
+  --pink: #DB44A4;
+  --tint: #F3FBF1;
+  --shadow: #111111;
+  --display: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Courier Prime", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1A0D; --card: #18241A; --ink: #EEF6EC; --muted: #A9BCA5; --line: #EEF6EC;
+    --leaf: #52D236; --sky: #2DC3EE; --link: #D9D95E; --danger: #FF5A5A; --pink: #F068BE;
+    --tint: #1F2E21; --shadow: #000000; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1A0D; --card: #18241A; --ink: #EEF6EC; --muted: #A9BCA5; --line: #EEF6EC;
+  --leaf: #52D236; --sky: #2DC3EE; --link: #D9D95E; --danger: #FF5A5A; --pink: #F068BE;
+  --tint: #1F2E21; --shadow: #000000; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); padding: 0 16px 64px; }
+.wrap { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+header.hero { padding-block: 36px 4px; display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font: 700 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 400 clamp(30px, 6vw, 46px)/1.05 var(--display); margin: 0; text-wrap: balance; }
+h1 mark { background: var(--link); color: #111; padding: 0 .15em; border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); }
+.lede { max-width: 62ch; margin: 0; color: var(--muted); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; }
+.bar-inner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--card); border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); padding: 10px 14px; }
+.meter { flex: 1 1 200px; height: 14px; border: 2px solid var(--line); background: var(--tint); min-width: 0; }
+.meter span { display: block; height: 100%; background: var(--leaf); width: 0; transition: width .25s; }
+.count { font: 700 14px var(--mono); font-variant-numeric: tabular-nums; }
+button { font: 600 13px var(--body); color: #111; background: var(--link); border: 2px solid var(--line); box-shadow: 3px 3px 0 var(--shadow); padding: 5px 12px; cursor: pointer; }
+button:active { transform: translate(3px,3px); box-shadow: none; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+button.ghost { background: var(--card); color: var(--ink); }
+button.armed { background: var(--danger); color: #fff; }
+
+.card { background: var(--card); border: 4px solid var(--line); box-shadow: 6px 6px 0 var(--shadow); }
+.phase > .ph-head { display: flex; align-items: baseline; gap: 14px; padding: 16px 18px 12px; border-bottom: 3px solid var(--line); }
+.ph-num { font: 400 22px/1 var(--display); background: var(--sky); color: #111; border: 3px solid var(--line); min-width: 44px; text-align: center; padding: 6px 4px; flex: none; }
+.phase.done .ph-num { background: var(--leaf); }
+.ph-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+h2 { font: 400 20px/1.2 var(--display); margin: 0; text-wrap: balance; }
+.ph-sub { font-size: 13px; color: var(--muted); }
+.ph-tally { margin-left: auto; font: 700 13px var(--mono); font-variant-numeric: tabular-nums; flex: none; }
+
+ol.steps { list-style: none; margin: 0; padding: 6px 0; }
+ol.steps > li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 10px 18px; }
+ol.steps > li + li { border-top: 2px dashed color-mix(in srgb, var(--line) 25%, transparent); }
+ol.steps input[type=checkbox] { appearance: none; width: 22px; height: 22px; margin: 2px 0 0; border: 3px solid var(--line); background: var(--card); cursor: pointer; display: grid; place-content: center; }
+ol.steps input[type=checkbox]:checked { background: var(--leaf); }
+ol.steps input[type=checkbox]:checked::after { content: ""; width: 10px; height: 5px; border: solid #111; border-width: 0 0 3px 3px; transform: rotate(-45deg) translate(1px,-1px); }
+.step { min-width: 0; }
+.step label { cursor: pointer; font-weight: 500; }
+li.checked .step label { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 2px; }
+.expect { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font-size: 14px; color: var(--muted); }
+.step a { color: var(--ink); font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 2px; }
+.step a:hover { background: var(--link); color: #111; }
+.expect li::before { content: "→ "; font-family: var(--mono); font-weight: 700; color: var(--ink); }
+code { font: 700 13.5px var(--mono); background: var(--tint); border: 1.5px solid color-mix(in srgb, var(--line) 35%, transparent); padding: 0 4px; overflow-wrap: anywhere; }
+.tag { font: 700 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--line); padding: 1px 6px; margin-left: 6px; vertical-align: 2px; background: var(--pink); color: #111; }
+
+.setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.panel { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.panel h3 { font: 400 16px var(--display); margin: 0; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+td { padding: 6px 0; vertical-align: top; }
+td:first-child { white-space: nowrap; padding-right: 10px; }
+tr + tr td { border-top: 2px dashed color-mix(in srgb, var(--line) 25%, transparent); }
+.copy { font: 700 13.5px var(--mono); background: var(--tint); color: var(--ink); box-shadow: 2px 2px 0 var(--shadow); padding: 2px 8px; }
+.copy.ok { background: var(--leaf); color: #111; }
+.cmd { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+.limits { padding: 16px 18px; background: var(--link); color: #111; }
+.limits h3 { font: 400 16px var(--display); margin: 0 0 6px; }
+.limits ul { margin: 0; padding-left: 18px; }
+.limits code { background: rgba(255,255,255,.55); border-color: rgba(0,0,0,.3); color: #111; }
+footer { font-size: 13px; color: var(--muted); }
+/* Section rail: fixed column left of the content on wide screens, a scrolling chip row inside the sticky bar otherwise. */
+html { scroll-behavior: smooth; }
+.phase, #tools, #ids { scroll-margin-top: 150px; }
+.rail { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 4px; scrollbar-width: thin; }
+.rail button { flex: none; display: flex; align-items: baseline; gap: 6px; background: var(--card); color: var(--ink); text-align: left; }
+.rail button b { font: 400 12px/1 var(--display); background: var(--sky); color: #111; border: 2px solid var(--line); padding: 3px 5px; min-width: 28px; text-align: center; }
+.rail button.done b { background: var(--leaf); }
+.rail button.on { background: var(--link); color: #111; }
+.rail button .nm { font-size: 12.5px; white-space: nowrap; }
+@media (min-width: 1280px) {
+  .rail { position: fixed; top: 96px; left: max(16px, calc(50% - 410px - 236px)); width: 216px; max-height: calc(100vh - 120px); overflow: auto; flex-direction: column; gap: 6px; padding: 0 6px 6px 0; }
+  .rail button { width: 100%; }
+  .rail button .nm { white-space: normal; }
+}
+
+/* Live IDs panel: paste targets with prefix checks, and ready-to-copy Netlify lines. Saved in this browser only. */
+.ids { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+.ids h3 { font: 400 16px var(--display); margin: 0; }
+.ids .note { margin: 0; font-size: 13px; color: var(--muted); }
+.ids .warn { background: var(--link); color: #111; border: 2px solid var(--line); padding: 8px 10px; font-size: 13px; }
+.ids .warn code { background: rgba(255,255,255,.55); border-color: rgba(0,0,0,.3); color: #111; }
+.idgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 16px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label { font: 700 12px var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+.field .row { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.field input { flex: 1; min-width: 0; font: 600 14px var(--mono); color: var(--ink); background: var(--card); border: 3px solid var(--line); padding: 7px 9px; }
+.field .chip { flex: none; font: 700 11px var(--mono); border: 2px solid var(--line); padding: 2px 6px; background: var(--tint); color: var(--ink); min-width: 62px; text-align: center; }
+.field .chip.ok { background: var(--leaf); color: #111; }
+.field .chip.bad { background: var(--danger); color: #fff; }
+.field .hint { font-size: 12px; color: var(--muted); min-height: 1.2em; }
+.outlines { display: flex; flex-direction: column; gap: 8px; }
+.outline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.outline code { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; padding: 4px 6px; }
+.outline .copy[disabled] { opacity: .45; cursor: not-allowed; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) { .meter span { transition: none; } }
+@media (max-width: 480px) { ol.steps > li { padding: 10px 12px; } .phase > .ph-head { padding: 14px 12px 10px; gap: 10px; } }
+
+/* Combined page: collapsible sections, cross-reference links, code blocks, overview card. */
+.ph-head[role=button] { cursor: pointer; }
+.ph-head .chev { flex: none; font: 400 14px var(--display); align-self: center; }
+.phase.collapsed > .ph-head { border-bottom: 0; }
+.phase.collapsed > ol.steps { display: none; }
+.phase.collapsed .chev { transform: rotate(-90deg); }
+.phase.opt .ph-num { background: var(--link); }
+a.xref { font-family: var(--mono); font-weight: 700; font-size: .95em; color: var(--ink); background: var(--tint); border: 1.5px solid color-mix(in srgb, var(--line) 35%, transparent); padding: 0 3px; text-decoration: none; }
+a.xref:hover { background: var(--link); color: #111; }
+.tag a.xref { background: transparent; border: 0; padding: 0; color: inherit; text-decoration: underline; }
+.flash { animation: flash 1.8s ease-out; }
+@keyframes flash { 0% { box-shadow: inset 0 0 0 4px var(--sky); background: color-mix(in srgb, var(--link) 60%, transparent); } 100% { box-shadow: inset 0 0 0 4px transparent; background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+.phase, #tools, #ids, #ov, ol.steps > li[id] { scroll-margin-top: 150px; }
+.codewrap { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-top: 8px; min-width: 0; max-width: 100%; }
+pre.code { margin: 0; padding: 10px 12px; max-width: 100%; overflow-x: auto; background: var(--tint); border: 2px solid var(--line); font: 600 12.5px/1.5 var(--mono); white-space: pre; }
+.ov td:first-child { font-weight: 600; }
+.ov td { padding-block: 7px; }
+.ov .verdict { margin: 0; }
+.ov .scroll { overflow-x: auto; }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Intraconnected · Pre-launch · Oct 6, 2026</div>
+    <h1>Launch <mark>checklist</mark></h1>
+    <p class="lede">Everything between here and paying customers, in order: a Stripe test-mode run (sections 00 to 09), going live (10 to 14), the native apps (15 to 18), later fixes (19) and finished work (20). Codes like A5, S12 or C2 are links. Done sections start collapsed; click a heading to open one. Your ticks stay in this browser only.</p>
+  </header>
+
+  <div class="bar"><div class="bar-inner">
+    <span class="count" id="count">0 / 0</span>
+    <div class="meter" aria-hidden="true"><span id="meter"></span></div>
+    <button class="ghost" id="reset" type="button">Clear ticks</button>
+  </div>
+  <nav class="rail" id="rail" aria-label="Sections"></nav></div>
+
+  <section class="card panel ov" id="ov">
+    <h3>Where things stand</h3>
+    <p class="verdict"><b>Not ready to take payments.</b> As of Oct 6: typecheck is clean, 177 of 177 tests pass and lint shows 0 errors and 17 warnings (E9). No live Stripe call has been made, and none of the native-app steps has been started.</p>
+    <div class="scroll"><table>
+      <tr><td>Test-mode run</td><td>Sections 00 to 09. Left: the customer emails (A5), the new test prices, and a re-run of A6 after the Oct 6 webhook fix.</td></tr>
+      <tr><td>Stripe live mode</td><td>Section 10 (B2). New $14.99 and $39.99 prices must exist in live mode too.</td></tr>
+      <tr><td>Email links</td><td>Section 11 (B3).</td></tr>
+      <tr><td>Support mailbox</td><td>Section 12 (B5).</td></tr>
+      <tr><td>Business setup</td><td>Section 13 (B6), plus decision C2.</td></tr>
+      <tr><td>Deploy and live check</td><td>Section 14 (B4).</td></tr>
+      <tr><td>Native app</td><td>Setup in section 15, Android in section 16, iOS in section 17, store review in section 18.</td></tr>
+      <tr><td>Not blocking</td><td>Section 19 has the later fixes (E1 to E9). Section 20 holds everything already done.</td></tr>
+    </table></div>
+  </section>
+
+  <section class="setup-grid" id="tools">
+    <div class="card panel">
+      <h3>Test cards</h3>
+      <p style="margin:0;font-size:13px;color:var(--muted)">Any future expiry, any CVC and ZIP. <a href='https://docs.stripe.com/testing' target='_blank' rel='noopener'>More test cards</a>.</p>
+      <table>
+        <tr><td><button class="copy" data-copy="4242424242424242">4242 4242 4242 4242</button></td><td>Succeeds</td></tr>
+        <tr><td><button class="copy" data-copy="4000002500003155">4000 0025 0000 3155</button></td><td>Needs 3-D Secure</td></tr>
+        <tr><td><button class="copy" data-copy="4000000000000002">4000 0000 0000 0002</button></td><td>Declined</td></tr>
+        <tr><td><button class="copy" data-copy="4000000000009995">4000 0000 0000 9995</button></td><td>Insufficient funds</td></tr>
+      </table>
+    </div>
+    <div class="card panel">
+      <h3>Commands</h3>
+      <div class="cmd">
+        <button class="copy" data-copy="stripe login">stripe login</button>
+        <button class="copy" data-copy="npm run dev:stripe">npm run dev:stripe</button>
+        <button class="copy" data-copy="stripe events resend evt_">stripe events resend evt_…</button>
+      </div>
+      <p style="margin:0;font-size:13px;color:var(--muted)">App runs at <a href='http://localhost:8888' target='_blank' rel='noopener'><code>http://localhost:8888</code></a>. To start any test over: Profile → Developer Testing → <b>Reset to Free</b>. That tab (dev builds only) can also set Annual or Lifetime without a payment.</p>
+    </div>
+  </section>
+
+
+  <section class="card ids" id="ids">
+    <h3>Live IDs and amounts</h3>
+    <p class="note">Paste what you get from the Stripe live dashboard. Each box checks the prefix, and the lines below turn into copy buttons for Netlify. Saved in this browser only.</p>
+    <div class="warn"><b>Never paste secrets here.</b> <code>sk_live_…</code> and <code>whsec_…</code> go straight into Netlify's environment variables, and nowhere else.</div>
+    <div class="idgrid">
+      <div class="field"><label for="f-annual-amt">Annual price (USD per year)</label>
+        <div class="row"><input id="f-annual-amt" data-key="annualAmt" type="text" inputmode="decimal" placeholder="14.99" autocomplete="off"><span class="chip" data-chip="annualAmt">empty</span></div><span class="hint" data-hint="annualAmt"></span></div>
+      <div class="field"><label for="f-life-amt">Lifetime price (USD once)</label>
+        <div class="row"><input id="f-life-amt" data-key="lifeAmt" type="text" inputmode="decimal" placeholder="39.99" autocomplete="off"><span class="chip" data-chip="lifeAmt">empty</span></div><span class="hint" data-hint="lifeAmt"></span></div>
+      <div class="field"><label for="f-annual-id">Annual price id</label>
+        <div class="row"><input id="f-annual-id" data-key="annualId" type="text" placeholder="price_…" autocomplete="off" spellcheck="false"><span class="chip" data-chip="annualId">empty</span></div><span class="hint" data-hint="annualId"></span></div>
+      <div class="field"><label for="f-life-id">Lifetime price id</label>
+        <div class="row"><input id="f-life-id" data-key="lifeId" type="text" placeholder="price_…" autocomplete="off" spellcheck="false"><span class="chip" data-chip="lifeId">empty</span></div><span class="hint" data-hint="lifeId"></span></div>
+      <div class="field"><label for="f-pk">Publishable key</label>
+        <div class="row"><input id="f-pk" data-key="pk" type="text" placeholder="pk_live_…" autocomplete="off" spellcheck="false"><span class="chip" data-chip="pk">empty</span></div><span class="hint" data-hint="pk"></span></div>
+      <div class="field"><label for="f-hook">Live webhook endpoint id (optional)</label>
+        <div class="row"><input id="f-hook" data-key="hook" type="text" placeholder="we_…" autocomplete="off" spellcheck="false"><span class="chip" data-chip="hook">empty</span></div><span class="hint" data-hint="hook"></span></div>
+    </div>
+    <div class="outlines">
+      <div class="outline"><code id="o-annual">STRIPE_PRICE_ANNUAL=</code><button class="copy" type="button" data-out="o-annual" disabled>Copy</button></div>
+      <div class="outline"><code id="o-life">STRIPE_PRICE_LIFETIME=</code><button class="copy" type="button" data-out="o-life" disabled>Copy</button></div>
+      <div class="outline"><code id="o-pk">VITE_STRIPE_PUBLISHABLE_KEY=</code><button class="copy" type="button" data-out="o-pk" disabled>Copy</button></div>
+      <div class="outline"><code id="o-claude">Live prices: Annual $__ per year, Lifetime $__ once.</code><button class="copy" type="button" data-out="o-claude" disabled>Copy for Claude</button></div>
+    </div>
+    <p class="note">The last line is a message for Claude. Paste it into the chat and Claude updates <code>pricingDisplay.ts</code> and the upgrade credit in <code>lifetimePricing.ts</code> to match.</p>
+    <button class="ghost" id="ids-clear" type="button" style="align-self:flex-start">Clear these fields</button>
+  </section>
+
+  <div id="phases" class="wrap" style="gap:28px"></div>
+
+  <section class="limits card">
+    <h3>What this local run can't cover</h3>
+    <ul>
+      <li><b>Renewals and failed renewals</b> (<code>past_due</code> grace, E1 event ordering) need a <a href='https://docs.stripe.com/billing/testing/test-clocks' target='_blank' rel='noopener'>Stripe test clock</a>, and checkout creates its own customers without one. Skip them or test them later.</li>
+      <li><b>Receipt emails</b> aren't sent automatically in test mode. Use "Send receipt" on a payment in the <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Dashboard</a> to preview one.</li>
+    </ul>
+  </section>
+
+  <footer>Replaces shipping-readiness.md, stripe-test-run.md and ios-build-guide.md. Also see programmer-docs/stripe-testing.local.md.</footer>
+</div>
+
+<script>
+const lk = (u, t) => `<a href='${u}' target='_blank' rel='noopener'>${t}</a>`;
+const PHASES = [
+  { t: "Setup", s: "Once, before any test. Claude did the checked items on Oct 6", steps: [
+    { d: 1, l: "Env vars checked. <a href='https://app.netlify.com/projects/intraconnected/configuration/env' target='_blank' rel='noopener'>Netlify</a> has <code>STRIPE_SECRET_KEY</code> (<code>sk_test_</code>), both price IDs and <code>FIREBASE_SERVICE_ACCOUNT_BASE64</code>. <code>netlify dev</code> injects them, so <code>.env</code> doesn't need them.", e: ["The existing test prices are the old ones: Annual $1.99 yearly recurring, Lifetime $4.99 one-time (see the last step in this section), both <code>livemode: false</code> (see <a href='https://dashboard.stripe.com/test/products' target='_blank' rel='noopener'>Stripe Products</a>)", "<code>ALLOW_TEST_RESET=true</code> was added to the local <code>.env</code> only, not Netlify"] },
+    { ref: "A5", l: "Turn on customer emails (A5). Stripe has no API for this, so do it by hand in two places: <a href='https://dashboard.stripe.com/test/settings/emails' target='_blank' rel='noopener'>Customer emails</a> (payments and refunds) and <a href='https://dashboard.stripe.com/test/settings/billing/automatic' target='_blank' rel='noopener'>Subscriptions and emails</a> (upcoming renewals and failed payments). Click Save on each.", e: ["Successful payments, failed payments and upcoming renewals all on"] },
+    { d: 1, l: "Stripe CLI logged in as the \"Intraconnected sandbox\" account (test mode)." },
+    { d: 1, l: "<code>npm run dev:stripe</code> is running. Open <a href=\"http://localhost:8888\" target=\"_blank\" rel=\"noopener\">http://localhost:8888</a>.", e: ["Not the Vite port: it moved to 5175 because 5173 and 5174 were taken, and it has no functions", "If the server stops, run the command again from the repo root"] },
+    { d: 1, l: "Webhook secret checked. The <code>whsec_…</code> from <code>stripe listen</code> matches <code>.env</code>, so no restart was needed. Compare against the endpoint in <a href='https://dashboard.stripe.com/test/webhooks' target='_blank' rel='noopener'>Stripe webhooks</a> only if you ever switch to a deployed endpoint." },
+    { l: "Open the three watch tabs: <a href=\"https://console.firebase.google.com/project/interconnectedness-3a37b/firestore/data\" target=\"_blank\" rel=\"noopener\">Firestore data</a> (find <code>users/{uid}/meta/billing</code>; your uid is in <a href=\"https://console.firebase.google.com/project/interconnectedness-3a37b/authentication/users\" target=\"_blank\" rel=\"noopener\">Authentication → Users</a>), <a href=\"https://dashboard.stripe.com/test/events\" target=\"_blank\" rel=\"noopener\">Stripe Events (test)</a>, and the dev terminal output." },
+    { tag: "B2", l: "<b>Create test prices at the new amounts.</b> Annual is now $14.99 a year and Lifetime $39.99 (<code>pricingDisplay.ts</code>, with a $14.99 upgrade credit in <code>lifetimePricing.ts</code>). Stripe prices can't be edited, so in <a href='https://dashboard.stripe.com/test/products' target='_blank' rel='noopener'>Stripe Products (test)</a> add a new $14.99 yearly recurring price to Annual and a new $39.99 one-time price to Lifetime. Put the new <code>price_…</code> ids in <code>STRIPE_PRICE_ANNUAL</code> and <code>STRIPE_PRICE_LIFETIME</code> in Netlify for the non-production contexts, then restart <code>npm run dev:stripe</code>.", e: ["Until you do, checkout still charges $1.99 and $4.99 while the pages say otherwise", "The DEVLOG entry says Lifetime is $39, but <code>pricingDisplay.ts</code> now says $39.99 (uncommitted). Pick one and make the Stripe price match", "Section 06's upgrade preview only shows $14.99 off once Annual costs $14.99"] }
+  ]},
+  { t: "Gates before payment", s: "Nothing is charged here", steps: [
+    { l: "Sign up a new account, don't verify the email, and try to check out.", e: ["Refused with a verify-your-email error (403 from <code>create-payment-intent</code>)", "Check the new user in <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/authentication/users' target='_blank' rel='noopener'>Authentication → Users</a>"] },
+    { l: "Signed out, go to <a href='http://localhost:8888/pricing' target='_blank' rel='noopener'><code>/pricing</code></a> and click a plan.", e: ["You land on <code>/login</code> (the sign-in screen)", "After sign-in, checkout reopens with that plan"] }
+  ]},
+  { t: "Lifetime purchase", s: "Free → Lifetime", steps: [
+    { l: "On a verified free account, buy Lifetime with <code>4242…</code>.", e: ["<code>[stripe]</code> shows <code>payment_intent.succeeded</code> → 200", "Also listed in <a href='https://dashboard.stripe.com/test/events' target='_blank' rel='noopener'>Stripe Events</a> and <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Payments</a>"] },
+    { l: "Check <code>meta/billing</code> in <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/firestore/data' target='_blank' rel='noopener'>Firestore</a>.", e: ["<code>plan: \"lifetime\"</code>, <code>previousPlan: \"free\"</code>", "UI updates without a reload; node cap is gone"] },
+    { l: "Check <a href='https://dashboard.stripe.com/test/customers' target='_blank' rel='noopener'>Stripe → Customers</a>.", e: ["Customer has your email", "PaymentIntent has <code>receipt_email</code> and <code>metadata.firebaseUid</code>"] },
+    { l: "Try to buy Lifetime again.", e: ["The card is hidden", "Calling the function directly returns 409"] }
+  ]},
+  { t: "Annual purchase", s: "Free → Annual", steps: [
+    { l: "Reset to Free, then buy Annual with <code>4242…</code>.", e: ["<code>plan: \"annual\"</code>, <code>subscriptionStatus: \"active\"</code>, a <code>stripeSubscriptionId</code>", "<a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Subscription in Stripe</a> has <code>metadata.firebaseUid</code>", "Check <code>meta/billing</code> in <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/firestore/data' target='_blank' rel='noopener'>Firestore</a>"] },
+    { l: "Look for the Annual card on Pricing and in UpgradeModal.", e: ["It's gone (duplicate guard)"] }
+  ]},
+  { t: "Card failures", s: "Declines and 3-D Secure", steps: [
+    { l: "Reset to Free, then try the declined card and the insufficient-funds card on both plans. Failed attempts show under <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Stripe Payments</a>.", e: ["Each shows an inline error", "<code>plan</code> stays <code>free</code>", "Retrying with <code>4242…</code> in the same modal works"] },
+    { l: "Try the 3-D Secure card on both plans. Complete the challenge once, fail it once.", e: ["Completed: plan granted", "Failed: error, no plan granted"] }
+  ]},
+  { t: "Cancelling Annual", s: "Keeps access until period end", steps: [
+    { l: "On Annual, go to Profile → Account → Cancel.", e: ["<a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Subscription</a> shows <code>cancel_at_period_end: true</code>", "<code>customer.subscription.updated</code> arrives; plan stays <code>annual</code>"] },
+    { l: "In the <a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Stripe Dashboard</a>, open the subscription and cancel it immediately.", e: ["<code>customer.subscription.deleted</code> arrives; plan becomes <code>free</code>"] }
+  ]},
+  { t: "Annual → Lifetime upgrade", s: "Discount and immediate cancel", steps: [
+    { l: "Reset, buy Annual, then open the upgrade picker.", e: ["Lifetime price is $14.99 less (the <code>get-lifetime-price</code> preview)"] },
+    { l: "Buy Lifetime.", e: ["Charged amount in <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Stripe Payments</a> matches the discounted price", "Old subscription cancelled immediately", "<code>plan: \"lifetime\"</code>, <code>previousPlan: \"annual\"</code>"] },
+    { l: "Check the <code>.updated</code> and <code>.deleted</code> events for the old subscription in <a href='https://dashboard.stripe.com/test/events' target='_blank' rel='noopener'>Stripe Events</a>.", e: ["They did not downgrade the plan", "Subscription fields cleared; plan stays <code>lifetime</code>"] }
+  ]},
+  { t: "Refunds", s: "Six small tests. Each one starts from Reset to Free", steps: [
+    { l: "<b>R1 · Plain refund.</b> Reset to Free: Profile → Developer Testing → <b>Reset to Free</b>. Then buy Lifetime with <code>4242…</code> (Profile → Account → Upgrade).", e: ["<code>meta/billing</code> shows <code>plan: \"lifetime\"</code> and <code>previousPlan: \"free\"</code>"] },
+    { l: "Profile → Account → <b>Request a refund</b> → <b>Confirm refund</b>.", e: ["Message says \"Refund submitted…\"","<code>charge.refunded</code> appears in <a href='https://dashboard.stripe.com/test/events' target='_blank' rel='noopener'>Stripe Events</a>","Within a few seconds the app drops to Free; <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/firestore/data' target='_blank' rel='noopener'>Firestore</a> shows <code>plan: \"free\"</code> and <code>previousPlan: null</code>"] },
+    { ref: "A6", l: "<b>R2 · Upgrade, then refund (A6).</b> Reset to Free. Buy <b>Annual</b> with <code>4242…</code>. Then Profile → Account → <b>Upgrade to Lifetime</b> and buy Lifetime.", tag: "A6", e: ["<a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Stripe Subscriptions</a> shows the old Annual subscription as canceled","<code>meta/billing</code> shows <code>plan: \"lifetime\"</code> and <code>previousPlan: \"annual\"</code>","Write down the old subscription's <b>renewal date</b> (current period end). You will compare it in the next step"] },
+    { l: "Profile → Account → <b>Request a refund</b> → <b>Confirm refund</b>.", tag: "A6", e: ["<a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Stripe Subscriptions</a> now lists a <b>new</b> subscription, status <b>Trialing</b>","Its trial end date equals the renewal date you wrote down","Exactly one new subscription, not several. Before the Oct 6 webhook fix one refund created four, so re-run this once","No new charge in <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Stripe Payments</a>","<code>meta/billing</code> shows <code>plan: \"annual\"</code>"] },
+    { l: "<b>R3 · Same, with cancel first.</b> Reset to Free. Buy Annual. Profile → Account → <b>Cancel subscription</b> → <b>Confirm cancellation</b>. Then <b>Upgrade to Lifetime</b>, buy it, and refund it as in R2.", tag: "A6", e: ["The restored subscription is still set to cancel at the end of the period (Stripe shows \"Cancels on…\")","Plan is <code>annual</code>"] },
+    { l: "<b>R4 · Partial refund keeps Lifetime.</b> Reset to Free, buy Lifetime. In <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Stripe Payments</a>, open the Lifetime payment → <b>Refund</b> → change the amount to <b>$1.00</b> → confirm.", e: ["<code>charge.refunded</code> arrives in <a href='https://dashboard.stripe.com/test/events' target='_blank' rel='noopener'>Stripe Events</a>","The app and <code>meta/billing</code> still say <code>lifetime</code>. A partial refund must not revoke access"] },
+    { l: "<b>R5 · Refund window.</b> Reset to Free, buy Lifetime. In <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/firestore/data' target='_blank' rel='noopener'>Firestore</a>, open <code>users/{uid}/meta/billing</code> and set <code>updatedAt</code> to <code>1000000000000</code> (a date in 2001).", e: ["Reload the app: Profile → Account no longer shows <b>Request a refund</b>","It says the 14-day window has passed and shows the support email"] },
+    { l: "<b>R6 · Full refund from Stripe.</b> Reset to Free, buy Lifetime. In <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Stripe Payments</a>, open the payment → <b>Refund</b> → full amount → confirm.", e: ["Same result as R1: app drops to Free, <code>previousPlan</code> back to <code>null</code>. This proves the webhook does the downgrade, not the button"] }
+  ]},
+  { t: "Webhook reliability", s: "Forgery, duplicates and downtime. W1 and W2 done by Claude", steps: [
+    { l: "<b>W1 · Forged requests are refused.</b> Claude sent a fake POST to <code>/.netlify/functions/stripe-webhook</code>, once with a bad signature and once with none.", d: 1, e: ["Bad signature: 400 <code>Invalid signature.</code>","No signature: 400 <code>Missing Stripe signature.</code>","Nothing was written to billing"] },
+    { l: "<b>W2 · A resent event is ignored.</b> Claude resent an old <code>payment_intent.created</code> with <code>stripe events resend evt_…</code>.", d: 1, e: ["The listener shows <code>[200]</code> in under a second","You can repeat it with any event id from <a href='https://dashboard.stripe.com/test/events' target='_blank' rel='noopener'>Stripe Events</a>. Do not resend a <code>charge.refunded</code>; it is the one event that creates a subscription"] },
+    { l: "<b>W3 · Setup for the downtime test.</b> Close the terminal running <code>npm run dev:stripe</code> (Ctrl+C). Open two terminals in the repo folder. In terminal A run <code>npm run dev:functions</code>. In terminal B run <code>stripe listen --forward-to localhost:8888/.netlify/functions/stripe-webhook</code>.", e: ["Terminal B prints <code>Ready!</code> and a <code>whsec_…</code> that matches <code>.env</code> (it should; it is the same Stripe CLI login)","http://localhost:8888 loads"] },
+    { l: "<b>W4 · Pay while the webhook is down.</b> Reset to Free (Profile → Developer Testing). Start a Lifetime purchase and stop at the card form. Now press Ctrl+C in <b>terminal A</b> only. Then enter <code>4242…</code> and pay.", e: ["Stripe takes the payment directly, so the card step still works with our server down","Terminal B shows <code>payment_intent.succeeded</code> followed by a failed delivery (connection refused, or <code>[ERROR]</code>)","<code>meta/billing</code> in <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/firestore/data' target='_blank' rel='noopener'>Firestore</a> is still <code>plan: \"free\"</code>. This is the gap the test is checking"] },
+    { l: "<b>W5 · Recover.</b> Run <code>npm run dev:functions</code> again in terminal A. Copy the <code>payment_intent.succeeded</code> event id from <a href='https://dashboard.stripe.com/test/events' target='_blank' rel='noopener'>Stripe Events</a> and run <code>stripe events resend evt_…</code> in a third terminal.", e: ["Terminal B shows <code>[200]</code> for it","<code>meta/billing</code> now shows <code>plan: \"lifetime\"</code>","(Stripe also retries failed deliveries on its own for up to 3 days in test mode. Resending just skips the wait)"] },
+    { l: "<b>W6 · Back to normal.</b> Close terminal B. Stop terminal A. Run <code>npm run dev:stripe</code> again so there is one listener.", e: ["Only one <code>stripe.exe</code> in Task Manager"] }
+  ]},
+  { t: "Account deletion", s: "Server-side wipe", steps: [
+    { l: "On an Annual account, delete the account from Profile.", e: ["<a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Subscription</a> cancelled immediately in Stripe", "User's <code>ideas</code> and <code>meta</code> gone from <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/firestore/data' target='_blank' rel='noopener'>Firestore</a>", "Auth user gone from <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/authentication/users' target='_blank' rel='noopener'>Authentication → Users</a>"] }
+  ]},
+  { refs: ["B2"], t: "Before switching to live keys", s: "Claude did the items already marked. The rest happen in the Stripe, Netlify and Firebase dashboards", steps: [
+    { l: "<b>CSP updated (B4).</b> Claude added <code>https://*.js.stripe.com</code> to <code>script-src</code> and <code>frame-src</code>, and <code>https://fonts.googleapis.com</code> to <code>connect-src</code>, in <code>netlify.toml</code>.", d: 1, e: ["Takes effect on a new deploy. <code>netlify dev</code> picks it up after a restart"] },
+    { ref: "B4", l: "<b>Check the console during one 3-D Secure purchase.</b> Restart <code>npm run dev:stripe</code>, open DevTools → Console, reset to Free, and buy with the <code>4000 0025 0000 3155</code> card. Complete the challenge.", tag: "B4", e: ["No <code>Refused to…</code> lines that come from <code>localhost</code> or <code>stripe.js</code>","Lines saying <code>style-src 'self'</code>, hCaptcha or <code>m.stripe.network</code> come from Stripe's own frames. Ignore them","A 403 on <code>create-payment-intent</code> means the account's email isn't verified"] },
+    { l: "<b>Optional: clean up.</b> Delete the leftover <a href='https://dashboard.stripe.com/test/customers' target='_blank' rel='noopener'>test customers</a> and cancel stray <a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>test subscriptions</a>. Test mode is separate from live, so leaving them is harmless." },
+    { l: "<b>B2 · <code>ALLOW_TEST_RESET</code> is not set in Netlify.</b> Claude checked: the project only has <code>FIREBASE_SERVICE_ACCOUNT_BASE64</code>, <code>GITHUB_TOKEN</code>, <code>STRIPE_PRICE_ANNUAL</code>, <code>STRIPE_PRICE_LIFETIME</code> and <code>STRIPE_SECRET_KEY</code>.", tag: "B2", d: 1 },
+    { l: "<b>S1 · Decide the business type first.</b> Stripe asks whether you are an <b>Individual / sole proprietor</b> or a <b>Company</b> (such as an LLC). Changing it later means re-verifying. If you plan to form an LLC (section 13), do that first and activate Stripe as the LLC.", tag: "B2", e: ["Individual: you use your own name, home address and SSN. Payouts go to a personal bank account","LLC: you use the LLC's legal name, its EIN and a business bank account","Terms and Privacy currently say you operate the service personally. Keep Stripe and those pages consistent"] },
+    { l: "<b>S2 · Understand test vs live.</b> Your test data lives in a Stripe sandbox called \"Intraconnected sandbox\". Live mode is the main account, which you reach from the account switcher at the top left of the Dashboard. Live mode has its own keys, products, prices, customers and webhooks. Nothing from the sandbox carries over.", tag: "B2" },
+    { l: "<b>S3 · Activate the account.</b> Open <a href='https://dashboard.stripe.com/account/onboarding' target='_blank' rel='noopener'>Stripe account activation</a> in the main account and fill in every section Stripe asks for.", tag: "B2", e: ["<b>Business:</b> type (S1), legal name, address, phone, website <code>https://intraconnected.app</code>","<b>Person:</b> your legal name, date of birth, home address, and the last four digits of your SSN (or the full SSN or EIN if asked)","<b>What you sell:</b> industry \"Software\" or \"SaaS\"; description such as \"Subscription and one-time-purchase web app for mind mapping\"","<b>Payouts:</b> bank routing and account numbers. Use the account that matches S1","<b>Statement descriptor:</b> what appears on customers' card statements. Use <code>INTRACONNECTED</code> (22 characters maximum). A recognizable name cuts down on chargebacks","Stripe may ask for a photo ID. Review usually takes minutes, sometimes a few days. You can finish the later steps while it is pending, but live payments only work once it is approved"] },
+    { l: "<b>S4 · Turn on two-step sign-in</b> for your Stripe login (<a href='https://dashboard.stripe.com/settings/user' target='_blank' rel='noopener'>your profile's two-step authentication</a>). This account will hold real money.", tag: "B2" },
+    { l: "<b>S5 · Fill in the public details.</b> Open <a href='https://dashboard.stripe.com/settings/public' target='_blank' rel='noopener'>Public details</a>. Set the business name, support email <code>support@intraconnected.app</code>, website, and add links to <code>https://intraconnected.app/terms</code> and <code>/privacy</code> if the form has them.", tag: "A5", e: ["This is what customers see on receipts and in payment emails","The mailbox must exist first (section 12), or replies bounce"] },
+    { l: "<b>S6 · Create the live Annual product.</b> Switch to live mode and open <a href='https://dashboard.stripe.com/products/create' target='_blank' rel='noopener'>Add product (live mode)</a>. Fill in:", tag: "B2", e: ["Name: <code>Intraconnected Annual</code>","Description: <code>Unlimited nodes for your mind maps, billed once a year. Cancel anytime.</code> (same as the test product)","Pricing model: <b>Standard</b>. Type: <b>Recurring</b>. Amount: your yearly price, currency <b>USD</b>. Billing period: <b>Yearly</b>","Tax behavior: copy whatever you decide in section 13. The test Annual price used <i>Inclusive</i> and the test Lifetime price used <i>Unspecified</i>. Make both the same","Click <b>Add product</b>"] },
+    { l: "<b>S7 · Copy the Annual price id.</b> On the new product's page, find the price row and copy the id that starts with <code>price_</code> (hover the row, or open the price and use the copy icon).", tag: "B2", e: ["Do <b>not</b> copy the product id, which starts with <code>prod_</code>. The app needs the price id","Paste it somewhere temporary until you set Netlify in S12"] },
+    { l: "<b>S8 · Create the live Lifetime product.</b> Open <a href='https://dashboard.stripe.com/products/create' target='_blank' rel='noopener'>Add product (live mode)</a> again.", tag: "B2", e: ["Name: <code>Intraconnected Lifetime</code>","Description: <code>Pay once, unlock unlimited nodes forever. No renewals, no surprises.</code>","Pricing model: <b>Standard</b>. Type: <b>One-time</b>. Amount: your one-time price, currency <b>USD</b>. Same tax behavior as Annual","Add the product and copy its <code>price_…</code> id as in S7"] },
+    { l: "<b>S9 · Check the amounts against the code.</b> The prices in the code are <b>$14.99 a year</b> and <b>$39.99 once</b>. Two places hard-code them, so your live prices must match.", tag: "B2", e: ["<code>src/utilities/billing/pricingDisplay.ts</code>: <code>ANNUAL_PRICE_DISPLAY</code> and <code>LIFETIME_PRICE_DISPLAY</code> (the text on Pricing and the upgrade screen). The DEVLOG says $39 for Lifetime, so settle that first","<code>netlify/functions/lib/lifetimePricing.ts</code>: <code>LIFETIME_UPGRADE_DISCOUNT_CENTS = 1499</code>. This is the credit an Annual subscriber gets toward Lifetime and it must equal the Annual price in cents","If you change either price, paste the new amounts into the Live IDs box above and copy the line for Claude. It updates both files and the tests","Stripe's minimum charge is $0.50 and its fee is about 2.9% plus $0.30, so a $14.99 sale nets about $14.26 and a $39.99 sale about $38.54"] },
+    { l: "<b>S10 · Add the live webhook endpoint.</b> In live mode open <a href='https://dashboard.stripe.com/webhooks/create' target='_blank' rel='noopener'>Add endpoint (live mode)</a>.", tag: "B2", e: ["Endpoint URL: <code>https://intraconnected.app/.netlify/functions/stripe-webhook</code>","Listen to events on <b>Your account</b> (not Connected accounts)","Select exactly these four events: <code>payment_intent.succeeded</code>, <code>customer.subscription.updated</code>, <code>customer.subscription.deleted</code>, <code>charge.refunded</code>","Without <code>charge.refunded</code>, refunded customers keep Lifetime","Leave the API version on the default and click <b>Add endpoint</b>"] },
+    { l: "<b>S11 · Copy the signing secret.</b> Open the new endpoint in <a href='https://dashboard.stripe.com/webhooks' target='_blank' rel='noopener'>live Webhooks</a> and reveal the <b>Signing secret</b> (<code>whsec_…</code>).", tag: "B2", e: ["It is different from the <code>whsec_…</code> that <code>stripe listen</code> prints locally. The live site must use this one","Also copy the live <b>publishable key</b> (<code>pk_live_…</code>) and <b>secret key</b> (<code>sk_live_…</code>) from <a href='https://dashboard.stripe.com/apikeys' target='_blank' rel='noopener'>live API keys</a>. The secret key can only be revealed once for standard keys, so store it in a password manager"] },
+    { l: "<b>S12 · Put the live values in Netlify, for Production only.</b> Open <a href='https://app.netlify.com/projects/intraconnected/configuration/env' target='_blank' rel='noopener'>Netlify environment variables</a>. For each variable below, edit it, choose <b>Different value for each deploy context</b>, and set the live value for <b>Production</b>. Leave the test value on <b>Deploy Previews</b>, <b>Branch deploys</b> and <b>Local development</b>.", tag: "B2", e: ["<code>STRIPE_SECRET_KEY</code> = <code>sk_live_…</code>. Tick \"contains secret values\"","<code>STRIPE_WEBHOOK_SECRET</code> = the live <code>whsec_…</code> from S11. Create it if it does not exist","<code>STRIPE_PRICE_ANNUAL</code> = live Annual <code>price_…</code>","<code>STRIPE_PRICE_LIFETIME</code> = live Lifetime <code>price_…</code>","<code>VITE_STRIPE_PUBLISHABLE_KEY</code> = <code>pk_live_…</code> for Production and your test <code>pk_test_…</code> for the other contexts. It is <b>not in Netlify yet</b>. It is baked in at build time, so it needs the <b>Builds</b> scope","Keeping test values on Local development means <code>npm run dev:stripe</code> keeps working against test mode","Do not add <code>ALLOW_TEST_RESET</code> anywhere in Netlify"] },
+    { l: "<b>S13 · Redeploy so the variables apply.</b> In <a href='https://app.netlify.com/projects/intraconnected/deploys' target='_blank' rel='noopener'>Netlify Deploys</a> use <b>Trigger deploy → Clear cache and deploy site</b> on the production branch.", tag: "B2", e: ["Variables only reach a build or function when it starts. An older deploy keeps the old values"] },
+    { l: "<b>S14 · Turn on the customer emails in live mode too.</b> <a href='https://dashboard.stripe.com/settings/emails' target='_blank' rel='noopener'>live Customer emails</a> (payments and refunds) and <a href='https://dashboard.stripe.com/settings/billing/automatic' target='_blank' rel='noopener'>live Subscriptions and emails</a> (renewals and failed payments).", tag: "A5", e: ["These are separate settings from test mode. Click Save on each"] },
+    { l: "<b>S15 · Run one real purchase and refund on the live site.</b> Real cards only; test cards are declined in live mode. Buy Lifetime with your own card, then refund it from Profile → Account → Request a refund.", tag: "B4", e: ["Plan goes to <code>lifetime</code>, then back to <code>free</code>","In <a href='https://dashboard.stripe.com/webhooks' target='_blank' rel='noopener'>live Webhooks</a>, the endpoint's event list shows <b>200</b> for each delivery","Stripe keeps its processing fee on a refund, so this costs about $1.46 on a $39.99 purchase (2.9% plus $0.30)","The receipt email arrives from Stripe. Check it shows your support address and statement descriptor","If a delivery shows an error, open it and send Claude the response. Check <a href='https://dashboard.stripe.com/payments' target='_blank' rel='noopener'>live Payments</a> that the charge and refund both appear"] }
+  ]},
+  { refs: ["B3"], t: "Firebase email links", s: "B3. Verification and password-reset emails open your own page. Needs the deploy in section 14 first", steps: [
+    { l: "<b>Authorize the domain.</b> Open <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/authentication/settings' target='_blank' rel='noopener'>Authentication → Settings</a> and look at <b>Authorized domains</b>. Add <code>intraconnected.app</code> if it is not listed.", tag: "B3", e: ["Sign-in, verification and reset links only work from listed domains"] },
+    { l: "<b>Point each template at your page.</b> Open <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/authentication/emails' target='_blank' rel='noopener'>Firebase → Authentication → Templates</a>. For <b>Email address verification</b>, <b>Password reset</b> and <b>Email address change</b>: click the pencil icon → <b>Customize action URL</b> → paste <code>https://intraconnected.app/auth/action</code> → Save.", tag: "B3", e: ["Do it once per template. It is a project setting, not part of the code","While there, check the sender name and subject read as Intraconnected"] },
+    { l: "<b>Test verification.</b> On the live site, sign up with a throwaway address and open the email.", tag: "B3", e: ["The link lands on the branded <code>/auth/action</code> page, not a Google-hosted one","It confirms the address, and checkout then works for that account"] },
+    { l: "<b>Test password reset.</b> Use \"Forgot password\" on the sign-in screen, open the email, set a new password, then sign in.", tag: "B3", e: ["You sign in with the new password and your ideas load (the recovery key copy re-wraps your encryption key)","If your ideas do not load, stop and tell Claude before launching"] },
+    { l: "<b>Clean up.</b> Delete the throwaway test accounts in <a href='https://console.firebase.google.com/project/interconnectedness-3a37b/authentication/users' target='_blank' rel='noopener'>Authentication → Users</a>." }
+  ]},
+  { refs: ["B5"], t: "Support mailbox", s: "B5. Pricing, Terms, Privacy, checkout errors and refunds all point to support@intraconnected.app", steps: [
+    { l: "<b>Find where the domain's DNS lives.</b> Open <a href='https://app.netlify.com/projects/intraconnected/domain-management' target='_blank' rel='noopener'>Netlify → Domain management</a>. If it lists DNS records, Netlify hosts your DNS. If it says the nameservers are elsewhere, use that provider's DNS page instead.", tag: "B5" },
+    { l: "<b>Pick a mailbox option.</b> Cheapest is free forwarding to your Gmail: <a href='https://improvmx.com' target='_blank' rel='noopener'>ImprovMX</a> (works with any DNS) or <a href='https://developers.cloudflare.com/email-routing/' target='_blank' rel='noopener'>Cloudflare Email Routing</a> (needs the domain's nameservers on Cloudflare). A paid mailbox (Google Workspace, Zoho) lets you reply as support@ directly.", tag: "B5", e: ["Forwarding is enough to launch. You can switch later without touching the code"] },
+    { l: "<b>Add the records the provider gives you.</b> Usually two <code>MX</code> records and one <code>TXT</code> (SPF) record, added in the DNS page from the first step. Create the <code>support</code> address in the provider.", tag: "B5", e: ["DNS changes can take from a few minutes to a few hours"] },
+    { l: "<b>Test both directions.</b> From another email account, send a message to <code>support@intraconnected.app</code>. Then reply to it.", tag: "B5", e: ["It arrives in your inbox, not spam","Your reply reaches the other account. With forwarding, replies come from your Gmail address, so decide whether that is acceptable"] },
+    { l: "<b>Use it in Stripe.</b> Set the support email in <a href='https://dashboard.stripe.com/settings/public' target='_blank' rel='noopener'>Stripe Public details</a> to <code>support@intraconnected.app</code>. Customers see it on receipts and Stripe replies go there.", tag: "A5" }
+  ]},
+  { refs: ["B6"], t: "Business setup", s: "B6. Decisions with real consequences. This is not legal or tax advice, so ask an accountant if unsure", steps: [
+    { l: "<b>Decide: form an LLC or stay a sole proprietor.</b> Terms (<code>src/pages/Terms.tsx</code> line 21) and Privacy (line 20) say the service is operated by you personally, \"an individual\". That makes you personally liable for the service. An LLC separates the two.", tag: "B6", e: ["If you are in Nevada, <a href='https://www.nvsilverflume.gov' target='_blank' rel='noopener'>Nevada SilverFlume</a> files the LLC. You also need an EIN (free) from the <a href='https://www.irs.gov/businesses/small-businesses-self-employed/get-an-employer-identification-number' target='_blank' rel='noopener'>IRS EIN page</a>","Open a business bank account in the LLC's name once it exists"] },
+    { l: "<b>If you form an LLC:</b> update Stripe, then tell Claude the legal name.", tag: "B6", e: ["Change the account owner, business name and bank account in <a href='https://dashboard.stripe.com/settings/business-details' target='_blank' rel='noopener'>Stripe Business details</a>","Claude updates the operator wording in Terms and Privacy and the DEVLOG. Do this before launch so the text and Stripe agree"] },
+    { l: "<b>Decide how to handle sales tax.</b> Nothing currently collects it. Options: turn on <a href='https://dashboard.stripe.com/settings/tax' target='_blank' rel='noopener'>Stripe Tax settings</a> and register where you must collect (checkout also needs <code>automatic_tax</code> turned on, which Claude can add), or sell through a merchant of record such as Paddle or Lemon Squeezy, which handles tax for you at a higher fee.", tag: "B6", e: ["Digital subscriptions are taxable in some US states and in the EU and UK. See <a href='https://docs.stripe.com/tax/supported-countries' target='_blank' rel='noopener'>Stripe Tax docs</a>","Small volume often falls under each state's threshold, but check yours. An accountant can answer it in one call"] },
+    { l: "<b>Add the auto-renewal notice at checkout.</b> The Annual card should say, near the pay button, that it renews every year at the stated price until cancelled, and how to cancel (Profile → Account).", tag: "B6", e: ["Several US states require this disclosure for subscriptions","Tell Claude \"add the renewal notice\" and it will edit <code>CheckoutModal.tsx</code> and the Pricing page"] },
+    { ref: "C2", l: "<b>Decide C2.</b> Confirm that Stripe on the web is the only billing system for v1 and that the native app sells nothing.", tag: "C2", e: ["Recommended Sep 29, still pending your yes or no. In the native app, link out to <code>/pricing</code> only where store rules allow it (currently the US on both stores), and show no purchase prompt elsewhere","Add in-app purchase later only if app-store signups become a meaningful share, through RevenueCat, writing to <code>meta/billing</code> with a <code>source</code> field (<code>stripe</code>, <code>apple</code>, <code>google</code>) so one system never overwrites another's plan","Re-check store rules before sections 17 and 18"] }
+  ]},
+  { t: "Commit and deploy", s: "Get the code live. Pair this with steps S12 to S15 of section 10", steps: [
+    { l: `<b>Run the checks locally.</b> Claude ran typecheck, lint and the tests on Oct 6: typecheck clean, lint 0 errors (17 warnings, see E9), 177 tests passing. Run <code>npm run build</code> yourself once more. CI runs all four.`, e: [`Build succeeds with no TypeScript errors`] },
+    { l: `<b>Commit.</b> Tell Claude "commit". It never commits on its own. Uncommitted right now: the new prices, the Support page and coffee icon, and the Developer Testing tab (<code>set-plan-test.ts</code>).`, e: [`<code>git status</code> shows a clean tree afterwards`] },
+    { l: `<b>Push.</b> <code>git push</code>. If you want a deploy preview first, commit on a new branch, push it and open a pull request into <code>main</code> on ${lk("https://github.com/Africk-Hunter/Intraconnected/pulls", "GitHub")}.`, e: [`Netlify builds a preview. If the build fails, open the log and send Claude the error`] },
+    { l: `<b>Check the production branch.</b> In ${lk("https://app.netlify.com/projects/intraconnected/configuration/deploys", "Netlify → Build & deploy")} confirm which branch deploys to production (probably <code>main</code>).`, e: [`The Landing branch was already merged into <code>main</code> (pull requests #17 and #18), so part of this may already be live`] },
+    { l: `<b>Confirm the production deploy succeeded.</b> Open ${lk("https://app.netlify.com/projects/intraconnected/deploys", "Netlify Deploys")} and wait for the latest production deploy to finish.`, e: [`No errors in the build log`, `<code>set-plan-test</code> and <code>reset-subscription-test</code> exist but return 404 without <code>ALLOW_TEST_RESET</code>, which must not be set in Netlify`] },
+    { l: `<b>Do steps S1 to S14 of section 10</b> (account, prices, webhook, Netlify variables), then the redeploy in S13.`, tag: "B2" },
+    { l: `<b>Smoke-test the live site.</b> Open ${lk("https://intraconnected.app", "intraconnected.app")}, ${lk("https://intraconnected.app/pricing", "/pricing")} and the landing page. Sign in, create an idea, sign out. Keep DevTools → Console open.`, tag: "B4", e: [`No red <code>Refused to…</code> CSP errors on any page`, `Then do the live purchase and refund in S15 of section 10`] },
+    { l: `<b>Launch.</b> Everything above is ticked. Share the link.`, e: [`Keep the Stripe live Events tab and the Netlify function logs open for the first day`] }
+  ]},
+  { t: "Native app setup", s: "Capacitor in this repo, wrapping dist/. Nothing exists yet: no capacitor.config, no ios/, no android/", steps: [
+    { d: 1, l: `<b>Approach chosen.</b> Capacitor wraps the built web app. A React Native rewrite would throw away every DOM component and <code>@dnd-kit</code>, and a Trusted Web Activity only covers Android.` },
+    { l: `<b>Check sync on a real phone first.</b> A phone app stays open in the background for days. The sync layer (A3, A4) passed a two-window check, but a real device is the real test.`, e: [`Edit on one device, see it on another within seconds`, `Turn on airplane mode, edit, turn it off: the change goes out and no banner stays stuck`] },
+    { ref: "D1", l: `<b>D1 · Install Capacitor.</b> In the repo root run <code>npm install @capacitor/core @capacitor/ios @capacitor/android</code> and <code>npm install -D @capacitor/cli</code>. Then <code>npx cap init "Intraconnected" "com.intraconnected.app" --web-dir dist</code>, <code>npm run build</code>, <code>npx cap add ios</code>, <code>npx cap add android</code>.`, e: [`After every web change run <code>npm run build &amp;&amp; npx cap sync</code>`, `Never set <code>server.url</code> to the live site. Apple rejects apps that are just a website in a frame (guideline 4.2)`, `Keep <code>webDir: 'dist'</code> and <code>androidScheme: 'https'</code>`, `On Windows <code>cap add ios</code> may warn it can't run CocoaPods. Codemagic runs that later`, `A <code>Podfile</code> in <code>ios/App/</code> means CocoaPods. No Podfile but a <code>CapApp-SPM/</code> folder means Swift Package Manager. Section 17's yaml handles both`, `Check: <code>ios/App/App/Info.plist</code> exists and <code>npx cap doctor</code> shows no errors`, `Commit <code>capacitor.config.ts</code>, <code>ios/</code> and <code>android/</code>. Gitignore their build output`] },
+    { ref: "D2", l: `<b>D2 · Icons and splash screen.</b> Export <code>MainLargerLogo.svg</code> to a 1024×1024 <code>assets/icon.png</code> with <code>sharp</code>, and make a 2732×2732 mint <code>assets/splash.png</code>. Then run <code>npx capacitor-assets generate --iconBackgroundColor "#E9F9E5" --splashBackgroundColor "#E9F9E5"</code>.`, e: [`Apple needs a real icon and splash before review`] },
+    { ref: "D3", l: `<b>D3 · Native plugins.</b> Install <code>@capacitor/app</code>, <code>status-bar</code>, <code>splash-screen</code>, <code>keyboard</code> and <code>haptics</code>.`, e: [`Android's back button must navigate up through <code>MobileMindMap.tsx</code>'s breadcrumbs with <code>App.addListener('backButton', …)</code>. Today it closes the app`, `Set the keyboard plugin to <code>resize: 'none'</code> so it doesn't fight the existing <code>visualViewport</code> handling`, `These plugins are also what keeps Apple from rejecting the app as a website in a frame (4.2)`] },
+    { l: `<b>Keep the encryption key in the platform keychain.</b> Without "Remember me" the key lives only in <code>sessionStorage</code> (<code>src/utilities/dekStore.ts</code>). The OS kills background apps often, so users would be sent back to the password login constantly. Use a secure-storage Capacitor plugin.`, tag: "D3", e: [`Can wait until after the first TestFlight build`] },
+    { ref: "D4", l: `<b>D4 · Add a CSP <code>&lt;meta&gt;</code> tag to <code>index.html</code>.</b> The <code>netlify.toml</code> headers never reach the bundled app, so mirror its allowlist in a tag.`, e: [`Can wait until after the first TestFlight build`] },
+    { l: `<b>Use a full API address on the phone.</b> Function calls use relative URLs like <code>/.netlify/functions/…</code>, which on the phone resolve to a page that doesn't exist. Add one <code>apiUrl(path)</code> helper that prefixes <code>https://intraconnected.app</code> when <code>Capacitor.isNativePlatform()</code> is true, and use it in all 8 <code>fetch</code> calls.`, e: [`Files: <code>src/utilities/billing/billing.tsx</code>, <code>src/utilities/firebase/authFirebase.tsx</code>, <code>src/utilities/firebase/featureRequests.ts</code>`, `Without it, account deletion, feature requests and all billing calls fail. Apple requires account deletion to work (5.1.1(v))`] },
+    { l: `<b>Allow the app's origin in CORS.</b> Add <code>capacitor://localhost</code> (iOS) and <code>https://localhost</code> (Android, because of <code>androidScheme: 'https'</code>) to <code>allowedOrigins</code> in <code>netlify/functions/lib/cors.ts</code>.`, e: [`Every function still checks the Firebase ID token, so this opens nothing up`] },
+    { l: `<b>Hide checkout in the native app.</b> When <code>Capacitor.isNativePlatform()</code> is true, hide checkout on Pricing, <code>UpgradeModal</code> and the node-cap prompts. Where store rules allow (currently the US on both stores) link out to <code>https://intraconnected.app/pricing</code>. Elsewhere show no purchase prompt.`, tag: "C2", e: [`Re-check Apple's and Google's current rules on external links before submitting. They are changing quickly`] },
+    { l: `<b>Check the Firebase API key.</b> In Google Cloud Console → APIs &amp; Services → Credentials, see whether the key is restricted by HTTP referrer.`, e: [`If it is, sign-in fails from <code>capacitor://localhost</code>. If there's no referrer restriction, nothing to do`] },
+    { l: `<b>How it behaves inside the app.</b> Fine as is: Firebase Auth (email and password), <code>BrowserRouter</code> and the email links from <code>AuthAction.tsx</code>.`, d: 1, e: [`Sync is handled by the sync layer. Another device's changes arrive when the app returns to the foreground`] }
+  ]},
+  { t: "Android and Google Play", s: "D5. Works from Windows", steps: [
+    { ref: "D5", l: `<b>Create the Play Console account.</b> One-time $25 fee at ${lk("https://play.google.com/console", "Google Play Console")}.` },
+    { l: `<b>Build a signed release.</b> In Android Studio, build a signed <code>.aab</code> and enroll in Play App Signing. Keep the upload keystore and its passwords in a password manager.`, e: [`Bump the version in <code>android/app/build.gradle</code> on every release`] },
+    { l: `<b>Fill in the Data safety form truthfully.</b> Say data is encrypted in transit and at rest.`, tag: "C1", e: [`Never write "end-to-end encrypted" (decision C1 kept email recovery)`] },
+    { l: `<b>Release to internal testing first,</b> then production. Test the back button and keyboard on a real Android phone.`, e: [`Back goes up one level in the map and only closes the app at the top`] }
+  ]},
+  { t: "iOS build and TestFlight", s: "D6. Windows to a signed build on your iPhone with no Mac. Codemagic's cloud Macs build and sign (C3). About 3 to 5 hours of your own work over 2 to 3 days", steps: [
+    { ref: "D6", l: `<b>Have these ready.</b> Section 15's sync check done, the repo pushed to GitHub, an iPhone on a recent iOS, an Apple ID with two-factor authentication, a credit card for the $99/year fee, Node 22 locally, and a password manager.`, e: [`No Mac needed. The Simulator is replaced by TestFlight on your phone, and Safari Web Inspector by Chrome's mobile view (or an hourly cloud Mac for iOS-only bugs)`] },
+    { l: `<b>Enroll in the Apple Developer Program</b> ($99/year, up to 48 hours). Decide Individual or Organization first, because it's hard to change. Fastest route is the Apple Developer app on your iPhone (Account → Enroll Now), or ${lk("https://developer.apple.com/programs/enroll/", "developer.apple.com/programs/enroll")}.`, e: [`Individual: your legal name on the store, no extra wait`, `Organization: the LLC's name, needs a D-U-N-S number (free, days to weeks). If you form the LLC in section 13, enroll as that. Moving later means a request to Apple Support`, `Use your legal name exactly as on your ID`, `Wait for "Welcome to the Apple Developer Program", then sign in once to ${lk("https://appstoreconnect.apple.com", "App Store Connect")} and accept the agreements. Uploads fail until you do`] },
+    { l: `<b>Register the App ID.</b> ${lk("https://developer.apple.com/account", "developer.apple.com/account")} → Certificates, IDs &amp; Profiles → Identifiers → <b>+</b> → App IDs → App. Description <code>Intraconnected</code>, Explicit bundle ID <code>com.intraconnected.app</code>, no capabilities.`, e: [`The bundle ID must match <code>appId</code> in <code>capacitor.config.ts</code> exactly. It can never be changed after an upload`] },
+    { l: `<b>Create the app in App Store Connect.</b> Apps → <b>+</b> → New App. Platform iOS, name <code>Intraconnected</code> (try <code>Intraconnected: Mind Map</code> if taken), English (U.S.), the bundle ID, SKU <code>intraconnected-ios</code>, Full Access.`, e: [`Open App Information and copy the <b>Apple ID</b> number (like <code>6741234567</code>). The yaml needs it`, `If the bundle ID isn't in the dropdown yet, wait a few minutes`] },
+    { l: `<b>Create an App Store Connect API key.</b> Users and Access → Integrations → App Store Connect API → Team Keys. Request Access the first time, then Generate API Key named <code>Codemagic</code> with the <b>App Manager</b> role.`, e: [`Download the <code>AuthKey_….p8</code> file. <b>Apple lets you download it exactly once.</b> Store it in your password manager right away`, `Also copy the <b>Issuer ID</b> (above the key list) and the <b>Key ID</b> (in the key's row)`, `Never commit the <code>.p8</code> file`] },
+    { l: `<b>Create the Codemagic account.</b> Sign up at ${lk("https://codemagic.io/signup", "codemagic.io")} with GitHub, limit access to this repo, Add application → GitHub → the repo → <b>Ionic Capacitor App</b> (or Other). Choose <b>codemagic.yaml</b>, not the Workflow Editor.`, tag: "C3", e: [`The yaml lives in the repo, so the build setup is versioned with the code`] },
+    { l: `<b>Connect the API key.</b> Teams → Personal Account → Integrations → Developer Portal → Connect. Name it exactly <code>intraconnected-asc</code>, add the Issuer ID, Key ID and the <code>.p8</code> file.`, e: [`The integration shows as connected`, `Free tier: a monthly allowance of macOS minutes (historically 500). A first build takes 10 to 20. Check ${lk("https://codemagic.io/pricing", "codemagic.io/pricing")}`] },
+    { l: `<b>Generate the signing certificate.</b> Codemagic → Teams → Personal Account → codemagic.yaml settings → Code signing identities → iOS certificates → Generate certificate. Use the <code>intraconnected-asc</code> key, type <b>Apple Distribution</b>, reference name <code>intraconnected_dist</code>.`, e: [`Save the <code>.p12</code> download and its password in your password manager. The password is shown once`, `Apple allows only a few distribution certificates. Reuse this one`] },
+    { l: `<b>Create the provisioning profile at Apple.</b> Certificates, IDs &amp; Profiles → Profiles → <b>+</b> → App Store Connect → App ID <code>com.intraconnected.app</code> → the Apple Distribution certificate from the last step → name <code>Intraconnected App Store</code> → Generate.`, e: [`No need to download it`] },
+    { l: `<b>Pull the profile into Codemagic.</b> Code signing identities → iOS provisioning profiles → Fetch profiles → tick <code>Intraconnected App Store</code>, reference name <code>intraconnected_appstore</code> → Download selected.`, e: [`Both the certificate and profile expire after a year. Add a calendar reminder for 11 months from today. Expired signing is the most common reason an old working setup suddenly fails`] },
+    { l: `<b>Add the build variable.</b> In Codemagic open the app → Environment variables. Name <code>VITE_STRIPE_PUBLISHABLE_KEY</code>, group <code>production_env</code>, Secure on. Use the <code>pk_test_…</code> key now and <code>pk_live_…</code> after section 10.`, e: [`Vite bakes <code>VITE_*</code> variables in at build time. Any new one you add to the web app must be added here too`, `Never put server secrets (<code>STRIPE_SECRET_KEY</code> and the like) here`] },
+    { l: `<b>Add <code>codemagic.yaml</code></b> at the repo root. Replace <code>0000000000</code> with the Apple ID number, commit and push. It handles both CocoaPods and Swift Package Manager.`, pre: `workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: intraconnected-asc
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.intraconnected.app
+      groups:
+        - production_env
+      vars:
+        APP_STORE_APPLE_ID: 0000000000
+      node: 22
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+      - name: Build web app
+        script: npm run build
+      - name: Sync Capacitor
+        script: npx cap sync ios
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Set build number
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          NEW=$((LATEST + 1))
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $NEW;/g" ios/App/App.xcodeproj/project.pbxproj
+          echo "Build number: $NEW"
+      - name: Build signed IPA
+        script: |
+          if [ -f ios/App/Podfile ]; then
+            xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App
+          else
+            xcode-project build-ipa --project ios/App/App.xcodeproj --scheme App
+          fi
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true`, e: [`The build number is separate from the version users see. Change <code>MARKETING_VERSION</code> in <code>ios/App/App.xcodeproj/project.pbxproj</code> by hand (every occurrence) for a new release`, `No <code>triggering</code> section, so it only runs when you start it. Once reliable, you can build on tags like <code>ios-v1.0.0</code> (D7)`] },
+    { l: `<b>Run the first build.</b> Codemagic → the app → Start new build → branch → <b>iOS → TestFlight</b>.`, e: [`10 to 20 minutes. If a step goes red, read the last 30 lines and check the troubleshooting step below`, `A green build ends with "Publishing to App Store Connect" succeeded`] },
+    { l: `<b>Answer the encryption questions.</b> In App Store Connect → TestFlight the build says "Processing" for 5 to 30 minutes, then <b>Missing Compliance</b>. Click Manage and answer truthfully. The app uses AES-GCM through the browser's Web Crypto, plus HTTPS.`, e: [`Apps that only use standard operating-system algorithms usually qualify for the exemption, but this is an export-law declaration, not a formality`, `To skip the prompt later, add <code>ITSAppUsesNonExemptEncryption</code> (boolean) to <code>ios/App/App/Info.plist</code>`] },
+    { l: `<b>Install on your iPhone.</b> TestFlight tab → Internal Testing → <b>+</b> → group <code>Me</code> → add yourself. Turn on automatic distribution. On the iPhone install TestFlight, sign in with the same Apple ID and tap Install from the invite email.`, e: [`Internal testers need no Apple review`] },
+    { l: `<b>Smoke test on the phone.</b>`, e: [`Sign up with a new account, sign out, sign in again`, `Create, rename, move and delete ideas. Checklists and link nodes work`, `Force-quit and reopen: still signed in, all ideas there`, `Same account on the website: edits show up on both`, `Link nodes open in Safari, not inside the app`, `Nothing offers a purchase`, `Delete a throwaway account from Profile: it really deletes`, `Nothing hidden under the notch or home bar. Sheets rise above the keyboard`] },
+    { l: `<b>If a build fails.</b> Likely causes and fixes:`, e: [`"No matching profiles found": redo the profile fetch. The profile's bundle ID must be exactly <code>com.intraconnected.app</code> and use the certificate you generated`, `Signing fails after months: the certificate or profile expired (1 year). Regenerate, re-create the profile, fetch again`, `"Maximum number of certificates generated": revoke an unused one at Apple, or reuse the saved <code>.p12</code>`, `TypeScript error in the build step: same as local CI. Fix, push, rebuild`, `<code>npm ci</code> fails: run <code>npm install</code> locally and commit the lock file`, `"workspace does not exist": CocoaPods vs Swift Package Manager mismatch. Commit the whole <code>ios/</code> folder`, `"bundle version must be higher": the build number was reused. Check the Set build number step`, `Upload mentions an agreement: sign in to App Store Connect and accept it`, `Blank white screen: the yaml must run <code>npm run build</code> before <code>npx cap sync ios</code>. For JS errors reproduce in Chrome's mobile view`, `Sign-in fails on the phone only: the Firebase API key referrer restriction (section 15)`, `Account deletion or feature requests fail on the phone only: relative URLs or CORS (section 15)`, `Logged out on every reopen: the encryption key is still only in <code>sessionStorage</code> (section 15)`] },
+    { l: `<b>Write these down</b> in a password manager. None go in the repo except the two public ones.`, e: [`Bundle ID <code>com.intraconnected.app</code> (public)`, `The app's Apple ID number (public)`, `Issuer ID and Key ID (secret)`, `The <code>AuthKey_….p8</code> file (secret, high)`, `The <code>.p12</code> certificate and its password (secret, high)`, `Certificate and profile expiry date (calendar reminder at 11 months)`, `Apple Developer renewal date ($99/year. Apps disappear from the store if it lapses)`] }
+  ]},
+  { t: "App Store review", s: "TestFlight for yourself needs none of this. A public release needs all of it. Review takes 1 to 3 days", steps: [
+    { l: `<b>Make the app feel native (guideline 4.2).</b> Finish D2 and D3: icon, splash, status bar, keyboard handling, haptics, secure key storage.`, e: [`Apple rejects apps that feel like a website in a frame`] },
+    { l: `<b>Make it iPhone-only</b> unless you've tested on iPad. In <code>ios/App/App.xcodeproj/project.pbxproj</code> set every <code>TARGETED_DEVICE_FAMILY</code> to <code>1</code>.`, e: [`Listing iPad means iPad screenshots and iPad testing`] },
+    { l: `<b>Fill in the listing.</b> App Store Connect → your app → the iOS version page.`, e: [`Screenshots for the required iPhone size (currently the 6.9-inch display), taken from a TestFlight build with a demo account`, `Description, subtitle (30 characters), keywords (100 characters)`, `Support URL <code>https://intraconnected.app/support</code>, which should show <code>support@intraconnected.app</code> (section 12)`, `Privacy policy URL <code>https://intraconnected.app/privacy</code>`, `Category Productivity. Pricing: Free`, `Age rating: the app has no objectionable content, but users can write anything, so answer the user-generated-content questions honestly`] },
+    { l: `<b>Fill in the App Privacy label.</b>`, tag: "C1", e: [`Email address: collected, linked to the user, for app functionality, not for tracking`, `Other user content (the ideas): collected, linked to the user, for app functionality`, `Tracking: none. There is no analytics or advertising SDK, so no tracking prompt is needed`, `Don't describe the data as "end-to-end encrypted" anywhere in the listing`] },
+    { l: `<b>Fill in App Review Information.</b>`, e: [`A demo account: verified email and password, with sample ideas already in it. Reviewers won't sign up`, `A note: paid plans are managed on the website and the app sells nothing, account deletion is in Profile, and ideas are encrypted on the device`] },
+    { l: `<b>Double-check the rules at submission time.</b>`, e: [`3.1.1 / 3.1.3 in-app purchase: no purchases in the app. Outside the US, no pointers to web purchases either (C2). Rules on external links keep changing, so re-read them`, `4.2 minimum functionality: needs D2 and D3`, `5.1.1(v) account deletion: exists, but must work in the phone build`, `4.8 Sign in with Apple: not required, because the app only offers email and password`] },
+    { l: `<b>Submit.</b> On the iOS version page choose the TestFlight build under Build → Save → <b>Add for Review</b> → <b>Submit</b>. Choose manual release if you want to pick the launch moment.`, e: [`A rejection just means fixing and resubmitting`] },
+    { ref: "D7", l: `<b>D7 · Continuous builds</b>, only after D5 and D6 have each been done once by hand. Codemagic can run the Android build too, so both live in one <code>codemagic.yaml</code>.`, e: [`On every release bump the version in <code>android/app/build.gradle</code> and the iOS build number`] },
+    { ref: "D8", l: `<b>D8 · Release loop.</b> Native changes wait for store review. Web changes still deploy instantly.`, e: [`Firebase, the security rules and the encryption are shared between web and app. Only the payment system differs`] }
+  ]},
+  { opt: 1, t: "Later fixes", s: "Should fix, none of them block launch. Not counted in the progress bar", steps: [
+    { ref: "E1", l: `<b>E1 · Out-of-order webhook events.</b> Stripe doesn't guarantee order, and the handler trusts each event's own status, so an older event can overwrite a newer one. Fetch the subscription fresh from Stripe, or compare each event's <code>created</code> time.` },
+    { ref: "E2", l: `<b>E2 · Refund window.</b> The 14-day window counts from <code>billing.updatedAt</code>, which any webhook write changes. Store <code>lifetimePurchasedAt</code> instead.` },
+    { ref: "E3", l: `<b>E3 · "Remember me" stores the raw encryption key</b> in <code>localStorage</code>.` },
+    { ref: "E4", l: `<b>E4 · Sessions never time out,</b> neither after idle time nor after a fixed maximum.` },
+    { ref: "E5", l: `<b>E5 · No error monitoring.</b> Client failures, including failed saves, are invisible. Having no analytics is deliberate.` },
+    { ref: "E6", d: 1, l: `<b>E6 · The client can set <code>meta/nodeCount</code> to any number.</b> Accepted and disclosed. A real fix needs a Cloud Function.` },
+    { ref: "E7", l: `<b>E7 · No end-to-end or UI tests</b> cover the checkout screens or the sync layer.` },
+    { ref: "E9", l: `<b>E9 · 17 <code>react-hooks/exhaustive-deps</code> lint warnings.</b> Each needs individual review.` },
+    { l: `<b>Checkout orphans.</b> Opening Annual checkout creates a Stripe Customer and an incomplete subscription each time, so abandoned checkouts leave orphans. A lookup by <code>metadata.firebaseUid</code> before creating would stop that.` }
+  ]},
+  { t: "Done and verified", s: "Finished work, collapsed. Everything here was fixed, decided or re-checked", steps: [
+    { d: 1, ref: "A1", l: `<b>A1 · The encryption wording.</b> The app stores a third copy of each user's key, <code>emailEncryptedDEK</code>, that anyone with database access can open, so "end-to-end" and "we cannot read them" were untrue.`, e: [`Fixed Sep 29 (C1, keep email recovery): Privacy, Terms, <code>Auth.tsx</code>, <code>index.html</code> and <code>site.webmanifest</code> no longer claim end-to-end encryption, and Privacy discloses the recovery key copy`] },
+    { d: 1, ref: "A2", l: `<b>A2 · Users could reset their own rate limits.</b>`, e: [`Fixed: the <code>meta/{metaDocId}</code> rule now excludes <code>billing</code>, <code>nodeCount</code>, <code>featureRequests</code> and <code>rateLimit_*</code> with no grant-back`, `Live since the rules were published Sep 29 (B1)`] },
+    { d: 1, ref: "A3", l: `<b>A3 · One failed load left an empty map.</b> Fixed by the new sync layer in <code>src/utilities/sync/</code>.`, e: [`Loads fetch everything first and only then replace the local copy. Offline it throws instead of returning an empty list. Each idea decrypts separately, so one bad doc doesn't hide the rest`] },
+    { d: 1, ref: "A4", l: `<b>A4 · Failed saves were silent and devices drifted apart.</b> Fixed by the same sync layer.`, e: [`Every change goes to an outbox on the device first, goes out one at a time in order, and retries until accepted. It survives reloads and offline periods`, `A refused change pauses sending and shows a banner with <b>Try again</b> or <b>Discard change</b>. Nothing is discarded automatically`, `Each device keeps its own change counter. A listener pulls others' changes only while the app is visible, 3 seconds after edits pause`, `Ideas left without a parent move to the top level`, `Cost: about 1 extra read per page load plus 1 per edit, no extra writes`, `Checked by hand Sep 29 with two signed-in windows: live sync, blocked connection and reload, refused save, stale edit. All passed`] },
+    { d: 1, ref: "B1", l: `<b>B1 · <code>firestore.rules</code> published</b> to the Firebase Console (project <code>interconnectedness-3a37b</code>) on Sep 29.`, e: [`Clients can't write <code>meta/billing</code>, the 50-idea free cap is enforced on the server, and the rate-limit docs are locked`, `Any future edit to <code>firestore.rules</code> has to be re-published by hand`] },
+    { d: 1, ref: "C1", l: `<b>C1 · Decided Sep 29: keep email recovery</b> and reword the copy. Never describe the app as "end-to-end encrypted" anywhere, store listings included.` },
+    { d: 1, ref: "C3", l: `<b>C3 · Decided Sep 29: Codemagic</b> for iOS builds. It supports Capacitor, signs with an App Store Connect API key, uploads to TestFlight and has a free monthly allowance. You still need an iPhone to test on.` },
+    { d: 1, ref: "C4", l: `<b>C4 · Decided Sep 29: keep showing</b> the disabled "Customization: Coming soon" tab.` },
+    { d: 1, ref: "E8", l: `<b>E8 · The landing page.</b> Done Oct 6: <code>/</code> is the landing page and the login form is at <code>/login</code>.` },
+    { d: 1, ref: "G", l: `<b>G · Already fixed before Sep 29.</b>`, e: [`Aug 17: test billing-reset endpoint returns 404 unless <code>ALLOW_TEST_RESET</code> is set. Email verification at signup and required before checkout. Webhook failures recorded and retried. Duplicate events detected by id. CI runs typecheck and lint. Rate limiting added. 37 billing tests. <code>ErrorBoundary</code>. Checkout "still finalizing" message times out. JSON export. Minimum password length 8. CORS allowlist. <code>jose</code> bumped and a react-router advisory patched`, `By Aug 26: self-serve Lifetime refunds. Focus traps and dialog roles in checkout modals. Support contact on Pricing`, `Aug 26: Terms and Privacy match live billing. Apple touch icon, Open Graph image and PWA icon set. Security headers (checked live in step B4). Debug logs removed. Lint warnings down from 47 to 17`, `Aug 13: rules stop clients writing <code>meta/billing</code> (published Sep 29)`, `Oct 6: Stripe test run found and fixed an atomicity bug in webhook event dedupe, and a checkout failure after a Customer was deleted in the Dashboard`] },
+    { d: 1, ref: "H", l: `<b>H · Already solid (re-checked Sep 29).</b>`, e: [`Every billing and account function verifies the caller's ID token. The webhook verifies Stripe's signature`, `No XSS sinks: no <code>dangerouslySetInnerHTML</code>, no raw <code>innerHTML</code>`, `Secrets come from environment variables and fail loudly if missing`, `Edge cases are regression-tested with real event sequences: duplicate purchases, Annual to Lifetime upgrades, refunds restoring the previous plan, the <code>past_due</code> grace period`, `Account deletion cancels Stripe, wipes the user's data and deletes the Auth user`, `Cancelling Annual keeps access until the paid year ends`] },
+    { d: 1, ref: "F", l: `<b>F · Corrections to the earlier audits.</b>`, e: [`The Aug 26 audit said code-side work was done. A1 to A6 showed it wasn't`, `The Aug 17 audit said <code>webhookEvents</code> guards out-of-order delivery. It only catches duplicates of the same event (E1)`, `The Aug 26 audit said the CSP uses a script hash. That became <code>'unsafe-inline'</code>; see CLAUDE.md`, `The playbook said email recovery would run more often on phones. It's the frequent logouts that are the problem (section 15), not recovery`] }
+  ]}
+];
+
+const KEY = "stripe-test-run:v1"; // unchanged so ticks from the old test-run page carry over
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (_) { state = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {} };
+
+const root = document.getElementById("phases");
+const refs = {};
+const stepRefs = st => { const r = [].concat(st.ref || []); const m = /^<b>([SRW]\d+) ·/.exec(st.l); if (m) r.push(m[1]); return r; };
+const setCollapsed = (sec, c) => { sec.classList.toggle("collapsed", c); sec.querySelector(".ph-head").setAttribute("aria-expanded", String(!c)); };
+
+PHASES.forEach((p, pi) => {
+  const sec = document.createElement("section");
+  sec.className = "card phase" + (p.opt ? " opt" : "");
+  sec.id = `phase-${pi}`;
+  if (p.opt) sec.dataset.opt = "1";
+  (p.refs || []).forEach(r => { if (!refs[r]) refs[r] = sec.id; });
+  sec.innerHTML = `<div class="ph-head" role="button" tabindex="0" aria-expanded="true"><span class="ph-num">${String(pi).padStart(2, "0")}</span><div class="ph-title"><h2>${p.t}</h2><span class="ph-sub">${p.s}</span></div><span class="ph-tally"></span><span class="chev" aria-hidden="true">▾</span></div><ol class="steps"></ol>`;
+  const head = sec.querySelector(".ph-head");
+  head.addEventListener("click", e => { if (e.target.closest("a")) return; setCollapsed(sec, !sec.classList.contains("collapsed")); });
+  head.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === head) { e.preventDefault(); setCollapsed(sec, !sec.classList.contains("collapsed")); } });
+  const ol = sec.querySelector("ol");
+  p.steps.forEach((st, si) => {
+    const id = `s-${pi}-${si}`;
+    const li = document.createElement("li");
+    li.innerHTML = `<input type="checkbox" id="${id}"><div class="step"><label for="${id}">${st.l}</label>${st.tag ? `<span class="tag">${st.tag}</span>` : ""}${st.pre ? '<div class="codewrap"><pre class="code"></pre><button class="copy" type="button">Copy</button></div>' : ""}${st.e ? `<ul class="expect">${st.e.map(x => `<li>${x}</li>`).join("")}</ul>` : ""}</div>`;
+    if (st.pre) { li.querySelector("pre").textContent = st.pre; li.querySelector(".copy").dataset.copy = st.pre; }
+    const rs = stepRefs(st);
+    if (rs.length) { li.id = "ref-" + rs[0]; rs.forEach(r => { refs[r] = li.id; }); }
+    const cb = li.querySelector("input");
+    cb.checked = id in state ? !!state[id] : !!st.d;
+    cb.addEventListener("change", () => { state[id] = cb.checked; save(); refresh(); });
+    ol.appendChild(li);
+  });
+  root.appendChild(sec);
+});
+
+// Turn codes like A5, S12 or "section 13" into links that open and jump to their target.
+function linkify(scope) {
+  const re = /\b(?:[A-E][1-9]|[SRW]\d{1,2})\b|\bsections? (\d{2})\b/g;
+  const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest("a, code, pre, button, script, style") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    const text = node.nodeValue; re.lastIndex = 0;
+    let m, last = 0, frag = null;
+    while ((m = re.exec(text))) {
+      let target, from = m.index, label = m[0];
+      if (m[1]) { target = "phase-" + parseInt(m[1], 10); from = m.index + m[0].length - m[1].length; label = m[1]; }
+      else target = refs[m[0]];
+      const el = target && document.getElementById(target);
+      if (!el || el.contains(node.parentElement)) continue;
+      frag = frag || document.createDocumentFragment();
+      frag.appendChild(document.createTextNode(text.slice(last, from)));
+      const a = document.createElement("a");
+      a.className = "xref"; a.href = "#" + target; a.textContent = label;
+      frag.appendChild(a);
+      last = from + label.length;
+    }
+    if (frag) { frag.appendChild(document.createTextNode(text.slice(last))); node.parentNode.replaceChild(frag, node); }
+  });
+}
+document.querySelectorAll(".step, .ph-sub, .lede, .ov").forEach(linkify);
+document.addEventListener("click", e => {
+  const a = e.target.closest("a.xref"); if (!a) return;
+  e.preventDefault();
+  const el = document.getElementById(a.getAttribute("href").slice(1)); if (!el) return;
+  const sec = el.closest(".phase"); if (sec) setCollapsed(sec, false);
+  el.scrollIntoView({ block: "start" });
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+  setTimeout(() => el.classList.remove("flash"), 1800);
+});
+
+const rail = document.getElementById("rail");
+const railItems = [{ id: "ov", n: "◎", t: "Where things stand" }, { id: "tools", n: "★", t: "Cards & commands" }, { id: "ids", n: "ID", t: "Live IDs" }, ...PHASES.map((p, i) => ({ id: `phase-${i}`, n: String(i).padStart(2, "0"), t: p.t }))];
+railItems.forEach(it => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "ghost"; b.dataset.target = it.id;
+  b.innerHTML = `<b>${it.n}</b><span class="nm">${it.t}</span>`;
+  b.addEventListener("click", () => {
+    const el = document.getElementById(it.id);
+    if (el) el.scrollIntoView({ block: "start" });
+  });
+  rail.appendChild(b);
+});
+function setActive(id) {
+  rail.querySelectorAll("button").forEach(b => {
+    const on = b.dataset.target === id;
+    b.classList.toggle("on", on);
+    if (on && rail.scrollWidth > rail.clientWidth && getComputedStyle(rail).position !== "fixed") b.scrollIntoView({ block: "nearest", inline: "center" });
+  });
+}
+function updateActive() {
+  let cur = railItems[0].id;
+  for (const it of railItems) {
+    const el = document.getElementById(it.id);
+    if (el && el.getBoundingClientRect().top <= 170) cur = it.id;
+  }
+  setActive(cur);
+}
+window.addEventListener("scroll", updateActive, { passive: true });
+window.addEventListener("resize", updateActive);
+
+function refresh() {
+  let total = 0, done = 0;
+  root.querySelectorAll(".phase").forEach(sec => {
+    const boxes = [...sec.querySelectorAll("input[type=checkbox]")];
+    const d = boxes.filter(b => b.checked).length;
+    boxes.forEach(b => b.closest("li").classList.toggle("checked", b.checked));
+    sec.querySelector(".ph-tally").textContent = `${d}/${boxes.length}`;
+    sec.classList.toggle("done", d === boxes.length);
+    const nb = document.querySelector(`#rail button[data-target="${sec.id}"]`);
+    if (nb) nb.classList.toggle("done", d === boxes.length);
+    if (!sec.dataset.opt) { total += boxes.length; done += d; }
+  });
+  document.getElementById("count").textContent = `${done} / ${total}`;
+  document.getElementById("meter").style.width = total ? `${(done / total) * 100}%` : "0";
+}
+refresh();
+root.querySelectorAll(".phase.done").forEach(sec => setCollapsed(sec, true));
+updateActive();
+
+const resetBtn = document.getElementById("reset");
+let armTimer;
+resetBtn.addEventListener("click", () => {
+  if (!resetBtn.classList.contains("armed")) {
+    resetBtn.classList.add("armed"); resetBtn.textContent = "Click again to clear";
+    armTimer = setTimeout(() => { resetBtn.classList.remove("armed"); resetBtn.textContent = "Clear ticks"; }, 3000);
+    return;
+  }
+  clearTimeout(armTimer);
+  state = {};
+  root.querySelectorAll("input[type=checkbox]").forEach(b => { b.checked = false; state[b.id] = false; });
+  save();
+  resetBtn.classList.remove("armed"); resetBtn.textContent = "Clear ticks";
+  refresh();
+});
+
+document.querySelectorAll(".copy[data-copy]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const text = btn.dataset.copy, label = btn.textContent;
+    const flash = () => { btn.classList.add("ok"); btn.textContent = "Copied"; setTimeout(() => { btn.classList.remove("ok"); btn.textContent = label; }, 1200); };
+    try {
+      navigator.clipboard.writeText(text).then(flash, () => {});
+    } catch (_) {}
+  });
+});
+</script>
+
+<script>
+(function () {
+  var KEY = "stripe-live-ids:v1";
+  var vals = {};
+  try { vals = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (_) { vals = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(vals)); } catch (_) {} }
+
+  var rules = {
+    annualAmt: { test: function (v) { return /^\d+(\.\d{1,2})?$/.test(v) && parseFloat(v) >= 0.5; }, bad: "Use a number like 14.99. Stripe's minimum charge is $0.50." },
+    lifeAmt:   { test: function (v) { return /^\d+(\.\d{1,2})?$/.test(v) && parseFloat(v) >= 0.5; }, bad: "Use a number like 39.99. Stripe's minimum charge is $0.50." },
+    annualId:  { test: function (v) { return /^price_[A-Za-z0-9]{10,}$/.test(v); }, bad: "A price id starts with price_. A prod_ id is the product, not the price." },
+    lifeId:    { test: function (v) { return /^price_[A-Za-z0-9]{10,}$/.test(v); }, bad: "A price id starts with price_. A prod_ id is the product, not the price." },
+    pk:        { test: function (v) { return /^pk_live_[A-Za-z0-9]{10,}$/.test(v); }, bad: "A live publishable key starts with pk_live_. pk_test_ is the test key." },
+    hook:      { test: function (v) { return /^we_[A-Za-z0-9]{10,}$/.test(v); }, bad: "A webhook endpoint id starts with we_. The whsec_ secret does not belong here." }
+  };
+  var secretLike = /^(sk_|rk_|whsec_)/;
+
+  function status(key) {
+    var v = (vals[key] || "").trim();
+    if (!v) return { s: "empty", ok: false, hint: "" };
+    if (secretLike.test(v)) return { s: "secret!", ok: false, hint: "That is a secret. Remove it and put it straight into Netlify.", secret: true };
+    if (rules[key].test(v)) return { s: "ok", ok: true, hint: "" };
+    return { s: "check", ok: false, hint: rules[key].bad };
+  }
+
+  function cents(v) { return Math.round(parseFloat(v) * 100); }
+  function usd(v) { return "$" + parseFloat(v).toFixed(2); }
+
+  function render() {
+    var st = {};
+    Object.keys(rules).forEach(function (k) {
+      st[k] = status(k);
+      var chip = document.querySelector('[data-chip="' + k + '"]');
+      var hint = document.querySelector('[data-hint="' + k + '"]');
+      chip.textContent = st[k].s;
+      chip.className = "chip" + (st[k].ok ? " ok" : (st[k].s === "check" || st[k].secret ? " bad" : ""));
+      hint.textContent = st[k].hint;
+    });
+    function setOut(id, text, enabled) {
+      var el = document.getElementById(id); el.textContent = text;
+      var b = document.querySelector('[data-out="' + id + '"]'); b.disabled = !enabled;
+    }
+    setOut("o-annual", "STRIPE_PRICE_ANNUAL=" + (st.annualId.ok ? vals.annualId.trim() : ""), st.annualId.ok);
+    setOut("o-life", "STRIPE_PRICE_LIFETIME=" + (st.lifeId.ok ? vals.lifeId.trim() : ""), st.lifeId.ok);
+    setOut("o-pk", "VITE_STRIPE_PUBLISHABLE_KEY=" + (st.pk.ok ? vals.pk.trim() : ""), st.pk.ok);
+    var amtOk = st.annualAmt.ok && st.lifeAmt.ok;
+    var msg = amtOk
+      ? "Live prices: Annual " + usd(vals.annualAmt.trim()) + " per year (" + cents(vals.annualAmt.trim()) + " cents), Lifetime " + usd(vals.lifeAmt.trim()) + " once. Update ANNUAL_PRICE_DISPLAY and LIFETIME_PRICE_DISPLAY in pricingDisplay.ts, LIFETIME_UPGRADE_DISCOUNT_CENTS in lifetimePricing.ts, and the tests."
+      : "Live prices: Annual $__ per year, Lifetime $__ once.";
+    setOut("o-claude", msg, amtOk);
+  }
+
+  document.querySelectorAll(".ids input[data-key]").forEach(function (inp) {
+    inp.value = vals[inp.dataset.key] || "";
+    inp.addEventListener("input", function () { vals[inp.dataset.key] = inp.value; save(); render(); });
+    inp.addEventListener("blur", function () { inp.value = inp.value.trim(); vals[inp.dataset.key] = inp.value; save(); render(); });
+  });
+
+  document.querySelectorAll(".ids button[data-out]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = document.getElementById(btn.dataset.out).textContent, label = btn.textContent;
+      var flash = function () { btn.classList.add("ok"); btn.textContent = "Copied"; setTimeout(function () { btn.classList.remove("ok"); btn.textContent = label; }, 1200); };
+      try { navigator.clipboard.writeText(text).then(flash, function () {}); } catch (_) {}
+    });
+  });
+
+  var clearBtn = document.getElementById("ids-clear"), armed = false, t;
+  clearBtn.addEventListener("click", function () {
+    if (!armed) { armed = true; clearBtn.classList.add("armed"); clearBtn.textContent = "Click again to clear"; t = setTimeout(function () { armed = false; clearBtn.classList.remove("armed"); clearBtn.textContent = "Clear these fields"; }, 3000); return; }
+    clearTimeout(t); armed = false; clearBtn.classList.remove("armed"); clearBtn.textContent = "Clear these fields";
+    vals = {}; save();
+    document.querySelectorAll(".ids input[data-key]").forEach(function (i) { i.value = ""; });
+    render();
+  });
+
+  render();
+})();
+</script>
+
