@@ -846,6 +846,23 @@ function ProfileModal() {
         <>
         <AnimatedOverlay open={profileModalOpen}>
             <div className="modal neobrutal profile-modal">
+                {/* ── MOBILE header: title (menu) or Back + tab name, then close ── */}
+                <header className="profile-mobile-header">
+                    {mobileView === 'tabs' ? (
+                        <h2 className="profile-mobile-title">Profile Options</h2>
+                    ) : (
+                        <>
+                            <button className="profile-back neobrutal-button" onClick={() => setMobileView('tabs')}>
+                                ← Back
+                            </button>
+                            <h2 className="profile-mobile-title profile-mobile-title--sub">
+                                {TABS.find(t => t.id === mobileView)?.label}
+                            </h2>
+                        </>
+                    )}
+                    <button className="profile-close neobrutal-button" onClick={handleClose} aria-label="Close">✕</button>
+                </header>
+
                 {/* Height animates between tabs / content changes (see useSmoothHeight) */}
                 <div
                     className={`profile-resize${animateHeight ? ' profile-resize--animate' : ''}`}
@@ -895,11 +912,10 @@ function ProfileModal() {
                         <div className="profile-mobile">
                             {mobileView === 'tabs' ? (
                                 <>
-                                    <h2 className="profile-heading">Profile Options</h2>
                                     {TABS.filter(tab => tab.id !== 'danger').map(tab => (
                                         <button
                                             key={tab.id}
-                                            className="profile-tab profile-tab--mobile neobrutal-button"
+                                            className={`profile-tab profile-tab--mobile profile-tab--${tab.id} neobrutal-button`}
                                             onClick={() => setMobileView(tab.id)}
                                         >
                                             <div>
@@ -910,7 +926,7 @@ function ProfileModal() {
                                         </button>
                                     ))}
                                     <button
-                                        className="profile-tab profile-tab--mobile profile-tab--disabled neobrutal-button"
+                                        className="profile-tab profile-tab--mobile profile-tab--customization profile-tab--disabled neobrutal-button"
                                         disabled
                                     >
                                         <div>
@@ -931,18 +947,13 @@ function ProfileModal() {
                                     </button>
                                 </>
                             ) : (
-                                <>
-                                    <button className="profile-back neobrutal-button" onClick={() => setMobileView('tabs')}>
-                                        ← Back
-                                    </button>
-                                    {tabContent[mobileView]}
-                                </>
+                                tabContent[mobileView]
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* Close button — in its own corner cell so the scrollbar starts below it */}
+                {/* Desktop close button — in its own corner cell so the scrollbar starts below it */}
                 <div className="profile-close-corner">
                     <button className="profile-close neobrutal-button" onClick={handleClose}>✕</button>
                 </div>

@@ -117,6 +117,22 @@
     flex-direction: column;
     gap: 0;
     align-items: stretch;
+
+    // The focused input's shadow (5px offset + 2px spread, see
+    // .neobrutal-input:focus) hangs below it; push everything underneath down
+    // by that amount so the spacing stays the same.
+    > .input {
+        margin-bottom: 0;
+        transition: all 0.3s ease, margin-bottom 0.3s ease;
+
+        &:focus {
+            margin-bottom: 7px;
+
+            @media (min-width: $large-desktop) {
+                margin-bottom: 8px;
+            }
+        }
+    }
 }
 
 .passwordFieldRow {

@@ -1473,4 +1473,61 @@
         width: 20px;
         height: 20px;
     }
+
+    .mmobile-checklist-inline-empty,
+    .mmobile-checklist-inline-input {
+        font-size: 1.1rem;
+    }
+
+    .mmobile-node-note-header {
+        font-size: 1.35rem;
+    }
+
+    .mmobile-node-note-body {
+        font-size: 1.05rem;
+    }
+
+    .mmobile-create-tabs {
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .mmobile-create-tab {
+        font-size: 1.2rem;
+        padding: 14px 0;
+        border-width: 3px;
+        border-radius: 14px;
+        box-shadow: 0 4px 0 #111;
+    }
+
+    .mmobile-priority-row {
+        gap: 14px;
+    }
+
+    .mmobile-priority-label {
+        font-size: 1.1rem;
+    }
+
+    .mmobile-priority-btns {
+        gap: 10px;
+    }
+
+    .mmobile-priority-btn {
+        font-size: 1.1rem;
+        padding: 9px 20px;
+        border-radius: 10px;
+    }
+
+    .mmobile-sheet-cl-items {
+        max-height: 220px;
+    }
+
+    .mmobile-sheet-cl-item {
+        font-size: 1.15rem;
+        padding: 12px 16px;
+    }
+
+    .mmobile-sheet-cl-item-del {
+        font-size: 1.05rem;
+    }
 }

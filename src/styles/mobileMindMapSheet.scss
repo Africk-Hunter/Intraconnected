@@ -253,4 +253,23 @@
     .mmobile-mindmap-sheet {
         bottom: calc(max(14px, env(safe-area-inset-bottom, 14px)) + 132px);
     }
+
+    .mmobile-mindmap-header {
+        padding: 18px 22px;
+    }
+
+    .mmobile-mindmap-title {
+        font-size: 1.45rem;
+    }
+
+    .mmobile-mindmap-close {
+        font-size: 1.15rem;
+        padding: 6px 13px;
+    }
+
+    .mmobile-mindmap-close-btn {
+        font-size: 1.2rem;
+        padding: 17px;
+        border-radius: 14px;
+    }
 }

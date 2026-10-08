@@ -11,7 +11,7 @@
 // ── Navbar ────────────────────────────────────────────────────────────────
 
 .landingNavbar {
-    height: 72px;
+    height: 76px; // 72px content + 4px border, now that the page is border-box
     @include landing-grid-bg;
     border-bottom: $neo-card-border;
     display: flex;
@@ -50,6 +50,10 @@
     display: flex;
     align-items: center;
     gap: 20px;
+
+    @media (max-width: $mobile) {
+        gap: 14px;
+    }
 }
 
 .landingNavLink {
@@ -66,7 +70,7 @@
     }
 
     @media (max-width: $mobile) {
-        display: none;
+        font-size: 14px;
     }
 }
 
@@ -79,6 +83,11 @@
     color: #111;
     text-decoration: none;
     white-space: nowrap;
+
+    @media (max-width: $mobile) {
+        padding: 9px 18px;
+        font-size: 14px;
+    }
 }
 
 // ── Hero ──────────────────────────────────────────────────────────────────
@@ -104,6 +113,12 @@
     letter-spacing: -2px;
     color: #111;
     max-width: 840px;
+
+    // Keep "Connect your ideas." on one line down to ~320px screens.
+    @media (max-width: $mobile) {
+        font-size: min(38px, 8.6vw);
+        letter-spacing: -1.4px;
+    }
 }
 
 // Marker-style highlights behind each headline line.
@@ -165,6 +180,11 @@
     margin-top: 22px;
     max-width: 480px;
     line-height: 1.7;
+
+    @media (max-width: $mobile) {
+        font-size: 17px;
+        line-height: 1.6;
+    }
 }
 
 .landingMindMapBox {
@@ -179,8 +199,8 @@
     padding: 24px;
 
     @media (max-width: $mobile) {
-        margin: 36px auto 32px;
-        padding: 14px;
+        margin: 32px auto 28px;
+        padding: 8px;
     }
 }
 
@@ -237,6 +257,14 @@
     text-decoration: none;
     letter-spacing: -0.4px;
     white-space: nowrap;
+    text-align: center;
+
+    // 54px side padding made this ~350px wide, wider than the card it sits in.
+    @media (max-width: $mobile) {
+        padding: 16px 28px;
+        font-size: 18px;
+        max-width: 100%;
+    }
 }
 
 // ── How it works ─────────────────────────────────────────────────────────
@@ -261,11 +289,24 @@
 }
 
 .landingHowTitle {
+    display: inline-block;
+    padding: 6px 22px 8px;
     font-size: clamp(28px, 3.6vw, 44px);
     font-weight: 800;
     letter-spacing: -1.2px;
     line-height: 1.1;
     color: #111;
+    background: $link;
+    border: $neo-card-border;
+    box-shadow: $neo-card-shadow;
+    border-radius: $neo-card-radius;
+    transform: rotate(-1.5deg);
+
+    @media (max-width: $mobile) {
+        padding: 4px 16px 6px;
+        border-width: 3px;
+        box-shadow: $neo-m-card-shadow;
+    }
 }
 
 .landingHowSteps {
@@ -368,6 +409,11 @@
     align-items: center;
     gap: 28px;
     text-align: center;
+
+    @media (max-width: $mobile) {
+        padding: 36px 18px;
+        gap: 22px;
+    }
 }
 
 .landingFinalCtaTitle {
@@ -501,4 +547,57 @@ $howLoop: 6s;
     .howS2-a, .howS2-cursor, .howS3-cursor { display: none; }
     .howS2-b { opacity: 1; }
     .howS3-drag { transform: translate(-120px, 0); }
+}
+
+// Phones: "How it works" cards are shorter — the step number sits beside the
+// title and text instead of on a row of its own.
+@media (max-width: $mobile) {
+    .landingHowItWorks {
+        padding-top: 28px;
+        padding-bottom: 48px;
+    }
+
+    .landingHowHeader {
+        margin-bottom: 24px;
+    }
+
+    .landingHowSteps {
+        gap: 20px;
+    }
+
+    .howStep {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        grid-template-areas:
+            'scene scene'
+            'num title'
+            'num body';
+        column-gap: 12px;
+        padding: 14px 14px 18px;
+    }
+
+    .howScene {
+        grid-area: scene;
+        margin-bottom: 14px;
+    }
+
+    .howStepNumber {
+        grid-area: num;
+        margin: 0;
+    }
+
+    .howStepTitle {
+        grid-area: title;
+        margin: 0 0 4px;
+        font-size: 18px;
+    }
+
+    .howStepBody {
+        grid-area: body;
+        line-height: 1.55;
+    }
+
+    .landingFinalCta {
+        padding-bottom: 40px;
+    }
 }

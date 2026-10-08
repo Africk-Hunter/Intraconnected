@@ -15,6 +15,9 @@ interface PriceCardProps {
   subtitle: string;
   note: string;
   features: PriceFeature[];
+  // The few lines that differ between plans. Only shown on phones, where the
+  // full per-card feature list is replaced by one shared "Every plan includes".
+  highlights?: string[];
   ctaLabel: string;
   onCtaClick: () => void;
   footNote: string;
@@ -30,6 +33,7 @@ const PriceCard: React.FC<PriceCardProps> = ({
   subtitle,
   note,
   features,
+  highlights = [],
   ctaLabel,
   onCtaClick,
   footNote,
@@ -47,6 +51,14 @@ const PriceCard: React.FC<PriceCardProps> = ({
         {priceSuffix && <span className="priceCardPriceSuffix">{priceSuffix}</span>}
       </div>
       <div className="priceCardSubtitle">{subtitle}</div>
+      <ul className="priceCardHighlights">
+        {highlights.map((text) => (
+          <li key={text} className="priceCardHighlight">
+            <PriceCheckIcon style={checkStyle} />
+            <span>{text}</span>
+          </li>
+        ))}
+      </ul>
       <div className="priceCardNote">{note}</div>
 
       <div className="priceCardFeatures">

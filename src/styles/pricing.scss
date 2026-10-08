@@ -150,6 +150,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
+    min-width: 0;
 
     &--free {
         background: #fff;
@@ -342,6 +343,11 @@
     font-size: 15px;
     font-weight: 700;
     color: #111;
+    text-align: center;
+
+    @media (max-width: $mobile) {
+        padding: 12px 18px;
+    }
 }
 
 .pricingSupport {
@@ -350,8 +356,261 @@
     font-size: 14px;
     color: #888;
 
+    @media (max-width: $mobile) {
+        padding: 0 20px 48px;
+    }
+
     a {
         color: inherit;
         text-decoration: underline;
+    }
+}
+
+// ── Shared "Every plan includes" + phone-only pieces ─────────────────────────
+
+// Desktop shows the full feature list on each card, so these stay hidden.
+.priceCardHighlights,
+.pricingIncludes {
+    display: none;
+}
+
+.priceCardHighlights {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pricingIncludesTitle {
+    margin: 0 0 10px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.pricingIncludesList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    svg {
+        flex-shrink: 0;
+    }
+}
+
+// ── Phones ────────────────────────────────────────────────────────────────
+// Everything is rebuilt to fit one screen: a short hero, three compact plan
+// cards (price + button on one row, only what differs between plans), and
+// one shared list for what every plan has in common.
+
+@media (max-width: $mobile) {
+    .pricingHero {
+        padding: 26px 20px 22px;
+    }
+
+    .pricingHeroSticker {
+        margin-bottom: 12px;
+    }
+
+    .pricingHeroTitle {
+        font-size: 34px;
+        letter-spacing: -1.2px;
+    }
+
+    .pricingHeroSubline {
+        font-size: 15px;
+        line-height: 1.55;
+        margin-top: 12px;
+    }
+
+    .pricingCards,
+    .pricingCards.pricingCards--compact {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px; // leaves room for the Lifetime badge sitting on the card edge
+        padding: 8px 20px 30px;
+    }
+
+    .pricingCards .priceCard {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 144px;
+        grid-template-areas:
+            'tier tier'
+            'price cta'
+            'sub sub'
+            'hl hl'
+            'note note'
+            'foot foot';
+        align-items: center;
+        column-gap: 14px;
+        padding: 18px 16px 16px;
+
+        &:hover {
+            transform: none;
+        }
+    }
+
+    .pricingCards .priceCardBadge {
+        top: -14px;
+        right: 14px;
+    }
+
+    .pricingCards .priceCardTier {
+        grid-area: tier;
+        margin-bottom: 6px;
+    }
+
+    .pricingCards .priceCardPriceRow {
+        grid-area: price;
+        align-items: baseline;
+        flex-wrap: nowrap;
+        gap: 4px;
+    }
+
+    .pricingCards .priceCardPrice {
+        font-size: 34px;
+        letter-spacing: -1.5px;
+    }
+
+    .pricingCards .priceCardPriceSuffix {
+        font-size: 12px;
+        white-space: nowrap;
+        margin-bottom: 0;
+    }
+
+    .pricingCards .priceCardSubtitle {
+        grid-area: sub;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+
+    .pricingCards .priceCardHighlights {
+        grid-area: hl;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 14px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 2px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .pricingCards .priceCardHighlight {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        font-weight: 700;
+
+        svg {
+            flex-shrink: 0;
+        }
+    }
+
+    // Free's and Annual's notes just repeat the subtitle/footnote; Lifetime's
+    // can carry the Annual-credit message, so it stays.
+    .pricingCards .priceCard--free .priceCardNote,
+    .pricingCards .priceCard--annual .priceCardNote {
+        display: none;
+    }
+
+    .pricingCards .priceCardNote {
+        grid-area: note;
+        margin: 10px 0 0;
+        padding: 0;
+        border-top: 0;
+        font-size: 12.5px;
+        line-height: 1.4;
+    }
+
+    .pricingCards .priceCardFeatures {
+        display: none;
+    }
+
+    .pricingCards .priceCardCta {
+        grid-area: cta;
+        padding: 10px 6px;
+        font-size: 14px;
+        line-height: 1.15;
+        white-space: normal;
+    }
+
+    .pricingCards .priceCard--free .priceCardFootNote,
+    .pricingCards .priceCard--lifetime .priceCardFootNote {
+        display: none;
+    }
+
+    .pricingCards .priceCardFootNote {
+        grid-area: foot;
+        text-align: left;
+        margin-top: 10px;
+    }
+
+    .pricingIncludes {
+        display: block;
+        margin: 0 20px 28px;
+        padding: 16px;
+        background: #fff;
+        border: $neo-m-card-border;
+        box-shadow: $neo-m-card-shadow;
+        border-radius: $neo-card-radius;
+    }
+
+    .pricingTaglineWrap {
+        gap: 14px;
+        padding: 0 20px 36px;
+    }
+
+    .pricingNoLockIn {
+        font-size: 14px;
+    }
+}
+
+// Phones: the muted greys are too faint on the coloured cards, so darken them.
+@media (max-width: $mobile) {
+    .pricingCards {
+        .priceCardTier,
+        .priceCardSubtitle,
+        .priceCardNote,
+        .priceCardFootNote {
+            color: rgba(0, 0, 0, 0.7);
+        }
+
+        .priceCard--free .priceCardTier,
+        .priceCard--free .priceCardSubtitle {
+            color: #555;
+        }
+    }
+}
+
+// Narrow phones (≤380px): no room for price and button side by side, so
+// the button drops to its own full-width row under the price.
+@media (max-width: 380px) {
+    .pricingCards .priceCard {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            'tier'
+            'price'
+            'cta'
+            'sub'
+            'hl'
+            'note'
+            'foot';
+    }
+
+    .pricingCards .priceCardCta {
+        margin-top: 12px;
+        white-space: nowrap;
+        padding: 12px 8px;
     }
 }

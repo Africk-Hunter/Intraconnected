@@ -35,7 +35,9 @@
     bottom: auto;
     width: 100%;
     height: auto;
+    box-sizing: border-box; // so max-height includes padding + border and can't poke past the top
     max-height: 100%;
+    min-height: 0;
     margin: 0;
     overflow: hidden auto;
     transform-origin: 50% 100%;
@@ -44,6 +46,98 @@
         flex: none;
         height: auto;
         overflow: visible;
+    }
+}
+
+// Help menu only (patch notes keeps the whole-sheet scroll above). The sheet
+// itself doesn't scroll: header and nav stay put, and the content between
+// them tweens to each screen's height (set inline by MobileHelpSheet) and
+// scrolls when the screen is taller than the room available.
+.mmobile-helpmenu-sheet {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .mmobile-help-content {
+        flex: 0 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        transition: height 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+}
+
+.mmobile-help-screen {
+    animation: mmHelpScreenForward 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    &--back {
+        animation-name: mmHelpScreenBack;
+    }
+
+    // Space between consecutive paragraphs (screen 1).
+    .mmobile-help-text + .mmobile-help-text {
+        margin-top: 10px;
+    }
+}
+
+@keyframes mmHelpScreenForward {
+    from { opacity: 0; transform: translateX(28px); }
+}
+
+@keyframes mmHelpScreenBack {
+    from { opacity: 0; transform: translateX(-28px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mmobile-help-screen {
+        animation-name: mmHelpScreenFade;
+        animation-duration: 0.2s;
+    }
+
+    .mmobile-helpmenu-sheet .mmobile-help-content {
+        transition: none;
+    }
+}
+
+@keyframes mmHelpScreenFade {
+    from { opacity: 0; }
+}
+
+.mmobile-help-dots {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+// 24px hit area, drawn as a small dot via ::before.
+.mmobile-help-dot {
+    position: relative;
+    width: 22px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 10px;
+        height: 10px;
+        translate: -50% -50%;
+        border: 2px solid #111;
+        border-radius: 999px;
+        background: transparent;
+        transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease;
+    }
+
+    &--active::before {
+        width: 20px;
+        background: $leaf;
     }
 }
 
@@ -62,14 +156,26 @@
 }
 
 .mmobile-help-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 36px;
     background: $neutral;
     border: 2px solid #111;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    padding: 4px 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 0 #111;
+    font-size: 0.95rem;
+    padding: 0 10px;
     cursor: pointer;
     font-family: inherit;
-    line-height: 1.4;
+    line-height: 1;
+    transition: translate 0.15s ease, box-shadow 0.15s ease;
+
+    &:active {
+        translate: 0 2px;
+        box-shadow: none;
+    }
 }
 
 .mmobile-help-content {
@@ -105,8 +211,8 @@
 
 .mmobile-help-grid {
     display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 12px 14px;
+    grid-template-columns: 5rem 1fr;
+    gap: 14px 14px;
     align-items: center;
 }
 
@@ -122,6 +228,9 @@
     white-space: nowrap;
     align-self: start;
     margin-top: 2px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 2px 0 #111;
     color: #111;
 
     &--root            { background: $roots; }
@@ -130,14 +239,14 @@
         background: $back;
         .mmobile-help-badge-icon { object-fit: contain; }
     }
-    &--delete          { background: $danger; }
+    &--delete          { background: $danger; .mmobile-help-badge-icon { filter: invert(1); } }
     &--leaf            { background: $leaf; }
     &--parent          { background: $sky; }
     &--link            { background: $link; }
     &--checklist-node  { background: $indigo; color: white; }
-    &--nav             { background: white; }
+    &--nav             { background: $neo-pink; }
     &--patchnotes      { background: white; }
-    &--edit            { background: white; }
+    &--edit            { background: white; padding: 0; overflow: hidden; align-items: stretch; }
     &--p1              { background: #D62000; color: white; }
     &--sort            { background: $deep-yellow; }
 }
@@ -379,9 +488,17 @@
     padding: 6px 12px;
     cursor: pointer;
     box-shadow: 0 3px 0 #111;
-    background: $back;
+    background: $neutral;
+    color: #111;
+    font-weight: 600;
+    transition: translate 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
 
     &--next { background: $leaf; padding: 12px; }
+
+    &:active:not(:disabled) {
+        translate: 0 3px;
+        box-shadow: none;
+    }
 
     &:disabled {
         opacity: 0.3;
@@ -431,6 +548,33 @@
         font-size: 1.2rem;
     }
 
+    .mmobile-help-pager {
+        font-size: 1.1rem;
+    }
+
+    .mmobile-help-close {
+        font-size: 1.15rem;
+        padding: 6px 13px;
+    }
+
+    .mmobile-patchnotes-recommend-btn {
+        font-size: 1rem;
+        padding: 6px 14px;
+    }
+
+    .mmobile-patchnotes-tag {
+        font-size: 0.95rem;
+        padding: 3px 10px;
+    }
+
+    .mmobile-patchnotes-title {
+        font-size: 1.35rem;
+    }
+
+    .mmobile-patchnotes-msg {
+        font-size: 1.05rem;
+    }
+
     .mmobile-help-badge {
         font-size: 1.4rem;
         padding: 12px 10px;
@@ -448,4 +592,19 @@
 
         &--next { padding: 16px; }
     }
+}
+
+// Mini copy of the swipe-to-reveal buttons (edit / move / delete).
+.mmobile-help-swipe-seg {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 0;
+
+    img { width: 16px; height: 16px; filter: invert(1); }
+
+    &--rename { background: $sky; }
+    &--move   { background: $deep-yellow; }
+    &--delete { background: $danger; }
 }

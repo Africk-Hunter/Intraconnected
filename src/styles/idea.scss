@@ -62,6 +62,14 @@
         width: 100%;
     }
 
+    // Clear the fixed sidebars' real footprint (the right one holds the
+    // 3-wide depth-indicator grid, ~12rem from the edge) rather than 15% —
+    // on narrower screens 15% is less than that and the cards ran under it.
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        width: calc(100% - 26rem);
+        margin: 0 13rem;
+    }
+
     @media (min-width: $large-desktop) {
         width: 80%;
         margin: 0 15%;
@@ -352,8 +360,24 @@
         row-gap: 2rem;
     }
 
+    // Tablet / small laptop: cards fill their column (see the matching
+    // `width: 100%` rules on .ideaNode) instead of a fixed width, so
+    // checklists and notes — which have no side padding — aren't squeezed
+    // narrower than the other cards.
     @media screen and (min-width: $mobile) and (max-width: 1438px) {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 2rem;
+        justify-items: stretch;
+
+        &>[data-flip-id] {
+            min-width: 0;
+        }
+    }
+
+    // Tablet landscape (iPad, Nest Hub): three columns would be too narrow
+    // for a normal word at the card font size.
+    @media screen and (min-width: $mobile) and (max-width: 1365px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -499,6 +523,10 @@
         @media screen and (max-width: $mobile) {
             padding: 1.75rem 1rem 1.25rem 1rem;
         }
+
+        @media screen and (min-width: $mobile) and (max-width: 1438px) {
+            font-size: 1.6rem;
+        }
     }
 
     &.leaf {
@@ -516,7 +544,8 @@
         }
 
         @media screen and (min-width: $mobile) and (max-width: 1438px) {
-            width: 10rem;
+            width: 100%;
+            box-sizing: border-box;
             padding: 2rem 1.5rem 1.5rem 1.5rem;
         }
 
@@ -641,6 +670,10 @@
             width: 20rem;
             font-size: 2.75rem;
         }
+
+        @media screen and (min-width: $mobile) and (max-width: 1438px) {
+            font-size: 1.6rem;
+        }
     }
 
     @media (max-width: $mobile) {
@@ -654,7 +687,8 @@
     }
 
     @media screen and (min-width: $mobile) and (max-width: 1438px) {
-        width: 10rem;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     &:hover .copy {
@@ -789,6 +823,15 @@
 
     &.link {
         padding-left: 1.8rem;
+    }
+
+    // Cards fill their column here, so a title can run the full width —
+    // keep it clear of the ribbon.
+    @media screen and (min-width: $mobile) and (max-width: 1438px) {
+        &.parent,
+        &.link {
+            padding-left: 2.4rem;
+        }
     }
 
     @media (min-width: $large-desktop) {
@@ -941,7 +984,8 @@
     cursor: default;
 
     @media screen and (min-width: $mobile) and (max-width: 1438px) {
-        width: 10rem;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     @media (min-width: $large-desktop) {
@@ -1296,7 +1340,8 @@
     }
 
     @media screen and (min-width: $mobile) and (max-width: 1438px) {
-        width: 10rem;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     @media (min-width: $large-desktop) {

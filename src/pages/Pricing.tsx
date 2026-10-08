@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import PriceCard from '../components/landing/PriceCard';
-import CoffeeIcon from '../components/landing/CoffeeIcon';
+import PizzaIcon from '../components/landing/PizzaIcon';
+import PriceCheckIcon from '../components/landing/PriceCheckIcon';
 import type { CheckoutPlan } from '../utilities/billing/billing';
 import { useLifetimePrice } from '../utilities/billing/useLifetimePrice';
 import { ANNUAL_PRICE_DISPLAY, ANNUAL_PRICE_PER_MONTH_DISPLAY, LIFETIME_PRICE_DISPLAY, formatMoney } from '../utilities/billing/pricingDisplay';
@@ -36,7 +37,7 @@ const Pricing: React.FC = () => {
         <span className="pricingHeroNode pricingHeroNode--leaf" aria-hidden="true">idea!</span>
         <span className="pricingHeroNode pricingHeroNode--sky" aria-hidden="true">sub-idea</span>
         <span className="pricingHeroNode pricingHeroNode--link" aria-hidden="true">tangent</span>
-        <div className="pricingHeroSticker">Cheaper than a latte <CoffeeIcon /></div>
+        <div className="pricingHeroSticker">Cheaper than pizza <PizzaIcon /></div>
         <h1 className="pricingHeroTitle">Big ideas,<br /><span className="pricingHeroTitleHighlight">tiny</span> price.</h1>
         <p className="pricingHeroSubline">
           50 nodes free, no card needed. Go annual for {ANNUAL_PRICE_DISPLAY}/yr, or pay once
@@ -57,6 +58,7 @@ const Pricing: React.FC = () => {
             { label: 'Full feature access' },
             { label: 'Export anytime (Markdown, OPML, JSON)' },
           ]}
+          highlights={['Up to 50 nodes']}
           ctaLabel="Get Started Free"
           onCtaClick={() => navigate('/login')}
           footNote="No card required"
@@ -76,6 +78,7 @@ const Pricing: React.FC = () => {
               { label: 'Export anytime (Markdown, OPML, JSON)' },
               { label: 'Suggest new features' },
             ]}
+            highlights={['Unlimited nodes', 'Suggest new features']}
             ctaLabel="Start Annual Plan"
             onCtaClick={() => beginCheckout('annual')}
             footNote={`Renews at ${ANNUAL_PRICE_DISPLAY}/yr · Cancel anytime`}
@@ -108,11 +111,20 @@ const Pricing: React.FC = () => {
               { label: 'Export anytime (Markdown, OPML, JSON)' },
               { label: 'Suggest new features' },
             ]}
+            highlights={['Unlimited nodes', 'Suggest new features']}
             ctaLabel="Unlock Lifetime Access"
             onCtaClick={() => beginCheckout('lifetime')}
             footNote="Access Forever"
           />
         )}
+      </section>
+
+      <section className="pricingIncludes" aria-label="Included in every plan">
+        <h2 className="pricingIncludesTitle">Every plan includes</h2>
+        <ul className="pricingIncludesList">
+          <li><PriceCheckIcon style="green" />Full feature access</li>
+          <li><PriceCheckIcon style="green" />Export anytime (Markdown, OPML, JSON)</li>
+        </ul>
       </section>
 
       <div className="pricingTaglineWrap">
