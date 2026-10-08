@@ -6,8 +6,8 @@ import MessageBox from "./MessageBox";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
-import { isGmailAddress, gmailResetSearchUrl } from "../utilities/gmail";
-import { storeEncryptedDEK, fetchEncryptedDEK, addEmailEncryptedDEK } from "../utilities/firebase/firebaseHelpers";
+import { getMailProvider, resetMailUrl } from "../utilities/mailProvider";
+import { storeEncryptedDEK, fetchEncryptedDEK, addEmailEncryptedDEK } from "../utilities/firebase/encryptionKeys";
 
 const Auth: React.FC = () => {
 
@@ -34,7 +34,7 @@ const Auth: React.FC = () => {
             }
         });
         return () => unsubscribe();
-    });
+    }, []);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -164,7 +164,7 @@ const Auth: React.FC = () => {
 
         let userCredential;
         try {
-            userCredential = await signInWithEmailAndPassword(auth, email, capturedPassword);
+            userCredential = await signInWithEmailAndPassword(auth, email.trim(), capturedPassword);
         } catch {
             isSigningIn.current = false;
             displayMessage('Invalid email or password. Please try again', 'bad');
@@ -248,6 +248,8 @@ const Auth: React.FC = () => {
         }
     }
 
+    const resetProvider = resetSentTo && email.trim() === resetSentTo ? getMailProvider(resetSentTo) : null;
+
     return (
         <div className="auth">
             <MessageBox />
@@ -263,14 +265,14 @@ const Auth: React.FC = () => {
                                 <span className="rememberMeBox" aria-hidden="true" />
                                 Keep me signed in
                             </label>
-                            {resetSentTo && isGmailAddress(resetSentTo) && email.trim() === resetSentTo ? (
+                            {resetProvider ? (
                                 <a
                                     className={`openGmail neobrutal-button ${showConfirmPassword ? "hidden" : ""}`}
-                                    href={gmailResetSearchUrl(resetSentTo)}
+                                    href={resetMailUrl(resetSentTo, resetProvider)}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    Open Gmail ↗
+                                    Open {resetProvider.name} ↗
                                 </a>
                             ) : (
                                 <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>

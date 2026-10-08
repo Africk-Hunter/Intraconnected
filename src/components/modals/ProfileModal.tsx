@@ -1,13 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { isGmailAddress, gmailResetSearchUrl } from '../../utilities/gmail';
+import { getMailProvider, resetMailUrl } from '../../utilities/mailProvider';
 import { signUserOut,deleteUserAccount, sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
 import { auth } from '../../firebaseConfig';
 import { fetchFullIdeaList } from '../../utilities/idea/helpers';
 import { checkDevPassword } from '../../utilities/devPassword';
 import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
-import { getCachedBillingStatus, BillingStatus } from '../../utilities/firebase/firebaseHelpers';
+import { getCachedBillingStatus, BillingStatus } from '../../utilities/billing/billingCache';
 import { SUPPORT_EMAIL } from '../../utilities/support';
 import { ideasToMarkdown, ideasToOpml } from '../../utilities/idea/exporters';
 import type { SortMode } from '../../utilities/idea/sorting';
@@ -42,6 +42,7 @@ function ProfileModal() {
     const [mobileView, setMobileView] = useState<MobileView>('tabs');
     const [resetSent, setResetSent] = useState(false);
     const [resetError, setResetError] = useState('');
+    const resetProvider = auth.currentUser?.email ? getMailProvider(auth.currentUser.email) : null;
     const [deletePassword, setDeletePassword] = useState('');
     const [deleteConfirm, setDeleteConfirm] = useState('');
     const [deleteError, setDeleteError] = useState('');
@@ -64,13 +65,14 @@ function ProfileModal() {
     const [emailVerified, setEmailVerified] = useState(true);
     const [verifyResendSent, setVerifyResendSent] = useState(false);
     const [verifyError, setVerifyError] = useState('');
-    const [isCheckingVerified, setIsCheckingVerified] = useState(false);
     const { contentRef, height: contentHeight, animate: animateHeight } = useSmoothHeight<HTMLDivElement>();
 
     useEffect(() => {
         if (profileModalOpen) {
             setBillingStatus(getCachedBillingStatus());
             setEmailVerified(auth.currentUser?.emailVerified ?? true);
+            // Picks up a verification completed since the modal was last opened.
+            refreshEmailVerified().then(setEmailVerified).catch(() => {});
         }
     }, [profileModalOpen]);
 
@@ -96,7 +98,6 @@ function ProfileModal() {
         setResetPlanError('');
         setVerifyResendSent(false);
         setVerifyError('');
-        setIsCheckingVerified(false);
         setRefundStep('idle');
         setIsRefunding(false);
         setRefundError('');
@@ -112,22 +113,14 @@ function ProfileModal() {
         try {
             await resendVerificationEmail();
             setVerifyResendSent(true);
-        } catch {
-            setVerifyError('Failed to send verification email. Please try again.');
-        }
-    }
-
-    async function handleCheckVerified() {
-        setIsCheckingVerified(true);
-        setVerifyError('');
-        try {
-            const verified = await refreshEmailVerified();
-            setEmailVerified(verified);
-            if (!verified) setVerifyError("Still not verified, check your inbox, or resend the email.");
-        } catch {
-            setVerifyError('Could not check verification status. Please try again.');
-        } finally {
-            setIsCheckingVerified(false);
+        } catch (error) {
+            console.error('Verification email error:', error);
+            const code = (error as { code?: string }).code;
+            setVerifyError(
+                code === 'auth/too-many-requests'
+                    ? 'Too many attempts. Please wait a few minutes and try again.'
+                    : 'Failed to send verification email. Please try again.'
+            );
         }
     }
 
@@ -267,7 +260,9 @@ function ProfileModal() {
             if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
                 setDeleteError('Incorrect password. Please try again.');
             } else {
-                setDeleteError('Something went wrong. Please try again.');
+                // Server errors (no Firebase code) carry a user-facing message,
+                // e.g. why the subscription couldn't be canceled.
+                setDeleteError(!code && err instanceof Error && err.message ? err.message : 'Something went wrong. Please try again.');
             }
             setIsDeleting(false);
         }
@@ -399,13 +394,6 @@ function ProfileModal() {
                         >
                             {verifyResendSent ? 'Verification email sent' : 'Send verification email'}
                         </button>
-                        <button
-                            className="profile-action-btn neutral neobrutal-button"
-                            onClick={handleCheckVerified}
-                            disabled={isCheckingVerified}
-                        >
-                            {isCheckingVerified ? 'Checking…' : "I've verified, refresh"}
-                        </button>
                     </div>
                     {verifyError && <p className="profile-error">{verifyError}</p>}
                 </section>
@@ -414,23 +402,25 @@ function ProfileModal() {
             {/* Reset Password */}
             <section className="profile-section profile-section--reset">
                 <h3 className="profile-section-title">Reset Password</h3>
-                <button
-                    className="profile-action-btn neobrutal-button"
-                    onClick={handleResetPassword}
-                    disabled={resetSent}
-                >
-                    {resetSent ? 'Link sent to email' : 'Send reset link'}
-                </button>
-                {resetSent && auth.currentUser?.email && isGmailAddress(auth.currentUser.email) && (
-                    <a
-                        className="profile-action-btn profile-action-btn--link neobrutal-button"
-                        href={gmailResetSearchUrl(auth.currentUser.email)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                <div className="profile-reset-actions">
+                    <button
+                        className="profile-action-btn neobrutal-button"
+                        onClick={handleResetPassword}
+                        disabled={resetSent}
                     >
-                        Open Gmail
-                    </a>
-                )}
+                        {resetSent ? 'Link sent to email' : 'Send reset link'}
+                    </button>
+                    {resetSent && resetProvider && (
+                        <a
+                            className="profile-action-btn profile-action-btn--link neobrutal-button"
+                            href={resetMailUrl(auth.currentUser!.email!, resetProvider)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Open {resetProvider.name}
+                        </a>
+                    )}
+                </div>
                 {resetError && <p className="profile-error">{resetError}</p>}
             </section>
 

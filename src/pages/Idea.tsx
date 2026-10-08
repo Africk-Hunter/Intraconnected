@@ -46,7 +46,7 @@ import ProfileModal from '../components/modals/ProfileModal';
 import UpgradeModal from '../components/modals/UpgradeModal';
 import LazyCheckoutModal from '../components/modals/LazyCheckoutModal';
 import UpgradeCelebrationModal from '../components/modals/UpgradeCelebrationModal';
-import MobileMindMap from '../components/MobileMindMap';
+import MobileMindMap from '../components/mobile/MobileMindMap';
 import MindMap from '../components/MindMap';
 import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRequests';
 import { consumePendingCheckoutPlan } from '../utilities/billing/billing';

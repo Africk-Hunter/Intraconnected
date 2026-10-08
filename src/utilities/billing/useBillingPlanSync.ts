@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { auth } from '../../firebaseConfig';
-import { subscribeBillingStatus, type BillingPlan } from '../firebase/firebaseHelpers';
+import { subscribeBillingStatus, type BillingPlan } from './billingCache';
 
 // Mirrors the signed-in user's plan from Firestore into `setBillingPlan`
 // until the returned function is called. Plain function (not only a hook)

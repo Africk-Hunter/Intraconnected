@@ -1,16 +1,11 @@
 import type { Context } from "@netlify/functions";
 import { firestore, verifyIdToken } from "./lib/firebaseAdmin";
 import { preflightResponse, jsonResponse } from "./lib/cors";
+import type { TrackedIssue } from "../../shared/featureRequests";
 
 const GITHUB_REPO = process.env.GITHUB_REPO ?? "Africk-Hunter/Intraconnected";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-interface TrackedIssue {
-    issueNumber: number;
-    title: string;
-    seenClosed: boolean;
-    createdAt: number;
-}
 
 export default async (req: Request, _context: Context) => {
     const preflight = preflightResponse(req);

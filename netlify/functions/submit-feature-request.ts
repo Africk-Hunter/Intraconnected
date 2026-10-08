@@ -1,7 +1,9 @@
 import type { Context } from "@netlify/functions";
-import { firestore, verifyIdToken } from "./lib/firebaseAdmin";
+import { firestore, verifyIdTokenDetailed } from "./lib/firebaseAdmin";
 import { containsProfanity } from "./lib/profanityFilter";
 import { preflightResponse, jsonResponse } from "./lib/cors";
+import { checkRateLimit } from "./lib/rateLimit";
+import type { TrackedIssue } from "../../shared/featureRequests";
 
 const GITHUB_REPO = process.env.GITHUB_REPO ?? "Africk-Hunter/Intraconnected";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -11,12 +13,6 @@ const BODY_MAX_LENGTH = 1000;
 const RATE_LIMIT_PER_DAY = 5;
 const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-interface TrackedIssue {
-    issueNumber: number;
-    title: string;
-    seenClosed: boolean;
-    createdAt: number;
-}
 
 export default async (req: Request, _context: Context) => {
     const preflight = preflightResponse(req);
@@ -33,10 +29,16 @@ export default async (req: Request, _context: Context) => {
         return jsonError(500, "Server misconfigured.");
     }
 
-    const uid = await verifyIdToken(req);
-    if (!uid) {
+    const user = await verifyIdTokenDetailed(req);
+    if (!user) {
         return jsonError(401, "You must be signed in to submit a feature request.");
     }
+    // Every request opens a GitHub issue with the server's token, and sign-up
+    // is open — without this, throwaway accounts are free issue spam.
+    if (!user.emailVerified) {
+        return jsonError(403, "Please verify your email address before submitting a feature request.");
+    }
+    const uid = user.uid;
 
     let payload: { title?: unknown; body?: unknown };
     try {
@@ -53,16 +55,19 @@ export default async (req: Request, _context: Context) => {
     if (body.length > BODY_MAX_LENGTH) return jsonError(400, `Description must be ${BODY_MAX_LENGTH} characters or fewer.`);
     if (containsProfanity(title) || containsProfanity(body)) return jsonError(400, "Please keep your request respectful.");
 
+    // Claimed before the GitHub call (and atomically — see checkRateLimit),
+    // so simultaneous requests can't all slip under the limit. A request that
+    // then fails at GitHub still uses up its slot; that's the cheap side to
+    // err on.
+    const allowed = await checkRateLimit({ uid, key: "featureRequest", limit: RATE_LIMIT_PER_DAY, windowMs: RATE_LIMIT_WINDOW_MS });
+    if (!allowed) {
+        return jsonError(429, "You've reached the daily limit for feature requests. Try again tomorrow.");
+    }
+
     const db = firestore();
     const ref = db.collection("users").doc(uid).collection("meta").doc("featureRequests");
     const snap = await ref.get();
     const existing: TrackedIssue[] = snap.exists ? (snap.data()?.issues ?? []) : [];
-
-    const since = Date.now() - RATE_LIMIT_WINDOW_MS;
-    const recentCount = existing.filter((issue) => issue.createdAt >= since).length;
-    if (recentCount >= RATE_LIMIT_PER_DAY) {
-        return jsonError(429, "You've reached the daily limit for feature requests. Try again tomorrow.");
-    }
 
     let issueNumber: number;
     try {

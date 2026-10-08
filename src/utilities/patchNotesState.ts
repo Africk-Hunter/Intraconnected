@@ -1,5 +1,5 @@
 import { ChangelogEntry } from './parseChangelog';
-import { fetchLastSeenPatchVersion, updateLastSeenPatchVersion } from './firebase/firebaseHelpers';
+import { fetchLastSeenPatchVersion, updateLastSeenPatchVersion } from './firebase/preferences';
 
 function storageKey(uid: string) {
     return `patchNotes_lastSeen_${uid}`;

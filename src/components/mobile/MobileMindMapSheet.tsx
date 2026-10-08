@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
+import { IdeaType, getIdeaLink, openIdeaLink, resolveIdeaLabel, isNoteMode } from '../../utilities';
 
 interface Props {
     currentId: number;
@@ -100,7 +100,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
 
             function handleClick() {
                 if (isChecklist || isNote) return;
-                if (isLink) { window.open(getIdeaLink(child), '_blank', 'noopener,noreferrer'); return; }
+                if (isLink) { openIdeaLink(getIdeaLink(child)); return; }
                 onNavigate(id);
             }
 

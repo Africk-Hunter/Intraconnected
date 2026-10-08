@@ -5,7 +5,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, scheduleChecklistFirebaseWrite, cleanLink, updateIdeaPriority, schedulePriorityFirebaseWrite, isNoteMode, isNoteWide, updateIdeaName, updateIdeaNameInFirebase } from '../utilities';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, cleanLink, openIdeaLink, updateIdeaPriority, isNoteMode, isNoteWide, updateIdeaName } from '../utilities';
 
 const NOTE_BODY_MAX_LENGTH = 2000;
 
@@ -412,7 +412,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     function handleNodeClick(e: React.MouseEvent) {
         if (link !== '') {
             e.preventDefault();
-            window.open(link, '_blank', 'noopener,noreferrer');
+            openIdeaLink(link);
             return;
         }
         makeRoot();
@@ -639,8 +639,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         const newBody = el ? el.innerText : title;
         setIsEditingBody(false);
         if (newBody === title) return;
-        updateIdeaNameInFirebase(id, newBody).then(() => {
-            updateIdeaName(id, newBody);
+        updateIdeaName(id, newBody).then(() => {
             setNewIdeaSwitch(prev => !prev);
         }).catch((error) => {
             console.error("Error updating note body: ", error);
@@ -671,7 +670,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         if (isRibbonAnimating) return;
         const next = priority === undefined ? 3 : priority === 3 ? 2 : priority === 2 ? 1 : undefined;
         updateIdeaPriority(id, next);
-        schedulePriorityFirebaseWrite(id, next);
         pendingResort.current = true;
         setIsRibbonAnimating(true);
         setTimeout(() => {
@@ -694,7 +692,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         );
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
-        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     function commitAddItem() {
@@ -705,7 +702,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         setLocalItems(newItems);
         setAddItemDraft('');
         updateChecklistItems(id, newItems);
-        scheduleChecklistFirebaseWrite(id, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -727,7 +723,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         const newItems = localItems.filter(item => item.id !== itemId);
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
-        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     function editItem(itemId: string, newText: string) {
@@ -736,7 +731,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         );
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
-        scheduleChecklistFirebaseWrite(id, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -746,7 +740,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         );
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
-        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     function handleItemDragEnd(event: DragEndEvent) {
@@ -757,7 +750,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         const newItems = arrayMove(localItems, oldIndex, newIndex);
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
-        scheduleChecklistFirebaseWrite(id, newItems);
     }
 
     if (isChecklist) {

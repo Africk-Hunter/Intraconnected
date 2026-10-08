@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import changelog from '../../programmer-docs/CHANGELOG.md?raw';
-import { parseChangelog } from '../utilities/parseChangelog';
-import { containsProfanity } from '../utilities/profanityFilter';
-import { submitFeatureRequest } from '../utilities/firebase/featureRequests';
+import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
+import { parseChangelog } from '../../utilities/parseChangelog';
+import { containsProfanity } from '../../utilities/profanityFilter';
+import { submitFeatureRequest } from '../../utilities/firebase/featureRequests';
 
 const entries = parseChangelog(changelog);
 

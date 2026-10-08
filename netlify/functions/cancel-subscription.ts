@@ -1,8 +1,8 @@
-import type { Context } from "@netlify/functions";
-import { verifyIdToken, firestore } from "./lib/firebaseAdmin";
 import { stripe } from "./lib/stripe";
-import { preflightResponse, jsonResponse } from "./lib/cors";
+import { jsonResponse } from "./lib/cors";
 import { checkRateLimit } from "./lib/rateLimit";
+import { authed } from "./lib/handler";
+import { getBillingDoc } from "./lib/lifetimePricing";
 
 // Self-serve cancellation shouldn't need to be called often — this is
 // generous enough for a user who backs out of the confirm step a few times,
@@ -10,34 +10,16 @@ import { checkRateLimit } from "./lib/rateLimit";
 const CANCEL_RATE_LIMIT = 5;
 const CANCEL_RATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-export default async (req: Request, _context: Context) => {
-    const preflight = preflightResponse(req);
-    if (preflight) return preflight;
-
-    function jsonError(status: number, message: string) {
-        return jsonResponse(req, { error: message }, status);
-    }
-
-    if (req.method !== "POST") {
-        return jsonError(405, "Method not allowed.");
-    }
-
-    const uid = await verifyIdToken(req);
-    if (!uid) {
-        return jsonError(401, "You must be signed in to cancel your subscription.");
-    }
-
+export default authed({ signInMessage: "You must be signed in to cancel your subscription." }, async ({ req, uid, fail }) => {
     const allowed = await checkRateLimit({ uid, key: "cancelSubscription", limit: CANCEL_RATE_LIMIT, windowMs: CANCEL_RATE_WINDOW_MS });
     if (!allowed) {
-        return jsonError(429, "Too many cancellation attempts. Please wait a bit and try again.");
+        return fail(429, "Too many cancellation attempts. Please wait a bit and try again.");
     }
 
-    const billingRef = firestore().collection("users").doc(uid).collection("meta").doc("billing");
-    const billingSnap = await billingRef.get();
-    const subscriptionId = billingSnap.exists ? (billingSnap.data()?.stripeSubscriptionId as string | null | undefined) : null;
+    const subscriptionId = (await getBillingDoc(uid))?.stripeSubscriptionId;
 
     if (!subscriptionId) {
-        return jsonError(400, "No active subscription found.");
+        return fail(400, "No active subscription found.");
     }
 
     try {
@@ -51,6 +33,6 @@ export default async (req: Request, _context: Context) => {
         return jsonResponse(req, { success: true });
     } catch (err) {
         console.error("Failed to cancel subscription:", err);
-        return jsonError(502, "Failed to cancel subscription.");
+        return fail(502, "Failed to cancel subscription.");
     }
-};
+});

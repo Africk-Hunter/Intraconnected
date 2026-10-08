@@ -6,9 +6,20 @@ vi.mock("./firebaseAdmin", () => ({ firestore: firestoreMock }));
 
 import { checkRateLimit } from "./rateLimit";
 
+// Runs the transaction callback against the fake doc ref directly — enough
+// for get-then-set semantics; real Firestore adds the retry-on-contention.
+function fakeTransactionRunner() {
+    return async (fn: (tx: unknown) => Promise<unknown>) =>
+        fn({
+            get: (ref: { get: () => Promise<unknown> }) => ref.get(),
+            set: (ref: { set: (data: unknown) => unknown }, data: unknown) => ref.set(data),
+        });
+}
+
 function mockRateLimitDoc(hits: number[] | null) {
     const ref = fakeDocRef(hits ? { hits } : null);
     firestoreMock.mockReturnValue({
+        runTransaction: fakeTransactionRunner(),
         collection: vi.fn(() => ({
             doc: vi.fn(() => ({
                 collection: vi.fn(() => ({
@@ -62,6 +73,7 @@ describe("checkRateLimit", () => {
             return ref;
         });
         firestoreMock.mockReturnValue({
+            runTransaction: fakeTransactionRunner(),
             collection: vi.fn(() => ({
                 doc: vi.fn(() => ({
                     collection: vi.fn(() => ({

@@ -1,5 +1,5 @@
 import { auth } from "../../firebaseConfig";
-import { getCachedBillingStatus } from "../firebase/firebaseHelpers";
+import { getCachedBillingStatus } from "../billing/billingCache";
 import { FREE_NODE_LIMIT } from "../billing/limits";
 import { enqueueMany } from "../sync/outbox";
 import { IdeaType } from "../types";

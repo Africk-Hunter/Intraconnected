@@ -1,5 +1,5 @@
 import { useIdeaContext } from "../../context/IdeaContext";
-import { updateIdeaLinkInFirebase, updateIdeaLink, cleanLink } from "../../utilities";
+import { updateIdeaLink, cleanLink } from "../../utilities";
 import AnimatedOverlay from "../AnimatedOverlay";
 
 
@@ -9,8 +9,7 @@ function LinkChangeModal() {
     
 
     function handleLinkChange(ideaID: number, newLink: string) {
-        updateIdeaLinkInFirebase(ideaID, newLink).then(() => {
-            updateIdeaLink(ideaID, newLink);
+        updateIdeaLink(ideaID, newLink).then(() => {
             setNewIdeaSwitch(prev => !prev);
         }).catch((error) => {
             console.error("Error updating link: ", error);

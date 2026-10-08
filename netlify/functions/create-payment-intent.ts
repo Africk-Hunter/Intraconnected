@@ -2,7 +2,7 @@ import type { Context } from "@netlify/functions";
 import type Stripe from "stripe";
 import { verifyIdTokenDetailed, type VerifiedUser } from "./lib/firebaseAdmin";
 import { stripe } from "./lib/stripe";
-import { getBillingDoc, getLifetimePrice } from "./lib/lifetimePricing";
+import { getBillingDoc, getLifetimePrice, recordStripeCustomer } from "./lib/lifetimePricing";
 import { preflightResponse, jsonResponse } from "./lib/cors";
 import { checkRateLimit } from "./lib/rateLimit";
 
@@ -28,6 +28,36 @@ const CHECKOUT_RATE_LIMIT = 10;
 const CHECKOUT_RATE_WINDOW_MS = 60 * 60 * 1000;
 
 const DEBUG = "[create-payment-intent]";
+
+// The duplicate-purchase guards below can't trust meta/billing alone: only
+// the webhook writes it, so for a few seconds after a successful payment it
+// still says "free" and a second checkout would sail through and charge
+// again. Stripe is the source of truth for what the customer already owns.
+async function hasLiveAnnualSubscription(customerId: string): Promise<boolean> {
+    const subscriptions = await stripe().subscriptions.list({ customer: customerId, status: "all", limit: 100 });
+    return subscriptions.data.some((sub) => ACTIVE_SUBSCRIPTION_STATUSES.includes(sub.status));
+}
+
+// A fully refunded purchase doesn't count — Stripe leaves its PaymentIntent
+// as "succeeded", so the charge's own `refunded` flag is what says so.
+async function hasPaidLifetime(customerId: string): Promise<boolean> {
+    const intents = await stripe().paymentIntents.list({ customer: customerId, limit: 100, expand: ["data.latest_charge"] });
+    return intents.data.some((intent) => {
+        if (intent.status !== "succeeded" || intent.metadata?.plan !== "lifetime") return false;
+        const charge = intent.latest_charge;
+        return !(charge && typeof charge === "object" && charge.refunded);
+    });
+}
+
+// Best-effort: failing to remember the customer only weakens the guards
+// above for the next checkout; it must never block this one.
+async function rememberCustomer(uid: string, customerId: string, billing: Awaited<ReturnType<typeof getBillingDoc>>): Promise<void> {
+    try {
+        await recordStripeCustomer(uid, customerId, billing);
+    } catch (error) {
+        console.error(DEBUG, "failed to record the Stripe customer on meta/billing", error);
+    }
+}
 
 // Reuses the Stripe Customer already on file (so repeated checkouts and a
 // later Lifetime purchase stay on one Customer — stripe-webhook.ts relies on
@@ -122,13 +152,19 @@ export default async (req: Request, _context: Context) => {
                 return jsonError(409, "You already have Lifetime access.");
             }
 
-            const { amount, currency } = await getLifetimePrice(uid, priceId);
-
             // Kept on the same Customer as any prior Annual subscription (see
             // resolveCustomer) rather than left anonymous — that Customer's
             // canceled subscription and saved card are what stripe-webhook.ts
             // restores Annual from if an annual→lifetime upgrade is refunded.
             const customer = await resolveCustomer(billing?.stripeCustomerId, uid, user.email);
+            await rememberCustomer(uid, customer, billing);
+
+            // Paid but not yet reflected in meta/billing (webhook in flight).
+            if (await hasPaidLifetime(customer)) {
+                return jsonError(409, "You already have Lifetime access.");
+            }
+
+            const { amount, currency } = await getLifetimePrice(uid, priceId);
 
             const paymentIntent = await stripe().paymentIntents.create({
                 amount,
@@ -148,6 +184,14 @@ export default async (req: Request, _context: Context) => {
             return jsonResponse(req, { clientSecret: paymentIntent.client_secret, amount, currency });
         }
 
+        // Lifetime already covers everything Annual does; a subscription
+        // bought on top would bill every year for nothing, and the webhook
+        // deliberately never records it against a Lifetime account, so it
+        // couldn't even be cancelled from the app.
+        if (billing?.plan === "lifetime") {
+            return jsonError(409, "You already have Lifetime access.");
+        }
+
         // Already have a live Annual subscription — Stripe allows multiple
         // subscriptions per customer, so subscriptions.create below would
         // silently create a second, independent one rather than reuse or
@@ -157,6 +201,12 @@ export default async (req: Request, _context: Context) => {
         }
 
         const customer = await resolveCustomer(billing?.stripeCustomerId, uid, user.email);
+        await rememberCustomer(uid, customer, billing);
+
+        // Same webhook-lag gap as the Lifetime branch: ask Stripe.
+        if (await hasLiveAnnualSubscription(customer)) {
+            return jsonError(409, "You already have an active Annual subscription.");
+        }
 
         const subscription = await stripe().subscriptions.create({
             customer,

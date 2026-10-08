@@ -1,5 +1,5 @@
 import { useIdeaContext } from "../../context/IdeaContext";
-import { updateIdeaName, updateIdeaNameInFirebase, updateIdeaNoteTitle, updateNoteTitleInFirebase, fetchFullIdeaList, isNoteMode } from "../../utilities";
+import { updateIdeaName, updateIdeaNoteTitle, fetchFullIdeaList, isNoteMode } from "../../utilities";
 import { useEffect, useState } from "react";
 import AnimatedOverlay from "../AnimatedOverlay";
 
@@ -49,18 +49,16 @@ function RenameModal() {
         setSelectedIdeaName(newName);
         const id = pickID();
         if (noteMode) {
-            updateNoteTitleInFirebase(id, newName).then(() => {
+            updateIdeaNoteTitle(id, newName).then(() => {
                 if (editRootOrNot) setRootName(newName.trim() ? newName : 'Untitled');
-                updateIdeaNoteTitle(id, newName);
                 setNewIdeaSwitch(prev => !prev);
             }).catch((error) => {
                 console.error("Error renaming note: ", error);
             });
             return;
         }
-        updateIdeaNameInFirebase(id, newName).then(() => {
+        updateIdeaName(id, newName).then(() => {
             if (editRootOrNot) setRootName(newName);
-            updateIdeaName(id, newName);
             setNewIdeaSwitch(prev => !prev);
         }).catch((error) => {
             console.error("Error renaming idea: ", error);

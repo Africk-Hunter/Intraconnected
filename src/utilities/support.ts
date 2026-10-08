@@ -1,1 +1,1 @@
-export const SUPPORT_EMAIL = 'support@intraconnected.app';
+export { SUPPORT_EMAIL } from '../../shared/support';

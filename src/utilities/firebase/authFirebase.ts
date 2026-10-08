@@ -43,7 +43,14 @@ export async function deleteUserAccount(password: string): Promise<void> {
         headers: { Authorization: `Bearer ${idToken}` },
     });
     if (!res.ok) {
-        throw new Error(await res.text());
+        let message = 'Something went wrong. Please try again.';
+        try {
+            const body = await res.json() as { error?: string };
+            if (body.error) message = body.error;
+        } catch {
+            // Non-JSON error body — keep the generic message.
+        }
+        throw new Error(message);
     }
 
     // The Auth user record is already gone server-side at this point —

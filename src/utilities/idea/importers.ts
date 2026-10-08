@@ -476,13 +476,13 @@ export function parseIntraconnectedJson(json: string): ImportDoc {
         const out = node('');
         if (idea.type === 'checklist') {
             out.text = idea.content;
-            out.items = (idea.items ?? []).map((item) => ({ text: item.text, checked: !!item.checked, ...(item.link ? { link: item.link } : {}) }));
+            out.items = (idea.items ?? []).map((item) => ({ text: item.text, checked: !!item.checked, ...(isWebLink(item.link) ? { link: item.link } : {}) }));
         } else if (idea.isNote) {
             out.text = idea.noteTitle ?? '';
             out.note = idea.content;
         } else {
             out.text = idea.content;
-            if (idea.link) out.link = idea.link;
+            if (isWebLink(idea.link)) out.link = idea.link;
         }
         if (idea.priority) out.priority = idea.priority;
         out.children = tree.childrenOf(idea.id).map(toNode);

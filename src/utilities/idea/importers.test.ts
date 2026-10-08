@@ -340,3 +340,24 @@ describe("round-trips through our own exports", () => {
         });
     }
 });
+
+describe("Intraconnected JSON import links", () => {
+    const json = (ideas: unknown[]) => JSON.stringify({ ideas });
+
+    it("keeps web links but drops anything that could run script", async () => {
+        const parsed = await parseImportFiles([
+            file("backup.json", json([
+                { id: 2, content: "good", parentID: 1, link: "https://example.com" },
+                { id: 3, content: "bad", parentID: 1, link: "javascript:alert(document.domain)" },
+                { id: 4, content: "data", parentID: 1, link: "data:text/html,<script>alert(1)</script>" },
+                { id: 5, type: "checklist", content: "list", parentID: 1, items: [
+                    { id: "a", text: "ok", checked: false, link: "http://example.com/x" },
+                    { id: "b", text: "evil", checked: false, link: "javascript:alert(1)" },
+                ] },
+            ])),
+        ]);
+        const links = (n: ImportNode): (string | undefined)[] => [n.link, ...(n.items ?? []).map((i) => i.link), ...n.children.flatMap(links)];
+        const all = parsed.nodes.flatMap(links).filter(Boolean);
+        expect(all).toEqual(["https://example.com", "http://example.com/x"]);
+    });
+});

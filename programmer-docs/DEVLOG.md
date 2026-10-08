@@ -4,6 +4,20 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Account Deletion 502 Fix — 2026-10-08
+- `delete-account` returned 502 for any account whose `meta/billing` still named an abandoned Annual checkout: Stripe refuses to cancel an `incomplete_expired` subscription, and the "already gone" check only accepted `canceled`. Both now count as not billing. New test in `delete-account.test.ts`.
+- The Profile delete error now shows the server's message instead of a generic "Something went wrong".
+
+## Full Audit Fixes — 2026-10-07
+Findings and verification notes: `programmer-docs/artifacts/audit-2026-10-07.md`. 202 tests passing (was 177), typecheck and build clean, lint 0 errors.
+- **Billing / account safety.** `create-payment-intent` now asks Stripe (not just `meta/billing`, which lags the webhook) before selling a second Annual subscription or Lifetime, blocks Annual for Lifetime accounts, and records the Stripe Customer id on `meta/billing` at checkout. `delete-account` requires a sign-in within the last 10 minutes server-side and refuses to delete anything when cancelling the Stripe subscription fails (unless Stripe says it's already gone).
+- **Rate limits.** `checkRateLimit` is transactional; `submit-feature-request` now uses it and requires a verified email.
+- **Links.** New `openIdeaLink`/`isOpenableLink` (http(s)/mailto only) replace every `window.open`; `cleanLink` no longer keeps other URL schemes; the JSON importer filters links like every other importer.
+- **Idea writes.** New `utilities/idea/ideaStore.ts`: every change is one call that updates localStorage and queues the outbox write (`applyOpLocally`, same as the sync rebase). Removed the `*InFirebase` wrappers, `schedule*FirebaseWrite`, and `idea/storage`. Mobile "new idea" now goes through `handleIdeaCreation` like desktop. Big subtree deletes are split into 450-id batches.
+- **Small bugs.** Sign-in trims the email; `Auth.tsx` auth listener no longer re-subscribes every render; the cached billing plan is per account (`billing_plan_<uid>`).
+- **Structure.** `firebaseHelpers.tsx` split into `billing/billingCache.ts`, `firebase/encryptionKeys.ts`, `firebase/preferences.ts` (ends the `outbox` ↔ `firebaseHelpers` import cycle). New top-level `shared/` for constants/types the app and functions must agree on. New `netlify/functions/lib/handler.ts`. All mobile components now in `components/mobile/`; non-JSX `.tsx` files renamed `.ts`. Removed dead `MobileNavigateSheet` and the unused `normalize.css` dependency.
+- Not done: splitting `MobileMindMap.tsx` into hooks/sheets (no UI tests; needs a hands-on pass), `npm audit fix` (advisories are Node-only paths; the fix churned the whole lockfile), E1–E9.
+
 ## Launch Checklist Consolidation — 2026-10-06
 - Merged `shipping-readiness.md`, `stripe-test-run.md` and `ios-build-guide.md` into one page, `programmer-docs/artifacts/launch-checklist.html` (the old stripe-test-run artifact, updated in place so its URL and saved ticks carry over). Sections 00 to 14 are the test run and go-live steps, 15 to 18 the native app (Capacitor setup, Android, iOS/TestFlight, store review), 19 the later fixes (E1 to E9) and 20 the finished work, collapsed. Codes like A5, S12 and C2 are links that open and jump to their target.
 - Updated for Oct 6: new prices ($14.99 / $39.99, new test and live Price ids needed), the A6 re-run after the webhook dedupe fix, support page URL, `/` landing page, 177 tests. Old references in code comments, CLAUDE.md and netlify.toml now point at the new file. Older DEVLOG entries still name the deleted files, kept as history.

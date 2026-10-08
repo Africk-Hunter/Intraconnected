@@ -66,6 +66,26 @@ export function getIdeaLink(idea: IdeaType | undefined): string {
     return idea.link ?? '';
 }
 
+// Links open in a new tab from a click, so anything but a web (or mail)
+// address — javascript:, data:, file: … — must never get that far, however it
+// got into the data (typed, imported, or edited on another device).
+const OPENABLE_PROTOCOLS = ['http:', 'https:', 'mailto:'];
+
+export function isOpenableLink(url: string): boolean {
+    try {
+        return OPENABLE_PROTOCOLS.includes(new URL(url.trim()).protocol);
+    } catch {
+        return false;
+    }
+}
+
+// Opens an idea's link in a new tab, if it is a web or mail address.
+export function openIdeaLink(url: string): void {
+    const target = /^www\./i.test(url.trim()) ? 'https://' + url.trim() : url.trim();
+    if (!isOpenableLink(target)) return;
+    window.open(target, '_blank', 'noopener,noreferrer');
+}
+
 export function cleanLink(userLink: string): string {
     if (userLink === '') return '';
 
@@ -75,6 +95,10 @@ export function cleanLink(userLink: string): string {
     const protocolMatch = userLink.match(/^([a-zA-Z][a-zA-Z0-9+\-.]*):\/\//);
     if (protocolMatch) {
         const proto = protocolMatch[1].toLowerCase();
+        // Only web addresses are kept as typed. Any other scheme (ftp://,
+        // javascript://…) isn't something the app can open, so it's not
+        // stored as a link rather than stored as a trap.
+        if (proto !== 'http' && proto !== 'https') return '';
         if (proto === 'http') {
             userLink = 'https://' + userLink.slice(protocolMatch[0].length);
         }

@@ -1,5 +1,5 @@
 import { useIdeaContext } from "../../context/IdeaContext";
-import { getChildrenToDelete, recursivelyDeleteChildren, getNameFromID, getIdeasByParentID } from "../../utilities";
+import { recursivelyDeleteChildren, getNameFromID, getIdeasByParentID } from "../../utilities";
 import { IdeaType } from "../../utilities";
 import AnimatedOverlay from "../AnimatedOverlay";
 
@@ -8,7 +8,7 @@ function DeleteConfirmModal() {
 
     function handleConfirm() {
         if (pendingDeleteId === null) return;
-        const childrenToDelete = getChildrenToDelete(pendingDeleteId);
+        const childrenToDelete = getIdeasByParentID(pendingDeleteId);
         recursivelyDeleteChildren(pendingDeleteId);
         setIdeas((prevIdeas: IdeaType[]) =>
             prevIdeas.filter(

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { auth } from '../../firebaseConfig';
-import { fetchOnboardingSeen, markOnboardingSeen } from '../../utilities/firebase/firebaseHelpers';
+import { fetchOnboardingSeen, markOnboardingSeen } from '../../utilities/firebase/preferences';
 
 const STORAGE_KEY = 'onboarding_v1_seen';
 

@@ -2,7 +2,7 @@ import { db, auth } from "../../firebaseConfig";
 import { collection, deleteField, doc, increment, writeBatch, type FieldValue } from "firebase/firestore";
 import { encryptField } from "../crypto";
 import { getDEK } from "../dekStore";
-import { getCachedBillingStatus } from "../firebase/firebaseHelpers";
+import { getCachedBillingStatus } from "../billing/billingCache";
 import type { ChecklistItem, IdeaType } from "../types";
 import { classifyError, coalesce, opIds, withoutDependents, type IdeaPatch, type QueuedOp, type SyncOp } from "./ops";
 import { updateSyncStatus, type SyncFailure } from "./syncStore";

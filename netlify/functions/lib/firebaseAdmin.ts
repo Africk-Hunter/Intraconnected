@@ -34,6 +34,28 @@ export async function verifyIdToken(req: Request): Promise<string | null> {
     }
 }
 
+export interface RecentlyAuthedUser {
+    uid: string;
+    // Seconds since epoch of the user's last real sign-in (password entry),
+    // which — unlike the token's issue time — a token refresh doesn't move.
+    authTime: number;
+}
+
+// For destructive actions (account deletion) that must not run on a merely
+// valid token: the caller compares authTime against how recent a re-login it
+// requires. checkRevoked also rejects tokens revoked since they were issued.
+export async function verifyIdTokenWithAuthTime(req: Request): Promise<RecentlyAuthedUser | null> {
+    const header = req.headers.get("authorization");
+    if (!header?.startsWith("Bearer ")) return null;
+    const token = header.slice("Bearer ".length);
+    try {
+        const decoded = await adminAuth().verifyIdToken(token, true);
+        return { uid: decoded.uid, authTime: decoded.auth_time };
+    } catch {
+        return null;
+    }
+}
+
 export interface VerifiedUser {
     uid: string;
     emailVerified: boolean;

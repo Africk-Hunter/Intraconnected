@@ -9,25 +9,28 @@ vi.hoisted(() => {
 const { verifyIdTokenDetailed } = vi.hoisted(() => ({ verifyIdTokenDetailed: vi.fn() }));
 vi.mock("../functions/lib/firebaseAdmin", () => ({ verifyIdTokenDetailed }));
 
-const { paymentIntentsCreate, customersCreate, customersUpdate, subscriptionsCreate } = vi.hoisted(() => ({
+const { paymentIntentsCreate, paymentIntentsList, customersCreate, customersUpdate, subscriptionsCreate, subscriptionsList } = vi.hoisted(() => ({
     paymentIntentsCreate: vi.fn(),
+    paymentIntentsList: vi.fn(),
     customersCreate: vi.fn(),
     customersUpdate: vi.fn(),
     subscriptionsCreate: vi.fn(),
+    subscriptionsList: vi.fn(),
 }));
 vi.mock("../functions/lib/stripe", () => ({
     stripe: () => ({
-        paymentIntents: { create: paymentIntentsCreate },
+        paymentIntents: { create: paymentIntentsCreate, list: paymentIntentsList },
         customers: { create: customersCreate, update: customersUpdate },
-        subscriptions: { create: subscriptionsCreate },
+        subscriptions: { create: subscriptionsCreate, list: subscriptionsList },
     }),
 }));
 
-const { getBillingDoc, getLifetimePrice } = vi.hoisted(() => ({
+const { getBillingDoc, getLifetimePrice, recordStripeCustomer } = vi.hoisted(() => ({
     getBillingDoc: vi.fn(),
     getLifetimePrice: vi.fn(),
+    recordStripeCustomer: vi.fn(),
 }));
-vi.mock("../functions/lib/lifetimePricing", () => ({ getBillingDoc, getLifetimePrice }));
+vi.mock("../functions/lib/lifetimePricing", () => ({ getBillingDoc, getLifetimePrice, recordStripeCustomer }));
 
 const { checkRateLimit } = vi.hoisted(() => ({ checkRateLimit: vi.fn() }));
 vi.mock("../functions/lib/rateLimit", () => ({ checkRateLimit }));
@@ -39,6 +42,10 @@ describe("create-payment-intent", () => {
         vi.clearAllMocks();
         checkRateLimit.mockResolvedValue(true);
         getBillingDoc.mockResolvedValue(null);
+        // Nothing owned yet, unless a test says otherwise.
+        subscriptionsList.mockResolvedValue({ data: [] });
+        paymentIntentsList.mockResolvedValue({ data: [] });
+        recordStripeCustomer.mockResolvedValue(undefined);
     });
 
     it("rejects non-POST requests", async () => {
@@ -89,6 +96,80 @@ describe("create-payment-intent", () => {
         const res = await handler(fakeRequest({ plan: "annual" }), {} as never);
         expect(res.status).toBe(409);
         expect(subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
+    // Annual on top of Lifetime would bill yearly for nothing, and the
+    // webhook never records a subscription against a Lifetime account.
+    it("rejects an Annual subscription for an account that already has Lifetime", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getBillingDoc.mockResolvedValue({ plan: "lifetime", subscriptionStatus: null });
+        const res = await handler(fakeRequest({ plan: "annual" }), {} as never);
+        expect(res.status).toBe(409);
+        expect(subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
+    // The webhook-lag gap: payment went through, meta/billing still says
+    // free, and the user reopens checkout. Stripe knows better than Firestore.
+    it("rejects Annual when Stripe already has a live subscription that meta/billing doesn't show yet", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getBillingDoc.mockResolvedValue({ plan: "free", stripeCustomerId: "cus_1", subscriptionStatus: null });
+        subscriptionsList.mockResolvedValue({ data: [{ status: "active" }] });
+        const res = await handler(fakeRequest({ plan: "annual" }), {} as never);
+        expect(res.status).toBe(409);
+        expect(subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
+    it("allows Annual when Stripe's only subscriptions are canceled or incomplete", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getBillingDoc.mockResolvedValue({ plan: "free", stripeCustomerId: "cus_1", subscriptionStatus: null });
+        subscriptionsList.mockResolvedValue({ data: [{ status: "canceled" }, { status: "incomplete" }] });
+        subscriptionsCreate.mockResolvedValue({
+            latest_invoice: { confirmation_secret: { client_secret: "secret_sub" }, amount_due: 1499, currency: "usd" },
+        });
+        const res = await handler(fakeRequest({ plan: "annual" }), {} as never);
+        expect(res.status).toBe(200);
+    });
+
+    it("rejects Lifetime when Stripe already has a paid Lifetime that meta/billing doesn't show yet", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getBillingDoc.mockResolvedValue({ plan: "free", stripeCustomerId: "cus_1" });
+        paymentIntentsList.mockResolvedValue({
+            data: [{ status: "succeeded", metadata: { plan: "lifetime" }, latest_charge: { refunded: false } }],
+        });
+        const res = await handler(fakeRequest({ plan: "lifetime" }), {} as never);
+        expect(res.status).toBe(409);
+        expect(paymentIntentsCreate).not.toHaveBeenCalled();
+    });
+
+    it("lets someone re-buy Lifetime after a full refund (the old PaymentIntent still reads 'succeeded')", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getBillingDoc.mockResolvedValue({ plan: "free", stripeCustomerId: "cus_1" });
+        getLifetimePrice.mockResolvedValue({ amount: 500, currency: "usd" });
+        paymentIntentsList.mockResolvedValue({
+            data: [{ status: "succeeded", metadata: { plan: "lifetime" }, latest_charge: { refunded: true } }],
+        });
+        paymentIntentsCreate.mockResolvedValue({ id: "pi_2", client_secret: "secret_new" });
+        const res = await handler(fakeRequest({ plan: "lifetime" }), {} as never);
+        expect(res.status).toBe(200);
+    });
+
+    it("remembers a newly created Customer on meta/billing so the next checkout can find it", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getLifetimePrice.mockResolvedValue({ amount: 500, currency: "usd" });
+        customersCreate.mockResolvedValue({ id: "cus_new" });
+        paymentIntentsCreate.mockResolvedValue({ id: "pi_1", client_secret: "secret_abc" });
+        await handler(fakeRequest({ plan: "lifetime" }), {} as never);
+        expect(recordStripeCustomer).toHaveBeenCalledWith("uid-1", "cus_new", null);
+    });
+
+    it("still starts checkout if remembering the Customer fails", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getLifetimePrice.mockResolvedValue({ amount: 500, currency: "usd" });
+        customersCreate.mockResolvedValue({ id: "cus_new" });
+        paymentIntentsCreate.mockResolvedValue({ id: "pi_1", client_secret: "secret_abc" });
+        recordStripeCustomer.mockRejectedValue(new Error("firestore down"));
+        const res = await handler(fakeRequest({ plan: "lifetime" }), {} as never);
+        expect(res.status).toBe(200);
     });
 
     it("creates a Lifetime PaymentIntent for an eligible verified user, on a newly created Stripe Customer", async () => {

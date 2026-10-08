@@ -1,7 +1,8 @@
 import { fetchFullIdeaList } from '../idea/helpers';
-import { getCachedBillingStatus, BillingPlan } from '../firebase/firebaseHelpers';
+import { getCachedBillingStatus, BillingPlan } from './billingCache';
 
-export const FREE_NODE_LIMIT = 50;
+import { FREE_NODE_LIMIT } from '../../../shared/limits';
+export { FREE_NODE_LIMIT };
 
 // Pure — unit-tested directly without touching localStorage/Firestore.
 export function isWithinFreeLimit(plan: BillingPlan, nodeCount: number): boolean {

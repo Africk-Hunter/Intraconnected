@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { resyncNodeCount, type BillingPlan } from '../firebase/firebaseHelpers';
+import { resyncNodeCount, type BillingPlan } from './billingCache';
 import { fetchFullIdeaList } from '../idea/helpers';
 
 // Firestore's free-tier node-cap rule (firestore.rules) checks

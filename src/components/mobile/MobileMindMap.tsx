@@ -1,43 +1,38 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useIdeaContext } from '../context/IdeaContext';
-import { SheetState, SWIPE_REVEAL_W, SWIPE_THRESHOLD } from './mobile/mobileTypes';
-import MobileChecklistItemSheet from './mobile/MobileChecklistItemSheet';
+import { useIdeaContext } from '../../context/IdeaContext';
+import { SheetState, SWIPE_REVEAL_W, SWIPE_THRESHOLD } from './mobileTypes';
+import MobileChecklistItemSheet from './MobileChecklistItemSheet';
 import {
     IdeaType,
     ChecklistItem,
     fetchFullIdeaList,
-    appendToLocalStorageFromFrontend,
-    addIdeaToFirebase,
+    handleIdeaCreation,
     updateIdeaName,
-    updateIdeaNameInFirebase,
     updateIdeaLink,
-    updateIdeaLinkInFirebase,
     updateIdeaNoteTitle,
-    updateNoteTitleInFirebase,
     isNoteMode,
     resolveIdeaLabel,
     updateIdeaParentId,
     updateIdeaPriority,
-    schedulePriorityFirebaseWrite,
     updateChecklistItems,
-    scheduleChecklistFirebaseWrite,
     handleChecklistCreation,
     handleNoteCreation,
     recursivelyDeleteChildren,
     cleanLink,
+    openIdeaLink,
     getIdeaLink,
     sortIdeas,
     canCreateIdea,
-} from '../utilities';
+} from '../../utilities';
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileMindMapSheet from './MobileMindMapSheet';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
-import changelog from '../../programmer-docs/CHANGELOG.md?raw';
-import { parseChangelog } from '../utilities/parseChangelog';
-import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../utilities/patchNotesState';
-import { auth } from '../firebaseConfig';
-import { onSyncRefreshed } from '../utilities/sync/syncStore';
+import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
+import { parseChangelog } from '../../utilities/parseChangelog';
+import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../../utilities/patchNotesState';
+import { auth } from '../../firebaseConfig';
+import { onSyncRefreshed } from '../../utilities/sync/syncStore';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -346,7 +341,6 @@ function MobileMindMap() {
     function cyclePriority(id: number, current: 1 | 2 | 3 | undefined) {
         const next = current === undefined ? 3 : current === 3 ? 2 : current === 2 ? 1 : undefined;
         updateIdeaPriority(id, next);
-        schedulePriorityFirebaseWrite(id, next);
         setAnimatingRibbonId(id);
         setTimeout(() => setAnimatingRibbonId(null), 200);
         if (!frozenOrderRef.current) {
@@ -633,7 +627,7 @@ function MobileMindMap() {
         if (isNoteMode(node)) return;
         const nodeLink = getIdeaLink(node);
         if (nodeLink) {
-            window.open(nodeLink, '_blank', 'noopener,noreferrer');
+            openIdeaLink(nodeLink);
             return;
         }
         setCurrentId(nodeId);
@@ -652,7 +646,6 @@ function MobileMindMap() {
             item.id === itemId ? { ...item, checked: !item.checked } : item
         );
         updateChecklistItems(nodeId, newItems);
-        scheduleChecklistFirebaseWrite(nodeId, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -661,7 +654,6 @@ function MobileMindMap() {
         if (!text) return;
         const newItems = [...currentItems, { id: String(Date.now()), text, checked: false }];
         updateChecklistItems(nodeId, newItems);
-        scheduleChecklistFirebaseWrite(nodeId, newItems);
         setInlineDrafts(prev => ({ ...prev, [nodeId]: '' }));
         setNewIdeaSwitch(prev => !prev);
     }
@@ -672,14 +664,12 @@ function MobileMindMap() {
         );
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
-        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function deleteSheetItem(itemId: string, nodeId: number) {
         const newItems = sheetItems.filter(item => item.id !== itemId);
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
-        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function editSheetItem(itemId: string, newText: string, nodeId: number) {
@@ -688,7 +678,6 @@ function MobileMindMap() {
         );
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
-        scheduleChecklistFirebaseWrite(nodeId, newItems);
         setNewIdeaSwitch(prev => !prev);
     }
 
@@ -698,7 +687,6 @@ function MobileMindMap() {
         );
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
-        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function addSheetItem(nodeId: number) {
@@ -708,7 +696,6 @@ function MobileMindMap() {
         setSheetItems(newItems);
         setSheetItemDraft('');
         updateChecklistItems(nodeId, newItems);
-        scheduleChecklistFirebaseWrite(nodeId, newItems);
     }
 
     function goBack() {
@@ -750,16 +737,14 @@ function MobileMindMap() {
         if (currentIdea && currentIdea.type !== 'checklist' && currentIdea.isNote) {
             const trimmed = headerDraft.trim();
             if (trimmed === (currentIdea.noteTitle ?? '')) return;
-            updateIdeaNoteTitle(currentId, trimmed);
-            updateNoteTitleInFirebase(currentId, trimmed).then(() => {
+            updateIdeaNoteTitle(currentId, trimmed).then(() => {
                 setNewIdeaSwitch(prev => !prev);
             });
             return;
         }
         const trimmed = headerDraft.trim() || 'Untitled';
         if (trimmed === currentIdea?.content) return;
-        updateIdeaName(currentId, trimmed);
-        updateIdeaNameInFirebase(currentId, trimmed).then(() => {
+        updateIdeaName(currentId, trimmed).then(() => {
             setNewIdeaSwitch(prev => !prev);
         });
     }
@@ -786,14 +771,10 @@ function MobileMindMap() {
 
         const name = draft.trim() || 'Untitled';
         if (sheet.isNew) {
-            const newId = Date.now();
-            const newIdea: IdeaType = { id: newId, content: name, parentID: currentId, link: cleanLink(newIdeaLink.trim()), ...(newIdeaPriority ? { priority: newIdeaPriority } : {}) };
-            appendToLocalStorageFromFrontend(newIdea);
-            addIdeaToFirebase(newIdea);
+            handleIdeaCreation(name, currentId, cleanLink(newIdeaLink.trim()), newIdeaPriority);
             setNewIdeaSwitch(prev => !prev);
         } else {
-            updateIdeaName(sheet.nodeId, name);
-            updateIdeaNameInFirebase(sheet.nodeId, name).then(() => {
+            updateIdeaName(sheet.nodeId, name).then(() => {
                 setNewIdeaSwitch(prev => !prev);
             });
         }
@@ -818,8 +799,7 @@ function MobileMindMap() {
     function commitLink() {
         if (!sheet || sheet.type !== 'link') return;
         const url = cleanLink(draft.trim());
-        updateIdeaLink(sheet.nodeId, url);
-        updateIdeaLinkInFirebase(sheet.nodeId, url).then(() => {
+        updateIdeaLink(sheet.nodeId, url).then(() => {
             setNewIdeaSwitch(prev => !prev);
         });
         closeSheet();
@@ -834,12 +814,10 @@ function MobileMindMap() {
             const title = draft.trim();
             if (title !== (node.noteTitle ?? '')) {
                 updateIdeaNoteTitle(sheet.nodeId, title);
-                updateNoteTitleInFirebase(sheet.nodeId, title);
                 changed = true;
             }
             if (editBodyDraft !== node?.content) {
                 updateIdeaName(sheet.nodeId, editBodyDraft);
-                updateIdeaNameInFirebase(sheet.nodeId, editBodyDraft);
                 changed = true;
             }
             if (changed) setNewIdeaSwitch(prev => !prev);
@@ -850,7 +828,6 @@ function MobileMindMap() {
         const name = draft.trim() || 'Untitled';
         if (name !== node?.content) {
             updateIdeaName(sheet.nodeId, name);
-            updateIdeaNameInFirebase(sheet.nodeId, name);
             changed = true;
         }
 
@@ -858,7 +835,6 @@ function MobileMindMap() {
             const url = cleanLink(editLinkDraft.trim());
             if (url !== getIdeaLink(node)) {
                 updateIdeaLink(sheet.nodeId, url);
-                updateIdeaLinkInFirebase(sheet.nodeId, url);
                 changed = true;
             }
         }
@@ -1480,7 +1456,6 @@ function MobileMindMap() {
                                 onReorder={(newItems, nodeId) => {
                                     setSheetItems(newItems);
                                     updateChecklistItems(nodeId, newItems);
-                                    scheduleChecklistFirebaseWrite(nodeId, newItems);
                                 }}
                             />
                         )}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { auth } from "../../firebaseConfig";
 import { resendVerificationEmail, refreshEmailVerified } from "../../utilities/firebase/authFirebase";
-import { isGmailAddress, gmailVerifySearchUrl } from "../../utilities/gmail";
+import { getMailProvider, verifyMailUrl } from "../../utilities/mailProvider";
 
 interface Props {
     onVerified: () => void;
@@ -42,6 +42,8 @@ function CheckoutVerifyEmail({ onVerified }: Props) {
         }
     }
 
+    const mailProvider = email ? getMailProvider(email) : null;
+
     return (
         <div className="checkoutVerify">
             <div className="checkoutVerify-icon" aria-hidden="true">✉️</div>
@@ -51,14 +53,14 @@ function CheckoutVerifyEmail({ onVerified }: Props) {
                 {email && <> We sent a link to <strong>{email}</strong>.</>}
             </p>
             <div className="checkoutVerify-actions">
-                {email && isGmailAddress(email) && (
+                {email && mailProvider && (
                     <a
                         className="checkoutVerify-btn neobrutal-button"
-                        href={gmailVerifySearchUrl(email)}
+                        href={verifyMailUrl(email, mailProvider)}
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        Open Gmail
+                        Open {mailProvider.name}
                     </a>
                 )}
                 <button className="checkoutVerify-btn neobrutal-button" onClick={handleCheck} disabled={checking}>

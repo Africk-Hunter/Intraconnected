@@ -3,7 +3,7 @@ import type { IdeaType } from "../utilities/types";
 import { buildAncestorPath, fetchFullIdeaList } from "../utilities/idea/helpers";
 // Type-only: this context wraps every route, so a value import here would
 // pull Firebase into the marketing pages' initial bundle.
-import type { BillingPlan } from "../utilities/firebase/firebaseHelpers";
+import type { BillingPlan } from "../utilities/billing/billingCache";
 import type { CheckoutPlan } from "../utilities/billing/billing";
 
 interface IdeaContextType {

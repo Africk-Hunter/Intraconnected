@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
+import type { BillingPlan } from "../../../shared/billing";
 
-export type BillingPlan = "free" | "annual" | "lifetime";
+export type { BillingPlan };
 
 export interface BillingDoc {
     plan: BillingPlan;

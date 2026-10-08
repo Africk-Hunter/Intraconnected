@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
+import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../../utilities';
 
 interface Props {
     nodeId: number;

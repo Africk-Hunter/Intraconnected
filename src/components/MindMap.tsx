@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, MouseEvent } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
-import { fetchFullIdeaList, IdeaType, ChecklistIdea, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
+import { fetchFullIdeaList, IdeaType, ChecklistIdea, getIdeaLink, openIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface TreeNodeProps {
     ideaId: number;
@@ -58,7 +58,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
     function handleClick() {
         if (!idea || isChecklist || isNote) return;
         if (isLink) {
-            window.open(getIdeaLink(idea), '_blank', 'noopener,noreferrer');
+            openIdeaLink(getIdeaLink(idea));
         } else {
             onNavigate(idea);
         }

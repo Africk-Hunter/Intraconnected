@@ -21,7 +21,6 @@
     "@stripe/stripe-js": "^9.13.0",
     "firebase": "^11.6.1",
     "firebase-admin": "^14.2.0",
-    "normalize.css": "^8.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.18.2",

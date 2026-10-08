@@ -130,7 +130,6 @@
     &.profile-action-btn--link {
         display: inline-block;
         box-sizing: border-box;
-        margin-top: 0.75rem;
         background: $link;
         color: black;
         text-align: center;
@@ -181,6 +180,14 @@
     color: $danger;
 }
 
+// "Send reset link" + "Open <mail provider>"; wraps (and stacks on mobile,
+// where buttons are full width) with room between the two.
+.profile-reset-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+}
+
 .profile-plan-actions {
     display: flex;
     flex-direction: column;
@@ -222,7 +229,7 @@
 .profile-error {
     color: $danger;
     font-size: 0.9rem;
-    margin: 0 0 0.75rem 0;
+    margin: 0.75rem 0;
 }
 
 .profile-support {
