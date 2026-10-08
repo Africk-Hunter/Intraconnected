@@ -15,6 +15,7 @@ import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } fr
 
 // Custom Libraries
 import { auth } from '../firebaseConfig';
+import { fetchLifetimeCelebrated, markLifetimeCelebrated } from '../utilities/firebase/preferences';
 import { useIdeaContext } from '../context/IdeaContext';
 import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
@@ -43,6 +44,7 @@ import ChecklistModal from '../components/modals/ChecklistModal';
 import FeatureImplementedModal from '../components/modals/FeatureImplementedModal';
 import OnboardingModal from '../components/modals/OnboardingModal';
 import ProfileModal from '../components/modals/ProfileModal';
+import SessionEndedModal from '../components/modals/SessionEndedModal';
 import UpgradeModal from '../components/modals/UpgradeModal';
 import LazyCheckoutModal from '../components/modals/LazyCheckoutModal';
 import UpgradeCelebrationModal from '../components/modals/UpgradeCelebrationModal';
@@ -143,6 +145,27 @@ function Idea() {
 
     useBillingPlanSync(setBillingPlan);
     useNodeCountResync(billingPlan, serverSynced);
+
+    // Lifetime granted without a checkout (Developer Testing): celebrate once
+    // per account (flag lives in Firestore, not this browser) the next time the
+    // app sees the plan. A real purchase shows the same modal via
+    // CheckoutModal, so this flag is set for those too.
+    const lifetimeCheckedRef = useRef(false);
+    useEffect(() => {
+        if (lifetimeCheckedRef.current) return;
+        if (billingPlan !== 'lifetime' && celebrationPlan !== 'lifetime') return;
+        lifetimeCheckedRef.current = true;
+        const alreadyShowing = celebrationPlan === 'lifetime';
+        fetchLifetimeCelebrated()
+            .then(seen => {
+                if (seen) return;
+                if (!alreadyShowing) setCelebrationPlan('lifetime');
+                return markLifetimeCelebrated();
+            })
+            .catch(() => {
+                lifetimeCheckedRef.current = false;
+            });
+    }, [billingPlan, celebrationPlan, setCelebrationPlan]);
 
     // Live updates from other devices, once the initial load has settled.
     useEffect(() => {
@@ -445,7 +468,7 @@ function Idea() {
 
                 <section className="right">
                     <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
-                    <Help showHelp={showHelp} />
+                    <Help showHelp={showHelp} onClose={() => setShowHelp(false)} />
                     <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>
             </section>
@@ -459,6 +482,7 @@ function Idea() {
             <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} handleNoteCreation={handleNoteCreation} />
             <OnboardingModal />
             <ProfileModal />
+            <SessionEndedModal />
             <UpgradeModal />
             <LazyCheckoutModal />
             {celebrationPlan && (

@@ -142,6 +142,8 @@ If adding "change password" via `updatePassword()`, re-wrap the DEK with the new
 ### Client-side encryption (NOT end-to-end — never call it that)
 All idea text fields are AES-256-GCM encrypted on the device before Firestore writes. Ciphertext stored as `enc:<base64>`. `decryptField` passes plaintext through unchanged (backward-compat). The DEK is stored in `meta/encryption` wrapped two ways: by password (`encryptedDEK`) and by email + uid (`emailEncryptedDEK`, which powers password-reset recovery). The email wrap is derivable by anyone with database access and the account's email, so **the service could technically read ideas**. Decided 2026-09-29 (launch-checklist C1): keep email recovery. Privacy/Terms/`index.html`/`site.webmanifest` are worded accordingly. Don't reintroduce "end-to-end", "only you can decrypt" or "we cannot read" anywhere, store listings included.
 
+Email changes (Profile → Account → `requestEmailChange`, `AuthAction` `verifyAndChangeEmail`) must keep that email wrap valid: `meta/encryption.emailWrapFor` records which email it was wrapped for, `Auth.tsx` re-wraps on sign-in when it differs from the current email, and `pendingEmailEncryptedDEK` (written when the change is requested) lets password-reset recovery work if the user resets before signing in again. The new email is also pushed to the Stripe Customer via `sync-billing-email`.
+
 At runtime the DEK is held in module-level `_dek` (`dekStore.ts`) + `sessionStorage` `dek_session`, and also `localStorage` `dek_local` when "Remember me" is checked (raw key, no expiry — known item E3). `clearDEK()` wipes all three on sign-out.
 
 ## Pricing & Billing

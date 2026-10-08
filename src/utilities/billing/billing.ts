@@ -214,6 +214,41 @@ export async function setPlanForTesting(plan: 'annual' | 'lifetime'): Promise<vo
     }
 }
 
+export interface TestUser {
+    uid: string;
+    email: string | null;
+    plan: string;
+}
+
+async function callGrantLifetimeTest<T>(payload: object): Promise<T> {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error('You must be signed in.');
+    }
+
+    const idToken = await user.getIdToken();
+    const res = await fetch('/.netlify/functions/grant-lifetime-test', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        throw new Error(await res.text());
+    }
+    return (await res.json()) as T;
+}
+
+// Testing-only (see grant-lifetime-test.ts) — every account with its plan.
+export async function listUsersForTesting(): Promise<TestUser[]> {
+    return (await callGrantLifetimeTest<{ users: TestUser[] }>({ action: 'list' })).users;
+}
+
+// Testing-only — grants Lifetime to any account by uid, with no payment.
+export async function grantLifetimeForTesting(uid: string): Promise<void> {
+    await callGrantLifetimeTest({ action: 'grant', uid });
+}
+
 export function consumePendingCheckoutPlan(): CheckoutPlan | null {
     const plan = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
     if (plan !== 'annual' && plan !== 'lifetime') return null;

@@ -49,6 +49,7 @@ export default async (req: Request, _context: Context) => {
             currentPeriodEnd: plan === "annual" ? now + 365 * 24 * 60 * 60 * 1000 : null,
             cancelAtPeriodEnd: false,
             previousPlan: null,
+            lifetimePaymentIntentId: null,
             updatedAt: now,
         },
         { merge: true }

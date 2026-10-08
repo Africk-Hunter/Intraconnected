@@ -31,11 +31,11 @@ const HelpMenuOne: React.FC = () => {
             </div>
             <p className="details">
                 Intraconnected is like a visual canvas for your ideas.
-                <br />
-                <br />
+            </p>
+            <p className="details">
                 Everything starts with a root idea. From there, you can build and explore related ideas as a growing network. Click to dive into any idea and make it the new root.
-                <br />
-                <br />
+            </p>
+            <p className="details">
                 It's all about building connections that you can explore intuitively, not just keeping track of scattered notes.
             </p>
         </section>

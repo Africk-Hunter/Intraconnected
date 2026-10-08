@@ -7,7 +7,8 @@ import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
 import { getMailProvider, resetMailUrl } from "../utilities/mailProvider";
-import { storeEncryptedDEK, fetchEncryptedDEK, addEmailEncryptedDEK } from "../utilities/firebase/encryptionKeys";
+import { storeEncryptedDEK, fetchEncryptedDEK, storeEmailWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
+import { syncBillingEmail } from "../utilities/firebase/authFirebase";
 
 const Auth: React.FC = () => {
 
@@ -22,7 +23,7 @@ const Auth: React.FC = () => {
     const isSigningIn = useRef(false);
     const pendingPasswordRef = useRef("");
     const pendingUidRef = useRef("");
-    const pendingEncDataRef = useRef<{ encryptedDEK: string; emailEncryptedDEK?: string } | null>(null);
+    const pendingEncDataRef = useRef<EncryptionDoc | null>(null);
 
     const { setMessageBoxMessage, setMessageType } = useIdeaContext();
 
@@ -180,14 +181,18 @@ const Auth: React.FC = () => {
                     const dek = await unwrapDEK(encData.encryptedDEK, capturedPassword, user.uid);
                     await setDEK(dek, rememberMe);
 
-                    // Derive email DEK — use stored one or generate fresh if account predates email recovery
-                    const emailForDEK = user.email!;
-                    const emailEncryptedDEK = encData.emailEncryptedDEK
-                        ?? await wrapDEKWithEmail(dek, emailForDEK, user.uid);
-
-                    // Silently backfill emailEncryptedDEK for accounts that predate email recovery
-                    if (!encData.emailEncryptedDEK) {
-                        try { await addEmailEncryptedDEK(emailEncryptedDEK); } catch { /* non-critical */ }
+                    // The recovery wrap is derived from the account's email. If it
+                    // isn't for the current one (accounts that predate email
+                    // recovery, or the email was changed/reverted since), re-wrap
+                    // it now that the key is unlocked, so password-reset recovery
+                    // keeps working.
+                    if (!encData.emailEncryptedDEK || encData.emailWrapFor !== user.email) {
+                        try {
+                            await storeEmailWrap(await wrapDEKWithEmail(dek, user.email!, user.uid), user.email!);
+                            // An email change also has to reach Stripe, so
+                            // receipts and renewal notices follow it.
+                            if (encData.emailEncryptedDEK) syncBillingEmail().catch(() => { /* non-critical */ });
+                        } catch { /* non-critical */ }
                     }
                     isSigningIn.current = false;
                     window.location.href = '/main';
@@ -230,7 +235,15 @@ const Auth: React.FC = () => {
 
         let dek: CryptoKey;
         try {
-            dek = await unwrapDEKWithEmail(encData.emailEncryptedDEK, userEmail, uid);
+            try {
+                dek = await unwrapDEKWithEmail(encData.emailEncryptedDEK, userEmail, uid);
+            } catch (err) {
+                // The email was changed but no password sign-in has happened
+                // since, so the wrap is still for the old address — use the one
+                // stored when the change was requested.
+                if (!encData.pendingEmailEncryptedDEK || encData.pendingEmail !== userEmail) throw err;
+                dek = await unwrapDEKWithEmail(encData.pendingEmailEncryptedDEK, userEmail, uid);
+            }
         } catch {
             displayMessage('Email recovery failed. Your email may have changed since setup.', 'bad');
             return;
@@ -241,6 +254,9 @@ const Auth: React.FC = () => {
             const newEmailEncryptedDEK = await wrapDEKWithEmail(dek, userEmail, uid);
             await storeEncryptedDEK(newEncryptedDEK, newEmailEncryptedDEK);
             await setDEK(dek, rememberMe);
+            if (encData.emailWrapFor !== userEmail) {
+                await syncBillingEmail().catch(() => { /* non-critical */ });
+            }
 
             window.location.href = '/main';
         } catch {
@@ -260,7 +276,7 @@ const Auth: React.FC = () => {
                     <div className="passwordField">
                         <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
                         <div className="passwordFieldRow">
-                            <label className={`rememberMe ${showConfirmPassword ? "hidden" : ""}`}>
+                            <label className={`rememberMe ${showConfirmPassword ? "hidden" : ""}`} inert={showConfirmPassword}>
                                 <input type="checkbox" className="rememberMeInput" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                                 <span className="rememberMeBox" aria-hidden="true" />
                                 Keep me signed in
@@ -268,6 +284,7 @@ const Auth: React.FC = () => {
                             {resetProvider ? (
                                 <a
                                     className={`openGmail neobrutal-button ${showConfirmPassword ? "hidden" : ""}`}
+                                    inert={showConfirmPassword}
                                     href={resetMailUrl(resetSentTo, resetProvider)}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -275,13 +292,13 @@ const Auth: React.FC = () => {
                                     Open {resetProvider.name} ↗
                                 </a>
                             ) : (
-                                <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} onClick={handleForgotPassword}>
+                                <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} inert={showConfirmPassword} onClick={handleForgotPassword}>
                                     Forgot password?
                                 </button>
                             )}
                         </div>
                     </div>
-                    <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                    <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} inert={!showConfirmPassword} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </section>
                 <button
                     className={`authSubmit neobrutal-button ${showConfirmPassword ? "register" : "login"}`}
@@ -295,7 +312,7 @@ const Auth: React.FC = () => {
                     }}>
                     Continue
                 </button>
-                <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} />
+                <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={(show) => { setConfirmPassword(""); setShowConfirmPassword(show); }} />
             </section>
             <a href="/" className="authLearnMore">New here? See what Intraconnected does →</a>
             <div className="legalLinks">

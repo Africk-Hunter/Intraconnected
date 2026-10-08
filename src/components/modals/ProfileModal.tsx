@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { getMailProvider, resetMailUrl } from '../../utilities/mailProvider';
-import { signUserOut,deleteUserAccount, sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
+import { getMailProvider, resetMailUrl, verifyMailUrl } from '../../utilities/mailProvider';
+import { signUserOut,deleteUserAccount, requestEmailChange,sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
 import { auth } from '../../firebaseConfig';
 import { fetchFullIdeaList } from '../../utilities/idea/helpers';
 import { checkDevPassword } from '../../utilities/devPassword';
-import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
+import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, listUsersForTesting, grantLifetimeForTesting, type TestUser, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
 import { getCachedBillingStatus, BillingStatus } from '../../utilities/billing/billingCache';
 import { SUPPORT_EMAIL } from '../../utilities/support';
 import { ideasToMarkdown, ideasToOpml } from '../../utilities/idea/exporters';
@@ -15,8 +15,9 @@ import { downloadFile } from '../../utilities/download';
 import { useSmoothHeight } from '../../utilities/useSmoothHeight';
 import ImportDataSection from './ImportDataSection';
 import '../../styles/profileModal.scss';
+import '../../styles/sessionEndedModal.scss';
 
-type Tab = 'account' | 'data' | 'developer';
+type Tab = 'account' | 'data' | 'danger' | 'developer';
 type ExportFormat = 'md' | 'opml' | 'json';
 
 const EXPORT_MIME_TYPES: Record<ExportFormat, string> = {
@@ -28,8 +29,9 @@ type MobileView = 'tabs' | Tab;
 
 // Developer tab only exists in dev builds — never ships to prod
 const TABS: { id: Tab; label: string; desc: string }[] = [
-    { id: 'account', label: 'Account', desc: 'Plan, password & account settings' },
+    { id: 'account', label: 'Account', desc: 'Plan, email, password & account settings' },
     { id: 'data', label: 'Data', desc: 'Import & export your ideas' },
+    { id: 'danger', label: 'Danger Zone', desc: 'Delete your account' },
     ...(import.meta.env.DEV
         ? [{ id: 'developer' as const, label: 'Developer Testing', desc: 'Dev-only tools' }]
         : []),
@@ -62,14 +64,27 @@ function ProfileModal() {
     const [devPasswordError, setDevPasswordError] = useState('');
     const [isSettingPlan, setIsSettingPlan] = useState(false);
     const [setPlanError, setSetPlanError] = useState('');
+    const [testUsers, setTestUsers] = useState<TestUser[] | null>(null);
+    const [grantingUid, setGrantingUid] = useState<string | null>(null);
+    const [grantError, setGrantError] = useState('');
     const [emailVerified, setEmailVerified] = useState(true);
     const [verifyResendSent, setVerifyResendSent] = useState(false);
     const [verifyError, setVerifyError] = useState('');
+    const [newEmail, setNewEmail] = useState('');
+    const [emailChangePassword, setEmailChangePassword] = useState('');
+    const [emailChangeError, setEmailChangeError] = useState('');
+    const [emailChangeSentTo, setEmailChangeSentTo] = useState('');
+    const changeProvider = emailChangeSentTo ? getMailProvider(emailChangeSentTo) : null;
+    const [isChangingEmail, setIsChangingEmail] = useState(false);
+    const [emailFormOpen, setEmailFormOpen] = useState(false);
+    // Read when the modal opens: auth.currentUser can still be null at first render.
+    const [currentEmail, setCurrentEmail] = useState(auth.currentUser?.email ?? '');
     const { contentRef, height: contentHeight, animate: animateHeight } = useSmoothHeight<HTMLDivElement>();
 
     useEffect(() => {
         if (profileModalOpen) {
             setBillingStatus(getCachedBillingStatus());
+            setCurrentEmail(auth.currentUser?.email ?? '');
             setEmailVerified(auth.currentUser?.emailVerified ?? true);
             // Picks up a verification completed since the modal was last opened.
             refreshEmailVerified().then(setEmailVerified).catch(() => {});
@@ -98,6 +113,12 @@ function ProfileModal() {
         setResetPlanError('');
         setVerifyResendSent(false);
         setVerifyError('');
+        setNewEmail('');
+        setEmailChangePassword('');
+        setEmailChangeError('');
+        setEmailChangeSentTo('');
+        setIsChangingEmail(false);
+        setEmailFormOpen(false);
         setRefundStep('idle');
         setIsRefunding(false);
         setRefundError('');
@@ -106,6 +127,32 @@ function ProfileModal() {
         setDevPasswordError('');
         setIsSettingPlan(false);
         setSetPlanError('');
+        setTestUsers(null);
+        setGrantingUid(null);
+        setGrantError('');
+    }
+
+    async function loadTestUsers() {
+        setGrantError('');
+        try {
+            setTestUsers(await listUsersForTesting());
+        } catch {
+            setGrantError('Failed to load users. Is ALLOW_TEST_RESET=true set in your local .env?');
+        }
+    }
+
+    async function handleGrantLifetime(uid: string) {
+        setGrantingUid(uid);
+        setGrantError('');
+        try {
+            await grantLifetimeForTesting(uid);
+            setTestUsers(prev => prev && prev.map(u => (u.uid === uid ? { ...u, plan: 'lifetime' } : u)));
+            if (uid === auth.currentUser?.uid) setBillingPlan('lifetime');
+        } catch {
+            setGrantError('Failed to grant lifetime access.');
+        } finally {
+            setGrantingUid(null);
+        }
     }
 
     async function handleResendVerification() {
@@ -249,6 +296,42 @@ function ProfileModal() {
         downloadFile(contents, EXPORT_MIME_TYPES[format], `intraconnected-export-${now.toISOString().slice(0, 10)}.${format}`);
     }
 
+    async function handleChangeEmail() {
+        const target = newEmail.trim();
+        if (!target || !emailChangePassword) return;
+        if (target.toLowerCase() === auth.currentUser?.email?.toLowerCase()) {
+            setEmailChangeError('That is already your email address.');
+            return;
+        }
+        setIsChangingEmail(true);
+        setEmailChangeError('');
+        try {
+            await requestEmailChange(emailChangePassword, target);
+            setEmailChangeSentTo(target);
+            setEmailChangePassword('');
+        } catch (err: unknown) {
+            const code = (err as { code?: string }).code ?? '';
+            if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+                setEmailChangeError('Incorrect password. Please try again.');
+            } else if (code === 'auth/invalid-new-email' || code === 'auth/invalid-email') {
+                setEmailChangeError('Enter a valid email address.');
+            } else if (code === 'auth/email-already-in-use') {
+                setEmailChangeError('An account with that email already exists.');
+            } else if (code === 'auth/too-many-requests') {
+                setEmailChangeError('Too many attempts. Please wait a few minutes and try again.');
+            } else if (code === 'app/not-signed-in') {
+                setEmailChangeError('Your session has expired. Please sign in again.');
+            } else if (code === 'app/no-account-email') {
+                setEmailChangeError("We couldn't find the email on your account. Please sign out and sign in again.");
+            } else {
+                console.error('Email change error:', err);
+                setEmailChangeError('Could not start the email change. Please try again.');
+            }
+        } finally {
+            setIsChangingEmail(false);
+        }
+    }
+
     async function handleDeleteAccount() {
         if (deleteConfirm !== 'DELETE' || !deletePassword) return;
         setIsDeleting(true);
@@ -272,9 +355,8 @@ function ProfileModal() {
 
     const planLabel = billingPlan === 'annual' ? 'Annual' : billingPlan === 'lifetime' ? 'Lifetime' : 'Free';
 
-    const accountContent = (
-        <div className="profile-account-content">
-            {/* Plan */}
+    const planSection = (
+        <>
             <section className="profile-section profile-section--plan">
                 <h3 className="profile-section-title">Plan</h3>
                 <p className="profile-section-desc">You're on the <strong>{planLabel}</strong> plan.</p>
@@ -333,7 +415,7 @@ function ProfileModal() {
                         {cancelError && <p className="profile-error">{cancelError}</p>}
                     </div>
                 )}
-                {billingPlan === 'lifetime' && (
+                {billingPlan === 'lifetime' && billingStatus.lifetimePaymentIntentId && (
                     <div className="profile-plan-actions">
                         {refundStep === 'done' ? (
                             <p className="profile-section-desc">
@@ -378,6 +460,12 @@ function ProfileModal() {
                     </div>
                 )}
             </section>
+        </>
+    );
+
+    const accountContent = (
+        <div className="profile-account-content">
+            {planSection}
 
             {/* Verify Email — only shown when unverified; gates upgrading (see create-payment-intent.ts) */}
             {!emailVerified && (
@@ -399,9 +487,82 @@ function ProfileModal() {
                 </section>
             )}
 
+            {/* Change Email */}
+            <section className="profile-section profile-section--email">
+                <h3 className="profile-section-title">Email</h3>
+                <p className="profile-section-desc">
+                    Signed in as <strong>{currentEmail}</strong>.
+                </p>
+                {emailChangeSentTo ? (
+                    <>
+                        <p className="profile-section-desc">
+                            Link sent to <strong>{emailChangeSentTo}</strong>. After you click it, sign in again with the new address.
+                        </p>
+                        {changeProvider && (
+                            <a
+                                className="profile-action-btn profile-action-btn--link neobrutal-button"
+                                href={verifyMailUrl(emailChangeSentTo, changeProvider)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Open {changeProvider.name}
+                            </a>
+                        )}
+                    </>
+                ) : !emailFormOpen ? (
+                    <button className="profile-action-btn neobrutal-button" onClick={() => setEmailFormOpen(true)}>
+                        Change email
+                    </button>
+                ) : (
+                    <>
+                        <p className="profile-section-desc">
+                            We'll send a link to the new address. Your email only changes once you click it.
+                        </p>
+                        <input
+                            id="profile-new-email"
+                            name="profile-new-email"
+                            className="profile-input neobrutal-input"
+                            type="email"
+                            placeholder="New email address"
+                            value={newEmail}
+                            onChange={e => setNewEmail(e.target.value)}
+                            autoComplete="email"
+                        />
+                        <input
+                            id="profile-email-password"
+                            name="profile-email-password"
+                            className="profile-input neobrutal-input"
+                            type="password"
+                            placeholder="Current password"
+                            value={emailChangePassword}
+                            onChange={e => setEmailChangePassword(e.target.value)}
+                            autoComplete="current-password"
+                        />
+                        {emailChangeError && <p className="profile-error">{emailChangeError}</p>}
+                        <div className="profile-plan-cancel-buttons">
+                            <button
+                                className="profile-action-btn neutral neobrutal-button"
+                                onClick={() => { setEmailFormOpen(false); setEmailChangeError(''); setEmailChangePassword(''); }}
+                                disabled={isChangingEmail}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="profile-action-btn neobrutal-button"
+                                onClick={handleChangeEmail}
+                                disabled={!newEmail.trim() || !emailChangePassword || isChangingEmail}
+                            >
+                                {isChangingEmail ? 'Sending…' : 'Send link'}
+                            </button>
+                        </div>
+                    </>
+                )}
+            </section>
+
             {/* Reset Password */}
             <section className="profile-section profile-section--reset">
                 <h3 className="profile-section-title">Reset Password</h3>
+                <p className="profile-section-desc">We'll email you a link to choose a new password.</p>
                 <div className="profile-reset-actions">
                     <button
                         className="profile-action-btn neobrutal-button"
@@ -433,7 +594,15 @@ function ProfileModal() {
                 </button>
             </section>
 
-            {/* Delete Account */}
+            {/* Support */}
+            <p className="profile-support">
+                Need help? Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+            </p>
+        </div>
+    );
+
+    const dangerContent = (
+        <div className="profile-account-content">
             <section className="profile-section profile-section--danger">
                 <h3 className="profile-section-title profile-section-title--danger">Delete Account</h3>
                 <p className="profile-section-desc">This permanently deletes all your data. This cannot be undone.</p>
@@ -465,11 +634,6 @@ function ProfileModal() {
                     {isDeleting ? 'Deleting…' : 'Delete account'}
                 </button>
             </section>
-
-            {/* Support */}
-            <p className="profile-support">
-                Need help? Email <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
-            </p>
         </div>
     );
 
@@ -557,6 +721,37 @@ function ProfileModal() {
                 {setPlanError && <p className="profile-error">{setPlanError}</p>}
             </section>
             <section className="profile-section profile-section--dev">
+                <h3 className="profile-section-title">Grant Lifetime Access</h3>
+                <p className="profile-section-desc">
+                    Gives any account Lifetime with no payment. Dev-only.
+                </p>
+                <button
+                    className="profile-action-btn neobrutal-button"
+                    onClick={loadTestUsers}
+                >
+                    {testUsers ? 'Refresh users' : 'Load users'}
+                </button>
+                {testUsers && (
+                    <ul className="profile-dev-users">
+                        {testUsers.map(u => (
+                            <li key={u.uid} className="profile-dev-user">
+                                <span className="profile-dev-user-email">
+                                    {u.email ?? u.uid} <small>({u.plan})</small>
+                                </span>
+                                <button
+                                    className="profile-action-btn neobrutal-button"
+                                    onClick={() => handleGrantLifetime(u.uid)}
+                                    disabled={grantingUid !== null || u.plan === 'lifetime'}
+                                >
+                                    {u.plan === 'lifetime' ? 'Lifetime' : grantingUid === u.uid ? 'Granting…' : 'Grant'}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                {grantError && <p className="profile-error">{grantError}</p>}
+            </section>
+            <section className="profile-section profile-section--dev">
                 <h3 className="profile-section-title">Reset Plan</h3>
                 <p className="profile-section-desc">
                     Cancels any live Stripe subscription and resets your plan to Free. Dev-only.
@@ -576,8 +771,11 @@ function ProfileModal() {
     const tabContent: Record<Tab, ReactNode> = {
         account: accountContent,
         data: dataContent,
+        danger: dangerContent,
         developer: import.meta.env.DEV ? developerContent : null,
     };
+
+    const activeTabMeta = TABS.find(t => t.id === activeTab) ?? TABS[0];
 
     return (
         <>
@@ -588,30 +786,43 @@ function ProfileModal() {
                     className={`profile-resize${animateHeight ? ' profile-resize--animate' : ''}`}
                     style={{ height: contentHeight }}
                 >
-                    <div ref={contentRef}>
+                    <div ref={contentRef} className="profile-content">
 
                         {/* ── DESKTOP layout ── */}
                         <div className="profile-desktop">
                             <div className="profile-left">
                                 <h2 className="profile-heading">Profile Options</h2>
-                                {TABS.map(tab => (
+                                {TABS.filter(tab => tab.id !== 'danger').map(tab => (
                                     <button
                                         key={tab.id}
-                                        className={`profile-tab neobrutal-button${activeTab === tab.id ? ' profile-tab--active' : ''}`}
+                                        className={`profile-tab profile-tab--${tab.id} neobrutal-button${activeTab === tab.id ? ' profile-tab--active' : ''}`}
                                         onClick={() => setActiveTab(tab.id)}
                                     >
                                         {tab.label}
                                     </button>
                                 ))}
                                 <button
-                                    className="profile-tab profile-tab--disabled neobrutal-button"
+                                    className="profile-tab profile-tab--customization profile-tab--disabled neobrutal-button"
                                     disabled
                                 >
                                     Customization
                                 </button>
+                                {/* Last item in the sidebar column */}
+                                <button
+                                    className={`profile-tab profile-tab--danger neobrutal-button${activeTab === 'danger' ? ' profile-tab--active' : ''}`}
+                                    onClick={() => setActiveTab('danger')}
+                                >
+                                    Danger Zone
+                                </button>
                             </div>
                             <div className="profile-right">
-                                {tabContent[activeTab]}
+                                <header className="profile-right-header">
+                                    <h2>{activeTabMeta.label}</h2>
+                                    <p>{activeTabMeta.desc}</p>
+                                </header>
+                                <div className="profile-right-body">
+                                    {tabContent[activeTab]}
+                                </div>
                             </div>
                         </div>
 
@@ -620,7 +831,7 @@ function ProfileModal() {
                             {mobileView === 'tabs' ? (
                                 <>
                                     <h2 className="profile-heading">Profile Options</h2>
-                                    {TABS.map(tab => (
+                                    {TABS.filter(tab => tab.id !== 'danger').map(tab => (
                                         <button
                                             key={tab.id}
                                             className="profile-tab profile-tab--mobile neobrutal-button"
@@ -643,6 +854,16 @@ function ProfileModal() {
                                         </div>
                                         <span className="profile-tab-arrow">›</span>
                                     </button>
+                                    <button
+                                        className="profile-tab profile-tab--mobile profile-tab--danger neobrutal-button"
+                                        onClick={() => setMobileView('danger')}
+                                    >
+                                        <div>
+                                            <span className="profile-tab-label">Danger Zone</span>
+                                            <span className="profile-tab-desc">Delete your account</span>
+                                        </div>
+                                        <span className="profile-tab-arrow">›</span>
+                                    </button>
                                 </>
                             ) : (
                                 <>
@@ -656,23 +877,42 @@ function ProfileModal() {
                     </div>
                 </div>
 
-                {/* Close button */}
-                <button className="profile-close neobrutal-button" onClick={handleClose}>✕</button>
+                {/* Close button — in its own corner cell so the scrollbar starts below it */}
+                <div className="profile-close-corner">
+                    <button className="profile-close neobrutal-button" onClick={handleClose}>✕</button>
+                </div>
             </div>
         </AnimatedOverlay>
 
             <AnimatedOverlay open={deleteConfirmOpen}>
-                <div className="modal neobrutal confirmModal">
-                    <p className="confirmText">Are you sure you want to permanently delete your account and all your data? This cannot be undone.</p>
-                    <section className="modalButtons">
-                        <button className="modalButton cancel neobrutal-button" onClick={() => setDeleteConfirmOpen(false)}>Cancel</button>
-                        <button
-                            className="modalButton delete neobrutal-button"
-                            onClick={() => { setDeleteConfirmOpen(false); handleDeleteAccount(); }}
-                        >
-                            Delete
-                        </button>
-                    </section>
+                <div className="modal neobrutal session-ended">
+                    <header className="session-ended-header session-ended-header--danger">
+                        <span className="session-ended-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+                                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                <path d="M10 11v6M14 11v6" />
+                            </svg>
+                        </span>
+                        <h2 className="session-ended-title">Delete your account?</h2>
+                    </header>
+                    <div className="session-ended-body">
+                        <p className="session-ended-text">
+                            This permanently deletes your account and all your data. This cannot be undone.
+                        </p>
+                        <div className="session-ended-actions">
+                            <button className="session-ended-submit neobrutal-button neutral" onClick={() => setDeleteConfirmOpen(false)}>
+                                Cancel
+                            </button>
+                            <button
+                                className="session-ended-submit neobrutal-button danger"
+                                onClick={() => { setDeleteConfirmOpen(false); handleDeleteAccount(); }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </AnimatedOverlay>
         </>

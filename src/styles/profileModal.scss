@@ -1,12 +1,51 @@
+@use 'sass:math';
+@use 'sass:map';
+@use 'sass:string';
 @use './variables' as *;
+
+// Line icons shared by the sidebar tabs and the section headings. Paths are
+// written with plain < > and encoded here so they can sit in a data URI.
+@function str-replace($s, $from, $to) {
+    $i: string.index($s, $from);
+    @if $i {
+        @return string.slice($s, 1, $i - 1) + $to +
+            str-replace(string.slice($s, $i + string.length($from)), $from, $to);
+    }
+    @return $s;
+}
+
+@function icon($body) {
+    $svg: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>#{$body}</svg>";
+    @return url("data:image/svg+xml,#{str-replace(str-replace($svg, '<', '%3C'), '>', '%3E')}");
+}
+
+$icons: (
+    'user': "<circle cx='12' cy='8' r='4'/><path d='M4 21c0-4 4-6 8-6s8 2 8 6'/>",
+    'data': "<ellipse cx='12' cy='5' rx='8' ry='3'/><path d='M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3'/>",
+    'sliders': "<path d='M4 7h9M19 7h1M4 17h1M11 17h9'/><circle cx='16' cy='7' r='2.5'/><circle cx='8' cy='17' r='2.5'/>",
+    'alert': "<path d='M12 3l10 18H2z'/><path d='M12 10v5M12 18h.01'/>",
+    'star': "<path d='M12 2.5l3 6.2 6.8.9-5 4.8 1.2 6.8-6-3.3-6 3.3 1.2-6.8-5-4.8 6.8-.9z'/>",
+    'mail': "<rect x='3' y='5' width='18' height='14' rx='2'/><path d='M3 7l9 6 9-6'/>",
+    'key': "<circle cx='8' cy='15' r='4'/><path d='M11 12l9-9M16 7l3 3'/>",
+    'logout': "<path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/>",
+    'trash': "<path d='M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6'/>",
+    // Export: out of the box, up and to the right. Import: down into a tray.
+    'export': "<path d='M14 4h6v6M20 4l-9 9'/><path d='M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4'/>",
+    'import': "<path d='M12 3v11M7 9l5 5 5-5'/><path d='M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3'/>",
+    'shield': "<path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M9 12l2 2 4-4'/>",
+    'terminal': "<path d='M4 17l6-6-6-6M12 19h8'/>",
+);
 
 .neobrutal.modal.profile-modal {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    width: min(56rem, 90vw);
-    min-height: 32rem;
+    width: min(60rem, 90vw);
+    // Height follows the content (animated by useSmoothHeight); the desktop
+    // two-panel keeps its own floor so the sidebar always fits.
+    min-height: auto;
+    max-height: 80vh;
     padding: 0;
     overflow: hidden;
     position: relative;
@@ -24,11 +63,11 @@
     }
 
     @media (min-width: $desktop) {
-        width: min(64rem, 90vw);
+        width: min(68rem, 90vw);
     }
 
     @media (min-width: $large-desktop) {
-        width: min(64rem, 90vw);
+        width: min(68rem, 90vw);
     }
 }
 
@@ -37,6 +76,8 @@
 .profile-resize {
     align-self: stretch;
     overflow: hidden;
+    // Anchors the desktop sidebar (see .profile-left).
+    position: relative;
 
     &--animate {
         transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
@@ -44,6 +85,104 @@
         @media (prefers-reduced-motion: reduce) {
             transition: none;
         }
+    }
+}
+
+$profile-scrollbar: 20px;
+$profile-scrollbar-mobile: 16px;
+$profile-scrollbar-line: 3px;
+$profile-scrollbar-pad: 2px;
+$profile-scrollbar-end-gap: 6px;
+$profile-corner: 4.2rem;
+$profile-corner-mobile: 3rem;
+
+// The measured element (see useSmoothHeight), so the modal never grows past
+// 80% of the viewport. Desktop scrolls inside .profile-right-body (sidebar stays
+// put); mobile scrolls the whole column.
+.profile-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+    // Desktop: only .profile-right-body scrolls, so this just clips.
+    overflow: hidden;
+
+    // Mobile scrolls this element, so it starts below the close-button corner
+    // ($profile-corner-mobile, less the modal's own 1rem of top padding).
+    @media (max-width: $mobile) {
+        margin-top: calc(#{$profile-corner-mobile} - 1rem);
+        max-height: calc(80vh - #{$profile-corner-mobile});
+        overflow-y: auto;
+    }
+}
+
+// Neobrutal scrollbar for the two scroll containers (desktop .profile-right-body,
+// mobile .profile-content): black-outlined green thumb on a tinted track with a
+// black line on its left edge. scrollbar-gutter keeps the track's width
+// reserved so content doesn't jump sideways when a tab is short enough not to
+// scroll. The track sits outside the container's padding, so it lands flush
+// against the modal border.
+//
+// The line is a gradient rather than a border: a border would also be cut by
+// the end caps below. The thumb is laid out over the track's whole box
+// (line included), so its left transparent border is wider by the line's
+// width, which centers it in the space to the right of the line. The outer
+// radii are sized so the *inner* (painted) radii come out equal and the thumb
+// stays a clean pill despite the uneven borders.
+@mixin profile-scrollbar($width, $outline: 3px) {
+    $pad: $profile-scrollbar-pad;
+    $line: $profile-scrollbar-line;
+    $inner: $width - $line - $pad * 2;
+    $r: math.div($inner, 2);
+    $track: darken($background-color, 4%);
+
+    &::-webkit-scrollbar {
+        width: $width;
+    }
+
+    &::-webkit-scrollbar-track,
+    &::-webkit-scrollbar-button:vertical:start:decrement,
+    &::-webkit-scrollbar-button:vertical:end:increment {
+        background: linear-gradient(to right, #000 $line, $track $line);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: $leaf;
+        background-clip: padding-box;
+        border: $pad solid transparent;
+        border-left-width: $pad + $line;
+        border-radius: ($r + $pad + $line) ($r + $pad) ($r + $pad) ($r + $pad + $line);
+        box-shadow: inset 0 0 0 $outline #000;
+    }
+}
+
+.profile-right-body,
+.profile-content {
+    scrollbar-gutter: stable;
+
+    @include profile-scrollbar($profile-scrollbar);
+
+    @media (max-width: $mobile) {
+        @include profile-scrollbar($profile-scrollbar-mobile, 2px);
+    }
+
+    // Empty end caps: the gap above and below the thumb at the ends of the
+    // scroll range.
+    &::-webkit-scrollbar-button {
+        display: none;
+    }
+
+    &::-webkit-scrollbar-button:vertical:start:decrement,
+    &::-webkit-scrollbar-button:vertical:end:increment {
+        display: block;
+        height: $profile-scrollbar-end-gap;
+    }
+
+    // Firefox has no pseudo-element API (and Chromium ignores the pseudo
+    // elements above once these standard properties are set), so only
+    // browsers without ::-webkit-scrollbar get the plain version.
+    @supports not selector(::-webkit-scrollbar) {
+        scrollbar-width: thin;
+        scrollbar-color: $leaf darken($background-color, 4%);
     }
 }
 
@@ -69,6 +208,17 @@
         color: #fff;
     }
 
+    // Last item in the sidebar column. Stays red when selected, unlike the
+    // blue active tabs.
+    &--danger {
+        background: $danger;
+        color: #fff;
+
+        &.profile-tab--active {
+            background: darken($danger, 8%);
+        }
+    }
+
     &--disabled {
         opacity: 0.4;
         cursor: not-allowed;
@@ -82,10 +232,6 @@
 
     &:last-child {
         border-bottom: none;
-    }
-
-    &--danger {
-        // intentionally unstyled at container level; title/button carry color
     }
 }
 
@@ -106,6 +252,7 @@
 }
 
 .profile-action-btn {
+    font-family: inherit;
     padding: 0.7rem 1.6rem;
     font-size: 1rem;
     font-weight: 600;
@@ -244,10 +391,42 @@
     }
 }
 
-.profile-close {
+// A notched corner of the modal that holds the close button. The scroll areas
+// start below it (see $profile-corner on .profile-right / .profile-content),
+// so their scrollbar track never runs underneath the button.
+.profile-close-corner {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    width: $profile-corner;
+    height: $profile-corner;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $background-color;
+    border-left: 3px solid #000;
+    border-bottom: 3px solid #000;
+    border-bottom-left-radius: 14px;
+
+    @media (max-width: $mobile) {
+        width: $profile-corner-mobile;
+        height: $profile-corner-mobile;
+    }
+}
+
+// On desktop the content's top bar supplies the rule and background, so the
+// corner is just a frame for the button.
+@media (min-width: #{$mobile + 1}) {
+    .profile-close-corner {
+        background: transparent;
+        border-left: none;
+        border-bottom-color: transparent;
+        border-radius: 0;
+    }
+}
+
+.profile-close {
     background: $neutral;
     font-size: 1.1rem;
     width: 2.2rem;
@@ -280,35 +459,328 @@
 
 // ── Desktop two-panel ────────────────────────────────────
 
+@keyframes profileCardIn {
+    from {
+        opacity: 0;
+        translate: 0 10px;
+    }
+}
+
 .profile-desktop {
     display: flex;
-    min-height: 32rem;
+    flex: 1 1 auto;
+    min-height: min(31rem, 80vh);
+    max-height: 80vh;
 
     @media (max-width: $mobile) {
         display: none;
     }
 }
 
+// Sidebar and content share one top bar ($profile-corner tall, ruled underneath);
+// the close button sits in the bar's right end.
+// Pinned to the animated .profile-resize box rather than sitting in the flow:
+// the content inside snaps to its new size the instant the window changes, but
+// this box eases there, so Danger Zone (pushed to the bottom) glides with it.
 .profile-left {
-    width: 14rem;
-    min-width: 14rem;
-    background: $background-color;
-    border-right: 3px solid #000;
-    padding: 1.5rem 1rem;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    width: 16rem;
+    min-width: 16rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    background: darken($background-color, 3%);
+    border-right: 3px solid #000;
+    padding-bottom: 1.25rem;
+
+    .profile-heading {
+        box-sizing: border-box;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        height: $profile-corner;
+        margin: 0 0 1.25rem;
+        padding: 0 1.25rem;
+        font-size: 1.1rem;
+        font-weight: 800;
+        border-bottom: 3px solid #000;
+    }
+
+    .profile-tab {
+        box-sizing: border-box;
+        width: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin: 0 1rem;
+        padding: 0.7rem 0.9rem;
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 700;
+        background: #fff;
+
+        & + .profile-tab {
+            margin-top: 0.85rem;
+        }
+
+        // The glyph takes the text colour, so it flips white on the active tab.
+        &::before {
+            content: '';
+            width: 1.25rem;
+            height: 1.25rem;
+            flex-shrink: 0;
+            background: currentColor;
+            mask-repeat: no-repeat;
+            mask-position: center;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            -webkit-mask-size: contain;
+        }
+
+        &--active {
+            background: $sky;
+            color: #fff;
+        }
+
+        &--disabled {
+            opacity: 0.55;
+
+            &::after {
+                content: 'Soon';
+                margin-left: auto;
+                padding: 0 6px;
+                font-size: 0.58rem;
+                font-weight: 800;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                border: 2px solid currentColor;
+                border-radius: 20px;
+            }
+        }
+
+        // Last in the column, set apart from the rest.
+        &--danger {
+            margin-top: auto !important;
+            background: #fff;
+            color: $danger;
+
+            &.profile-tab--active {
+                background: $danger;
+                color: #fff;
+            }
+        }
+    }
+}
+
+@each $tab, $name in ('account': 'user', 'data': 'data', 'customization': 'sliders', 'danger': 'alert', 'developer': 'terminal') {
+    .profile-left .profile-tab--#{$tab}::before {
+        -webkit-mask-image: icon(map.get($icons, $name));
+        mask-image: icon(map.get($icons, $name));
+    }
 }
 
 .profile-right {
     flex: 1;
-    padding: 1.5rem 2rem;
+    // Room for the absolutely positioned sidebar.
+    margin-left: 16rem;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-right-header {
+    box-sizing: border-box;
+    flex-shrink: 0;
+    height: $profile-corner;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    // Leaves the right end to the close button.
+    padding: 0 calc(#{$profile-corner} + 0.5rem) 0 2rem;
+    border-bottom: 3px solid #000;
+
+    h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    p {
+        margin: 2px 0 0;
+        font-size: 0.82rem;
+        line-height: 1.2;
+        color: #555;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.profile-right-body {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    // The scrollbar gutter is reserved on the right, so take it off the padding.
+    padding: 1.6rem calc(2rem - #{$profile-scrollbar}) 2rem 2rem;
 }
 
 .profile-account-content {
     display: flex;
     flex-direction: column;
+}
+
+// .profile-content only scrolls on mobile; on desktop its reserved gutter would
+// leave a blank strip down the right edge, under the top bar's rule.
+@media (min-width: #{$mobile + 1}) {
+    .profile-content {
+        scrollbar-gutter: auto;
+    }
+}
+
+// Each section is a card; they flow two-up and drop to one column when narrow.
+.profile-desktop .profile-account-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+
+    .profile-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1.15rem 1.25rem 1.3rem;
+        background: #fff;
+        border: 3px solid #111;
+        border-bottom: 3px solid #111;
+        border-radius: 12px;
+        box-shadow: 4px 4px 0 #111;
+        animation: profileCardIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+
+        &:nth-child(2) { animation-delay: 0.05s; }
+        &:nth-child(3) { animation-delay: 0.1s; }
+        &:nth-child(4) { animation-delay: 0.15s; }
+        &:nth-child(5) { animation-delay: 0.2s; }
+
+        // Action rows sit at the foot of the card so neighbours line up.
+        > .profile-action-btn:last-child,
+        > .profile-reset-actions:last-child,
+        > .profile-export-buttons:last-child {
+            margin-top: auto;
+        }
+
+        > .profile-input {
+            align-self: stretch;
+            width: auto;
+            margin: 0;
+            background: #fff;
+        }
+
+        > .profile-section-desc,
+        > .profile-error,
+        > .profile-import-status,
+        > .profile-import-error {
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+        > .profile-plan-actions,
+        > .profile-reset-actions,
+        > .profile-export-buttons,
+        > .profile-plan-cancel-buttons {
+            align-self: stretch;
+        }
+    }
+
+    // Unverified is the one thing to fix first, so it leads the grid.
+    .profile-section--verify {
+        grid-column: 1 / -1;
+        order: -1;
+    }
+
+    .profile-section--danger {
+        grid-column: 1 / -1;
+        max-width: 34rem;
+        background: #fff8f8;
+        border-color: $danger;
+        box-shadow: 4px 4px 0 $danger;
+    }
+
+    .profile-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 800;
+
+        // Coloured icon chip. Every section picks its own glyph + colour.
+        &::before {
+            content: '';
+            width: 2.1rem;
+            height: 2.1rem;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            border: 2px solid #111;
+            border-radius: 9px;
+            box-shadow: 2px 2px 0 #111;
+            background-color: $leaf;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 60%;
+        }
+    }
+
+    .profile-support {
+        grid-column: 1 / -1;
+        margin: 0.25rem 0 0;
+        animation: profileCardIn 0.4s 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
+}
+
+@each $section, $name, $color in
+    ('plan', 'star', $sky),
+    ('verify', 'shield', $orange),
+    ('email', 'mail', $link),
+    ('reset', 'key', $leaf),
+    ('logout', 'logout', $neutral),
+    ('danger', 'trash', #ffb3b3),
+    ('export', 'export', $leaf),
+    ('import', 'import', $sky),
+    ('dev', 'terminal', $neutral) {
+    .profile-desktop .profile-section--#{$section} .profile-section-title::before {
+        background-color: $color;
+        background-image: icon(map.get($icons, $name));
+    }
+}
+
+.profile-desktop .profile-section--danger .profile-section-title {
+    color: $danger;
+}
+
+// The plan name reads as a badge.
+.profile-desktop .profile-section--plan .profile-section-desc strong {
+    padding: 0.05rem 0.55rem;
+    background: $sky;
+    color: #fff;
+    border: 2px solid #111;
+    border-radius: 7px;
+    font-weight: 800;
 }
 
 // ── Mobile single-column ─────────────────────────────────
@@ -364,6 +836,12 @@
             opacity: 0.55;
             pointer-events: none;
             box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        &.profile-tab--danger {
+            margin-top: 0;
+            background: $danger;
+            color: #fff;
         }
     }
 
@@ -477,4 +955,27 @@
         background: #fff;
         padding: 10px 14px;
     }
+}
+
+.profile-dev-users {
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 14rem;
+    overflow-y: auto;
+}
+
+.profile-dev-user {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.profile-dev-user-email {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }

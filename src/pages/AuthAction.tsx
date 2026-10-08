@@ -8,7 +8,7 @@ import {
     verifyPasswordResetCode,
 } from "firebase/auth";
 
-type Status = "working" | "verified" | "resetForm" | "resetDone" | "recovered" | "error";
+type Status = "working" | "verified" | "resetForm" | "resetDone" | "recovered" | "emailChanged" | "error";
 
 // Firebase's default action-handler page (the one its emails link to unless
 // the project's Console > Authentication > Templates > "Customize action
@@ -24,6 +24,7 @@ const AuthAction: React.FC = () => {
     const [status, setStatus] = useState<Status>("working");
     const [errorMessage, setErrorMessage] = useState("");
     const [resetEmail, setResetEmail] = useState("");
+    const [newEmail, setNewEmail] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmNewPassword, setConfirmNewPassword] = useState("");
     const [formError, setFormError] = useState("");
@@ -59,6 +60,17 @@ const AuthAction: React.FC = () => {
                 .catch(() => {
                     setStatus("error");
                     setErrorMessage("This link is invalid or has expired.");
+                });
+        } else if (mode === "verifyAndChangeEmail") {
+            checkActionCode(auth, oobCode)
+                .then((info) => {
+                    setNewEmail(info.data.email ?? "");
+                    return applyActionCode(auth, oobCode);
+                })
+                .then(() => setStatus("emailChanged"))
+                .catch(() => {
+                    setStatus("error");
+                    setErrorMessage("This email change link is invalid or has expired. You can request a new one from Profile.");
                 });
         } else {
             setStatus("error");
@@ -142,6 +154,20 @@ const AuthAction: React.FC = () => {
                     <>
                         <h1 className="authActionTitle">Password updated</h1>
                         <p className="authActionText">You can now sign in with your new password.</p>
+                        <button className="authActionBtn neobrutal-button leaf" onClick={() => navigate("/login")}>
+                            Go to sign in
+                        </button>
+                    </>
+                )}
+
+                {status === "emailChanged" && (
+                    <>
+                        <h1 className="authActionTitle">Email updated</h1>
+                        <p className="authActionText">
+                            Your account email is now
+                            {newEmail && <> <span className="authActionEmail">{newEmail}</span></>}.
+                            Sign in again with your new address and your existing password.
+                        </p>
                         <button className="authActionBtn neobrutal-button leaf" onClick={() => navigate("/login")}>
                             Go to sign in
                         </button>

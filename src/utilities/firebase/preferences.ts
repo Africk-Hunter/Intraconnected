@@ -35,3 +35,21 @@ export async function markOnboardingSeen(): Promise<void> {
     const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
     await setDoc(prefsDoc, { onboardingSeen: true }, { merge: true });
 }
+
+// Whether this account has already seen the Lifetime celebration modal — kept
+// on the account (not localStorage) so it shows once per account, not browser.
+export async function fetchLifetimeCelebrated(): Promise<boolean> {
+    const user = authCheck();
+    if (!user) return true;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    const snap = await getDoc(prefsDoc);
+    if (!snap.exists()) return false;
+    return (snap.data().lifetimeCelebrated as boolean) ?? false;
+}
+
+export async function markLifetimeCelebrated(): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    await setDoc(prefsDoc, { lifetimeCelebrated: true }, { merge: true });
+}

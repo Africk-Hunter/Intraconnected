@@ -19,6 +19,8 @@ export interface BillingStatus {
     currentPeriodEnd: number | null;
     cancelAtPeriodEnd: boolean;
     updatedAt: number;
+    // Set only by a real Lifetime purchase; absent for a dev-granted plan, which has nothing to refund.
+    lifetimePaymentIntentId?: string | null;
 }
 
 const FREE_BILLING_STATUS: BillingStatus = {

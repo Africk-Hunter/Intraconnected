@@ -1,7 +1,10 @@
 import { auth } from "../../firebaseConfig";
-import { clearDEK } from "../dekStore";
+import { clearDEK, getDEK } from "../dekStore";
+import { wrapDEKWithEmail } from "../crypto";
+import { storePendingEmailWrap } from "./encryptionKeys";
 import { flushOutbox } from "../sync/outbox";
 import {
+    verifyBeforeUpdateEmail,
     EmailAuthProvider,
     reauthenticateWithCredential,
     sendPasswordResetEmail,
@@ -55,15 +58,72 @@ export async function deleteUserAccount(password: string): Promise<void> {
 
     // The Auth user record is already gone server-side at this point —
     // signOut just clears the client's local session state to match.
+    // Key first: the session-ended modal only opens while the key is still held.
+    clearDEK();
     try {
         await auth.signOut();
     } catch {
         // Already gone server-side; nothing left to sign out of.
     }
 
-    clearDEK();
     localStorage.clear();
     window.location.href = '/';
+}
+
+// Asks the server whether another account already uses this address (see
+// check-email-available.ts for why Firebase can't be asked from the browser).
+async function isEmailAvailable(email: string): Promise<boolean> {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No authenticated user");
+    const idToken = await user.getIdToken();
+    const res = await fetch('/.netlify/functions/check-email-available', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ email }),
+    });
+    if (!res.ok) throw new Error("Could not check that email address");
+    return ((await res.json()) as { available: boolean }).available;
+}
+
+// Starts an email change. Firebase emails a link to the NEW address and only
+// switches the account over once it's clicked (handled in AuthAction.tsx), so
+// a typo can't lock anyone out. Needs the password (fresh sign-in), and the
+// unlocked key: the recovery wrap is derived from the email, so a copy for the
+// new address is stored now — the click may happen with no key available.
+export async function requestEmailChange(password: string, newEmail: string): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) throw Object.assign(new Error("Not signed in"), { code: "app/not-signed-in" });
+    // user.email can be empty while the password provider's record still has
+    // it; reauthenticating needs the address the account signs in with.
+    const currentEmail = user.email ?? user.providerData.find(p => p.providerId === 'password')?.email ?? null;
+    if (!currentEmail) {
+        console.error('requestEmailChange: signed-in user has no email', { uid: user.uid, providers: user.providerData.map(p => p.providerId) });
+        throw Object.assign(new Error("Account has no email"), { code: "app/no-account-email" });
+    }
+
+    const normalized = newEmail.trim().toLowerCase();
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(currentEmail, password));
+
+    if (!(await isEmailAvailable(normalized))) {
+        throw Object.assign(new Error("Email already in use"), { code: "auth/email-already-in-use" });
+    }
+
+    const wrap = await wrapDEKWithEmail(getDEK(), normalized, user.uid);
+    await storePendingEmailWrap(normalized, wrap);
+    await verifyBeforeUpdateEmail(user, normalized);
+}
+
+// Copies the account's current email onto its Stripe Customer (no-op for
+// accounts that never checked out). Best-effort at the call sites.
+export async function syncBillingEmail(): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) return;
+    const idToken = await user.getIdToken();
+    const res = await fetch('/.netlify/functions/sync-billing-email', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) throw new Error("Could not update billing email");
 }
 
 export async function sendPasswordReset(email: string): Promise<void> {

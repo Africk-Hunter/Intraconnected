@@ -4,6 +4,23 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Desktop Help Menu Polish — 2026-10-08
+- New frame: close button, footer with clickable page dots + Back / Next ("Got it" on the last page) replacing the side arrows that jumped around as the height changed. Keyboard: ←/→ to page, Esc to close (ignored while typing). Hidden popup is `inert`.
+- Screens slide/fade in from the direction you're paging; height tweens to each screen and is re-measured with a ResizeObserver (late fonts/images, breakpoint changes). Capped to the window height; the body scrolls on short screens. Reopening after finishing starts at page 1. Reduced-motion respected.
+- Styling: card tokens for border/shadow, aligned icon column, lighter subheaders, 1.5 line height, consistent icon chips; removed `<br />` spacing hacks and the global `.show` rule. Patch notes popup now opens with the same motion.
+
+## Profile Modal Redesign (desktop) — 2026-10-08
+- Sections are now white cards in a two-up grid (one column when narrow), each with a coloured icon chip; the sidebar tabs have icons, Danger Zone is pinned to the bottom. A shared top bar (sidebar title + tab title/description, close button at the right end) replaces the dead space above the content; the scrollbar starts under it (`.profile-right-body`).
+- Fixed: a stray scrollbar-gutter strip down the right edge, and blank space under the sidebar when the content was shorter than the modal's old `min-height`.
+- Mobile layout untouched. Added a one-line description to Reset Password.
+
+## Change Email — 2026-10-08
+- Profile → Account → Change Email: password + new address → `verifyBeforeUpdateEmail`; the email only changes when the link sent to the new address is clicked. `AuthAction.tsx` handles `verifyAndChangeEmail`.
+- The recovery wrap (`emailEncryptedDEK`) is derived from the email, so `meta/encryption` now also stores `emailWrapFor` (the email it was wrapped for). Sign-in re-wraps when it differs from the current email (email change, `recoverEmail` revert, legacy docs). At request time a `pendingEmailEncryptedDEK` for the new address is stored too, so password-reset recovery still works if the user resets before ever signing in again.
+- New `check-email-available` function (signed-in, rate limited, Admin `getUserByEmail`) runs before the change link is sent, so an address that already has an account is refused up front ("An account with that email already exists") instead of failing after the click. Firebase can't do this from the browser when email enumeration protection is on.
+- New `sync-billing-email` function copies the Auth email onto the Stripe Customer; called after the re-wrap on sign-in.
+- **Needs Console:** Authentication → Templates → "Email address change" action URL → `https://intraconnected.app/auth/action`. Not tested against live Firebase.
+
 ## Account Deletion 502 Fix — 2026-10-08
 - `delete-account` returned 502 for any account whose `meta/billing` still named an abandoned Annual checkout: Stripe refuses to cancel an `incomplete_expired` subscription, and the "already gone" check only accepted `canceled`. Both now count as not billing. New test in `delete-account.test.ts`.
 - The Profile delete error now shows the server's message instead of a generic "Something went wrong".

@@ -1,43 +1,234 @@
 @use './variables' as *;
 
-.howToUsePopup {
-    transform: translateX(-25%);
-    opacity: 0;
-    pointer-events: none;
+$help-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 2rem 1rem;
+// Desktop help popup (the mobile one is MobileHelpSheet). Height is set
+// inline by Help.tsx from the current screen's natural size so it can tween.
+.howToUsePopup {
     position: absolute;
     right: 10vh;
     z-index: 5;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     width: 45rem;
+    max-height: calc(100vh - 4rem);
+    padding: 2rem 2.25rem 1.5rem;
     overflow: hidden;
 
-    border-radius: 10px;
-    border: 3px solid black;
-    box-shadow: 4px 4px 0 2px black;
-    transition: all 0.3s ease;
-    gap: 1.5rem;
+    border: $neo-card-border;
+    border-radius: $neo-card-radius-lg;
+    box-shadow: $neo-card-shadow;
 
-    @media (max-width: $mobile) {
-        width: 80vw;
-        height: fit-content;
-        padding: 1rem 1rem;
-        right: 1rem;
-        top: -30rem;
-        left: 0;
-        margin: auto;
+    opacity: 0;
+    transform: translateX(1.25rem) scale(0.98);
+    transform-origin: top right;
+    pointer-events: none;
+    transition:
+        opacity 0.25s ease,
+        transform 0.35s $help-ease,
+        height 0.35s $help-ease;
+
+    &.show {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
     }
 
     @media (min-width: $large-desktop) {
         width: 58rem;
-        border: 4px solid black;
+        padding: 2.75rem 3rem 2rem;
+        gap: 2rem;
+        border: $neo-card-border-lg;
+        box-shadow: $neo-card-shadow-lg;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transform: none;
+        transition: opacity 0.2s ease;
     }
 }
 
+.help-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+    width: 2.2rem;
+    height: 2.2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    background: $neutral;
+    // Small icon button — scaled-down shadow, same as .upgradeModal-close.
+    box-shadow: 1px 1px 0 1px black;
 
+    &:hover,
+    &:active {
+        box-shadow: 0 0 0 1px black;
+        translate: 1px 1px;
+    }
+
+    @media (min-width: $large-desktop) {
+        top: 1.25rem;
+        right: 1.25rem;
+        width: 2.85rem;
+        height: 2.85rem;
+        font-size: 1.45rem;
+    }
+}
+
+.help-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.help-screen {
+    animation: help-screen-in-forward 0.4s $help-ease both;
+
+    &--back {
+        animation-name: help-screen-in-back;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        animation-name: help-screen-fade;
+        animation-duration: 0.2s;
+    }
+}
+
+@keyframes help-screen-in-forward {
+    from {
+        opacity: 0;
+        transform: translateX(1.5rem);
+    }
+}
+
+@keyframes help-screen-in-back {
+    from {
+        opacity: 0;
+        transform: translateX(-1.5rem);
+    }
+}
+
+@keyframes help-screen-fade {
+    from {
+        opacity: 0;
+    }
+}
+
+.help-footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1.25rem;
+    border-top: 2px solid rgba(0, 0, 0, 0.12);
+
+    @media (min-width: $large-desktop) {
+        padding-top: 1.5rem;
+    }
+}
+
+.help-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.help-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    padding: 0;
+    border: 2px solid black;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    transition: width 0.3s $help-ease, background-color 0.2s ease;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.2);
+    }
+
+    &--active,
+    &--active:hover {
+        width: 1.75rem;
+        background: $leaf;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 1rem;
+        height: 1rem;
+
+        &--active,
+        &--active:hover {
+            width: 2.25rem;
+        }
+    }
+}
+
+.help-nav {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.help-nav-btn {
+    min-width: 6.5rem;
+    padding: 0.5rem 1rem;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: black;
+    white-space: nowrap;
+    // Lighter than .neobrutal-button's default so the footer doesn't outweigh
+    // the content above it.
+    box-shadow: $neo-detail-shadow;
+
+    &:hover,
+    &:active {
+        box-shadow: 0 0 0 1px black;
+        translate: $neo-detail-translate;
+    }
+
+    &--primary {
+        background: $leaf;
+    }
+
+    &:disabled {
+        opacity: 0.35;
+        cursor: default;
+        box-shadow: $neo-detail-shadow;
+        translate: none;
+    }
+
+    @media (min-width: $large-desktop) {
+        min-width: 8.5rem;
+        padding: 0.65rem 1.4rem;
+        font-size: 1.3rem;
+        box-shadow: $neo-detail-shadow-lg;
+
+        &:hover,
+        &:active {
+            box-shadow: 0 0 0 1px black;
+            translate: $neo-detail-translate-lg;
+        }
+
+        &:disabled {
+            box-shadow: $neo-detail-shadow-lg;
+            translate: none;
+        }
+    }
+}
 
 // ── Help screen 1: title row animation ─────────────────────────
 
@@ -90,35 +281,47 @@
 
 .header {
     margin: 0;
+    // Clears the close button.
+    padding-right: 3rem;
     font-size: 2.25rem;
     font-weight: 500;
-    margin-bottom: 0;
+    line-height: 1.1;
     user-select: none;
 
     @media (min-width: $large-desktop) {
+        padding-right: 4rem;
         font-size: 3rem;
+    }
+
+    .help-one-title-row & {
+        padding-right: 0;
     }
 }
 
 .subHeader {
-    margin: .3rem 0 .75rem 0;
+    margin: 0.5rem 0 1.5rem;
+    font-size: 1.05rem;
+    color: rgba(0, 0, 0, 0.6);
     user-select: none;
 
     @media (min-width: $large-desktop) {
-        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        font-size: 1.35rem;
     }
 }
 
 .details {
-    font-size: 1.25rem;
     margin: 0;
+    font-size: 1.1rem;
     font-weight: 400;
-    vertical-align: top;
-    height: 100%;
+    line-height: 1.5;
 
+    & + & {
+        margin-top: 0.85rem;
+    }
 
     @media (min-width: $large-desktop) {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 }
 
@@ -126,158 +329,113 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    justify-self: center;
     width: fit-content;
     height: fit-content;
-    border-radius: 10px;
-    border: 2px solid black;
-    box-shadow: 1px 1px 0 1px black;
-    padding: 0.25rem 0.75rem;
-    font-size: 1.1rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: $neo-detail-radius;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    font-size: 1.05rem;
+    font-weight: 600;
+    user-select: none;
 
     @media (min-width: $large-desktop) {
-        padding: 1rem 1rem;
-        font-size: 1.75rem;
+        padding: 0.8rem 1.5rem;
+        border-radius: $neo-detail-radius-lg;
+        font-size: 1.5rem;
     }
 
     &.helpLeaf {
-        padding: .65rem 1.25rem;
         background: $leaf;
     }
 
     &.helpRoot {
         background: $roots;
-        padding: .5rem 1rem;
     }
 
     &.helpBack {
-        padding: .5rem 1rem;
         background: $back;
     }
 
     &.helpParent {
-        padding: .65rem 1.25rem;
         background: $sky;
     }
 
     &.helpLink {
-        padding: .65rem 1.25rem;
         background: $link;
     }
 
     &.helpChecklist {
         background: $indigo;
         color: white;
-        padding: .65rem 1.25rem;
     }
 
     &.helpNote {
         background: $neo-green;
         color: white;
-        padding: .65rem 1.25rem;
     }
 
     &.helpPriorityHigh {
         background: #D62000;
         color: white;
-        padding: .65rem 1.25rem;
         font-weight: 700;
     }
 
     &.helpSort {
         background: $deep-yellow;
-        padding: .5rem .75rem;
         gap: 0.35rem;
-        font-size: 0.85rem;
         font-weight: 700;
     }
 
     &.help-chip-prio-anim {
         position: relative;
-        padding: .65rem 1.25rem;
         animation: help-chip-bg 6s ease-in-out infinite;
         font-weight: 700;
+    }
+
+    &.helpTrash,
+    &.helpPlus {
+        width: 2.75rem;
+        height: 2.75rem;
+        padding: 0;
 
         @media (min-width: $large-desktop) {
-            padding: 1rem 1.5rem;
+            width: 3.5rem;
+            height: 3.5rem;
         }
     }
 
     &.helpTrash {
-        width: 1.75rem;
-        height: 1.75rem;
         background: $danger;
-        aspect-ratio: 1 / 1;
-
-        @media (min-width: $large-desktop) {
-            padding: 1rem;
-            font-size: 1.5rem;
-        }
     }
 
     &.helpPlus {
-        width: 1rem;
-        height: 1rem;
         background: $leaf;
-        aspect-ratio: 1 / 1;
-
-        @media (min-width: $large-desktop) {
-            padding: 1rem;
-            font-size: 1.5rem;
-        }
     }
 }
 
 .helpImg {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 90%;
-    height: 90%;
+    display: block;
+    width: 55%;
+    height: 55%;
 
     &.trash {
-        width: 100%;
-        height: 100%;
-    }
-
-    @media (min-width: $large-desktop) {
-        width: 150%;
-        height: 150%;
-
-        &.trash {
-            width: 150%;
-            height: 150%;
-        }
+        width: 60%;
+        height: 60%;
     }
 }
 
 .helpGrid {
     display: grid;
-    grid-template-columns: 1fr 5fr;
+    grid-template-columns: 7rem 1fr;
+    align-items: center;
+    gap: 1.25rem 1.5rem;
     width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    gap: 1rem 0.5rem;
-
-    &::-webkit-scrollbar {
-        display: none;
-    }
-
-    @media (max-width: $mobile) {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
-        padding: 0 0.5rem;
-        margin: 0 auto;
-        width: 100%;
-        height: fit-content;
-    }
 
     @media (min-width: $large-desktop) {
-        grid-template-columns: 1fr 5fr;
-        gap: 2rem 0.75rem;
-        margin: 0 auto;
-        width: 100%;
-        height: fit-content;
+        grid-template-columns: 9.5rem 1fr;
+        gap: 1.75rem 2rem;
     }
 }
 
@@ -324,24 +482,6 @@
             }
         }
     }
-}
-
-.moveArrow {
-    opacity: 0;
-    pointer-events: none;
-    cursor: pointer;
-    scale: 1.5;
-    user-select: none;
-    margin: 0 .5rem 0 .25rem;
-}
-
-.show {
-    &.howToUsePopup {
-        transform: translateX(0);
-    }
-
-    opacity: 1;
-    pointer-events: auto;
 }
 
 .help-chip-lbl-ghost {
@@ -1003,13 +1143,13 @@
     display: flex;
     gap: 0.35rem;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     padding: 0.15rem 0;
 }
 
 .help-depth-dot {
-    width: 2rem;
-    height: 2rem;
+    width: 1.6rem;
+    height: 1.6rem;
     background: $roots;
     border: 2px solid black;
     border-radius: 5px;
@@ -1017,17 +1157,19 @@
     flex-shrink: 0;
 
     @media (min-width: $large-desktop) {
-        width: 2.8rem;
-        height: 2.8rem;
+        width: 2.4rem;
+        height: 2.4rem;
     }
 }
 
 
 // ────────────────────────────────────────────────────────────────
 
+// Same open/close motion as .howToUsePopup — the two swap in the same spot.
 .patchNotesPopup {
-    transition: all 0.3s ease;
-    transform: translateX(-25%);
+    transition: opacity 0.25s ease, transform 0.35s $help-ease;
+    transform: translateX(1.25rem) scale(0.98);
+    transform-origin: top right;
     opacity: 0;
     pointer-events: none;
 
@@ -1051,9 +1193,14 @@
     }
 
     &.show {
-        transform: translateX(0);
+        transform: none;
         opacity: 1;
         pointer-events: auto;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transform: none;
+        transition: opacity 0.2s ease;
     }
 
     @media (min-width: $large-desktop) {

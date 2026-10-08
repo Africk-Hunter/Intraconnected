@@ -1,0 +1,162 @@
+@use './variables' as *;
+
+.neobrutal.modal.session-ended {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    width: min(34rem, 90vw);
+    min-height: auto;
+    padding: 0;
+    overflow: hidden;
+    text-align: left;
+    background-color: $background-color;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    background-size: 40px 40px;
+
+    @media (max-width: $mobile) {
+        align-items: stretch !important;
+        padding: 0 !important;
+    }
+}
+
+.session-ended-header {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 1.5rem 2rem;
+    background: $burnt-orange;
+    color: #fff;
+    border-bottom: 3px solid #000;
+}
+
+// Same card for destructive confirmations (delete account).
+.session-ended-header--danger {
+    background: $danger;
+
+    .session-ended-icon {
+        background: $back;
+        color: #000;
+    }
+}
+
+.session-ended-actions {
+    display: flex;
+    gap: 1rem;
+
+    .session-ended-submit {
+        flex: 1;
+    }
+
+    .danger {
+        color: #fff;
+    }
+}
+
+.session-ended-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 3.8rem;
+    height: 3.8rem;
+    background: $link;
+    color: #000;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    box-shadow: $neo-detail-shadow;
+    transform: rotate(-6deg);
+
+    svg {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+}
+
+.session-ended-title {
+    margin: 0;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.session-ended-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.7rem 2rem 2rem;
+}
+
+.session-ended-text {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    color: #222;
+}
+
+.session-ended-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    .input {
+        width: 100%;
+        box-sizing: border-box;
+        text-transform: none;
+        letter-spacing: normal;
+        font-weight: 400;
+        font-size: 1.05rem;
+        padding-block: 0.8rem;
+
+        &::placeholder {
+            font-size: 1.05rem;
+        }
+    }
+}
+
+.session-ended-error {
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    background: $danger;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+}
+
+.session-ended-submit {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+}
+
+.session-ended-leave {
+    align-self: center;
+    padding: 0.2rem 0.3rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+
+    &:hover {
+        color: #000;
+    }
+}
