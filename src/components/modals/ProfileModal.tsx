@@ -6,7 +6,7 @@ import { signUserOut,deleteUserAccount, requestEmailChange,sendPasswordReset, re
 import { auth } from '../../firebaseConfig';
 import { fetchFullIdeaList } from '../../utilities/idea/helpers';
 import { checkDevPassword } from '../../utilities/devPassword';
-import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, listUsersForTesting, grantLifetimeForTesting, type TestUser, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
+import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, listUsersForTesting, grantLifetimeForTesting, lookupUidByEmailForTesting, type TestUser, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
 import { getCachedBillingStatus, BillingStatus } from '../../utilities/billing/billingCache';
 import { SUPPORT_EMAIL } from '../../utilities/support';
 import { ideasToMarkdown, ideasToOpml } from '../../utilities/idea/exporters';
@@ -67,6 +67,9 @@ function ProfileModal() {
     const [testUsers, setTestUsers] = useState<TestUser[] | null>(null);
     const [grantingUid, setGrantingUid] = useState<string | null>(null);
     const [grantError, setGrantError] = useState('');
+    const [lookupEmail, setLookupEmail] = useState('');
+    const [lookupUid, setLookupUid] = useState('');
+    const [lookupError, setLookupError] = useState('');
     const [emailVerified, setEmailVerified] = useState(true);
     const [verifyResendSent, setVerifyResendSent] = useState(false);
     const [verifyError, setVerifyError] = useState('');
@@ -75,6 +78,7 @@ function ProfileModal() {
     const [emailChangeError, setEmailChangeError] = useState('');
     const [emailChangeSentTo, setEmailChangeSentTo] = useState('');
     const changeProvider = emailChangeSentTo ? getMailProvider(emailChangeSentTo) : null;
+    const verifyProvider = auth.currentUser?.email ? getMailProvider(auth.currentUser.email) : null;
     const [isChangingEmail, setIsChangingEmail] = useState(false);
     const [emailFormOpen, setEmailFormOpen] = useState(false);
     // Read when the modal opens: auth.currentUser can still be null at first render.
@@ -138,6 +142,16 @@ function ProfileModal() {
             setTestUsers(await listUsersForTesting());
         } catch {
             setGrantError('Failed to load users. Is ALLOW_TEST_RESET=true set in your local .env?');
+        }
+    }
+
+    async function handleLookupUid() {
+        setLookupError('');
+        setLookupUid('');
+        try {
+            setLookupUid(await lookupUidByEmailForTesting(lookupEmail));
+        } catch {
+            setLookupError('No account found, or ALLOW_TEST_RESET=true is missing from your local .env.');
         }
     }
 
@@ -482,6 +496,16 @@ function ProfileModal() {
                         >
                             {verifyResendSent ? 'Verification email sent' : 'Send verification email'}
                         </button>
+                        {verifyResendSent && verifyProvider && currentEmail && (
+                            <a
+                                className="profile-action-btn profile-action-btn--link neobrutal-button"
+                                href={verifyMailUrl(currentEmail, verifyProvider)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Open {verifyProvider.name}
+                            </a>
+                        )}
                     </div>
                     {verifyError && <p className="profile-error">{verifyError}</p>}
                 </section>
@@ -750,6 +774,47 @@ function ProfileModal() {
                     </ul>
                 )}
                 {grantError && <p className="profile-error">{grantError}</p>}
+            </section>
+            <section className="profile-section profile-section--dev">
+                <h3 className="profile-section-title">Find User ID</h3>
+                <p className="profile-section-desc">
+                    Look up a Firebase uid by email. Dev-only.
+                </p>
+                <form
+                    onSubmit={e => {
+                        e.preventDefault();
+                        void handleLookupUid();
+                    }}
+                >
+                    <input
+                        className="profile-input"
+                        type="email"
+                        placeholder="user@example.com"
+                        value={lookupEmail}
+                        onChange={e => setLookupEmail(e.target.value)}
+                        autoComplete="off"
+                    />
+                    <button
+                        type="submit"
+                        className="profile-action-btn neobrutal-button"
+                        disabled={!lookupEmail.trim()}
+                    >
+                        Look up
+                    </button>
+                </form>
+                {lookupUid && (
+                    <p className="profile-section-desc">
+                        <code>{lookupUid}</code>{' '}
+                        <button
+                            type="button"
+                            className="profile-action-btn neobrutal-button"
+                            onClick={() => void navigator.clipboard?.writeText(lookupUid)}
+                        >
+                            Copy
+                        </button>
+                    </p>
+                )}
+                {lookupError && <p className="profile-error">{lookupError}</p>}
             </section>
             <section className="profile-section profile-section--dev">
                 <h3 className="profile-section-title">Reset Plan</h3>

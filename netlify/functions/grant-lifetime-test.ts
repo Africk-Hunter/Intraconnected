@@ -28,9 +28,9 @@ export default async (req: Request, _context: Context) => {
         return jsonError(401, "You must be signed in.");
     }
 
-    let body: { action?: unknown; uid?: unknown };
+    let body: { action?: unknown; uid?: unknown; email?: unknown };
     try {
-        body = (await req.json()) as { action?: unknown; uid?: unknown };
+        body = (await req.json()) as { action?: unknown; uid?: unknown; email?: unknown };
     } catch {
         return jsonError(400, "Invalid request body.");
     }
@@ -49,6 +49,18 @@ export default async (req: Request, _context: Context) => {
             plan: (snaps[i]?.data()?.plan as string | undefined) ?? "free",
         }));
         return jsonResponse(req, { users: result });
+    }
+
+    if (body.action === "lookup") {
+        if (typeof body.email !== "string" || !body.email.trim()) {
+            return jsonError(400, "email is required.");
+        }
+        try {
+            const user = await adminAuth().getUserByEmail(body.email.trim());
+            return jsonResponse(req, { uid: user.uid, email: user.email ?? null });
+        } catch {
+            return jsonError(404, "No account with that email.");
+        }
     }
 
     if (body.action === "grant") {
@@ -77,5 +89,5 @@ export default async (req: Request, _context: Context) => {
         return jsonResponse(req, { success: true });
     }
 
-    return jsonError(400, "action must be 'list' or 'grant'.");
+    return jsonError(400, "action must be 'list', 'lookup' or 'grant'.");
 };

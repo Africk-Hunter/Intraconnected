@@ -244,6 +244,11 @@ export async function listUsersForTesting(): Promise<TestUser[]> {
     return (await callGrantLifetimeTest<{ users: TestUser[] }>({ action: 'list' })).users;
 }
 
+// Testing-only — finds an account's uid from its email.
+export async function lookupUidByEmailForTesting(email: string): Promise<string> {
+    return (await callGrantLifetimeTest<{ uid: string }>({ action: 'lookup', email })).uid;
+}
+
 // Testing-only — grants Lifetime to any account by uid, with no payment.
 export async function grantLifetimeForTesting(uid: string): Promise<void> {
     await callGrantLifetimeTest({ action: 'grant', uid });
