@@ -8,6 +8,7 @@ vi.mock("../sync/outbox", () => ({ enqueue, enqueueMany }));
 import {
     createIdea,
     recursivelyDeleteChildren,
+    restoreIdeas,
     updateChecklistItems,
     updateIdeaLink,
     updateIdeaName,
@@ -110,5 +111,31 @@ describe("ideaStore", () => {
     it("survives a parent cycle in bad data instead of looping forever", () => {
         seed(idea(2, 3), idea(3, 2));
         expect(() => recursivelyDeleteChildren(2)).not.toThrow();
+    });
+
+    it("delete returns what it removed, and restoreIdeas puts it back parents first", () => {
+        seed(idea(2, 1), idea(3, 2), idea(4, 3), idea(5, 2), idea(6, 1));
+        const removed = recursivelyDeleteChildren(2);
+        expect(removed.map((i) => i.id).sort()).toEqual([2, 3, 4, 5]);
+        vi.clearAllMocks();
+
+        restoreIdeas(removed);
+        expect(saved().map((i) => i.id).sort()).toEqual([2, 3, 4, 5, 6]);
+        expect(saved().find((i) => i.id === 4)).toEqual(idea(4, 3));
+        const ops = enqueueMany.mock.calls[0][0] as { kind: string; idea: IdeaType }[];
+        expect(ops.every((op) => op.kind === "create")).toBe(true);
+        const order = ops.map((op) => op.idea.id);
+        expect(order.indexOf(2)).toBeLessThan(order.indexOf(3));
+        expect(order.indexOf(3)).toBeLessThan(order.indexOf(4));
+        expect(order.indexOf(2)).toBeLessThan(order.indexOf(5));
+    });
+
+    it("restoreIdeas skips ideas that already exist and does nothing when all do", () => {
+        seed(idea(2, 1), idea(3, 2));
+        restoreIdeas([idea(2, 1), idea(3, 2)]);
+        expect(enqueueMany).not.toHaveBeenCalled();
+        restoreIdeas([idea(3, 2), idea(7, 3)]);
+        expect(saved().map((i) => i.id)).toEqual([2, 3, 7]);
+        expect(enqueueMany.mock.calls[0][0]).toEqual([{ kind: "create", idea: idea(7, 3) }]);
     });
 });

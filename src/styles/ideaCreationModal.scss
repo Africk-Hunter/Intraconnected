@@ -1187,8 +1187,8 @@
 }
 
 // desktop/mobile tip text swap (tip 3)
-.oa-tip-text--drag { @media (max-width: $mobile) { display: none; } }
-.oa-tip-text--lp   { display: none; @media (max-width: $mobile) { display: block; } }
+.oa-tip-text--drag { @media #{$mobile-ui} { display: none; } }
+.oa-tip-text--lp   { display: none; @media #{$mobile-ui} { display: block; } }
 
 .onboarding-cta {
     font-size: 1.3rem;
@@ -1336,7 +1336,7 @@
 
 .oa--drag {
     position: relative;
-    @media (max-width: $mobile) { display: none; }
+    @media #{$mobile-ui} { display: none; }
 }
 
 .oa-drag-card {
@@ -1382,7 +1382,7 @@
 .oa--lp {
     display: none;
     position: relative;
-    @media (max-width: $mobile) { display: flex; }
+    @media #{$mobile-ui} { display: flex; }
 }
 
 .oa-lp-card {
@@ -1440,4 +1440,16 @@
 @keyframes trophyBounce {
     from { transform: scale(0); opacity: 0; }
     to   { transform: scale(1); opacity: 1; }
+}
+
+// The ⋯ button drawn inline in help text, so it looks like the real thing
+.oa-inline-icon {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -0.2em;
+    padding: 0 3px;
+    margin: 0 1px;
+    border: 1.5px solid currentColor;
+    border-radius: 6px;
+    line-height: 1;
 }

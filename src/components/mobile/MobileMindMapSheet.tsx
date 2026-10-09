@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { IdeaType, getIdeaLink, openIdeaLink, resolveIdeaLabel, isNoteMode } from '../../utilities';
+import { useSheetSwipeDown } from './useSheetSwipeDown';
 
 interface Props {
     currentId: number;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }: Props) {
+    const swipe = useSheetSwipeDown(onClose);
     const ideasWithRoot = (() => {
         const hasRoot = allIdeas.some(i => Number(i.id) === 1);
         return hasRoot
@@ -100,7 +102,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
 
             function handleClick() {
                 if (isChecklist || isNote) return;
-                if (isLink) { openIdeaLink(getIdeaLink(child)); return; }
+                if (isLink && !hasKids) { openIdeaLink(getIdeaLink(child)); return; }
                 onNavigate(id);
             }
 
@@ -143,10 +145,11 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
     return (
         <>
             <div className="mmobile-scrim" onClick={onClose} />
-            <div className="mmobile-mindmap-sheet" style={style}>
-                <div className="mmobile-mindmap-header">
+            <div ref={swipe.sheetRef} className="mmobile-mindmap-sheet" style={style} role="dialog" aria-modal="true" aria-label="Mind map">
+                <div className="mmobile-mindmap-header" {...swipe.dragProps}>
+                    <div className="mmobile-sheet-grab mmobile-sheet-grab--panel" aria-hidden="true" />
                     <span className="mmobile-mindmap-title">Mind Map</span>
-                    <button className="mmobile-mindmap-close" onClick={onClose}>✕</button>
+                    <button className="mmobile-mindmap-close" onClick={onClose} aria-label="Close">✕</button>
                 </div>
                 <div className="vtree-scroll" ref={scrollRef}>
                     {root && (

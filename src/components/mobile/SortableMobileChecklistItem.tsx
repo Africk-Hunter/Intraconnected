@@ -2,7 +2,8 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { ChecklistItem } from '../../utilities/types';
-import { cleanLink } from '../../utilities';
+import { cleanLink, openIdeaLink } from '../../utilities';
+import MoreDotsIcon from './MoreDotsIcon';
 
 export interface SortableMobileItemProps {
     item: ChecklistItem;
@@ -13,8 +14,13 @@ export interface SortableMobileItemProps {
     onLinkChange: (id: string, link: string, nodeId: number) => void;
 }
 
+// One row of the full checklist view: drag handle · (checkbox + text, one
+// big target that ticks the item, like the inline view) · ↗ when it has a
+// link · ⋯ for Edit / Link / Delete. Every target is at least 44px; the
+// rarely-used actions sit behind ⋯ instead of crowding the row.
 function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit, onLinkChange }: SortableMobileItemProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+    const [menuOpen, setMenuOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState('');
     const editInputRef = useRef<HTMLTextAreaElement>(null);
@@ -46,6 +52,7 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
     }, [isLinking]);
 
     function startEdit() {
+        setMenuOpen(false);
         setEditDraft(item.text);
         setIsEditing(true);
     }
@@ -56,7 +63,8 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
         setIsEditing(false);
     }
 
-    function openLink() {
+    function openLinkEditor() {
+        setMenuOpen(false);
         setLinkDraft(item.link ?? '');
         setIsLinking(true);
     }
@@ -72,54 +80,75 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
         <li
             ref={setNodeRef}
             style={style}
-            className={`mmobile-checklist-sheet-item${item.checked ? ' mmobile-checklist-sheet-item--checked' : ''}`}
+            className={`mmobile-checklist-sheet-item${item.checked ? ' mmobile-checklist-sheet-item--checked' : ''}${menuOpen ? ' mmobile-checklist-sheet-item--menu' : ''}`}
         >
-            <button className="mmobile-checklist-sheet-drag" {...attributes} {...listeners} aria-label="Drag to reorder">
-                <img src="/images/DragHandle.svg" alt="" />
-            </button>
-            <button className="mmobile-checklist-sheet-cb" onClick={() => onToggle(item.id, nodeId)} />
-            {isEditing ? (
-                <textarea
-                    ref={editInputRef}
-                    className="mmobile-checklist-sheet-edit-input"
-                    value={editDraft}
-                    rows={1}
-                    onChange={e => {
-                        setEditDraft(e.target.value);
-                        const el = e.target;
-                        el.style.height = 'auto';
-                        el.style.height = el.scrollHeight + 'px';
-                    }}
-                    onBlur={commitEdit}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitEdit(); } if (e.key === 'Escape') setIsEditing(false); }}
-                    maxLength={200}
-                />
-            ) : (
-                item.link ? (
-                    <a href={item.link} target="_blank" rel="noreferrer" className="mmobile-checklist-sheet-text mmobile-checklist-sheet-text--linked">
-                        {item.text}
-                    </a>
+            <div className="mmobile-checklist-sheet-row">
+                <button className="mmobile-checklist-sheet-drag" {...attributes} {...listeners} aria-label="Drag to reorder">
+                    <img src="/images/DragHandle.svg" alt="" />
+                </button>
+                {isEditing ? (
+                    <textarea
+                        ref={editInputRef}
+                        className="mmobile-checklist-sheet-edit-input"
+                        value={editDraft}
+                        rows={1}
+                        enterKeyHint="done"
+                        aria-label="Item text"
+                        onChange={e => {
+                            setEditDraft(e.target.value);
+                            const el = e.target;
+                            el.style.height = 'auto';
+                            el.style.height = el.scrollHeight + 'px';
+                        }}
+                        onBlur={commitEdit}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitEdit(); } if (e.key === 'Escape') setIsEditing(false); }}
+                        maxLength={200}
+                    />
                 ) : (
-                    <span className="mmobile-checklist-sheet-text">{item.text}</span>
-                )
-            )}
-            {!isEditing && (
-                <>
                     <button
-                        className={`mmobile-checklist-sheet-link${item.link ? ' mmobile-checklist-sheet-link--active' : ''}`}
-                        onClick={() => isLinking ? setIsLinking(false) : openLink()}
-                        title={item.link ? 'Edit link' : 'Add link'}
+                        className="mmobile-checklist-sheet-toggle"
+                        role="checkbox"
+                        aria-checked={item.checked}
+                        onClick={() => onToggle(item.id, nodeId)}
                     >
-                        <img src="/images/LinkBlack.svg" alt="Link" />
+                        <span className="mmobile-checklist-sheet-cb" aria-hidden="true" />
+                        <span className={`mmobile-checklist-sheet-text${item.link ? ' mmobile-checklist-sheet-text--linked' : ''}`}>{item.text}</span>
                     </button>
-                    <button className="mmobile-checklist-sheet-edit" onClick={startEdit}>
-                        <img src="/images/Pen.svg" alt="Edit" />
+                )}
+                {item.link && !isEditing && (
+                    <button className="mmobile-checklist-sheet-open" onClick={() => openIdeaLink(item.link!)} aria-label="Open link">
+                        ↗
                     </button>
-                </>
+                )}
+                {!isEditing && (
+                    <button
+                        className="mmobile-checklist-sheet-more"
+                        onClick={() => setMenuOpen(open => !open)}
+                        aria-expanded={menuOpen}
+                        aria-label={`Actions for ${item.text}`}
+                    >
+                        <MoreDotsIcon />
+                    </button>
+                )}
+            </div>
+
+            {menuOpen && !isEditing && !isLinking && (
+                <div className="mmobile-checklist-sheet-menu">
+                    <button className="mmobile-checklist-sheet-menu-btn" onClick={startEdit}>
+                        <img src="/images/Pen.svg" alt="" /> Edit
+                    </button>
+                    <button className="mmobile-checklist-sheet-menu-btn" onClick={openLinkEditor}>
+                        <img src="/images/LinkBlack.svg" alt="" /> {item.link ? 'Link' : 'Add link'}
+                    </button>
+                    <button
+                        className="mmobile-checklist-sheet-menu-btn mmobile-checklist-sheet-menu-btn--delete"
+                        onClick={() => { setMenuOpen(false); onDelete(item.id, nodeId); }}
+                    >
+                        <img src="/images/Trash.svg" alt="" /> Delete
+                    </button>
+                </div>
             )}
-            <button className="mmobile-checklist-sheet-del" onClick={() => onDelete(item.id, nodeId)}>
-                <img src="/images/Trash.svg" alt="Delete" />
-            </button>
+
             {isLinking && (
                 <div className="mmobile-checklist-sheet-item-link-row">
                     <input
@@ -132,6 +161,9 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
                             if (e.key === 'Enter') { e.preventDefault(); commitLink(); }
                             if (e.key === 'Escape') { cancelLinkRef.current = true; setIsLinking(false); }
                         }}
+                        type="url"
+                        enterKeyHint="done"
+                        aria-label="Link"
                         placeholder="Paste URL, press Enter"
                         maxLength={500}
                     />
@@ -139,7 +171,7 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
                         <button
                             className="mmobile-checklist-sheet-item-link-clear"
                             onMouseDown={e => { e.preventDefault(); onLinkChange(item.id, '', nodeId); setIsLinking(false); }}
-                            title="Remove link"
+                            aria-label="Remove link"
                         >
                             ✕
                         </button>

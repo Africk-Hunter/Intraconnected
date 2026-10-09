@@ -82,7 +82,8 @@ function collectSubtreeIds(list: IdeaType[], rootIdeaId: number): number[] {
     return ids;
 }
 
-export function recursivelyDeleteChildren(ideaId: number): void {
+// Returns what was removed, so the caller can offer Undo (restoreIdeas).
+export function recursivelyDeleteChildren(ideaId: number): IdeaType[] {
     const list = fetchFullIdeaList();
     const ids = collectSubtreeIds(list, ideaId);
     const removed = new Set(ids);
@@ -93,4 +94,48 @@ export function recursivelyDeleteChildren(ideaId: number): void {
         ops.push({ kind: "delete", ids: ids.slice(i, i + DELETE_CHUNK_SIZE) });
     }
     enqueueMany(ops);
+    return list.filter((idea) => removed.has(idea.id));
+}
+
+// Undo for a delete: puts the ideas back with the same ids, as ordinary
+// creates queued after the delete. Parents are queued before their children,
+// so no create ever lands under a parent the server doesn't have yet. Any
+// that already exist again (restored twice, or re-created by a sync) are
+// skipped. The free-plan node counter nets out: -N on delete, +N here.
+export function restoreIdeas(ideas: IdeaType[]): void {
+    const list = fetchFullIdeaList();
+    const present = new Set(list.map((idea) => idea.id));
+    const pending = ideas.filter((idea) => !present.has(idea.id));
+    const ordered = parentsFirst(pending);
+    if (ordered.length === 0) return;
+    writeLocal([...list, ...ordered]);
+    enqueueMany(ordered.map((idea) => ({ kind: "create" as const, idea })));
+}
+
+function parentsFirst(ideas: IdeaType[]): IdeaType[] {
+    const inSet = new Set(ideas.map((idea) => idea.id));
+    const childrenOf = new Map<number, IdeaType[]>();
+    const tops: IdeaType[] = [];
+    for (const idea of ideas) {
+        if (inSet.has(idea.parentID) && idea.parentID !== idea.id) {
+            const siblings = childrenOf.get(idea.parentID);
+            if (siblings) siblings.push(idea);
+            else childrenOf.set(idea.parentID, [idea]);
+        } else {
+            tops.push(idea);
+        }
+    }
+    const ordered: IdeaType[] = [];
+    const seen = new Set<number>();
+    const queue = [...tops];
+    while (queue.length > 0) {
+        const idea = queue.shift()!;
+        if (seen.has(idea.id)) continue;
+        seen.add(idea.id);
+        ordered.push(idea);
+        queue.push(...(childrenOf.get(idea.id) ?? []));
+    }
+    // A parent cycle in bad data has no top; keep those ideas rather than drop them.
+    for (const idea of ideas) if (!seen.has(idea.id)) ordered.push(idea);
+    return ordered;
 }

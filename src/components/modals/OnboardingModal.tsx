@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth } from '../../firebaseConfig';
 import { fetchOnboardingSeen, markOnboardingSeen } from '../../utilities/firebase/preferences';
+import MoreDotsIcon from '../mobile/MoreDotsIcon';
 
 const STORAGE_KEY = 'onboarding_v1_seen';
 
@@ -78,7 +79,7 @@ function OnboardingModal() {
                             <strong>Drag</strong> a card onto another to nest it, or onto the trash to delete.
                         </p>
                         <p className="onboarding-tip__text oa-tip-text--lp">
-                            <strong>Long-press</strong> any card to rename, move, or delete it.
+                            Tap <span className="oa-inline-icon"><MoreDotsIcon size={16} /></span> on a card, or press and hold it, to edit, move or delete it. Hold and drag to move it into another.
                         </p>
                         <div className="oa oa--drag">
                             <div className="oa-drag-card" />

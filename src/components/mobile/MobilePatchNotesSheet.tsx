@@ -3,6 +3,7 @@ import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../../utilities/parseChangelog';
 import { containsProfanity } from '../../utilities/profanityFilter';
 import { submitFeatureRequest } from '../../utilities/firebase/featureRequests';
+import { useSheetSwipeDown } from './useSheetSwipeDown';
 
 const entries = parseChangelog(changelog);
 
@@ -14,6 +15,7 @@ function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?
     const [body, setBody] = useState('');
     const [profanityError, setProfanityError] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const swipe = useSheetSwipeDown(onClose);
 
     function reset() {
         setView('notes');
@@ -43,13 +45,18 @@ function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?
     return (
         <>
             <div className="mmobile-scrim mmobile-patchnotes-scrim" onClick={onClose}>
-                <div className="mmobile-help-sheet mmobile-patchnotes-sheet" style={style} onClick={e => e.stopPropagation()}>
-                    <div className="mmobile-help-header">
+                <div ref={swipe.sheetRef} className="mmobile-help-sheet mmobile-patchnotes-sheet" style={style} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="What's new">
+                    <div className="mmobile-sheet-grab mmobile-sheet-grab--panel" aria-hidden="true" {...swipe.dragProps} />
+                    <div className="mmobile-help-header" {...swipe.dragProps}>
                         <span className="mmobile-help-pager">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</span>
-                        {view === 'notes'
-                            ? <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>+ Recommend a feature</button>
-                            : <button className="mmobile-help-close" onClick={view === 'submitting' ? undefined : reset}>✕</button>
-                        }
+                        {view === 'notes' ? (
+                            <div className="mmobile-help-header-actions">
+                                <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>+ Recommend a feature</button>
+                                <button className="mmobile-help-close" onClick={onClose} aria-label="Close">✕</button>
+                            </div>
+                        ) : (
+                            <button className="mmobile-help-close" onClick={view === 'submitting' ? undefined : reset} aria-label="Back to notes">✕</button>
+                        )}
                     </div>
 
                     <div className="mmobile-help-content">

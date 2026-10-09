@@ -1,8 +1,8 @@
 export type SheetState =
-    | { type: 'rename'; nodeId: number; isNew?: boolean }
+    | { type: 'create'; nodeId: number }
     | { type: 'edit'; nodeId: number }
+    | { type: 'actions'; nodeId: number }
     | { type: 'move'; nodeId: number }
-    | { type: 'link'; nodeId: number }
     | { type: 'confirmDelete'; nodeId: number }
     | { type: 'checklist'; nodeId: number };
 

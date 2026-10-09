@@ -54,6 +54,7 @@ import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRe
 import { consumePendingCheckoutPlan } from '../utilities/billing/billing';
 import { useBillingPlanSync } from '../utilities/billing/useBillingPlanSync';
 import { useNodeCountResync } from '../utilities/billing/useNodeCountResync';
+import { useIsMobileUI } from '../utilities/useIsMobileUI';
 import { syncOnLoad, startSyncListener } from '../utilities/sync/syncEngine';
 import { onSyncRefreshed } from '../utilities/sync/syncStore';
 import SyncStatusBanner from '../components/SyncStatusBanner';
@@ -145,6 +146,7 @@ function Idea() {
 
     useBillingPlanSync(setBillingPlan);
     useNodeCountResync(billingPlan, serverSynced);
+    const isMobileUI = useIsMobileUI();
 
     // Lifetime granted without a checkout (Developer Testing): celebrate once
     // per account (flag lives in Firestore, not this browser) the next time the
@@ -472,7 +474,7 @@ function Idea() {
                     <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>
             </section>
-            <MobileMindMap />
+            {isMobileUI && <MobileMindMap />}
             <SyncStatusBanner />
             <MindMap onClose={() => setShowMindMap(false)} visible={showMindMap} />
             <RenameModal />

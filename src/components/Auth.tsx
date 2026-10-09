@@ -31,7 +31,7 @@ const Auth: React.FC = () => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user && !isSigningIn.current) {
                 const dekLoaded = await loadDEKFromSession();
-                if (dekLoaded) window.location.href = '/main';
+                if (dekLoaded) window.location.replace('/main');
             }
         });
         return () => unsubscribe();
@@ -131,7 +131,7 @@ const Auth: React.FC = () => {
 
                 sessionStorage.setItem('new_user', 'true');
                 isSigningIn.current = false;
-                window.location.href = '/main';
+                window.location.replace('/main');
             })
             .catch((error) => {
                 isSigningIn.current = false;
@@ -195,7 +195,7 @@ const Auth: React.FC = () => {
                         } catch { /* non-critical */ }
                     }
                     isSigningIn.current = false;
-                    window.location.href = '/main';
+                    window.location.replace('/main');
                 } catch {
                     // DEK decryption failed — password was reset; auto-recover via email
                     pendingPasswordRef.current = capturedPassword;
@@ -213,7 +213,7 @@ const Auth: React.FC = () => {
                 await setDEK(dek, rememberMe);
 
                 isSigningIn.current = false;
-                window.location.href = '/main';
+                window.location.replace('/main');
             }
         } catch (error) {
             isSigningIn.current = false;
@@ -258,7 +258,7 @@ const Auth: React.FC = () => {
                 await syncBillingEmail().catch(() => { /* non-critical */ });
             }
 
-            window.location.href = '/main';
+            window.location.replace('/main');
         } catch {
             displayMessage('Could not save your new keys. Please try again.', 'bad');
         }

@@ -18,6 +18,7 @@ import {
     handleChecklistCreation,
     handleNoteCreation,
     recursivelyDeleteChildren,
+    restoreIdeas,
     cleanLink,
     openIdeaLink,
     getIdeaLink,
@@ -28,13 +29,23 @@ import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileMindMapSheet from './MobileMindMapSheet';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
+import MobileUndoToast, { type UndoToastState } from './MobileUndoToast';
+import MobilePriorityPicker from './MobilePriorityPicker';
+import { useSheetSwipeDown } from './useSheetSwipeDown';
+import MoreDotsIcon from './MoreDotsIcon';
 import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../../utilities/patchNotesState';
 import { auth } from '../../firebaseConfig';
 import { onSyncRefreshed } from '../../utilities/sync/syncStore';
+import { useBackHandler } from '../../utilities/backStack';
 
 const _changelogEntries = parseChangelog(changelog);
+
+// iOS uses ~0.5s for long-press; shorter turns a resting thumb into a hold.
+const LONG_PRESS_MS = 500;
+// How far the finger must move after the hold before it becomes a drag.
+const DRAG_START_PX = 10;
 
 const lastPointer = { x: 0, y: 0 };
 if (typeof window !== 'undefined') {
@@ -58,6 +69,7 @@ function MobileMindMap() {
             if (currentId !== 1 && !fetchFullIdeaList().some((idea) => idea.id === currentId)) {
                 setCurrentId(1);
                 setSheet(null);
+                showToast('That idea was deleted on another device');
             }
         });
     }, [currentId]);
@@ -71,6 +83,7 @@ function MobileMindMap() {
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
+    const [showPath, setShowPath] = useState(false);
     const [animatingRibbonId, setAnimatingRibbonId] = useState<number | null>(null);
     const frozenOrderRef = useRef<number[] | null>(null);
     const reorderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,15 +105,29 @@ function MobileMindMap() {
     const [editBodyDraft, setEditBodyDraft] = useState('');
     const [newIdeaPriority, setNewIdeaPriority] = useState<1 | 2 | 3 | undefined>(undefined);
     const [headerDraft, setHeaderDraft] = useState('');
+    const [editingTitle, setEditingTitle] = useState(false);
     const [sheetOrigin, setSheetOrigin] = useState({ dx: 0, dy: 0 });
     const [helpOrigin, setHelpOrigin] = useState({ dx: 0, dy: 0 });
     const [mindMapOrigin, setMindMapOrigin] = useState({ dx: 0, dy: 0 });
     const [keyboardInset, setKeyboardInset] = useState(0);
+    const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+    const [confirmDiscard, setConfirmDiscard] = useState(false);
+    // Bumped each time Create is tried with the required name empty; the
+    // field re-keys on it so the red flash replays on every attempt.
+    const [nameFlash, setNameFlash] = useState(0);
+    const createNameRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+    // Which checklist the full-view sheet is showing, for undo callbacks that
+    // run after the sheet may have closed or changed.
+    const sheetNodeIdRef = useRef<number | null>(null);
 
     // Drag-and-drop
     const isDraggingRef = useRef(false);
     const [isDragging, setIsDragging] = useState(false);
     const [isDroppingAnim, setIsDroppingAnim] = useState(false);
+    const [isHolding, setIsHolding] = useState(false);
+    const [toast, setToast] = useState<UndoToastState | null>(null);
+    const toastKeyRef = useRef(0);
+    const [editPriority, setEditPriority] = useState<1 | 2 | 3 | undefined>(undefined);
     const [dragNodeId, setDragNodeId] = useState<number | null>(null);
     const [pressingNodeId, setPressingNodeId] = useState<number | null>(null);
     const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
@@ -143,6 +170,7 @@ function MobileMindMap() {
             });
         }
         sheetWasNullRef.current = !isOpen;
+        sheetNodeIdRef.current = sheet?.type === 'checklist' ? sheet.nodeId : null;
     }, [sheet]);
 
     // Mobile overlays (sheet, help, patch notes, mind map, profile) are mutually exclusive —
@@ -197,15 +225,27 @@ function MobileMindMap() {
         if (!vv || !sheet) { setKeyboardInset(0); return; }
         function update() {
             setKeyboardInset(Math.max(0, window.innerHeight - vv!.height - vv!.offsetTop));
+            setViewportHeight(vv!.height);
         }
         update();
         vv.addEventListener('resize', update);
-        return () => { vv.removeEventListener('resize', update); setKeyboardInset(0); };
+        // iOS also pans the visual viewport when the keyboard opens
+        vv.addEventListener('scroll', update);
+        return () => {
+            vv.removeEventListener('resize', update);
+            vv.removeEventListener('scroll', update);
+            setKeyboardInset(0);
+        };
     }, [sheet]);
 
     useEffect(() => {
         const idea = fetchFullIdeaList().find(i => i.id === currentId);
         setHeaderDraft(idea ? resolveIdeaLabel(idea) : 'Ideas');
+        // The revealed row belonged to the view just left; without this the
+        // first tap in the new view is spent closing a reveal that isn't there.
+        setSwipeRevealedId(null);
+        setShowPath(false);
+        setEditingTitle(false);
     }, [currentId]);
 
     useLayoutEffect(() => {
@@ -213,14 +253,14 @@ function MobileMindMap() {
         if (!el) return;
         el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
-    }, [headerDraft]);
+    }, [headerDraft, editingTitle]);
 
     useEffect(() => {
-        if (!isDragging) return;
+        if (!isDragging && !isHolding) return;
         const prevent = (e: TouchEvent) => e.preventDefault();
         document.addEventListener('touchmove', prevent, { passive: false });
         return () => document.removeEventListener('touchmove', prevent);
-    }, [isDragging]);
+    }, [isDragging, isHolding]);
 
     // Prevent iOS scroll-recognizer confusion when swipes originate outside the list.
     // touch-action: manipulation alone isn't enough on all iOS versions; a non-passive
@@ -241,9 +281,15 @@ function MobileMindMap() {
     }, []);
 
     const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastTouchRef = useRef({ x: 0, y: 0 });
+    const holdPointRef = useRef({ x: 0, y: 0 });
     const longPressActive = useRef(false);
     const touchMoved = useRef(false);
     const lastLongPressTime = useRef(0);
+    // A touch that lands while the list is still coasting only stops it (as
+    // in native lists); it must not also open the row under the finger.
+    const lastScrollTimeRef = useRef(0);
+    const touchStoppedScrollRef = useRef(false);
 
     const allIdeas: IdeaType[] = fetchFullIdeaList();
     const currentIdea = allIdeas.find(i => i.id === currentId);
@@ -367,34 +413,48 @@ function MobileMindMap() {
         setPressingNodeId(null);
     }
 
-    function startPress(nodeId?: number) {
+    // Holding a row still opens its action menu (the iPhone habit); moving the
+    // finger after that lifts the row for dragging instead (handleNodeTouchMove).
+    function startPress(nodeId: number) {
         longPressActive.current = false;
         touchMoved.current = false;
         if (pressTimer.current) clearTimeout(pressTimer.current);
-        if (nodeId !== undefined) setPressingNodeId(nodeId);
+        setPressingNodeId(nodeId);
         pressTimer.current = setTimeout(() => {
-            if (Date.now() - mountTimeRef.current < 1000) {
-                if (nodeId !== undefined) setPressingNodeId(null);
-                return;
-            }
+            setPressingNodeId(null);
+            if (Date.now() - mountTimeRef.current < 1000) return;
             longPressActive.current = true;
             lastLongPressTime.current = Date.now();
-            if (nodeId !== undefined) {
-                setPressingNodeId(null);
-                navigator.vibrate?.(25);
-                const el = nodeElRefs.current[nodeId];
-                if (el) {
-                    const rect = el.getBoundingClientRect();
-                    const initialPos = { x: rect.left + rect.width / 2, y: rect.top + 40 };
-                    dragPosRef.current = initialPos;
-                    setDragPos(initialPos);
-                    resetSwipeNode(nodeId);
-                }
-                isDraggingRef.current = true;
-                setIsDragging(true);
-                setDragNodeId(nodeId);
+            holdPointRef.current = { ...lastTouchRef.current };
+            // Block scrolling from here on, so a move after the hold is still
+            // ours to turn into a drag (touchmove is only cancelable before
+            // the browser starts scrolling).
+            setIsHolding(true);
+            navigator.vibrate?.(25);
+            resetSwipeNode(nodeId);
+            setSheet({ type: 'actions', nodeId });
+        }, LONG_PRESS_MS);
+    }
+
+    function finishDrag(nodeId: number, drop: boolean) {
+        if (drop) {
+            const target = _dropTargetId.current;
+            if (target === -1 && currentIdea?.parentID) {
+                doMove(nodeId, currentIdea.parentID);
+            } else if (target !== null && target > 0) {
+                doMove(nodeId, target);
             }
-        }, 360);
+        }
+        // stop logic immediately, but let the ghost play its landing animation
+        isDraggingRef.current = false;
+        stopEdgeScroll();
+        setDropTargetId(null);
+        setIsDroppingAnim(true);
+        setTimeout(() => {
+            setIsDragging(false);
+            setDragNodeId(null);
+            setIsDroppingAnim(false);
+        }, 180);
     }
 
     function stopEdgeScroll() {
@@ -450,19 +510,25 @@ function MobileMindMap() {
         const t = e.touches[0];
         swipeStartRef.current = { x: t.clientX, y: t.clientY, nodeId };
         swipeDirRef.current = null;
+        lastTouchRef.current = { x: t.clientX, y: t.clientY };
+        touchStoppedScrollRef.current = Date.now() - lastScrollTimeRef.current < 100;
         startPress(nodeId);
     }
 
     function handleNodeTouchMove(e: React.TouchEvent, nodeId: number) {
         if (!swipeStartRef.current || swipeStartRef.current.nodeId !== nodeId) return;
         const t = e.touches[0];
+        lastTouchRef.current = { x: t.clientX, y: t.clientY };
         const dx = t.clientX - swipeStartRef.current.x;
         const dy = t.clientY - swipeStartRef.current.y;
 
-        // Long press has fired — this is a drag, not a swipe
+        // The hold has fired (menu open): moving now turns it into a drag
         if (longPressActive.current) {
-            touchMoved.current = true;
             if (!isDraggingRef.current) {
+                const hold = holdPointRef.current;
+                if (Math.hypot(t.clientX - hold.x, t.clientY - hold.y) < DRAG_START_PX) return;
+                closeSheet();
+                touchMoved.current = true;
                 isDraggingRef.current = true;
                 setIsDragging(true);
                 setDragNodeId(nodeId);
@@ -525,23 +591,21 @@ function MobileMindMap() {
     }
 
     function handleNodeTouchEnd(e: React.TouchEvent, nodeId: number) {
+        setIsHolding(false);
         if (isDraggingRef.current) {
-            const target = _dropTargetId.current;
-            if (target === -1 && currentIdea?.parentID) {
-                doMove(nodeId, currentIdea.parentID);
-            } else if (target !== null && target > 0) {
-                doMove(nodeId, target);
-            }
-            // stop logic immediately, but let the ghost play its landing animation
-            isDraggingRef.current = false;
-            stopEdgeScroll();
-            setDropTargetId(null);
-            setIsDroppingAnim(true);
-            setTimeout(() => {
-                setIsDragging(false);
-                setDragNodeId(null);
-                setIsDroppingAnim(false);
-            }, 180);
+            finishDrag(nodeId, true);
+            longPressActive.current = false;
+            swipeStartRef.current = null;
+            swipeDirRef.current = null;
+            endPress();
+            return;
+        }
+
+        // Held without moving: the action menu is open; lifting the finger
+        // must not also count as a tap on the row (or on the menu's scrim).
+        if (longPressActive.current) {
+            e.preventDefault();
+            longPressActive.current = false;
             swipeStartRef.current = null;
             swipeDirRef.current = null;
             endPress();
@@ -572,8 +636,23 @@ function MobileMindMap() {
                 }
             }
         } else {
-            if (!touchMoved.current) { e.preventDefault(); tapNode(nodeId); }
+            if (!touchMoved.current) {
+                e.preventDefault();
+                if (!touchStoppedScrollRef.current) tapNode(nodeId);
+            }
         }
+        swipeStartRef.current = null;
+        swipeDirRef.current = null;
+        endPress();
+    }
+
+    // The OS took the touch away (an incoming call, a system gesture): undo
+    // whatever was half-done instead of leaving a drag or swipe stuck.
+    function handleNodeTouchCancel(nodeId: number) {
+        setIsHolding(false);
+        if (isDraggingRef.current) finishDrag(nodeId, false);
+        if (swipeDirRef.current === 'h') resetSwipeNode(nodeId);
+        longPressActive.current = false;
         swipeStartRef.current = null;
         swipeDirRef.current = null;
         endPress();
@@ -595,43 +674,96 @@ function MobileMindMap() {
     }
 
     const breadcrumbs = getBreadcrumbs();
-    const canGoBack = !!(currentIdea?.parentID);
+    const canGoBack = currentId !== 1;
+    const parentCrumb = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2] : null;
 
     function closeSheet() {
         setSheet(null);
+        setConfirmDiscard(false);
         setNewIdeaLink('');
         setEditLinkDraft('');
         setNewIdeaPriority(undefined);
     }
+
+    // Something typed into the open Create/Edit sheet that a stray tap on the
+    // scrim (or Back, or a swipe down) would otherwise silently throw away.
+    function isSheetDirty(): boolean {
+        if (sheet?.type === 'create') {
+            return !!(draft.trim() || newIdeaLink.trim() || checklistTitle.trim() || checklistItems.length
+                || checklistItemDraft.trim() || newNoteTitle.trim() || newNoteBody.trim());
+        }
+        if (sheet?.type === 'edit') {
+            const node = allIdeas.find(i => i.id === sheet.nodeId);
+            if (!node) return false;
+            if (editPriority !== node.priority) return true;
+            if (node.type !== 'checklist' && node.isNote) {
+                return draft !== (node.noteTitle ?? '') || editBodyDraft !== node.content;
+            }
+            if ((draft.trim() || 'Untitled') !== node.content) return true;
+            return node.type !== 'checklist' && cleanLink(editLinkDraft.trim()) !== getIdeaLink(node);
+        }
+        return false;
+    }
+
+    // Close unless that would lose typed text; then ask first. Returns
+    // whether it closed. Cancel buttons call closeSheet directly.
+    function requestCloseSheet(): boolean {
+        if (isSheetDirty()) {
+            setConfirmDiscard(true);
+            return false;
+        }
+        closeSheet();
+        return true;
+    }
+
+    const sheetSwipe = useSheetSwipeDown(requestCloseSheet);
+
+    // The phone's Back button / back gesture: close whatever is open first,
+    // otherwise go up one level (see utilities/backStack.ts).
+    useBackHandler(canGoBack, goBack);
+    useBackHandler(sheet !== null, requestCloseSheet, 1);
+    useBackHandler(showHelp, () => setShowHelp(false), 1);
+    useBackHandler(showPatchNotes, () => setShowPatchNotes(false), 1);
+    useBackHandler(showMindMap, () => setShowMindMap(false), 1);
+    useBackHandler(showPath, () => setShowPath(false), 1);
+    useBackHandler(profileModalOpen, () => setProfileModalOpen(false), 1);
 
     function tapNode(nodeId: number) {
         endPress();
         if (longPressActive.current) { longPressActive.current = false; return; }
         if (Date.now() - lastLongPressTime.current < 400) return;
 
-        // Tapping while another node is revealed just closes the reveal
-        if (swipeRevealedId !== null && swipeRevealedId !== nodeId) {
+        // Tapping while a node is revealed (that one or another) just closes
+        // the reveal, as in iOS lists
+        if (swipeRevealedId !== null) {
             resetSwipeNode(swipeRevealedId);
             return;
         }
 
         const node = allIdeas.find(i => i.id === nodeId);
         if (node?.type === 'checklist') {
-            setExpandedChecklists(prev => {
-                const next = new Set(prev);
-                if (next.has(nodeId)) next.delete(nodeId); else next.add(nodeId);
-                return next;
-            });
+            toggleChecklistExpanded(nodeId);
             return;
         }
-        if (isNoteMode(node)) return;
+        // A note has nothing inside it; tapping opens it to read or edit.
+        if (node && isNoteMode(node)) { openEditSheet(node); return; }
         const nodeLink = getIdeaLink(node);
-        if (nodeLink) {
+        // A link that somehow has children (an import, or a move from an older
+        // build) drills in instead, so those children stay reachable.
+        if (nodeLink && !allIdeas.some(i => i.parentID === nodeId)) {
             openIdeaLink(nodeLink);
             return;
         }
         setCurrentId(nodeId);
         setSheet(null);
+    }
+
+    function toggleChecklistExpanded(nodeId: number) {
+        setExpandedChecklists(prev => {
+            const next = new Set(prev);
+            if (next.has(nodeId)) next.delete(nodeId); else next.add(nodeId);
+            return next;
+        });
     }
 
     function openChecklistSheet(nodeId: number) {
@@ -667,9 +799,24 @@ function MobileMindMap() {
     }
 
     function deleteSheetItem(itemId: string, nodeId: number) {
+        const index = sheetItems.findIndex(item => item.id === itemId);
+        if (index === -1) return;
+        const removed = sheetItems[index];
         const newItems = sheetItems.filter(item => item.id !== itemId);
         setSheetItems(newItems);
         updateChecklistItems(nodeId, newItems);
+        setNewIdeaSwitch(prev => !prev);
+        const text = removed.text.length > 40 ? `${removed.text.slice(0, 39)}…` : removed.text;
+        showToast(`Deleted “${text}”`, () => {
+            // Put it back where it was, in whatever the list is now
+            const fresh = fetchFullIdeaList().find(i => i.id === nodeId);
+            if (fresh?.type !== 'checklist' || fresh.items.some(item => item.id === itemId)) return;
+            const items = [...fresh.items];
+            items.splice(Math.min(index, items.length), 0, removed);
+            updateChecklistItems(nodeId, items);
+            setSheetItems(prev => (sheetNodeIdRef.current === nodeId ? items : prev));
+            setNewIdeaSwitch(prev => !prev);
+        });
     }
 
     function editSheetItem(itemId: string, newText: string, nodeId: number) {
@@ -699,9 +846,16 @@ function MobileMindMap() {
     }
 
     function goBack() {
-        if (!currentIdea?.parentID) return;
-        setCurrentId(currentIdea.parentID);
+        if (currentId === 1) return;
+        setCurrentId(currentIdea?.parentID || 1);
         setSheet(null);
+    }
+
+    function openPatchNotes() {
+        setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
+        markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);
+        setIsNewPatchNotes(false);
+        setShowPatchNotes(true);
     }
 
     function addChild() {
@@ -712,13 +866,14 @@ function MobileMindMap() {
         }
         setDraft('');
         setCreateTab('idea');
+        setNameFlash(0);
         setChecklistTitle('');
         setChecklistItems([]);
         setChecklistItemDraft('');
         setNewNoteTitle('');
         setNewNoteBody('');
         setNewIdeaPriority(undefined);
-        setSheet({ type: 'rename', nodeId: -1, isNew: true });
+        setSheet({ type: 'create', nodeId: -1 });
     }
 
     function addChecklistItem() {
@@ -749,59 +904,142 @@ function MobileMindMap() {
         });
     }
 
-    function commitRename() {
-        if (!sheet || sheet.type !== 'rename') return;
+    function flashMissingName() {
+        setNameFlash(n => n + 1); // keeps the field red until something is typed
+        navigator.vibrate?.(40);
+        const field = createNameRef.current;
+        field?.focus();
+        // Replays on every attempt without remounting (which could drop the keyboard)
+        field?.animate(
+            [
+                { backgroundColor: '#ff8f8f', transform: 'translateX(0)' },
+                { backgroundColor: '#ff5a5a', transform: 'translateX(-6px)' },
+                { backgroundColor: '#ff8f8f', transform: 'translateX(5px)' },
+                { backgroundColor: '#ff5a5a', transform: 'translateX(-3px)' },
+                { backgroundColor: '', transform: 'translateX(0)' },
+            ],
+            { duration: 450, easing: 'ease-out' },
+        );
+    }
 
-        if (sheet.isNew && createTab === 'checklist') {
-            const title = checklistTitle.trim() || 'Untitled';
-            handleChecklistCreation(title, currentId, checklistItems, newIdeaPriority);
+    function commitCreate() {
+        if (!sheet || sheet.type !== 'create') return;
+        const missing = createTab === 'idea' ? !draft.trim() : createTab === 'checklist' ? !checklistTitle.trim() : !newNoteTitle.trim();
+        if (missing) { flashMissingName(); return; }
+
+        if (createTab === 'checklist') {
+            const title = checklistTitle.trim();
+            // An item typed but not yet added with Return is still meant to be kept
+            const pending = checklistItemDraft.trim();
+            const items = pending
+                ? [...checklistItems, { id: String(Date.now()), text: pending, checked: false }]
+                : checklistItems;
+            handleChecklistCreation(title, currentId, items, newIdeaPriority);
             setNewIdeaSwitch(prev => !prev);
             closeSheet();
             return;
         }
 
-        if (sheet.isNew && createTab === 'note') {
+        if (createTab === 'note') {
             const title = newNoteTitle.trim();
-            if (!title) return;
             handleNoteCreation(title, currentId, newNoteBody, newIdeaPriority);
             setNewIdeaSwitch(prev => !prev);
             closeSheet();
             return;
         }
 
-        const name = draft.trim() || 'Untitled';
-        if (sheet.isNew) {
-            handleIdeaCreation(name, currentId, cleanLink(newIdeaLink.trim()), newIdeaPriority);
-            setNewIdeaSwitch(prev => !prev);
-        } else {
-            updateIdeaName(sheet.nodeId, name).then(() => {
-                setNewIdeaSwitch(prev => !prev);
-            });
-        }
+        const name = draft.trim();
+        handleIdeaCreation(name, currentId, cleanLink(newIdeaLink.trim()), newIdeaPriority);
+        setNewIdeaSwitch(prev => !prev);
         closeSheet();
+    }
+
+    function showToast(message: string, onUndo?: () => void) {
+        toastKeyRef.current += 1;
+        setToast({ key: toastKeyRef.current, message, onUndo });
+    }
+
+    function shortLabel(idea: IdeaType | undefined): string {
+        const label = resolveIdeaLabel(idea).split('\n')[0].trim() || 'Untitled';
+        return label.length > 40 ? `${label.slice(0, 39)}…` : label;
+    }
+
+    function countDescendants(nodeId: number): number {
+        let count = 0;
+        const seen = new Set<number>([nodeId]);
+        const stack = [nodeId];
+        while (stack.length > 0) {
+            const id = stack.pop()!;
+            for (const idea of allIdeas) {
+                if (idea.parentID === id && !seen.has(idea.id)) {
+                    seen.add(idea.id);
+                    count++;
+                    stack.push(idea.id);
+                }
+            }
+        }
+        return count;
+    }
+
+    // A single idea is deleted straight away (Undo is offered); a branch
+    // asks first, saying how much will go.
+    function requestDelete(nodeId: number) {
+        if (countDescendants(nodeId) === 0) deleteNode(nodeId);
+        else setSheet({ type: 'confirmDelete', nodeId });
     }
 
     function deleteNode(nodeId: number) {
+        const node = allIdeas.find(i => i.id === nodeId);
         if (currentId === nodeId && currentIdea?.parentID) {
             setCurrentId(currentIdea.parentID);
         }
-        recursivelyDeleteChildren(nodeId);
+        const removed = recursivelyDeleteChildren(nodeId);
         setNewIdeaSwitch(prev => !prev);
         closeSheet();
+        const inside = removed.length - 1;
+        showToast(
+            inside > 0 ? `Deleted “${shortLabel(node)}” and ${inside} inside` : `Deleted “${shortLabel(node)}”`,
+            () => {
+                restoreIdeas(removed);
+                setNewIdeaSwitch(prev => !prev);
+            },
+        );
     }
 
     function doMove(nodeId: number, targetId: number) {
+        const oldParentId = allIdeas.find(i => i.id === nodeId)?.parentID ?? 1;
+        const target = allIdeas.find(i => i.id === targetId);
         updateIdeaParentId(nodeId, targetId);
         setNewIdeaSwitch(prev => !prev);
         closeSheet();
-    }
-
-    function commitLink() {
-        if (!sheet || sheet.type !== 'link') return;
-        const url = cleanLink(draft.trim());
-        updateIdeaLink(sheet.nodeId, url).then(() => {
+        showToast(`Moved to “${shortLabel(target)}”`, () => {
+            const list = fetchFullIdeaList();
+            if (!list.some(i => i.id === nodeId)) return;
+            updateIdeaParentId(nodeId, list.some(i => i.id === oldParentId) ? oldParentId : 1);
             setNewIdeaSwitch(prev => !prev);
         });
+    }
+
+    function openActions(nodeId: number) {
+        if (swipeRevealedId !== null) resetSwipeNode(swipeRevealedId);
+        setSheet({ type: 'actions', nodeId });
+    }
+
+    function openEditSheet(node: IdeaType) {
+        if (swipeRevealedId !== null) resetSwipeNode(swipeRevealedId);
+        setDraft(isNoteMode(node) && node.type !== 'checklist' ? (node.noteTitle ?? '') : node.content);
+        setEditBodyDraft(node.content);
+        setEditLinkDraft(getIdeaLink(node));
+        setEditPriority(node.priority);
+        setSheet({ type: 'edit', nodeId: node.id });
+    }
+
+    function setPriorityFromMenu(nodeId: number, priority: 1 | 2 | 3 | undefined) {
+        const node = allIdeas.find(i => i.id === nodeId);
+        if (node && node.priority !== priority) {
+            updateIdeaPriority(nodeId, priority);
+            setNewIdeaSwitch(prev => !prev);
+        }
         closeSheet();
     }
 
@@ -809,6 +1047,11 @@ function MobileMindMap() {
         if (!sheet || sheet.type !== 'edit') return;
         const node = allIdeas.find(i => i.id === sheet.nodeId);
         let changed = false;
+
+        if (node && editPriority !== node.priority) {
+            updateIdeaPriority(sheet.nodeId, editPriority);
+            changed = true;
+        }
 
         if (node && node.type !== 'checklist' && node.isNote) {
             const title = draft.trim();
@@ -847,39 +1090,60 @@ function MobileMindMap() {
     const sheetNodeLink = getIdeaLink(sheetNode ?? undefined);
     const sheetTitle =
         sheet?.type === 'move' ? 'Move under…' :
-        sheet?.type === 'rename' ? (sheet.isNew ? (createTab === 'checklist' ? 'New checklist' : createTab === 'note' ? 'New note' : 'New idea') : sheetNode?.type === 'checklist' ? 'Rename checklist' : allIdeas.some(i => i.parentID === sheetNode?.id) ? 'Rename idea' : 'Rewrite idea') :
+        sheet?.type === 'create' ? (createTab === 'checklist' ? 'New checklist' : createTab === 'note' ? 'New note' : 'New idea') :
         sheet?.type === 'edit' ? (sheetNode?.type === 'checklist' ? 'Edit checklist' : isNoteMode(sheetNode ?? undefined) ? 'Edit note' : 'Edit idea') :
-        sheet?.type === 'link' ? (sheetNodeLink ? 'Change link' : 'Add link') :
         sheet?.type === 'confirmDelete' ? 'Delete idea?' :
+        sheet?.type === 'actions' ? shortLabel(sheetNode ?? undefined) :
         sheet?.type === 'checklist' ? (sheetNode?.content ?? '') : '';
 
     return (
         <div className="mmobile">
             <div className="mmobile-nav">
-                <button className={`mmobile-help${showHelp ? ' mmobile-help--active' : ''}`} onClick={() => {
-                    if (!showHelp) setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
-                    setShowHelp(h => !h);
-                }}>
-                    <img src="/images/QuestionMark.svg" alt="Help" />
+                <button
+                    className={`mmobile-help${showHelp ? ' mmobile-help--active' : ''}${isNewPatchNotes ? ' mmobile-help--new' : ''}`}
+                    aria-label={isNewPatchNotes ? 'Help (new patch notes)' : 'Help'}
+                    onClick={() => {
+                        if (!showHelp) setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
+                        setShowHelp(h => !h);
+                    }}
+                >
+                    <img src="/images/QuestionMark.svg" alt="" />
                 </button>
-                {canGoBack && (
-                    <button className="mmobile-back" onClick={goBack}>
-                        <img src="/images/ArrowBack.svg" alt="Back" className="mmobile-back-icon" />
-                    </button>
-                )}
-                {currentId === 1 ? (
+                {currentId === 1 || !parentCrumb ? (
                     <img src="/images/MainLargerLogo.svg" alt="Intraconnected" className="mmobile-nav-logo" />
                 ) : (
-                    <div className="mmobile-crumbs">
-                        {breadcrumbs.map((idea, i) => (
-                            <button
-                                key={idea.id}
-                                className={`mmobile-crumb${idea.id === currentId ? ' mmobile-crumb--active' : ''}`}
-                                onClick={() => { setCurrentId(idea.id); setSheet(null); }}
-                            >
-                                {i > 0 ? '› ' : ''}{resolveIdeaLabel(idea).split('\n')[0]}
-                            </button>
-                        ))}
+                    <div className="mmobile-path">
+                        <button
+                            className={`mmobile-path-btn${showPath ? ' mmobile-path-btn--open' : ''}`}
+                            onClick={() => setShowPath(p => !p)}
+                            aria-expanded={showPath}
+                            aria-haspopup="true"
+                        >
+                            <span className="mmobile-path-in">in</span>
+                            <span className="mmobile-path-name">{resolveIdeaLabel(parentCrumb).split('\n')[0]}</span>
+                            <span className="mmobile-path-caret" aria-hidden="true">▾</span>
+                        </button>
+                        {showPath && (
+                            <>
+                                <div className="mmobile-path-scrim" onClick={() => setShowPath(false)} />
+                                <ol className="mmobile-path-menu">
+                                    {breadcrumbs.map((idea, i) => {
+                                        const isCurrent = idea.id === currentId;
+                                        return (
+                                            <li key={idea.id} style={{ '--depth': i } as React.CSSProperties}>
+                                                <button
+                                                    className={`mmobile-path-item${isCurrent ? ' mmobile-path-item--current' : ''}`}
+                                                    onClick={isCurrent ? () => setShowPath(false) : () => { setCurrentId(idea.id); setSheet(null); }}
+                                                    aria-current={isCurrent ? 'page' : undefined}
+                                                >
+                                                    {resolveIdeaLabel(idea).split('\n')[0]}
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
+                                </ol>
+                            </>
+                        )}
                     </div>
                 )}
                 <button className="mmobile-logout" onClick={() => setProfileModalOpen(true)}>
@@ -887,7 +1151,7 @@ function MobileMindMap() {
                 </button>
             </div>
 
-            {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
+            {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} onOpenPatchNotes={openPatchNotes} hasNewPatchNotes={isNewPatchNotes} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
             {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
             {showMindMap && (
                 <MobileMindMapSheet
@@ -900,57 +1164,80 @@ function MobileMindMap() {
                 />
             )}
 
-            <div
-                ref={headerDivRef}
-                className="mmobile-header"
-                onMouseDown={() => startPress(currentId)}
-                onMouseUp={endPress}
-                onMouseLeave={endPress}
-                onTouchStart={() => startPress(currentId)}
-                onTouchEnd={endPress}
-            >
-                <textarea
-                    ref={headerTextareaRef}
-                    className="mmobile-header-title"
-                    value={headerDraft}
-                    rows={1}
-                    onChange={e => {
-                        setHeaderDraft(e.target.value);
-                        const el = e.target;
-                        el.style.height = 'auto';
-                        el.style.height = el.scrollHeight + 'px';
-                    }}
-                    onBlur={saveHeaderDraft}
-                    onMouseDown={e => e.stopPropagation()}
-                    onTouchStart={e => e.stopPropagation()}
-                />
+            <div ref={headerDivRef} className="mmobile-header">
+                {editingTitle ? (
+                    <textarea
+                        ref={headerTextareaRef}
+                        className="mmobile-header-title"
+                        value={headerDraft}
+                        rows={1}
+                        autoFocus
+                        enterKeyHint="done"
+                        aria-label="Name"
+                        onChange={e => {
+                            setHeaderDraft(e.target.value);
+                            const el = e.target;
+                            el.style.height = 'auto';
+                            el.style.height = el.scrollHeight + 'px';
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                            if (e.key === 'Escape') {
+                                setHeaderDraft(currentIdea ? resolveIdeaLabel(currentIdea) : 'Ideas');
+                                setEditingTitle(false);
+                            }
+                        }}
+                        onBlur={() => { saveHeaderDraft(); setEditingTitle(false); }}
+                    />
+                ) : (
+                    <div className="mmobile-header-title-row">
+                        <h1 className="mmobile-header-title mmobile-header-title--static">{headerDraft.trim() || 'Untitled'}</h1>
+                        <button className="mmobile-header-edit" onClick={() => setEditingTitle(true)} aria-label="Rename">
+                            <img src="/images/Pen.svg" alt="" />
+                        </button>
+                    </div>
+                )}
                 <div className="mmobile-header-count">
                     <span>{children.length} {children.length === 1 ? 'idea' : 'ideas'}</span>
                     <button
                         className={`mmobile-sort-btn${sortMode === 'recent' ? ' mmobile-sort-btn--recent' : ''}`}
-                        onClick={e => { e.stopPropagation(); toggleSortMode(); }}
-                        onMouseDown={e => e.stopPropagation()}
-                        onTouchStart={e => e.stopPropagation()}
+                        onClick={toggleSortMode}
                     >
                         <img src="/images/sort.svg" alt="" />
-                        {sortMode === 'priority' ? 'Priority' : 'Age'}
+                        Sort: {sortMode === 'priority' ? 'Priority' : 'Age'}
                     </button>
                 </div>
             </div>
 
-            <div className="mmobile-list" ref={mobileListRef}>
-                {isDragging && currentIdea?.parentID && (
+            {/* Between the title card and the list rather than inside the
+                scrolling list: it pushes the rows down as it slides open, and
+                stays visible however far the list is scrolled. */}
+            {isDragging && !!currentIdea?.parentID && (
+                <div className="mmobile-parent-drop-anchor">
                     <div
                         ref={el => { parentZoneRef.current = el; }}
                         className={`mmobile-parent-drop-zone${dropTargetId === -1 ? ' mmobile-parent-drop-zone--active' : ''}`}
                     >
                         ↑ Move to parent
                     </div>
-                )}
+                </div>
+            )}
+
+            <div
+                className="mmobile-list"
+                ref={mobileListRef}
+                onScroll={() => {
+                    lastScrollTimeRef.current = Date.now();
+                    if (swipeRevealedId !== null && !isDraggingRef.current) resetSwipeNode(swipeRevealedId);
+                }}
+            >
                 {children.length === 0 ? (
                     <div className="mmobile-empty">No ideas here yet.<br />Tap + to create one.</div>
                 ) : children.map(child => {
-                    const hasKids = allIdeas.some(i => i.parentID === child.id);
+                    const kidCount = allIdeas.reduce((n, i) => (i.parentID === child.id ? n + 1 : n), 0);
+                    const hasKids = kidCount > 0;
+                    const isRevealed = swipeRevealedId === child.id;
+                    const priorityLabel = `Priority: ${child.priority === 1 ? 'High' : child.priority === 2 ? 'Medium' : child.priority === 3 ? 'Low' : 'none'}. Tap to change.`;
                     const childLink = getIdeaLink(child);
 
                     if (child.type === 'checklist') {
@@ -959,22 +1246,25 @@ function MobileMindMap() {
                         const checkedCount = items.filter(i => i.checked).length;
                         return (
                             <div key={child.id} data-flip-id={child.id} className="mmobile-node-wrap">
-                                <div className="mmobile-node-swipe-actions" ref={el => { swipeActionsElRefs.current[child.id] = el; }}>
+                                <div className="mmobile-node-swipe-actions" ref={el => { swipeActionsElRefs.current[child.id] = el; }} aria-hidden={!isRevealed}>
                                     <button
                                         className="mmobile-node-swipe-btn mmobile-node-swipe-btn--rename"
-                                        onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); setDraft(child.content); setEditLinkDraft(getIdeaLink(child)); setSheet({ type: 'edit', nodeId: child.id }); }}
+                                        tabIndex={isRevealed ? 0 : -1}
+                                        onClick={e => { e.stopPropagation(); openEditSheet(child); }}
                                     >
-                                        <img src="/images/Pen.svg" alt="Rename" />
+                                        <img src="/images/Pen.svg" alt="Edit" />
                                     </button>
                                     <button
                                         className="mmobile-node-swipe-btn mmobile-node-swipe-btn--move"
+                                        tabIndex={isRevealed ? 0 : -1}
                                         onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); setSheet({ type: 'move', nodeId: child.id }); }}
                                     >
                                         <img src="/images/Move.svg" alt="Move" />
                                     </button>
                                     <button
                                         className="mmobile-node-swipe-btn mmobile-node-swipe-btn--delete"
-                                        onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); setSheet({ type: 'confirmDelete', nodeId: child.id }); }}
+                                        tabIndex={isRevealed ? 0 : -1}
+                                        onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); requestDelete(child.id); }}
                                     >
                                         <img src="/images/Trash.svg" alt="Delete" />
                                     </button>
@@ -982,32 +1272,54 @@ function MobileMindMap() {
                                 <div
                                     ref={el => { nodeElRefs.current[child.id] = el; }}
                                     className={`mmobile-node mmobile-node--checklist${isExpanded ? ' mmobile-node--expanded' : ''}${isDragging && dragNodeId === child.id ? ' mmobile-node--held' : ''}${pressingNodeId === child.id ? ' mmobile-node--pressing' : ''}`}
-                                    onMouseDown={() => startPress(child.id)}
-                                    onMouseUp={endPress}
-                                    onMouseLeave={endPress}
                                     onTouchStart={e => handleNodeTouchStart(e, child.id)}
                                     onTouchMove={e => handleNodeTouchMove(e, child.id)}
                                     onTouchEnd={e => handleNodeTouchEnd(e, child.id)}
+                                    onTouchCancel={() => handleNodeTouchCancel(child.id)}
+                                    onContextMenu={e => e.preventDefault()}
                                     onClick={() => tapNode(child.id)}
                                 >
                                     <div className="mmobile-node-header-row">
                                         <span className="mmobile-node-title">{child.content}</span>
                                         <button
                                             className={`mmobile-node-priority-ribbon mmobile-node-priority-ribbon--${child.priority ? `p${child.priority}` : 'none'}${animatingRibbonId === child.id ? ' mmobile-node-priority-ribbon--animating' : ''}`}
+                                            aria-label={priorityLabel}
                                             onClick={e => { e.stopPropagation(); cyclePriority(child.id, child.priority); }}
                                             onTouchEnd={e => e.stopPropagation()}
-                                            onMouseDown={e => e.stopPropagation()}
+                                            onTouchStart={e => e.stopPropagation()}
                                         />
-                                        <span className="mmobile-node-count">{checkedCount}/{items.length}</span>
                                         <button
                                             className="mmobile-checklist-open-btn"
                                             onClick={e => { e.stopPropagation(); openChecklistSheet(child.id); }}
                                             onTouchEnd={e => e.stopPropagation()}
-                                            onMouseDown={e => e.stopPropagation()}
+                                            onTouchStart={e => e.stopPropagation()}
                                         >
                                             <img src="/images/OpenIconSkinny.svg" alt="Open full view" />
                                         </button>
-                                        <span className="mmobile-node-arrow">{isExpanded ? '▾' : '▸'}</span>
+                                        <button
+                                            className="mmobile-node-more"
+                                            aria-label={`Actions for ${shortLabel(child)}`}
+                                            onClick={e => { e.stopPropagation(); openActions(child.id); }}
+                                            onTouchStart={e => e.stopPropagation()}
+                                            onTouchEnd={e => e.stopPropagation()}
+                                        >
+                                            <MoreDotsIcon />
+                                        </button>
+                                        {/* A dropdown, not a way in: count + a chevron that
+                                            points down when closed and flips up when open. */}
+                                        <button
+                                            className={`mmobile-checklist-toggle${isExpanded ? ' mmobile-checklist-toggle--open' : ''}`}
+                                            aria-expanded={isExpanded}
+                                            aria-label={`${isExpanded ? 'Hide' : 'Show'} items, ${checkedCount} of ${items.length} done`}
+                                            onClick={e => { e.stopPropagation(); toggleChecklistExpanded(child.id); }}
+                                            onTouchStart={e => e.stopPropagation()}
+                                            onTouchEnd={e => e.stopPropagation()}
+                                        >
+                                            <span className="mmobile-checklist-toggle-count">{checkedCount}/{items.length}</span>
+                                            <svg className="mmobile-checklist-toggle-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                                                <path d="M2 4.25 6 8.25 10 4.25" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </button>
                                     </div>
                                     {isExpanded && (
                                         <div
@@ -1015,8 +1327,6 @@ function MobileMindMap() {
                                             onClick={e => e.stopPropagation()}
                                             onTouchStart={e => e.stopPropagation()}
                                             onTouchEnd={e => e.stopPropagation()}
-                                            onMouseDown={e => e.stopPropagation()}
-                                            onMouseUp={e => e.stopPropagation()}
                                         >
                                             <ul className="mmobile-checklist-inline-items">
                                                 {items.map(item => (
@@ -1069,22 +1379,25 @@ function MobileMindMap() {
                         : 'mmobile-node--leaf';
                     return (
                         <div key={child.id} data-flip-id={child.id} className="mmobile-node-wrap">
-                            <div className="mmobile-node-swipe-actions" ref={el => { swipeActionsElRefs.current[child.id] = el; }}>
+                            <div className="mmobile-node-swipe-actions" ref={el => { swipeActionsElRefs.current[child.id] = el; }} aria-hidden={!isRevealed}>
                                 <button
                                     className="mmobile-node-swipe-btn mmobile-node-swipe-btn--rename"
-                                    onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); setDraft(noteMode ? (child.noteTitle ?? '') : child.content); setEditBodyDraft(child.content); setEditLinkDraft(getIdeaLink(child)); setSheet({ type: 'edit', nodeId: child.id }); }}
+                                    tabIndex={isRevealed ? 0 : -1}
+                                    onClick={e => { e.stopPropagation(); openEditSheet(child); }}
                                 >
-                                    <img src="/images/Pen.svg" alt="Rename" />
+                                    <img src="/images/Pen.svg" alt="Edit" />
                                 </button>
                                 <button
                                     className="mmobile-node-swipe-btn mmobile-node-swipe-btn--move"
+                                    tabIndex={isRevealed ? 0 : -1}
                                     onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); setSheet({ type: 'move', nodeId: child.id }); }}
                                 >
                                     <img src="/images/Move.svg" alt="Move" />
                                 </button>
                                 <button
                                     className="mmobile-node-swipe-btn mmobile-node-swipe-btn--delete"
-                                    onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); setSheet({ type: 'confirmDelete', nodeId: child.id }); }}
+                                    tabIndex={isRevealed ? 0 : -1}
+                                    onClick={e => { e.stopPropagation(); resetSwipeNode(child.id); requestDelete(child.id); }}
                                 >
                                     <img src="/images/Trash.svg" alt="Delete" />
                                 </button>
@@ -1092,12 +1405,11 @@ function MobileMindMap() {
                             <div
                                 ref={el => { nodeElRefs.current[child.id] = el; }}
                                 className={`mmobile-node ${colorClass}${dropTargetId === child.id ? ' mmobile-node--drop-target' : ''}${isDragging && dragNodeId === child.id ? ' mmobile-node--held' : ''}${pressingNodeId === child.id ? ' mmobile-node--pressing' : ''}`}
-                                onMouseDown={() => startPress(child.id)}
-                                onMouseUp={endPress}
-                                onMouseLeave={endPress}
                                 onTouchStart={e => handleNodeTouchStart(e, child.id)}
                                 onTouchMove={e => handleNodeTouchMove(e, child.id)}
                                 onTouchEnd={e => handleNodeTouchEnd(e, child.id)}
+                                onTouchCancel={() => handleNodeTouchCancel(child.id)}
+                                onContextMenu={e => e.preventDefault()}
                                 onClick={() => tapNode(child.id)}
                             >
                                 {noteMode ? (
@@ -1110,11 +1422,28 @@ function MobileMindMap() {
                                 )}
                                 <button
                                     className={`mmobile-node-priority-ribbon mmobile-node-priority-ribbon--${child.priority ? `p${child.priority}` : 'none'}${animatingRibbonId === child.id ? ' mmobile-node-priority-ribbon--animating' : ''}`}
+                                    aria-label={priorityLabel}
                                     onClick={e => { e.stopPropagation(); cyclePriority(child.id, child.priority); }}
                                     onTouchEnd={e => e.stopPropagation()}
-                                    onMouseDown={e => e.stopPropagation()}
+                                    onTouchStart={e => e.stopPropagation()}
                                 />
-                                {!noteMode && <span className="mmobile-node-arrow">›</span>}
+                                <button
+                                    className="mmobile-node-more"
+                                    aria-label={`Actions for ${shortLabel(child)}`}
+                                    onClick={e => { e.stopPropagation(); openActions(child.id); }}
+                                    onTouchStart={e => e.stopPropagation()}
+                                    onTouchEnd={e => e.stopPropagation()}
+                                >
+                                    <MoreDotsIcon />
+                                </button>
+                                {!noteMode && (childLink && !hasKids ? (
+                                    <span className="mmobile-node-arrow mmobile-node-arrow--out" aria-label="opens website">↗</span>
+                                ) : (
+                                    <span className="mmobile-node-arrow">
+                                        {hasKids && <span className="mmobile-node-kids" aria-label={`${kidCount} inside`}>{kidCount}</span>}
+                                        ›
+                                    </span>
+                                ))}
                             </div>
                         </div>
                     );
@@ -1123,24 +1452,15 @@ function MobileMindMap() {
 
             <div ref={fabAreaRef} className={`mmobile-fab-area${sheet ? ' mmobile-fab-area--hidden' : ''}`}>
                 <button
-                    className={`mmobile-patchnotes-btn${isNewPatchNotes ? ' mmobile-patchnotes-btn--new' : ''}${showPatchNotes ? ' mmobile-patchnotes-btn--active' : ''}`}
-                    onClick={() => {
-                        if (!showPatchNotes) {
-                            setHelpOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
-                            markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);
-                            setIsNewPatchNotes(false);
-                        }
-                        setShowPatchNotes(p => !p);
-                    }}
-                ><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" /></button>
+                    className={`mmobile-back-btn${canGoBack ? '' : ' mmobile-back-btn--at-root'}`}
+                    onClick={canGoBack ? goBack : undefined}
+                    aria-disabled={!canGoBack}
+                ><img src="/images/ArrowBack.svg" alt="Back" /></button>
                 <button
                     className={`mmobile-home-btn${currentId === 1 ? ' mmobile-home-btn--at-root' : ''}`}
                     onClick={currentId === 1 ? undefined : () => { setCurrentId(1); setSheet(null); }}
+                    aria-disabled={currentId === 1}
                 ><img src="/images/Home.svg" alt="Home" /></button>
-                <button
-                    className={`mmobile-fab${sheet?.type === 'rename' && sheet.isNew ? ' mmobile-fab--active' : ''}`}
-                    onClick={addChild}
-                ><img src="/images/SkinnyPlus.svg" alt="Create" /></button>
                 <button
                     className={`mmobile-navigate-btn${showMindMap ? ' mmobile-navigate-btn--active' : ''}`}
                     onClick={() => {
@@ -1148,9 +1468,15 @@ function MobileMindMap() {
                         setShowMindMap(m => !m);
                     }}
                 >
-                    <img src="/images/MindMapBlack.svg" alt="Navigate" />
+                    <img src="/images/MindMapBlack.svg" alt="Mind map" />
                 </button>
+                <button
+                    className={`mmobile-fab${sheet?.type === 'create' ? ' mmobile-fab--active' : ''}`}
+                    onClick={addChild}
+                ><img src="/images/SkinnyPlus.svg" alt="Create" /></button>
             </div>
+
+            {toast && <MobileUndoToast toast={toast} aboveSheet={sheet !== null} onDismiss={() => setToast(null)} />}
 
             {isDragging && dragNodeId !== null && (() => {
                 const dragNode = allIdeas.find(i => i.id === dragNodeId);
@@ -1174,63 +1500,70 @@ function MobileMindMap() {
 
             {sheet && (
                 <>
-                    <div className="mmobile-scrim" onClick={() => { if (Date.now() - lastLongPressTime.current < 400) return; closeSheet(); }} />
-                    <div className="mmobile-sheet" style={{ '--origin-dx': `${sheetOrigin.dx}px`, '--origin-dy': `${sheetOrigin.dy}px`, ...(keyboardInset > 0 ? { bottom: `${keyboardInset + 8}px` } : {}) } as React.CSSProperties}>
-                        <div className="mmobile-sheet-title">
-                            {sheetTitle}
-                            {(sheet.type === 'move' || sheet.type === 'checklist') && (
-                                <button className="mmobile-sheet-close" onClick={closeSheet}>✕</button>
-                            )}
+                    <div className="mmobile-scrim" onClick={() => { if (Date.now() - lastLongPressTime.current < 400) return; requestCloseSheet(); }} />
+                    <div
+                        ref={sheetSwipe.sheetRef}
+                        className={`mmobile-sheet${sheet.type === 'checklist' ? ' mmobile-sheet--checklist' : ''}`}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={sheetTitle || 'Sheet'}
+                        style={{
+                            '--origin-dx': `${sheetOrigin.dx}px`,
+                            '--origin-dy': `${sheetOrigin.dy}px`,
+                            // With the keyboard up, sit just above it and fit
+                            // what's left of the screen (dvh doesn't shrink for
+                            // the keyboard on iOS), scrolling inside if needed.
+                            ...(keyboardInset > 0 ? { bottom: `${keyboardInset + 8}px`, maxHeight: `${Math.max(160, viewportHeight - 16)}px` } : {}),
+                        } as React.CSSProperties}
+                    >
+                        <div className="mmobile-sheet-top" {...sheetSwipe.dragProps}>
+                            <div className="mmobile-sheet-grab" aria-hidden="true" />
+                            <div className="mmobile-sheet-title">
+                                {sheetTitle}
+                                <button className="mmobile-sheet-close" onClick={() => requestCloseSheet()} aria-label="Close">✕</button>
+                            </div>
                         </div>
 
-                        {sheet.type === 'rename' && (
+                        {confirmDiscard && (
+                            <div className="mmobile-discard" role="alertdialog" aria-label="Discard changes?">
+                                <p className="mmobile-discard-text">Discard what you typed?</p>
+                                <div className="mmobile-sheet-btns">
+                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={() => setConfirmDiscard(false)}>Keep editing</button>
+                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--delete" onClick={closeSheet}>Discard</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {sheet.type === 'create' && (
                             <>
-                                {sheet.isNew && (
-                                    <div className="mmobile-create-tabs">
+                                <div className="mmobile-create-tabs">
                                         <button
                                             className={`mmobile-create-tab mmobile-create-tab--idea${createTab === 'idea' ? ' mmobile-create-tab--active' : ''}`}
-                                            onClick={() => setCreateTab('idea')}
+                                            onClick={() => { setCreateTab('idea'); setNameFlash(0); }}
                                         >
                                             Idea
                                         </button>
                                         <button
                                             className={`mmobile-create-tab mmobile-create-tab--checklist${createTab === 'checklist' ? ' mmobile-create-tab--active' : ''}`}
-                                            onClick={() => setCreateTab('checklist')}
+                                            onClick={() => { setCreateTab('checklist'); setNameFlash(0); }}
                                         >
                                             Checklist
                                         </button>
                                         <button
                                             className={`mmobile-create-tab mmobile-create-tab--note${createTab === 'note' ? ' mmobile-create-tab--active' : ''}`}
-                                            onClick={() => setCreateTab('note')}
+                                            onClick={() => { setCreateTab('note'); setNameFlash(0); }}
                                         >
                                             Note
                                         </button>
-                                    </div>
-                                )}
+                                </div>
 
-                                {!sheet.isNew && (
-                                    <textarea
-                                        autoFocus
-                                        className="mmobile-rename-input mmobile-rename-input--grow"
-                                        value={draft}
-                                        onChange={e => {
-                                            setDraft(e.target.value);
-                                            const el = e.target;
-                                            el.style.height = 'auto';
-                                            el.style.height = el.scrollHeight + 'px';
-                                        }}
-                                        onFocus={e => { const el = e.target; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }}
-                                        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitRename(); } }}
-                                        placeholder="Idea name"
-                                        rows={1}
-                                    />
-                                )}
-
-                                {sheet.isNew && createTab === 'idea' && (
+                                {createTab === 'idea' && (
                                     <div className="mmobile-sheet-create-fields">
                                         <textarea
+                                            ref={el => { createNameRef.current = el; }}
                                             autoFocus
                                             className="mmobile-rename-input mmobile-rename-input--grow"
+                                            aria-invalid={nameFlash > 0 && !draft.trim()}
                                             value={draft}
                                             onChange={e => {
                                                 setDraft(e.target.value);
@@ -1238,6 +1571,8 @@ function MobileMindMap() {
                                                 el.style.height = 'auto';
                                                 el.style.height = el.scrollHeight + 'px';
                                             }}
+                                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitCreate(); } }}
+                                            enterKeyHint="done"
                                             placeholder="Idea name"
                                             rows={1}
                                         />
@@ -1246,19 +1581,24 @@ function MobileMindMap() {
                                             placeholder="Link (optional)"
                                             value={newIdeaLink}
                                             onChange={e => setNewIdeaLink(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitCreate(); } }}
+                                            enterKeyHint="done"
                                             type="url"
                                         />
                                     </div>
                                 )}
 
-                                {sheet.isNew && createTab === 'checklist' && (
+                                {createTab === 'checklist' && (
                                     <div className="mmobile-sheet-cl-create">
                                         <input
+                                            ref={el => { createNameRef.current = el; }}
                                             autoFocus
                                             className="mmobile-rename-input"
+                                            aria-invalid={nameFlash > 0 && !checklistTitle.trim()}
                                             placeholder="Checklist title"
                                             value={checklistTitle}
                                             onChange={e => setChecklistTitle(e.target.value)}
+                                            enterKeyHint="next"
                                             maxLength={100}
                                         />
                                         {checklistItems.length > 0 && (
@@ -1271,25 +1611,40 @@ function MobileMindMap() {
                                                 ))}
                                             </ul>
                                         )}
-                                        <input
-                                            className="mmobile-rename-input"
-                                            placeholder="Add item (Enter to add)"
-                                            value={checklistItemDraft}
-                                            onChange={e => setChecklistItemDraft(e.target.value)}
-                                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChecklistItem(); } }}
-                                            maxLength={200}
-                                        />
+                                        <div className="mmobile-sheet-cl-add-row">
+                                            <input
+                                                className="mmobile-rename-input"
+                                                placeholder="Add item"
+                                                value={checklistItemDraft}
+                                                onChange={e => setChecklistItemDraft(e.target.value)}
+                                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChecklistItem(); } }}
+                                                enterKeyHint="next"
+                                                maxLength={200}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="mmobile-sheet-cl-add-btn"
+                                                onClick={addChecklistItem}
+                                                disabled={!checklistItemDraft.trim()}
+                                                aria-label="Add item"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
-                                {sheet.isNew && createTab === 'note' && (
+                                {createTab === 'note' && (
                                     <div className="mmobile-sheet-create-fields">
                                         <input
+                                            ref={el => { createNameRef.current = el; }}
                                             autoFocus
                                             className="mmobile-rename-input"
+                                            aria-invalid={nameFlash > 0 && !newNoteTitle.trim()}
                                             placeholder="Note title"
                                             value={newNoteTitle}
                                             onChange={e => setNewNoteTitle(e.target.value)}
+                                            enterKeyHint="next"
                                             maxLength={100}
                                         />
                                         <textarea
@@ -1308,53 +1663,37 @@ function MobileMindMap() {
                                     </div>
                                 )}
 
-                                {sheet.isNew && (
-                                    <div className="mmobile-priority-row mmobile-priority-row--create">
-                                        <span className="mmobile-priority-label">Priority</span>
-                                        <div className="mmobile-priority-btns">
-                                            {([1, 2, 3] as const).map(p => (
-                                                <button
-                                                    key={p}
-                                                    className={`mmobile-priority-btn${newIdeaPriority === p ? ' mmobile-priority-btn--active' : ''}`}
-                                                    onClick={() => setNewIdeaPriority(prev => prev === p ? undefined : p)}
-                                                    type="button"
-                                                >
-                                                    P{p}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                <MobilePriorityPicker value={newIdeaPriority} onChange={setNewIdeaPriority} />
 
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
                                     <button
                                         className="mmobile-sheet-btn mmobile-sheet-btn--save"
-                                        onClick={commitRename}
-                                        disabled={sheet.isNew && ((createTab === 'checklist' && !checklistTitle.trim()) || (createTab === 'note' && !newNoteTitle.trim()))}
+                                        onClick={commitCreate}
+                                        aria-disabled={(createTab === 'idea' && !draft.trim()) || (createTab === 'checklist' && !checklistTitle.trim()) || (createTab === 'note' && !newNoteTitle.trim())}
                                     >
-                                        {sheet.isNew ? 'Create' : 'Save'}
+                                        Create
                                     </button>
                                 </div>
                             </>
                         )}
 
-                        {sheet.type === 'link' && (
-                            <>
-                                <input
-                                    autoFocus
-                                    className="mmobile-rename-input"
-                                    value={draft}
-                                    onChange={e => setDraft(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && commitLink()}
-                                    placeholder="https://..."
-                                    type="url"
-                                />
-                                <div className="mmobile-sheet-btns">
-                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
-                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={commitLink}>Save</button>
-                                </div>
-                            </>
+                        {sheet.type === 'actions' && sheetNode && (
+                            <div className="mmobile-actions">
+                                <button className="mmobile-action-btn" onClick={() => openEditSheet(sheetNode)}>
+                                    <img src="/images/Pen.svg" className="mmobile-action-icon" alt="" />
+                                    Edit
+                                </button>
+                                <button className="mmobile-action-btn" onClick={() => setSheet({ type: 'move', nodeId: sheetNode.id })}>
+                                    <img src="/images/Move.svg" className="mmobile-action-icon" alt="" />
+                                    Move…
+                                </button>
+                                <MobilePriorityPicker value={sheetNode.priority} onChange={p => setPriorityFromMenu(sheetNode.id, p)} />
+                                <button className="mmobile-action-btn mmobile-action-btn--delete" onClick={() => requestDelete(sheetNode.id)}>
+                                    <img src="/images/Trash.svg" className="mmobile-action-icon" alt="" />
+                                    Delete
+                                </button>
+                            </div>
                         )}
 
                         {sheet.type === 'move' && (
@@ -1390,6 +1729,7 @@ function MobileMindMap() {
                                     maxLength={2000}
                                     rows={4}
                                 />
+                                <MobilePriorityPicker value={editPriority} onChange={setEditPriority} />
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={commitEdit}>Save</button>
@@ -1411,18 +1751,25 @@ function MobileMindMap() {
                                     }}
                                     onFocus={e => { const el = e.target; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }}
                                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit(); } }}
+                                    enterKeyHint="done"
                                     placeholder="Idea name"
                                     rows={1}
                                 />
-                                {sheetNode?.type !== 'checklist' && !allIdeas.some(i => i.parentID === sheetNode?.id) && (
+                                {sheetNode?.type !== 'checklist' && (!allIdeas.some(i => i.parentID === sheetNode?.id) || !!sheetNodeLink) && (
                                     <input
                                         className="mmobile-rename-input mmobile-link-input"
                                         placeholder="Link (optional)"
                                         value={editLinkDraft}
                                         onChange={e => setEditLinkDraft(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitEdit(); } }}
+                                        enterKeyHint="done"
                                         type="url"
                                     />
                                 )}
+                                {sheetNode?.type !== 'checklist' && allIdeas.some(i => i.parentID === sheetNode?.id) && !sheetNodeLink && (
+                                    <p className="mmobile-sheet-hint">An idea with ideas inside it can't be a link.</p>
+                                )}
+                                <MobilePriorityPicker value={editPriority} onChange={setEditPriority} />
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={commitEdit}>Save</button>
@@ -1433,7 +1780,12 @@ function MobileMindMap() {
                         {sheet.type === 'confirmDelete' && (
                             <>
                                 <p className="mmobile-confirm-text">
-                                    This will permanently delete <strong>{resolveIdeaLabel(sheetNode ?? undefined)}</strong> and all its children.
+                                    {(() => {
+                                        const inside = countDescendants(sheet.nodeId);
+                                        return (
+                                            <>This will delete <strong>{shortLabel(sheetNode ?? undefined)}</strong> and the {inside === 1 ? 'idea' : `${inside} ideas`} inside it.</>
+                                        );
+                                    })()}
                                 </p>
                                 <div className="mmobile-sheet-btns">
                                     <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>

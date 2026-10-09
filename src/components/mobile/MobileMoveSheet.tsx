@@ -68,7 +68,9 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                 const visibleKids = allIdeas.filter(i => i.parentID === child.id && !hidden.has(i.id));
                 const isChecklist = child.type === 'checklist';
                 const isNote = isNoteMode(child);
-                const isDisabled = disabled.has(child.id) || isChecklist || isNote;
+                // Same rule as drag-and-drop: a link node opens its URL when
+                // tapped, so anything moved under it would be unreachable.
+                const isDisabled = disabled.has(child.id) || isChecklist || isNote || !!getIdeaLink(child);
                 const isExpanded = expandedMoveNodes.has(child.id);
                 const isCurrentParent = child.id === movingNode?.parentID;
                 const hasKids = allIdeas.some(i => i.parentID === child.id);

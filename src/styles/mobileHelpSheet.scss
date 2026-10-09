@@ -142,11 +142,56 @@
 }
 
 .mmobile-help-header {
+    touch-action: none;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+}
+
+.mmobile-help-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mmobile-help-whatsnew {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    background: $sky;
+    border: 2px solid #111;
+    border-radius: 10px;
+    box-shadow: 0 2px 0 #111;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #111;
+    cursor: pointer;
+    white-space: nowrap;
+
+    img { width: 16px; height: 16px; }
+
+    &:active { box-shadow: 0 0 0 #111; translate: 0 2px; }
+
+    @media (max-width: 359px) {
+        .mmobile-help-whatsnew-label { display: none; }
+    }
+}
+
+.mmobile-help-whatsnew-dot {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 12px;
+    height: 12px;
+    background: $danger;
+    border: 2px solid #111;
+    border-radius: 50%;
 }
 
 .mmobile-help-pager {
@@ -159,8 +204,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 40px;
-    height: 36px;
+    min-width: 44px;
+    height: 44px;
     background: $neutral;
     border: 2px solid #111;
     border-radius: 10px;
@@ -607,4 +652,16 @@
     &--rename { background: $sky; }
     &--move   { background: $deep-yellow; }
     &--delete { background: $danger; }
+}
+
+// The ⋯ button drawn inline in help text, so it looks like the real thing
+.mmobile-help-inline-icon {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -0.2em;
+    padding: 0 3px;
+    margin: 0 1px;
+    border: 1.5px solid currentColor;
+    border-radius: 6px;
+    line-height: 1;
 }

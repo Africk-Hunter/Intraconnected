@@ -26,6 +26,12 @@ $desktop: 1024px;
 $large-desktop: 1921px;
 $very-large-desktop: 3840px;
 
+// When the touch UI (MobileMindMap) replaces the desktop layout: touch screens
+// below 1024px, or any pointer below 577px (a mouse or trackpad keeps the
+// desktop layout down to there). Keep in sync with MOBILE_UI_QUERY in
+// src/utilities/useIsMobileUI.ts.
+$mobile-ui: "(max-width: 1023px) and (pointer: coarse), (max-width: 576px)";
+
 //Idea Component
 $back-size: 7rem;
 

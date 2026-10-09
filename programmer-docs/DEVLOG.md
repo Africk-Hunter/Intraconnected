@@ -4,6 +4,36 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Mobile UX Pass, Phase 4: Checklists, Sheets & Polish — 2026-10-09
+- Checklist full view rebuilt: each row is handle · checkbox+text (one 44px+ target that ticks it, like the inline view) · ↗ for linked items · ⋯ (Edit / Link / Delete). Was five 16–24px targets with an instant, unrecoverable delete next to Edit; item delete now has Undo, and the toast stays tappable above an open sheet.
+- Sheets: grab handle + swipe down to close on every sheet (help, patch notes and mind map too), ✕ everywhere (44px), and Back. Tapping the scrim, ✕, swiping down or Back on a Create/Edit sheet with typed text asks "Discard what you typed?" instead of silently throwing it away. With the keyboard up the sheet fits the visible area and scrolls inside, title kept in view. Mind Map's red "Close" is neutral.
+- Rows: links show ↗, parents show how many ideas are inside, tapping a note opens it. "Move to parent" floats over the list while dragging (was inside the scroll, often off-screen, and pushed rows down). A tap that stops a fling no longer opens a row.
+- Header title is text with a ✎ button (was an always-open text field; Return now saves). Sort button reads "Sort: Priority/Age" with a 44px tap area. New Idea: Return creates (Shift+Return for a new line), Create is disabled until there's a name, keyboards show Done/Next. Edit explains why a parent has no link field. Moving to the top level after an idea was deleted on another device now says so.
+- Accessibility: sheets are dialogs, the ribbon says its priority, hidden swipe buttons aren't read out or tabbable. Overscroll is off while the app is open (Android pull-to-refresh could reload mid-session).
+- Removed the unreachable link sheet and rename-only sheet (`SheetState` `rename` → `create`).
+- Follow-ups from testing: the checklist row's ▸ (read as "go into") is now a bordered "3/5 ▾" dropdown pill whose chevron flips when open. ⋯ is drawn (`MoreDotsIcon`) instead of the "⋯" character, which fell back to a wide, stretched glyph. "Move to parent" sits between the title card and the list again, pushing the rows down as it opens (outside the scroll, so still always visible). The undo toast has a ✕ and can be swiped away sideways or down. Create stays tappable (dimmed) with an empty name: tapping it or pressing Return flashes the name field red with a shake and a buzz, focuses it, and keeps it red until something is typed (idea name, checklist title, note title). A checklist with no title no longer falls back to "Untitled".
+- Mobile inputs are now ≥16px. Pinch-zoom is still blocked in `index.html`: removing it needs every input app-wide (profile, checkout, sign-in on phones) at 16px first, or iOS zooms on focus — left for the desktop pass, which covers those screens on mobile.
+
+## Mobile UX Pass, Phase 3: Visible Actions & Undo — 2026-10-09
+- Every row has a ⋯ button opening an action sheet (Edit, Move, Priority, Delete); works with touch and mouse. Swipe-left stays as a shortcut.
+- Long-press now matches the iPhone habit and the onboarding text: holding a row (500ms, was 360ms) opens the same sheet; moving the finger after the hold closes it and starts the drag. Rows handle `touchcancel` (a drag could get stuck) and suppress the Android context menu.
+- Undo: deleting a single idea happens at once with a 5s "Deleted … · Undo" toast; deleting a branch still confirms, now saying how many ideas are inside, and also offers Undo. Moves (drag or Move sheet) show "Moved to … · Undo". `recursivelyDeleteChildren` returns what it removed; new `restoreIdeas` re-creates it parents first. Tests in `ideaStore.test.ts`.
+- Priority can be set from Edit and the action sheet with a High / Med / Low / None picker coloured like the ribbons (Create's P1/P2/P3 row uses it too). The ribbon's tap area grew to ~42×44px; sheet ✕ is 44px; Delete text is white on red.
+- Onboarding tip 3 and help pages 2, 4 and 6 describe ⋯, hold, hold-and-drag, Undo and picking priority.
+
+## Mobile UX Pass, Phase 2: Navigation — 2026-10-09
+- The phone's Back button / back gesture now closes the open sheet (help, patch notes, mind map, profile, path menu) or goes up one level, instead of leaving the app. New `utilities/backStack.ts` (`useBackHandler`): one history entry is kept on top while anything wants Back and removed again when nothing does, so Back at the top level still leaves. Tested in `backStack.test.ts` (fake history with async `back()`).
+- Sign-in and the signed-in landing redirect use `location.replace('/main')`, so Back from the app no longer returns to the login form.
+- Bottom bar is now Back · Home · Mind Map · +. Back moved down from the hard-to-reach top-left; + is bottom-right. Patch Notes moved into Help ("What's new" button); the Help button shows a dot when they're unread (the old patch notes button's "new" state had no style).
+- The breadcrumb strip (18px-tall links, scrolled the useful end off-screen) is replaced by one 44px "in *Parent* ▾" button that opens the full path. Help text updated for the new Back and What's new.
+
+## Mobile UX Pass, Phase 1: Bug Fixes — 2026-10-09
+- The touch UI is now chosen by pointer as well as width (`$mobile-ui` / `useIsMobileUI`): a mouse or trackpad keeps the desktop layout down to 577px instead of getting the swipe-only touch UI below 1024px. `MobileMindMap` is no longer mounted on desktop. Onboarding tip 3 switches on the same rule (it switched at 576px, so tablets saw "drag onto the trash").
+- Move sheet no longer offers link nodes as targets (an idea moved there was unreachable). A link that already has children drills in on tap (list and Mind Map), and Edit keeps its link field so the link can be removed.
+- After swiping a row open and navigating, the next tap no longer gets swallowed; tapping the open row closes it, and scrolling the list closes it too.
+- Holding the title card no longer jams scrolling (leftover long-press handlers removed). Tapping a priority ribbon or checklist open button no longer starts a drag ~0.4s later. A mouse hold on a row no longer leaves a drag card stuck on screen (mouse long-press removed).
+- New checklist: an item typed but not added with Return is kept on Create; added a + button next to the item field.
+
 ## Desktop Help Menu Polish — 2026-10-08
 - New frame: close button, footer with clickable page dots + Back / Next ("Got it" on the last page) replacing the side arrows that jumped around as the height changed. Keyboard: ←/→ to page, Esc to close (ignored while typing). Hidden popup is `inert`.
 - Screens slide/fade in from the direction you're paging; height tweens to each screen and is re-measured with a ResizeObserver (late fonts/images, breakpoint changes). Capped to the window height; the body scrolls on short screens. Reopening after finishing starts at page 1. Reduced-motion respected.

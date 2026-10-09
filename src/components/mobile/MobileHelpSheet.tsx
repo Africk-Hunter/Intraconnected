@@ -1,7 +1,11 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
+import { useSheetSwipeDown } from './useSheetSwipeDown';
+import MoreDotsIcon from './MoreDotsIcon';
 
 interface Props {
     onClose: () => void;
+    onOpenPatchNotes: () => void;
+    hasNewPatchNotes: boolean;
     style?: React.CSSProperties;
 }
 
@@ -47,9 +51,9 @@ const SCREENS: React.FC[] = [
                 <span className="mmobile-help-badge mmobile-help-badge--add"><img src="/images/Plus.svg" className="mmobile-help-badge-icon" alt="+" /></span>
                 <p className="mmobile-help-text">Tap + at the bottom to create a new idea under the current root.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--back"><img src="/images/ArrowBack.svg" className="mmobile-help-badge-icon" alt="Back" /></span>
-                <p className="mmobile-help-text">Tap Back to navigate up to the previous root.</p>
+                <p className="mmobile-help-text">Tap Back at the bottom, or use your phone's back gesture, to go up one level.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--delete"><img src="/images/Trash.svg" className="mmobile-help-badge-icon" alt="Delete" /></span>
-                <p className="mmobile-help-text">Long-press a node, then tap Delete to remove it and all its children.</p>
+                <p className="mmobile-help-text">Tap <span className="mmobile-help-inline-icon"><MoreDotsIcon size={16} /></span> on a node (or press and hold it) for Edit, Move, Priority and Delete. Deleted something by mistake? Tap <strong>Undo</strong>.</p>
             </div>
         </>
     ),
@@ -82,7 +86,7 @@ const SCREENS: React.FC[] = [
             </div>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--p1">P1</span>
-                <p className="mmobile-help-text">Each idea has a <strong>priority ribbon</strong>. Tap it to cycle: <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong>, then none. The ribbon height shows urgency at a glance.</p>
+                <p className="mmobile-help-text">Each idea has a <strong>priority ribbon</strong>. Tap it to cycle: <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong>, then none, or pick one directly from <span className="mmobile-help-inline-icon"><MoreDotsIcon size={16} /></span> or Edit. The ribbon height shows urgency at a glance.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--sort"><img src="/images/sort.svg" className="mmobile-help-badge-icon" alt="Sort" /></span>
                 <p className="mmobile-help-text">Tap the <strong>Sort</strong> button in the idea count row to reorder by priority. Tap again to switch back to Age (creation) order.</p>
             </div>
@@ -124,9 +128,9 @@ const SCREENS: React.FC[] = [
                     <span className="mmobile-help-swipe-seg mmobile-help-swipe-seg--move"><img src="/images/Move.svg" alt="" /></span>
                     <span className="mmobile-help-swipe-seg mmobile-help-swipe-seg--delete"><img src="/images/Trash.svg" alt="" /></span>
                 </span>
-                <p className="mmobile-help-text">Swipe a node <strong>left</strong> to reveal Edit, Move and Delete. Or press and hold, then drag it onto another node to move it there.</p>
+                <p className="mmobile-help-text">Swipe a node <strong>left</strong> for quick Edit, Move and Delete. To move by dragging, press and hold, then drag it onto another node.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--patchnotes"><img src="/images/PatchNotesIconSkinny.svg" className="mmobile-help-badge-icon" alt="Patch notes" /></span>
-                <p className="mmobile-help-text">The <strong>Patch Notes</strong> are a running log of new features and changes. Want to see a new feature? Recommend it using the button in the patch notes!</p>
+                <p className="mmobile-help-text">Tap <strong>What's new</strong> at the top of this menu for a running log of new features and changes. Want to see a new feature? Recommend it from there!</p>
             </div>
         </>
     )
@@ -134,13 +138,14 @@ const SCREENS: React.FC[] = [
 const LAST = SCREENS.length - 1;
 const SWIPE_MIN_PX = 50;
 
-function MobileHelpSheet({ onClose, style }: Props) {
+function MobileHelpSheet({ onClose, onOpenPatchNotes, hasNewPatchNotes, style }: Props) {
     const [screen, setScreen] = useState(0);
     const [direction, setDirection] = useState<'forward' | 'back'>('forward');
     const [contentHeight, setContentHeight] = useState<number>();
     const contentRef = useRef<HTMLDivElement>(null);
     const screenRef = useRef<HTMLDivElement>(null);
     const touchStart = useRef<{ x: number; y: number } | null>(null);
+    const swipe = useSheetSwipeDown(onClose);
 
     function goTo(index: number) {
         if (index < 0 || index > LAST || index === screen) return;
@@ -182,8 +187,9 @@ function MobileHelpSheet({ onClose, style }: Props) {
 
     return (
         <div className="mmobile-scrim mmobile-helpmenu-scrim" onClick={onClose}>
-            <div className="mmobile-help-sheet mmobile-helpmenu-sheet" style={style} onClick={e => e.stopPropagation()} role="dialog" aria-label="Help">
-                <div className="mmobile-help-header">
+            <div ref={swipe.sheetRef} className="mmobile-help-sheet mmobile-helpmenu-sheet" style={style} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Help">
+                <div className="mmobile-sheet-grab mmobile-sheet-grab--panel" aria-hidden="true" {...swipe.dragProps} />
+                <div className="mmobile-help-header" {...swipe.dragProps}>
                     <div className="mmobile-help-dots">
                         {SCREENS.map((_, i) => (
                             <button
@@ -195,7 +201,14 @@ function MobileHelpSheet({ onClose, style }: Props) {
                             />
                         ))}
                     </div>
-                    <button className="mmobile-help-close" onClick={onClose} aria-label="Close help">✕</button>
+                    <div className="mmobile-help-header-actions">
+                        <button className="mmobile-help-whatsnew" onClick={onOpenPatchNotes} aria-label="What's new">
+                            <img src="/images/PatchNotesIconSkinny.svg" alt="" />
+                            <span className="mmobile-help-whatsnew-label">What's new</span>
+                            {hasNewPatchNotes && <span className="mmobile-help-whatsnew-dot" aria-label="(new)" />}
+                        </button>
+                        <button className="mmobile-help-close" onClick={onClose} aria-label="Close help">✕</button>
+                    </div>
                 </div>
 
                 <div

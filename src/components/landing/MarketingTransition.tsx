@@ -61,7 +61,7 @@ const MarketingTransition: React.FC = () => {
     let cancelled = false;
     let stop: (() => void) | undefined;
     import('../../utilities/firebase/homeRedirect').then(({ redirectIfSignedIn }) => {
-      if (!cancelled) stop = redirectIfSignedIn(() => { window.location.href = '/main'; });
+      if (!cancelled) stop = redirectIfSignedIn(() => { window.location.replace('/main'); });
     });
     return () => {
       cancelled = true;
