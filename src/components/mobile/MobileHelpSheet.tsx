@@ -71,7 +71,7 @@ const SCREENS: React.FC[] = [
                 <span className="mmobile-help-badge mmobile-help-badge--checklist-node">
                     <span className="mmobile-checklist-inline-cb mmobile-checklist-inline-cb--checked" />
                 </span>
-                <p className="mmobile-help-text">Indigo nodes are checklists. Tap to expand items inline, or tap the icon in the header to open the full view.</p>
+                <p className="mmobile-help-text">Indigo nodes are checklists. Tap the count to open the items inline; once open, tap Full view to edit, reorder or link them.</p>
             </div>
         </>
     ),

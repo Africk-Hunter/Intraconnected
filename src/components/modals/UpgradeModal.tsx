@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { useIdeaContext } from "../../context/IdeaContext";
 import AnimatedOverlay from "../AnimatedOverlay";
+import { WarningIcon } from "../Icons";
 import PriceCard from "../landing/PriceCard";
 import { startCheckout, formatMoney } from "../../utilities/billing/billing";
 import { useLifetimePrice } from "../../utilities/billing/useLifetimePrice";
@@ -55,7 +56,7 @@ function UpgradeModal() {
                 <h3 className="upgradeModalTitle" id="upgradeModalTitle">{title}</h3>
                 {forced ? (
                     <p className="upgradeModalNotice">
-                        <span className="upgradeModalNotice-icon" aria-hidden="true">⚠</span>
+                        <span className="upgradeModalNotice-icon" aria-hidden="true"><WarningIcon /></span>
                         Your idea tree has reached {FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused until you upgrade.
                     </p>
                 ) : (

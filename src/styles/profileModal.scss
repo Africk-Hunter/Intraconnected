@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use 'sass:math';
 @use 'sass:map';
 @use 'sass:string';
@@ -210,7 +211,7 @@ $profile-scrollbar-end-gap: 6px;
     $line: $profile-scrollbar-line;
     $inner: $width - $line - $pad * 2;
     $r: math.div($inner, 2);
-    $track: darken($background-color, 4%);
+    $track: color.adjust($background-color, $lightness: -4%);
 
     &::-webkit-scrollbar {
         width: $width;
@@ -261,7 +262,7 @@ $profile-scrollbar-end-gap: 6px;
     // browsers without ::-webkit-scrollbar get the plain version.
     @supports not selector(::-webkit-scrollbar) {
         scrollbar-width: thin;
-        scrollbar-color: $leaf darken($background-color, 4%);
+        scrollbar-color: $leaf color.adjust($background-color, $lightness: -4%);
     }
 }
 
@@ -294,7 +295,7 @@ $profile-scrollbar-end-gap: 6px;
         color: #fff;
 
         &.profile-tab--active {
-            background: darken($danger, 8%);
+            background: color.adjust($danger, $lightness: -8%);
         }
     }
 
@@ -551,7 +552,7 @@ $profile-scrollbar-end-gap: 6px;
     min-width: 16rem;
     display: flex;
     flex-direction: column;
-    background: darken($background-color, 3%);
+    background: color.adjust($background-color, $lightness: -3%);
     border-right: 3px solid #000;
     padding-bottom: 1.25rem;
 

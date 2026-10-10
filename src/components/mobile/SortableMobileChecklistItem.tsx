@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { ChecklistItem } from '../../utilities/types';
 import { cleanLink, openIdeaLink } from '../../utilities';
 import MoreDotsIcon from './MoreDotsIcon';
+import { LinkOutIcon } from '../Icons';
 
 export interface SortableMobileItemProps {
     item: ChecklistItem;
@@ -117,7 +118,7 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
                 )}
                 {item.link && !isEditing && (
                     <button className="mmobile-checklist-sheet-open" onClick={() => openIdeaLink(item.link!)} aria-label="Open link">
-                        ↗
+                        <LinkOutIcon />
                     </button>
                 )}
                 {!isEditing && (

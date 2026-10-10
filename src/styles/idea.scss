@@ -331,14 +331,13 @@
     row-gap: 5rem;
     margin-bottom: 10rem;
     transition: opacity 0.06s ease;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    justify-items: center;
 
     &--fade {
         opacity: 0;
     }
-
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    justify-items: center;
 
     // FLIP wrapper — keeps DnD transforms isolated from reorder animation
     &>[data-flip-id] {
@@ -486,6 +485,11 @@
     transition: background-color 0.4s ease, color 0.4s ease, width 0.4s ease,
         min-height 0.4s ease, padding 0.4s ease, border-radius 0.4s ease;
 
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+
     &:hover, &:active {
         box-shadow: $neo-idea-press;
         translate: $neo-idea-translate;
@@ -500,11 +504,6 @@
             translate: $neo-idea-translate-lg;
         }
     }
-
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    touch-action: manipulation;
 
     &.parent {
         background: $sky;
@@ -869,6 +868,7 @@
     background: $deep-yellow;
     font-size: 1.1rem;
     font-weight: 600;
+    transition: transform 0.3s ease-in-out;
 
     &-img {
         width: 1.1rem;
@@ -882,8 +882,6 @@
     &--at-root {
         transform: translateY(-3.75rem);
     }
-
-    transition: transform 0.3s ease-in-out;
 
     @media (min-width: $large-desktop) {
         width: 9rem;

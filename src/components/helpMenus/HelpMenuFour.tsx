@@ -1,4 +1,5 @@
 import React from 'react';
+import { LinkOutIcon } from '../Icons';
 
 const HelpMenuFour: React.FC = () => {
     return (
@@ -28,7 +29,7 @@ const HelpMenuFour: React.FC = () => {
                             <button className="mm-node-btn mm-node-btn--leaf" style={{ pointerEvents: 'none' }}>Home</button>
                         </div>
                         <div className="mm-child-wrap">
-                            <button className="mm-node-btn mm-node-btn--link" style={{ pointerEvents: 'none' }}>Docs ↗</button>
+                            <button className="mm-node-btn mm-node-btn--link" style={{ pointerEvents: 'none' }}>Docs <LinkOutIcon /></button>
                         </div>
                     </div>
                 </div>

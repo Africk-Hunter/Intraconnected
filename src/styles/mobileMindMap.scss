@@ -181,6 +181,8 @@
     justify-content: center;
     overflow: visible;
     transition: box-shadow 0.12s ease, translate 0.12s ease;
+    // Anchors the unread patch-notes dot (--new::after below)
+    position: relative;
 
     &:active {
         box-shadow: 0 0px 0 #111;
@@ -200,7 +202,6 @@
     }
 
     // Unread patch notes (they live inside Help now)
-    position: relative;
     &--new::after {
         content: '';
         position: absolute;
@@ -385,7 +386,9 @@
     margin-top: -1.65rem;
     margin-bottom: -0.35rem;
     margin-left: -0.4rem;
-    margin-right: -0.4rem;
+    // positive, not negative: the swatch's drop shadow pokes ~2px past the
+    // button on the right, so this keeps a clear gap before the title
+    margin-right: 2px;
     width: 1.9rem;
     cursor: pointer;
     display: block;
@@ -413,8 +416,8 @@
     &::before {
         content: '';
         position: absolute;
-        left: -6px;
-        right: -6px;
+        left: -2px;
+        right: -2px;
         top: 0;
         height: max(100%, 44px);
     }
@@ -1123,13 +1126,26 @@
 // ⋯ on every row: a visible way to Edit / Move / Delete (swipe and
 // long-press are shortcuts nobody sees). 44px tall hit area; the negative
 // margins keep it from making the row taller.
+// Dots + child count/arrow travel as one group at the row's right edge
+// (the priority ribbon sits in the opposite, top-left corner).
+.mmobile-node-end {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
 .mmobile-node-more {
     all: unset;
+    // positioned + stacked above the ribbon's tap area (a positioned ::before
+    // that would otherwise paint over, and steal taps from, this button)
+    position: relative;
+    z-index: 1;
     flex-shrink: 0;
     align-self: center;
     width: 36px;
     height: 44px;
-    margin: -10px -4px;
+    margin: -10px 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1369,20 +1385,43 @@
     align-self: flex-start;
 }
 
+// "Full view" sits in the open list's footer, beside "+ Add item" — only
+// shown once the checklist is expanded. 44px tap height around the pill.
 .mmobile-checklist-open-btn {
     all: unset;
+    box-sizing: border-box;
+    position: relative;
     cursor: pointer;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.2;
+
+    img { width: 14px; height: 14px; filter: invert(1); }
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: -10px -4px;
+    }
+
+    &:active { background: rgba(255, 255, 255, 0.15); }
+}
+
+.mmobile-checklist-inline-footer {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-    opacity: 0.7;
-
-    img { width: 16px; height: 16px; filter: invert(1); }
-
-    &:active { opacity: 1; }
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 // "3/5 ▾": opens the items inline. Bordered like a select so it reads as a
@@ -1512,12 +1551,11 @@
 .mmobile-checklist-inline-input {
     all: unset;
     display: block;
-    width: 100%;
-    margin-top: 8px;
-    padding: 6px 0;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 0;
     font-size: 1rem;
     color: rgba(255, 255, 255, 0.7);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
     box-sizing: border-box;
 
     &::placeholder { color: rgba(255, 255, 255, 0.35); }
@@ -1717,7 +1755,7 @@
         margin-top: -2.13rem;
         margin-bottom: -0.4rem;
         margin-left: -0.45rem;
-        margin-right: -0.45rem;
+        margin-right: 2px;
         width: 2.2rem;
 
         &::after {
@@ -1871,10 +1909,10 @@
     }
 
     .mmobile-checklist-open-btn {
-        width: 32px;
-        height: 32px;
+        font-size: 1rem;
+        padding: 6px 14px;
 
-        img { width: 20px; height: 20px; }
+        img { width: 18px; height: 18px; }
     }
 
     .mmobile-checklist-inline-item {

@@ -4,6 +4,7 @@ import type { CheckoutIntent, CheckoutPlan } from "../../utilities/billing/billi
 import { formatMoney } from "../../utilities/billing/billing";
 import { getCardElementStyle } from "../../utilities/billing/stripeAppearance";
 import NodeLoader from "./NodeLoader";
+import { LockIcon } from "../Icons";
 
 const PLAN_LABEL: Record<CheckoutPlan, { label: string; suffix: string }> = {
     annual: { label: "Annual Plan", suffix: "/year" },
@@ -71,7 +72,7 @@ function CheckoutForm({ plan, intent, onDone }: Props) {
             >
                 {submitting ? <><NodeLoader className="small" />Processing…</> : "Pay now"}
             </button>
-            <p className="checkoutFormTrust">🔒 Payments secured by Stripe</p>
+            <p className="checkoutFormTrust"><LockIcon /> Payments secured by Stripe</p>
         </form>
     );
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { auth } from "../../firebaseConfig";
 import { resendVerificationEmail, refreshEmailVerified } from "../../utilities/firebase/authFirebase";
 import { getMailProvider, verifyMailUrl } from "../../utilities/mailProvider";
+import { MailIcon } from "../Icons";
 
 interface Props {
     onVerified: () => void;
@@ -46,7 +47,7 @@ function CheckoutVerifyEmail({ onVerified }: Props) {
 
     return (
         <div className="checkoutVerify">
-            <div className="checkoutVerify-icon" aria-hidden="true">✉️</div>
+            <div className="checkoutVerify-icon" aria-hidden="true"><MailIcon /></div>
             <h2 className="checkoutVerify-title">One quick step first</h2>
             <p className="checkoutVerify-text">
                 Confirm your email address and you're ready to upgrade.

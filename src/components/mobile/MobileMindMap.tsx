@@ -33,6 +33,7 @@ import MobileUndoToast, { type UndoToastState } from './MobileUndoToast';
 import MobilePriorityPicker from './MobilePriorityPicker';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 import MoreDotsIcon from './MoreDotsIcon';
+import { LinkOutIcon } from '../Icons';
 import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../../utilities/patchNotesState';
@@ -1280,7 +1281,6 @@ function MobileMindMap() {
                                     onClick={() => tapNode(child.id)}
                                 >
                                     <div className="mmobile-node-header-row">
-                                        <span className="mmobile-node-title">{child.content}</span>
                                         <button
                                             className={`mmobile-node-priority-ribbon mmobile-node-priority-ribbon--${child.priority ? `p${child.priority}` : 'none'}${animatingRibbonId === child.id ? ' mmobile-node-priority-ribbon--animating' : ''}`}
                                             aria-label={priorityLabel}
@@ -1288,14 +1288,7 @@ function MobileMindMap() {
                                             onTouchEnd={e => e.stopPropagation()}
                                             onTouchStart={e => e.stopPropagation()}
                                         />
-                                        <button
-                                            className="mmobile-checklist-open-btn"
-                                            onClick={e => { e.stopPropagation(); openChecklistSheet(child.id); }}
-                                            onTouchEnd={e => e.stopPropagation()}
-                                            onTouchStart={e => e.stopPropagation()}
-                                        >
-                                            <img src="/images/OpenIconSkinny.svg" alt="Open full view" />
-                                        </button>
+                                        <span className="mmobile-node-title">{child.content}</span>
                                         <button
                                             className="mmobile-node-more"
                                             aria-label={`Actions for ${shortLabel(child)}`}
@@ -1349,19 +1342,30 @@ function MobileMindMap() {
                                                     <li className="mmobile-checklist-inline-empty">No items yet</li>
                                                 )}
                                             </ul>
-                                            <input
-                                                className="mmobile-checklist-inline-input"
-                                                placeholder="+ Add item"
-                                                value={inlineDrafts[child.id] ?? ''}
-                                                onChange={e => setInlineDrafts(prev => ({ ...prev, [child.id]: e.target.value }))}
-                                                onKeyDown={e => {
-                                                    if (e.key === 'Enter') {
-                                                        e.stopPropagation();
-                                                        addInlineItem(child.id, items);
-                                                    }
-                                                }}
-                                                maxLength={200}
-                                            />
+                                            {/* Full view only shows once the list is open, so the
+                                                closed card's header stays uncluttered. */}
+                                            <div className="mmobile-checklist-inline-footer">
+                                                <input
+                                                    className="mmobile-checklist-inline-input"
+                                                    placeholder="+ Add item"
+                                                    value={inlineDrafts[child.id] ?? ''}
+                                                    onChange={e => setInlineDrafts(prev => ({ ...prev, [child.id]: e.target.value }))}
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter') {
+                                                            e.stopPropagation();
+                                                            addInlineItem(child.id, items);
+                                                        }
+                                                    }}
+                                                    maxLength={200}
+                                                />
+                                                <button
+                                                    className="mmobile-checklist-open-btn"
+                                                    onClick={e => { e.stopPropagation(); openChecklistSheet(child.id); }}
+                                                >
+                                                    <img src="/images/OpenIconSkinny.svg" alt="" />
+                                                    Full view
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -1412,6 +1416,13 @@ function MobileMindMap() {
                                 onContextMenu={e => e.preventDefault()}
                                 onClick={() => tapNode(child.id)}
                             >
+                                <button
+                                    className={`mmobile-node-priority-ribbon mmobile-node-priority-ribbon--${child.priority ? `p${child.priority}` : 'none'}${animatingRibbonId === child.id ? ' mmobile-node-priority-ribbon--animating' : ''}`}
+                                    aria-label={priorityLabel}
+                                    onClick={e => { e.stopPropagation(); cyclePriority(child.id, child.priority); }}
+                                    onTouchEnd={e => e.stopPropagation()}
+                                    onTouchStart={e => e.stopPropagation()}
+                                />
                                 {noteMode ? (
                                     <span className="mmobile-node-title mmobile-node-title--note">
                                         <span className="mmobile-node-note-header">{resolveIdeaLabel(child)}</span>
@@ -1420,30 +1431,25 @@ function MobileMindMap() {
                                 ) : (
                                     <span className="mmobile-node-title">{child.content}</span>
                                 )}
-                                <button
-                                    className={`mmobile-node-priority-ribbon mmobile-node-priority-ribbon--${child.priority ? `p${child.priority}` : 'none'}${animatingRibbonId === child.id ? ' mmobile-node-priority-ribbon--animating' : ''}`}
-                                    aria-label={priorityLabel}
-                                    onClick={e => { e.stopPropagation(); cyclePriority(child.id, child.priority); }}
-                                    onTouchEnd={e => e.stopPropagation()}
-                                    onTouchStart={e => e.stopPropagation()}
-                                />
-                                <button
-                                    className="mmobile-node-more"
-                                    aria-label={`Actions for ${shortLabel(child)}`}
-                                    onClick={e => { e.stopPropagation(); openActions(child.id); }}
-                                    onTouchStart={e => e.stopPropagation()}
-                                    onTouchEnd={e => e.stopPropagation()}
-                                >
-                                    <MoreDotsIcon />
-                                </button>
-                                {!noteMode && (childLink && !hasKids ? (
-                                    <span className="mmobile-node-arrow mmobile-node-arrow--out" aria-label="opens website">↗</span>
-                                ) : (
-                                    <span className="mmobile-node-arrow">
-                                        {hasKids && <span className="mmobile-node-kids" aria-label={`${kidCount} inside`}>{kidCount}</span>}
-                                        ›
-                                    </span>
-                                ))}
+                                <span className="mmobile-node-end">
+                                    <button
+                                        className="mmobile-node-more"
+                                        aria-label={`Actions for ${shortLabel(child)}`}
+                                        onClick={e => { e.stopPropagation(); openActions(child.id); }}
+                                        onTouchStart={e => e.stopPropagation()}
+                                        onTouchEnd={e => e.stopPropagation()}
+                                    >
+                                        <MoreDotsIcon />
+                                    </button>
+                                    {!noteMode && (childLink && !hasKids ? (
+                                        <span className="mmobile-node-arrow mmobile-node-arrow--out" aria-label="opens website"><LinkOutIcon /></span>
+                                    ) : (
+                                        <span className="mmobile-node-arrow">
+                                            {hasKids && <span className="mmobile-node-kids" aria-label={`${kidCount} inside`}>{kidCount}</span>}
+                                            ›
+                                        </span>
+                                    ))}
+                                </span>
                             </div>
                         </div>
                     );

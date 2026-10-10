@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
+import { CheckboxIcon } from '../Icons';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -79,7 +80,7 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange,
                 <img src="images/DragHandle.svg" alt="" />
             </button>
             <button className="checklistModal-cb" onClick={() => onToggle(item.id)}>
-                {item.checked ? '☑' : '☐'}
+                <CheckboxIcon checked={item.checked} />
             </button>
             {isEditing ? (
                 <textarea

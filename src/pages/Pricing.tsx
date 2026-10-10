@@ -37,7 +37,7 @@ const Pricing: React.FC = () => {
         <span className="pricingHeroNode pricingHeroNode--leaf" aria-hidden="true">idea!</span>
         <span className="pricingHeroNode pricingHeroNode--sky" aria-hidden="true">sub-idea</span>
         <span className="pricingHeroNode pricingHeroNode--link" aria-hidden="true">tangent</span>
-        <div className="pricingHeroSticker">Cheaper than pizza <PizzaIcon /></div>
+        <div className="pricingHeroSticker">Cheaper Than A Pizza <PizzaIcon /></div>
         <h1 className="pricingHeroTitle">Big ideas,<br /><span className="pricingHeroTitleHighlight">tiny</span> price.</h1>
         <p className="pricingHeroSubline">
           50 nodes free, no card needed. Go annual for {ANNUAL_PRICE_DISPLAY}/yr, or pay once

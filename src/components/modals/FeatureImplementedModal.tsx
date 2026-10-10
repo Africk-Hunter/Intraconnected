@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { SparkleIcon } from '../Icons';
 
 const COLORS = ['#41BC28', '#00A9D8', '#E8E879', '#DB44A4', '#7322C3', '#EC8A13', '#1EB899'];
 
@@ -90,7 +91,7 @@ const FeatureImplementedModal: React.FC<Props> = ({ titles, onClose }) => {
         <section className="overlay feature-impl-overlay" onClick={onClose}>
             <canvas ref={canvasRef} className="confetti-canvas" />
             <div className="modal neobrutal confirmModal feature-impl-modal" onClick={e => e.stopPropagation()}>
-                <p className="feature-impl-trophy">🎉</p>
+                <p className="feature-impl-trophy"><SparkleIcon /></p>
                 {titles.length === 1 ? (
                     <p className="confirmText">
                         Your feature request <strong className="confirmName">"{titles[0]}"</strong> was implemented!

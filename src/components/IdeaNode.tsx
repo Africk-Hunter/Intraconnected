@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
+import { CheckboxIcon } from './Icons';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -143,7 +144,7 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCo
                 <img src="images/DragHandle.svg" alt="" />
             </button>
             <button className="checklist-checkbox" onClick={e => onToggle(e, item.id)}>
-                {item.checked ? '☑' : '☐'}
+                <CheckboxIcon checked={item.checked} />
             </button>
             {isEditing ? (
                 <textarea

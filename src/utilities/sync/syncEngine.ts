@@ -6,7 +6,7 @@ import { fetchFullIdeaList } from "../idea/helpers";
 import type { ChecklistItem, IdeaType } from "../types";
 import { findOrphans, othersChanged, othersOnly, rebase, type DeviceCounters } from "./ops";
 import { bindOutbox, enqueue, getDeviceId, setOutboxRefreshHandler, unsyncedOpsSince } from "./outbox";
-import { addSyncNotice, clearSyncNotice, emitSyncRefreshed } from "./syncStore";
+import { addSyncNotice, emitSyncRefreshed } from "./syncStore";
 
 // Keeps this device's local idea list (localStorage "ideas", which every
 // view reads) in step with Firestore:
@@ -33,24 +33,6 @@ function syncDocRef(uid: string) {
 function readDevices(data: DocumentData | undefined): DeviceCounters {
     const devices = data?.devices;
     return devices && typeof devices === "object" ? (devices as DeviceCounters) : {};
-}
-
-// Ids of unreadable ideas whose notice the user has dismissed.
-const dismissedUnreadableKey = (uid: string) => `sync_unreadable_dismissed_${uid}`;
-const UNREADABLE_NOTICE_KEY = "unreadable";
-
-function getDismissedUnreadable(uid: string): number[] {
-    try {
-        const parsed: unknown = JSON.parse(localStorage.getItem(dismissedUnreadableKey(uid)) ?? "[]");
-        return Array.isArray(parsed) ? parsed.filter((id): id is number => typeof id === "number") : [];
-    } catch {
-        return [];
-    }
-}
-
-function setDismissedUnreadable(uid: string, ids: number[]): void {
-    if (ids.length === 0) localStorage.removeItem(dismissedUnreadableKey(uid));
-    else localStorage.setItem(dismissedUnreadableKey(uid), JSON.stringify([...new Set(ids)]));
 }
 
 function getSeen(uid: string): DeviceCounters | null {
@@ -160,28 +142,6 @@ async function pullFromServer(uid: string): Promise<boolean> {
                     : `Moved ${orphans.length} ideas whose parent had been deleted to your top level.`
             );
         }
-        // Only tell the user about unreadable ideas they haven't already
-        // dismissed — there's nothing for them to do about one, so repeating
-        // it on every sign-in is just noise.
-        const dismissed = getDismissedUnreadable(uid);
-        const newlySkipped = skippedIds.filter((id) => !dismissed.includes(id));
-        // Forget dismissals for ideas that are readable (or gone) again, so a
-        // later failure of the same idea is reported afresh.
-        setDismissedUnreadable(uid, dismissed.filter((id) => skippedIds.includes(id)));
-        if (newlySkipped.length > 0) {
-            addSyncNotice(
-                newlySkipped.length === 1
-                    ? "1 idea couldn't be read and isn't shown."
-                    : `${newlySkipped.length} ideas couldn't be read and aren't shown.`,
-                {
-                    key: UNREADABLE_NOTICE_KEY,
-                    onDismiss: () => setDismissedUnreadable(uid, [...getDismissedUnreadable(uid), ...newlySkipped]),
-                }
-            );
-        } else {
-            clearSyncNotice(UNREADABLE_NOTICE_KEY);
-        }
-
         emitSyncRefreshed();
         return true;
     } catch (error) {

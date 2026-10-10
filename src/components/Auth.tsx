@@ -3,6 +3,7 @@ import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
+import { LinkOutIcon } from "./Icons";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
 import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
@@ -289,7 +290,7 @@ const Auth: React.FC = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    Open {resetProvider.name} ↗
+                                    Open {resetProvider.name} <LinkOutIcon />
                                 </a>
                             ) : (
                                 <button className={`forgotPassword ${showConfirmPassword ? "hidden" : ""}`} inert={showConfirmPassword} onClick={handleForgotPassword}>

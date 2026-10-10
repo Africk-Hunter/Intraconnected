@@ -4,6 +4,9 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Build Warnings Cleared — 2026-10-10
+- `npm run build` is warning-free: `darken()` → `color.adjust(..., $lightness: -N%)` in `profileModal.scss` (deprecated, removed in Dart Sass 3), and declarations written after nested rules moved above them in `idea.scss` (`.ideaNodes`, idea node, `.sort-btn`) and `mobileMindMap.scss` (`position: relative` on the bottom-bar button) — Sass is changing how it orders those. Compiled CSS is byte-identical before and after.
+
 ## Mobile UX Pass, Phase 4: Checklists, Sheets & Polish — 2026-10-09
 - Checklist full view rebuilt: each row is handle · checkbox+text (one 44px+ target that ticks it, like the inline view) · ↗ for linked items · ⋯ (Edit / Link / Delete). Was five 16–24px targets with an instant, unrecoverable delete next to Edit; item delete now has Undo, and the toast stays tappable above an open sheet.
 - Sheets: grab handle + swipe down to close on every sheet (help, patch notes and mind map too), ✕ everywhere (44px), and Back. Tapping the scrim, ✕, swiping down or Back on a Create/Edit sheet with typed text asks "Discard what you typed?" instead of silently throwing it away. With the keyboard up the sheet fits the visible area and scrolls inside, title kept in view. Mind Map's red "Close" is neutral.
