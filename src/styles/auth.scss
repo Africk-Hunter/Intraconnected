@@ -31,6 +31,29 @@
     }
 }
 
+// Sign-in page keeps the original image logo (plain div, not BrandLogo).
+div.largeLogo:not(.brandLogo){
+    user-select: none;
+
+    .largeLogoImg{
+        // Border (four 1px offsets around the art) + a hard offset shadow, like .neobrutal-button.
+        filter:
+            drop-shadow(1px 0 0 black)
+            drop-shadow(-1px 0 0 black)
+            drop-shadow(0 1px 0 black)
+            drop-shadow(0 -1px 0 black)
+            drop-shadow(4px 4px 0 black);
+    }
+
+    @media (max-width: $mobile) {
+        scale: .7;
+    }
+
+    @media (min-width: $large-desktop) {
+        scale: 1.5;
+    }
+}
+
 .authForm{
     display: flex;
     flex-direction: column;

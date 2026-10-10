@@ -10,7 +10,6 @@ import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
 import { getMailProvider, resetMailUrl } from "../utilities/mailProvider";
 import { storeEncryptedDEK, fetchEncryptedDEK, storeEmailWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
 import { syncBillingEmail } from "../utilities/firebase/authFirebase";
-import BrandLogo from "./BrandLogo";
 
 const Auth: React.FC = () => {
 
@@ -271,7 +270,7 @@ const Auth: React.FC = () => {
     return (
         <div className="auth">
             <MessageBox />
-            <BrandLogo className="largeLogo" animated />
+            <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
             <section className="authForm">
                 <section className="authInputs">
                     <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
