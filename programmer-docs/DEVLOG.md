@@ -4,6 +4,9 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Social Share Image Redesign — 2026-10-10
+- `public/og-image.png` redrawn in the landing page's style: grid background, Space Grotesk, the hero's "Map your mind. / Connect your ideas." marker highlights, a small mind map card (parents, a leaf, a checklist) with neobrutal borders and shadows, and an `intraconnected.app` pill. Was a system font on a flat background. Rendered from HTML with headless Chrome at 1200×630, palette-compressed (45 KB). Alt text updated; added `twitter:image:alt`.
+
 ## Build Warnings Cleared — 2026-10-10
 - `npm run build` is warning-free: `darken()` → `color.adjust(..., $lightness: -N%)` in `profileModal.scss` (deprecated, removed in Dart Sass 3), and declarations written after nested rules moved above them in `idea.scss` (`.ideaNodes`, idea node, `.sort-btn`) and `mobileMindMap.scss` (`position: relative` on the bottom-bar button) — Sass is changing how it orders those. Compiled CSS is byte-identical before and after.
 
