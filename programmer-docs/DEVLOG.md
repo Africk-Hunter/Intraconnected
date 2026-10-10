@@ -4,8 +4,17 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Landing "Drag to Reorganize" Animation — 2026-10-10
+- The How it works step 3 scene now shows an actual drop: Guitar is picked up (tilts, grows, goes slightly see-through), dragged onto Music, which grows and gets a dashed drop-target ring, and is released into it, then pops out underneath as Music's child before the line draws. It used to slide sideways into the child slot without touching Music. The cursor is its own element, so it stays on Music after the drop and then fades out.
+
+- "Zoom into a branch" (step 2) now reads as a click: the cursor dips and releases, Projects sinks into its shadow, and a ripple rings out from the click point before the view switches. The cursor's press used to scale around the SVG's corner, so it drifted instead of pressing in place; it now scales around its tip.
+
+## Marketing Floaters Down the Whole Page — 2026-10-10
+- The decorative mini nodes on `/` and `/pricing` now run the full page height instead of only the hero: they moved from the hero section to `.landingPage`/`.pricingPage` (landing 4 → 10, pricing 3 → 8), placed in the side margins and tucked behind content (`z-index: -1` under an `isolation: isolate` page) so they peek out from behind cards on narrower desktops instead of covering them. Still hidden below 1024px (landing) / 768px (pricing).
+- Labels now match the node type their color stands for, like the hero mind map: green leaves are single ideas ("Learn guitar"), blue parents are categories with a dimmed child count ("Travel 5 ›"), yellow links end in ↗, and indigo checklists have a ticked checkbox (`floater-checkbox` mixin, inline SVG) and progress ("Packing 3/5"). Pricing's tie into the pizza sticker ("Skip one pizza", "Budget 2/4").
+
 ## Social Share Image Redesign — 2026-10-10
-- `public/og-image.png` redrawn in the landing page's style: grid background, Space Grotesk, the hero's "Map your mind. / Connect your ideas." marker highlights, a small mind map card (parents, a leaf, a checklist) with neobrutal borders and shadows, and an `intraconnected.app` pill. Was a system font on a flat background. Rendered from HTML with headless Chrome at 1200×630, palette-compressed (45 KB). Alt text updated; added `twitter:image:alt`.
+- `public/og-image.png` redrawn in the landing page's style: grid background, Space Grotesk, the hero's "Map your mind. / Connect your ideas." marker highlights, and a small mind map card (parents, a leaf, a checklist) with neobrutal borders and shadows. No small print, so it stays readable as a thumbnail. Was a system font on a flat background. Brand row uses the current `BrandLogo` mark with a larger DM Sans 700 wordmark (34 → 50px). Rendered from HTML with headless Chrome at 1200×630, palette-compressed (32 KB). Alt text updated; added `twitter:image:alt`.
 
 ## Build Warnings Cleared — 2026-10-10
 - `npm run build` is warning-free: `darken()` → `color.adjust(..., $lightness: -N%)` in `profileModal.scss` (deprecated, removed in Dart Sass 3), and declarations written after nested rules moved above them in `idea.scss` (`.ideaNodes`, idea node, `.sort-btn`) and `mobileMindMap.scss` (`position: relative` on the bottom-bar button) — Sass is changing how it orders those. Compiled CSS is byte-identical before and after.

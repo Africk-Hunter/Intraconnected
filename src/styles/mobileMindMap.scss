@@ -337,12 +337,12 @@
 }
 
 
+// BrandLogo between Help and Profile; sized by font-size so it fits a 320px phone.
 .mmobile-nav-logo {
     flex: 1;
-    height: 42px;
-    width: auto;
-    object-fit: contain;
-    object-position: center center;
+    min-width: 0;
+    justify-content: center;
+    font-size: clamp(17px, 5.4vw, 22px);
 }
 
 
@@ -1706,7 +1706,7 @@
     }
 
     .mmobile-nav-logo {
-        height: 56px;
+        font-size: 28px;
     }
 
     .mmobile-logout,

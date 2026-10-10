@@ -18,15 +18,16 @@
     
 }
 
+// BrandLogo sizes in em, so font-size is its size.
 .largeLogo{
-    user-select: none;
+    font-size: 3.25rem;
 
     @media (max-width: $mobile) {
-        scale: .7;
+        font-size: clamp(1.75rem, 8.5vw, 2.5rem);
     }
 
     @media (min-width: $large-desktop) {
-        scale: 1.5;
+        font-size: 4.75rem;
     }
 }
 

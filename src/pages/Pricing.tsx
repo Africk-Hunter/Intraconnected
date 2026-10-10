@@ -33,10 +33,16 @@ const Pricing: React.FC = () => {
 
   return (
     <div className="pricingPage">
+      {/* Same node types as the app (and the landing page's floaters). */}
+      <span className="pricingHeroNode pricingHeroNode--leaf" aria-hidden="true">Big idea</span>
+      <span className="pricingHeroNode pricingHeroNode--sky" aria-hidden="true">Side projects <small>4 ›</small></span>
+      <span className="pricingHeroNode pricingHeroNode--link" aria-hidden="true">Inspo <small>↗</small></span>
+      <span className="pricingHeroNode pricingHeroNode--indigo" aria-hidden="true">Budget <small>2/4</small></span>
+      <span className="pricingHeroNode pricingHeroNode--leaf2" aria-hidden="true">Skip one pizza</span>
+      <span className="pricingHeroNode pricingHeroNode--link2" aria-hidden="true">Read later <small>↗</small></span>
+      <span className="pricingHeroNode pricingHeroNode--sky2" aria-hidden="true">Someday <small>6 ›</small></span>
+      <span className="pricingHeroNode pricingHeroNode--indigo2" aria-hidden="true">Goals <small>1/3</small></span>
       <section className="pricingHero">
-        <span className="pricingHeroNode pricingHeroNode--leaf" aria-hidden="true">idea!</span>
-        <span className="pricingHeroNode pricingHeroNode--sky" aria-hidden="true">sub-idea</span>
-        <span className="pricingHeroNode pricingHeroNode--link" aria-hidden="true">tangent</span>
         <div className="pricingHeroSticker">Cheaper Than A Pizza <PizzaIcon /></div>
         <h1 className="pricingHeroTitle">Big ideas,<br /><span className="pricingHeroTitleHighlight">tiny</span> price.</h1>
         <p className="pricingHeroSubline">

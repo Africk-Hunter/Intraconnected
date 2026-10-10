@@ -34,6 +34,7 @@ import MobilePriorityPicker from './MobilePriorityPicker';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 import MoreDotsIcon from './MoreDotsIcon';
 import { LinkOutIcon } from '../Icons';
+import BrandLogo from '../BrandLogo';
 import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../../utilities/patchNotesState';
@@ -1111,7 +1112,7 @@ function MobileMindMap() {
                     <img src="/images/QuestionMark.svg" alt="" />
                 </button>
                 {currentId === 1 || !parentCrumb ? (
-                    <img src="/images/MainLargerLogo.svg" alt="Intraconnected" className="mmobile-nav-logo" />
+                    <BrandLogo className="mmobile-nav-logo" />
                 ) : (
                     <div className="mmobile-path">
                         <button

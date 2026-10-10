@@ -1,0 +1,97 @@
+@use './variables' as *;
+
+// ── Brand logo (BrandLogo.tsx) ──────────────────────────────────────────────
+// Everything is in em: set font-size on .brandLogo (or a parent) to size it.
+
+$brand-ink: #111;
+
+// Entrance timing: root pops, connectors draw out of it, children land, word follows.
+$brand-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+$brand-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+$brand-pop-duration: 260ms;
+$brand-draw-duration: 240ms;
+
+.brandLogo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    color: $brand-ink;
+    line-height: 1;
+    user-select: none;
+}
+
+.brandLogo-word {
+    font-family: "DM Sans", sans-serif;
+    font-weight: 850;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+    // Optical centering against the mark: DM Sans sits a touch high in its line box.
+    padding-bottom: 0.06em;
+}
+
+.brandMark {
+    display: block;
+    height: 1.45em;
+    width: auto;
+    flex-shrink: 0;
+    overflow: visible;
+}
+
+.brandMark-link {
+    fill: none;
+    stroke: $brand-ink;
+    stroke-width: 3.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.brandMark-shadow {
+    fill: $brand-ink;
+}
+
+.brandMark-face {
+    stroke: $brand-ink;
+    stroke-width: 3;
+}
+
+.brandMark-node--root .brandMark-face { fill: $roots; }
+.brandMark-node--parent .brandMark-face { fill: $sky; }
+.brandMark-node--leaf .brandMark-face { fill: $leaf; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .brandLogo--animated {
+        .brandMark-node {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: brand-node-pop $brand-pop-duration $brand-ease-pop both;
+        }
+
+        .brandMark-node--parent { animation-delay: 300ms; }
+        .brandMark-node--leaf { animation-delay: 340ms; }
+
+        .brandMark-link {
+            // Gap longer than the path, so no round-cap dot shows before the draw starts.
+            stroke-dasharray: 1 2;
+            animation: brand-link-draw $brand-draw-duration $brand-ease-out 120ms both;
+        }
+
+        .brandLogo-word {
+            animation: brand-word-in 320ms $brand-ease-out 180ms both;
+        }
+    }
+}
+
+@keyframes brand-node-pop {
+    from { opacity: 0; transform: scale(0.6); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes brand-link-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes brand-word-in {
+    from { opacity: 0; transform: translateX(-0.25em); }
+    to { opacity: 1; transform: translateX(0); }
+}

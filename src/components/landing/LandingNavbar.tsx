@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import LandingLogoMark from './LandingLogoMark';
+import { BrandMark } from '../BrandLogo';
 
 interface LandingNavbarProps {
   page?: 'landing' | 'pricing' | 'support';
@@ -8,7 +8,7 @@ interface LandingNavbarProps {
 const LandingNavbar: React.FC<LandingNavbarProps> = ({ page = 'landing' }) => (
   <nav className="landingNavbar">
     <Link to="/" className="landingNavbarBrand">
-      <LandingLogoMark width={38} height={32} />
+      <BrandMark className="landingNavbarMark" />
       <span className="landingNavbarBrandText">Intraconnected</span>
     </Link>
     <div className="landingNavbarLinks">

@@ -7,6 +7,7 @@ import {
     confirmPasswordReset,
     verifyPasswordResetCode,
 } from "firebase/auth";
+import BrandLogo from "../components/BrandLogo";
 
 type Status = "working" | "verified" | "resetForm" | "resetDone" | "recovered" | "emailChanged" | "error";
 
@@ -104,7 +105,7 @@ const AuthAction: React.FC = () => {
 
     return (
         <div className="auth authAction">
-            <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
+            <BrandLogo className="largeLogo" animated />
 
             <div className="authActionCard neobrutal">
                 {status === "working" && (

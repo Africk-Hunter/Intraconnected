@@ -1,6 +1,9 @@
 @use './variables' as *;
 
 .landingPage {
+    position: relative;
+    isolation: isolate; // lets .heroFloater sit behind content but above the page background
+    overflow-x: clip;
     min-height: 100vh;
     font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif;
     color: #111;
@@ -30,15 +33,21 @@
 .landingNavbarBrand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     text-decoration: none;
     color: #111;
 }
 
+.landingNavbarMark {
+    height: 32px;
+}
+
+// Same wordmark as BrandLogo (brandLogo.scss), not the page's Space Grotesk.
 .landingNavbarBrandText {
+    font-family: "DM Sans", sans-serif;
     font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -0.6px;
+    font-weight: 850;
+    letter-spacing: -0.04em;
     color: #111;
 
     @media (max-width: $mobile) {
@@ -94,7 +103,6 @@
 
 .landingHero {
     position: relative;
-    overflow-x: clip;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -145,9 +153,11 @@
     }
 }
 
-// Decorative mini nodes drifting around the headline; desktop only.
+// Decorative mini nodes drifting down the whole page (positioned against
+// .landingPage, behind the content); desktop only.
 .heroFloater {
     position: absolute;
+    z-index: -1;
     padding: 6px 16px;
     font-size: 15px;
     font-weight: 800;
@@ -162,6 +172,25 @@
     &--sky { top: 170px; right: 7%; background: $sky; --tilt: 6deg; animation-delay: -1.5s; }
     &--link { top: 330px; left: 3%; background: $link; --tilt: 5deg; animation-delay: -3s; }
     &--indigo { top: 400px; right: 3%; background: $indigo; color: #fff; --tilt: -5deg; animation-delay: -2s; }
+    &--sky2 { top: 31%; left: 4%; background: $sky; --tilt: 7deg; animation-delay: -4s; }
+    &--leaf2 { top: 41%; right: 5%; background: $leaf; --tilt: -6deg; animation-delay: -0.5s; }
+    &--indigo2 { top: 53%; left: 2%; background: $indigo; color: #fff; --tilt: -4deg; animation-delay: -2.5s; }
+    &--link2 { top: 64%; right: 3%; background: $link; --tilt: 5deg; animation-delay: -3.5s; }
+    &--leaf3 { top: 77%; left: 5%; background: $leaf; --tilt: 6deg; animation-delay: -1s; }
+    &--sky3 { top: 89%; right: 6%; background: $sky; --tilt: -7deg; animation-delay: -4.5s; }
+
+    &--indigo,
+    &--indigo2 {
+        @include floater-checkbox;
+    }
+
+    // Child count, link arrow or checklist progress — dimmed like the app's rows.
+    small {
+        font-size: inherit;
+        font-weight: 700;
+        opacity: 0.7;
+        margin-left: 2px;
+    }
 
     @media (max-width: $desktop) {
         display: none;
@@ -487,7 +516,12 @@ $howLoop: 6s;
 .howS2-a,
 .howS2-b,
 .howS2-cursor,
-.howS3-drag {
+.howS2-press,
+.howS2-ripple,
+.howS3-drag,
+.howS3-cursor,
+.howS3-target,
+.howS3-ring {
     animation-duration: $howLoop;
     animation-iteration-count: infinite;
     animation-timing-function: ease-in-out;
@@ -496,6 +530,30 @@ $howLoop: 6s;
 .howS2-a { animation-name: howViewA; }
 .howS2-b { animation-name: howViewB; }
 .howS2-cursor { animation-name: howCursor2; }
+.howS2-press { animation-name: howPress2; }
+.howS2-ripple { animation-name: howRipple2; }
+
+// The cursor tip is the top-left of its box, so pressing scales around the tip.
+.howS2-cursor,
+.howS2-ripple {
+    transform-box: fill-box;
+}
+
+.howS2-cursor { transform-origin: 0 0; }
+.howS2-ripple { transform-origin: center; opacity: 0; animation-timing-function: ease-out; }
+
+// Click: cursor dips, Projects sinks into its shadow, a ripple rings out, then release.
+@keyframes howPress2 {
+    0%, 31% { transform: translate(0, 0); }
+    33%, 37% { transform: translate(2px, 2px); }
+    41%, 100% { transform: translate(0, 0); }
+}
+
+@keyframes howRipple2 {
+    0%, 31.5% { opacity: 0; transform: scale(0.2); }
+    32% { opacity: 0.9; transform: scale(0.3); }
+    39%, 100% { opacity: 0; transform: scale(1.1); }
+}
 
 @keyframes howViewA {
     0%, 40% { opacity: 1; }
@@ -512,25 +570,57 @@ $howLoop: 6s;
 @keyframes howCursor2 {
     0% { opacity: 0; transform: translate(70px, -26px); }
     10% { opacity: 1; transform: translate(70px, -26px); }
-    30% { opacity: 1; transform: translate(0, 0); }
-    35% { opacity: 1; transform: translate(0, 0) scale(0.85); }
-    39% { opacity: 1; transform: translate(0, 0) scale(1); }
+    30%, 31% { opacity: 1; transform: translate(0, 0) scale(1); }
+    33%, 37% { opacity: 1; transform: translate(1px, 1px) scale(0.8); }
+    41% { opacity: 1; transform: translate(0, 0) scale(1); }
     46%, 100% { opacity: 0; transform: translate(0, 0); }
 }
 
-// Scene 3: Guitar (and its cursor) is dragged under Music, then a line joins them.
+// Scene 3: Guitar is picked up, dragged over Music (which lights up as the drop
+// target) and released into it, then pops out as Music's child and a line joins them.
+// The hover offset (-100px, -74px) is shared by the drag and cursor keyframes so the
+// cursor stays on the node; it puts the cursor tip inside Music.
 .howS3-drag { animation-name: howDrag; }
+.howS3-cursor { animation-name: howCursor3; }
+.howS3-target { animation-name: howDropTarget; }
+.howS3-ring { opacity: 0; animation-name: howDropRing; }
 
 @keyframes howDrag {
-    0%, 20% { opacity: 1; transform: translate(0, 0) scale(1); }
-    28% { opacity: 1; transform: translate(0, 0) scale(1.06); }
-    58% { opacity: 1; transform: translate(-120px, 0) scale(1.06); }
-    64%, 90% { opacity: 1; transform: translate(-120px, 0) scale(1); }
-    96%, 100% { opacity: 0; transform: translate(-120px, 0) scale(1); }
+    0% { opacity: 0; transform: translate(0, 0) scale(1) rotate(0deg); }
+    4%, 16% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+    22% { opacity: 0.9; transform: translate(0, 0) scale(1.08) rotate(-4deg); }
+    44%, 50% { opacity: 0.9; transform: translate(-100px, -74px) scale(1.08) rotate(-4deg); }
+    56% { opacity: 0; transform: translate(-100px, -74px) scale(0.4) rotate(0deg); }
+    60% { opacity: 0; transform: translate(-120px, 0) scale(0.3) rotate(0deg); }
+    66%, 90% { opacity: 1; transform: translate(-120px, 0) scale(1) rotate(0deg); }
+    96%, 100% { opacity: 0; transform: translate(-120px, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes howCursor3 {
+    0% { opacity: 0; transform: translate(0, 0) scale(1); }
+    4%, 16% { opacity: 1; transform: translate(0, 0) scale(1); }
+    20% { opacity: 1; transform: translate(0, 0) scale(0.85); }
+    44%, 50% { opacity: 1; transform: translate(-100px, -74px) scale(0.85); }
+    54%, 66% { opacity: 1; transform: translate(-100px, -74px) scale(1); }
+    74%, 100% { opacity: 0; transform: translate(-100px, -74px) scale(1); }
+}
+
+@keyframes howDropTarget {
+    0%, 36% { transform: scale(1); }
+    44%, 52% { transform: scale(1.06); }
+    57% { transform: scale(0.95); }
+    62%, 100% { transform: scale(1); }
+}
+
+@keyframes howDropRing {
+    0%, 36% { opacity: 0; }
+    42%, 54% { opacity: 1; }
+    58%, 100% { opacity: 0; }
 }
 
 .howS3-drag,
-.howS3-cursor {
+.howS3-cursor,
+.howS3-target {
     transform-box: fill-box;
     transform-origin: center;
 }
@@ -539,9 +629,12 @@ $howLoop: 6s;
     .heroFloater { animation: none; transform: rotate(var(--tilt, 0deg)); }
 
     .howS1-node1, .howS1-node2, .howS1-line1, .howS1-line2,
-    .howS2-b, .howS2-b1, .howS2-b2, .howS3-line, .howS3-drag {
+    .howS2-b, .howS2-b1, .howS2-b2, .howS3-line, .howS3-drag,
+    .howS3-target, .howS3-ring, .howS2-press, .howS2-ripple {
         animation: none;
     }
+
+    .howS2-ripple { display: none; }
 
     // Static end states: zoomed-in view, Guitar already moved under Music.
     .howS2-a, .howS2-cursor, .howS3-cursor { display: none; }

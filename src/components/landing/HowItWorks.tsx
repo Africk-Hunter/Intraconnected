@@ -93,7 +93,7 @@ const HowItWorks: React.FC = () => (
             <g className="howS2-a">
               <text x="12" y="22" fontSize="11" fontWeight="700" fill="#111">Ideas</text>
               <Node x={8} y={62} w={66} fill="var(--mm-sky)" label="Music" />
-              <Node x={87} y={62} w={66} fill="var(--mm-sky)" label="Projects" />
+              <Node className="howS2-press" x={87} y={62} w={66} fill="var(--mm-sky)" label="Projects" />
               <Node x={166} y={62} w={66} fill="var(--mm-sky)" label="Writing" />
             </g>
             <g className="howS2-b">
@@ -101,6 +101,7 @@ const HowItWorks: React.FC = () => (
               <Node className="howS2-b1" x={25} y={62} w={80} fill="var(--mm-link)" label="Website" />
               <Node className="howS2-b2" x={125} y={62} w={90} fill="var(--mm-leaf)" label="Launch" />
             </g>
+            <circle className="howS2-ripple" cx={112} cy={72} r={14} fill="none" stroke="#111" strokeWidth="2" />
             <Cursor className="howS2-cursor" x={112} y={72} />
           </svg>
         </div>
@@ -114,12 +115,26 @@ const HowItWorks: React.FC = () => (
           <svg viewBox="0 0 240 150" width="100%">
             <g className="howS3">
               <Line className="howS3-line" d="M 55,44 L 55,100" />
-              <Node x={20} y={16} w={70} fill="var(--mm-sky)" label="Music" />
+              <g className="howS3-target">
+                <rect
+                  className="howS3-ring"
+                  x={13}
+                  y={9}
+                  width={86}
+                  height={44}
+                  rx="10"
+                  fill="none"
+                  stroke="#111"
+                  strokeWidth="2"
+                  strokeDasharray="5 3"
+                />
+                <Node x={20} y={16} w={70} fill="var(--mm-sky)" label="Music" />
+              </g>
               <Node x={150} y={16} w={70} fill="var(--mm-sky)" label="Writing" />
               <g className="howS3-drag">
                 <Node x={140} y={100} w={70} fill="var(--mm-leaf)" label="Guitar" />
-                <Cursor className="howS3-cursor" x={186} y={112} />
               </g>
+              <Cursor className="howS3-cursor" x={165} y={108} />
             </g>
           </svg>
         </div>
