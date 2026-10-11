@@ -851,7 +851,7 @@ function ProfileModal() {
 
     return (
         <>
-        <AnimatedOverlay open={profileModalOpen}>
+        <AnimatedOverlay open={profileModalOpen} onEscape={handleClose}>
             <div className="modal neobrutal profile-modal">
                 {/* ── MOBILE header: title (menu) or Back + tab name, then close ── */}
                 <header className="profile-mobile-header">
@@ -967,7 +967,7 @@ function ProfileModal() {
             </div>
         </AnimatedOverlay>
 
-            <AnimatedOverlay open={deleteConfirmOpen}>
+            <AnimatedOverlay open={deleteConfirmOpen} onEscape={() => setDeleteConfirmOpen(false)}>
                 <div className="modal neobrutal session-ended">
                     <header className="session-ended-header session-ended-header--danger">
                         <span className="session-ended-icon" aria-hidden="true">

@@ -76,7 +76,7 @@ function OnboardingModal() {
                     <div className="onboarding-tip onboarding-tip--3">
                         <span className="onboarding-tip__num">3</span>
                         <p className="onboarding-tip__text oa-tip-text--drag">
-                            <strong>Drag</strong> a card onto another to nest it, or onto the trash to delete.
+                            <strong>Drag</strong> a card onto another to nest it, or onto the trash to delete. Right-click a card, or use its <strong>⋯</strong>, for more.
                         </p>
                         <p className="onboarding-tip__text oa-tip-text--lp">
                             Tap <span className="oa-inline-icon"><MoreDotsIcon size={16} /></span> on a card, or press and hold it, to edit, move or delete it. Hold and drag to move it into another.

@@ -1,6 +1,8 @@
 # Native store listing — copy and answers
 
-Draft text and answers for the App Store (iOS) and Google Play (Android) listings. Plan and progress: `programmer-docs/artifacts/native-app-plan.html`. Rules that apply to everything below:
+https://claude.ai/artifact/WxjYNp7ZvDLoNzAWTQtByj
+
+Draft text and answers for the App Store (iOS) and Google Play (Android) listings. Plan and progress: `programmer-docs/artifacts/native-app-plan.html` (https://claude.ai/artifact/8AfWNA2bCDKhoEq7AumzaC). Rules that apply to everything below:
 
 - Never write "end-to-end encrypted", "only you can decrypt" or "we cannot read your ideas" (decision C1: email recovery stays, so the service could technically read them). Say "encrypted on your device before it is saved" and nothing stronger.
 - The app sells nothing and shows no prices (decision C2). Describe the account, not purchases.

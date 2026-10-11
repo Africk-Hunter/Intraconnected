@@ -66,15 +66,6 @@
     }
 }
 
-.howDeepHolder {
-    transition: opacity 0.3s ease;
-
-    &--hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
-}
-
 .nav-btn--hidden {
     opacity: 0;
     pointer-events: none;
@@ -258,6 +249,20 @@
     position: relative;
     display: inline-flex;
     transition: opacity 0.3s ease;
+}
+
+// Unseen-help-page dot on the Help button.
+.tooltip-wrapper--badged::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 12px;
+    height: 12px;
+    background: $danger;
+    border: 2px solid #111;
+    border-radius: 50%;
+    pointer-events: none;
 }
 
 .tooltip-highlighted {

@@ -1,4 +1,5 @@
 @use './variables' as *;
+@use './focusEffects' as *;
 
 @keyframes overlayIn {
     from { opacity: 0; }
@@ -139,6 +140,113 @@
     @media (min-width: $large-desktop) {
         font-size: 2.75rem;
     }
+}
+
+// Delete confirmation: icon badge, title, the idea's name on a card, then the
+// consequence. Shares .confirmModal (auto height) and .modalButtons.
+.deleteModal {
+    gap: 1rem;
+
+    .modalButtons {
+        margin-top: 0.5rem;
+    }
+
+    // The keyboard-selected button, so it's clear which one Enter will press.
+    .modalButton:focus-visible {
+        @include focus-button;
+    }
+}
+
+.deleteModalIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background: $danger;
+    color: white;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+
+    @media (min-width: $large-desktop) {
+        width: 5rem;
+        height: 5rem;
+        border: $neo-detail-border-lg;
+        box-shadow: $neo-detail-shadow-lg;
+    }
+}
+
+.deleteModalTitle {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+
+    @media (min-width: $large-desktop) {
+        font-size: 2.75rem;
+    }
+}
+
+.deleteModalName {
+    width: 28.125rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem 1rem;
+    background: $neutral;
+    border: $neo-detail-border;
+    border-radius: $neo-card-radius;
+    box-shadow: $neo-detail-shadow;
+    text-align: center;
+
+    @media (max-width: $mobile) {
+        width: 20rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: 37rem;
+        padding: 1rem 1.5rem;
+        border: $neo-detail-border-lg;
+        border-radius: $neo-card-radius-lg;
+        box-shadow: $neo-detail-shadow-lg;
+    }
+}
+
+.deleteModalNameText {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+    word-break: break-word;
+    font-size: 1.5rem;
+    font-weight: 700;
+
+    @media (min-width: $large-desktop) {
+        font-size: 2rem;
+    }
+}
+
+.deleteModalDetail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 1.1rem;
+    text-align: center;
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.5rem;
+    }
+}
+
+.deleteModalCount {
+    padding: 0.15rem 0.7rem;
+    background: $danger;
+    color: white;
+    font-weight: 800;
+    border: $neo-detail-border;
+    border-radius: 999px;
 }
 
 .contentHolder{

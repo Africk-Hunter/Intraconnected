@@ -220,6 +220,63 @@ function MindMap({ onClose, visible }: MindMapProps) {
         return () => cancelAnimationFrame(raf);
     }, [visible, allIdeas]);
 
+    // Zoom about the middle of the view (the wheel zooms about the pointer).
+    function zoomBy(factor: number) {
+        const el = bodyRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        setView(prev => {
+            const newZoom = Math.min(4, Math.max(0.2, prev.zoom * factor));
+            const scale = newZoom / prev.zoom;
+            return { zoom: newZoom, x: cx - (cx - prev.x) * scale, y: cy - (cy - prev.y) * scale };
+        });
+    }
+
+    // Back to the current idea at 100%, centred, however far the user panned or zoomed.
+    function centerOnCurrent() {
+        if (!bodyRef.current || !canvasRef.current) return;
+        const bodyRect = bodyRef.current.getBoundingClientRect();
+        const currentNode = canvasRef.current.querySelector('.mm-node-btn--current') as HTMLElement | null;
+        if (!currentNode) return;
+        const nodeRect = currentNode.getBoundingClientRect();
+        const nodeScreenX = nodeRect.left - bodyRect.left + nodeRect.width / 2;
+        const nodeScreenY = nodeRect.top - bodyRect.top + nodeRect.height / 2;
+        setView(prev => {
+            const cx = (nodeScreenX - prev.x) / prev.zoom;
+            const cy = (nodeScreenY - prev.y) / prev.zoom;
+            return { zoom: 1, x: bodyRect.width / 2 - cx, y: bodyRect.height / 2 - cy };
+        });
+    }
+
+    // Keyboard while the map is open: Esc closes, + / - zoom, 0 recentres,
+    // arrows pan. Ignored while typing and while any modal is on top.
+    useEffect(() => {
+        if (!visible) return;
+        const PAN_STEP = 80;
+        function onKeyDown(e: KeyboardEvent) {
+            if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+            const t = e.target;
+            if (t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
+            if (document.querySelector('.overlay')) return;
+            switch (e.key) {
+                case 'Escape': onClose(); break;
+                case '+': case '=': zoomBy(1.2); break;
+                case '-': case '_': zoomBy(1 / 1.2); break;
+                case '0': centerOnCurrent(); break;
+                case 'ArrowLeft': setView(v => ({ ...v, x: v.x + PAN_STEP })); break;
+                case 'ArrowRight': setView(v => ({ ...v, x: v.x - PAN_STEP })); break;
+                case 'ArrowUp': setView(v => ({ ...v, y: v.y + PAN_STEP })); break;
+                case 'ArrowDown': setView(v => ({ ...v, y: v.y - PAN_STEP })); break;
+                default: return;
+            }
+            e.preventDefault();
+        }
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [visible, onClose]);
+
     // Non-passive wheel listener so preventDefault works
     useEffect(() => {
         const el = bodyRef.current;
@@ -306,6 +363,12 @@ function MindMap({ onClose, visible }: MindMapProps) {
                         />
                     )}
                 </div>
+            </div>
+            <div className="mm-controls" role="group" aria-label="Mind map view">
+                <button className="mm-ctrl-btn neobrutal-button" type="button" onClick={() => zoomBy(1 / 1.2)} title="Zoom out (-)" aria-label="Zoom out">−</button>
+                <span className="mm-ctrl-zoom" aria-live="polite">{Math.round(view.zoom * 100)}%</span>
+                <button className="mm-ctrl-btn neobrutal-button" type="button" onClick={() => zoomBy(1.2)} title="Zoom in (+)" aria-label="Zoom in">+</button>
+                <button className="mm-ctrl-btn mm-ctrl-btn--wide neobrutal-button" type="button" onClick={centerOnCurrent} title="Center on the current idea (0)">Center</button>
             </div>
         </div>
     );

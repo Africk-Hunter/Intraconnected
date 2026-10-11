@@ -1,0 +1,70 @@
+@use "./variables" as *;
+
+// In flow above the title row (.top stacks them), so a tall title card pushes
+// the breadcrumb up instead of running under it.
+.breadcrumb {
+    width: 80%;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+
+    ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.2rem 0.6rem;
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+
+        // Separator after every ancestor: the title below is the last step.
+        &::after {
+            content: "›";
+            opacity: 0.55;
+        }
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 1.6rem;
+    }
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.breadcrumb-link {
+    all: unset;
+    box-sizing: border-box;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    background: $neutral;
+    border: $neo-detail-border;
+
+    &:hover {
+        background: $link;
+    }
+
+    &:focus-visible {
+        outline: 5px solid $orange;
+        outline-offset: 2px;
+    }
+}
+
+.breadcrumb-fold {
+    opacity: 0.7;
+    cursor: help;
+}

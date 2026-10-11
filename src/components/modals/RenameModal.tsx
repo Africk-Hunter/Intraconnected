@@ -65,8 +65,13 @@ function RenameModal() {
         });
     }
 
+    function submit() {
+        handleIdeaRename(modalContent);
+        closeModal();
+    }
+
     return (
-        <AnimatedOverlay open={renameModalOpen}>
+        <AnimatedOverlay open={renameModalOpen} onEscape={closeModal}>
             <div className="modal neobrutal">
                 <textarea
                     autoFocus={true}
@@ -74,10 +79,14 @@ function RenameModal() {
                     placeholder={`${actionLabel}...`}
                     value={modalContent}
                     onChange={(e) => setModalContent(e.target.value)}
+                    onKeyDown={(e) => {
+                        // Enter saves; Shift+Enter keeps a line break for long ideas and notes.
+                        if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); submit(); }
+                    }}
                 ></textarea>
                 <section className="modalButtons">
                     <button className="modalButton cancel neobrutal-button" onClick={closeModal}>Cancel</button>
-                    <button className="modalButton continue neobrutal-button" onClick={() => { handleIdeaRename(modalContent); closeModal(); }}>{isChecklist ? 'Rename' : noteMode ? 'Save' : hasChildren ? 'Rename' : 'Rewrite'}</button>
+                    <button className="modalButton continue neobrutal-button" onClick={submit}>{isChecklist ? 'Rename' : noteMode ? 'Save' : hasChildren ? 'Rename' : 'Rewrite'}</button>
                 </section>
             </div>
         </AnimatedOverlay>

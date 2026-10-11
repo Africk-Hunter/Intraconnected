@@ -5,6 +5,8 @@ export interface UndoToastState {
     key: number;
     message: string;
     onUndo?: () => void;
+    // Optional second button, e.g. "Take me there".
+    action?: { label: string; run: () => void };
 }
 
 interface Props {
@@ -88,6 +90,14 @@ function MobileUndoToast({ toast, aboveSheet, onDismiss }: Props) {
                     onClick={() => { toast.onUndo?.(); onDismiss(); }}
                 >
                     Undo
+                </button>
+            )}
+            {toast.action && (
+                <button
+                    className="mmobile-toast-undo"
+                    onClick={() => { toast.action?.run(); onDismiss(); }}
+                >
+                    {toast.action.label}
                 </button>
             )}
             <button className="mmobile-toast-close" onClick={onDismiss} aria-label="Dismiss">

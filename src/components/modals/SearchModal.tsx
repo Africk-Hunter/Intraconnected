@@ -1,0 +1,138 @@
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { fetchFullIdeaList } from '../../utilities';
+import { readRecentVisits } from '../../utilities/idea/recentVisits';
+import { newestIdeas, recentIdeas, searchIdeas, type IdeaKind, type SearchResult } from '../../utilities/idea/search';
+import AnimatedOverlay from '../AnimatedOverlay';
+
+export interface SearchCommand {
+    label: string;
+    hint?: string;
+    run: () => void;
+}
+
+interface Props {
+    open: boolean;
+    onClose: () => void;
+    // Picking an idea takes the user to the level it lives in and selects its card.
+    onPick: (result: SearchResult) => void;
+    commands: SearchCommand[];
+}
+
+const KIND_LABEL: Record<IdeaKind, string> = { idea: 'Idea', link: 'Link', checklist: 'Checklist', note: 'Note' };
+
+type Row =
+    | { type: 'command'; command: SearchCommand }
+    | { type: 'idea'; result: SearchResult };
+
+// Ctrl/Cmd+K: find any idea at any level by what it says, and jump to it.
+// Results come first; the commands sit below under their own "Actions" heading.
+function SearchModal({ open, onClose, onPick, commands }: Props) {
+    const [query, setQuery] = useState('');
+    const [active, setActive] = useState(0);
+    const listRef = useRef<HTMLUListElement>(null);
+
+    useEffect(() => {
+        if (open) { setQuery(''); setActive(0); }
+    }, [open]);
+
+    const rows = useMemo<Row[]>(() => {
+        if (!open) return [];
+        const q = query.trim().toLowerCase();
+        const matchingCommands = commands.filter((c) => q === '' || c.label.toLowerCase().includes(q));
+        const all = fetchFullIdeaList();
+        const visited = recentIdeas(all, readRecentVisits());
+        const results = q !== '' ? searchIdeas(all, query) : visited.length > 0 ? visited : newestIdeas(all);
+        return [
+            ...results.map((result): Row => ({ type: 'idea', result })),
+            ...matchingCommands.map((command): Row => ({ type: 'command', command })),
+        ];
+    }, [open, query, commands]);
+
+    useEffect(() => { setActive(0); }, [query]);
+
+    useEffect(() => {
+        listRef.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
+    }, [active, rows]);
+
+    function choose(row: Row | undefined) {
+        if (!row) return;
+        onClose();
+        if (row.type === 'idea') onPick(row.result);
+        else row.command.run();
+    }
+
+    function onKeyDown(e: React.KeyboardEvent) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(a + 1, rows.length - 1)); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+        else if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); choose(rows[active]); }
+    }
+
+    const hasQuery = query.trim() !== '';
+    const ideaCount = rows.filter((r) => r.type === 'idea').length;
+    const hasVisits = useMemo(() => open && recentIdeas(fetchFullIdeaList(), readRecentVisits()).length > 0, [open]);
+    const groupTitle =(type: Row['type']) =>
+        type === 'command' ? 'Actions' : hasQuery ? `${ideaCount} ${ideaCount === 1 ? 'match' : 'matches'}` : hasVisits ? 'Recent' : 'Newest';
+
+    return (
+        <AnimatedOverlay open={open} onClick={onClose} onEscape={onClose}>
+            <div className="modal neobrutal search-modal" role="dialog" aria-label="Search ideas" onClick={(e) => e.stopPropagation()}>
+                <input
+                    className="search-modal-input neobrutal-input"
+                    type="text"
+                    placeholder="Search ideas, notes and checklists…"
+                    value={query}
+                    autoFocus
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={onKeyDown}
+                    aria-label="Search ideas"
+                    role="combobox"
+                    aria-expanded="true"
+                    aria-controls="search-modal-list"
+                />
+                <ul className="search-modal-list" id="search-modal-list" ref={listRef} role="listbox" aria-label="Results">
+                    {hasQuery && ideaCount === 0 && (
+                        <li className="search-modal-empty" role="presentation">No idea says "{query.trim()}".</li>
+                    )}
+                    {rows.map((row, i) => (
+                        <Fragment key={row.type === 'idea' ? `i${row.result.id}` : `c${row.command.label}`}>
+                        {(i === 0 || rows[i - 1].type !== row.type) && (
+                            <li className="search-modal-group" role="presentation">{groupTitle(row.type)}</li>
+                        )}
+                        <li role="presentation">
+                            <button
+                                type="button"
+                                role="option"
+                                aria-selected={i === active}
+                                data-active={i === active}
+                                tabIndex={-1}
+                                className={`search-modal-row${i === active ? ' search-modal-row--active' : ''}`}
+                                onMouseEnter={() => setActive(i)}
+                                onClick={() => choose(row)}
+                            >
+                                {row.type === 'idea' ? (
+                                    <>
+                                        <span className="search-modal-main">
+                                            <span className="search-modal-label">{row.result.label}</span>
+                                            {row.result.snippet && <span className="search-modal-snippet">{row.result.snippet}</span>}
+                                            <span className="search-modal-path">{['Ideas', ...row.result.path].join(' › ')}</span>
+                                        </span>
+                                        <span className={`search-modal-kind search-modal-kind--${row.result.kind}`}>{KIND_LABEL[row.result.kind]}</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="search-modal-label">{row.command.label}</span>
+                                        {row.command.hint && <kbd>{row.command.hint}</kbd>}
+                                    </>
+                                )}
+                            </button>
+                        </li>
+                        </Fragment>
+                    ))}
+                </ul>
+                <p className="search-modal-foot">↑ ↓ to choose · Enter to go · Esc to close</p>
+            </div>
+        </AnimatedOverlay>
+    );
+}
+
+export default SearchModal;

@@ -1,0 +1,40 @@
+@use "./variables" as *;
+
+// Keyboard-focus effects, shared so a card and a button read as the same thing.
+// Mixins only: this file emits no CSS of its own. Use with:
+//   @use "./focusEffects" as *;
+//   .thing:focus-visible { @include focus-lift; }
+
+// The focused element lifts off the page (the opposite of the hover press) with
+// a deeper shadow. Desktop-sized at $large-desktop and up.
+@mixin focus-lift {
+    translate: -3px -3px;
+    box-shadow: 9px 9px 0 2px black;
+
+    @media (min-width: $large-desktop) {
+        translate: -4px -4px;
+        box-shadow: 11px 11px 0 3px black;
+    }
+}
+
+// Thick orange ring a little away from the edge, so the focused button is
+// clear even on a coloured background.
+@mixin focus-ring {
+    outline: 5px solid $orange;
+    outline-offset: 3px;
+}
+
+// Highlighted-row look for cards: orange fill (--card-bg also colours the
+// "Show more" fade) plus the lift. No ring; the fill is the marker.
+@mixin focus-card {
+    outline: none;
+    --card-bg: #{$orange};
+    background: var(--card-bg);
+    @include focus-lift;
+}
+
+// Buttons: ring plus lift, keeping the button's own colour.
+@mixin focus-button {
+    @include focus-ring;
+    @include focus-lift;
+}

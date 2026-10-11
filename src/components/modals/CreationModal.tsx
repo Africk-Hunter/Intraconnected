@@ -211,6 +211,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     }
 
     function handleCreateIdea() {
+        if (!modalContent.trim()) return;
         handleIdeaCreation(modalContent, rootId, cleanLink(link), priority);
         setCreationModalOpen(false);
         setNewIdeaSwitch(prev => !prev);
@@ -283,6 +284,14 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         removeTimeoutsRef.current.set(itemId, timeout);
     }
 
+    // Ctrl/Cmd+Enter creates from the long-form fields, where plain Enter is a line break.
+    function handleCreateShortcut(e: React.KeyboardEvent, create: () => void) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            create();
+        }
+    }
+
     function handleItemKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -316,7 +325,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     }
 
     return (
-        <AnimatedOverlay open={creationModalOpen} scrollable>
+        <AnimatedOverlay open={creationModalOpen} scrollable onEscape={handleClose}>
             <div className="modal neobrutal creationModal">
                         <div className="creation-tabs">
                             <button
@@ -346,7 +355,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                         >
                             <div className={`creation-panel${activeTab === 'idea' ? ' creation-panel--active' : ''}`}>
                                 <section className="contentHolder" ref={ideaContentHolderRef}>
-                                    <textarea ref={focusIdeaTextarea} className="ideaContent" placeholder='Whats your idea?' value={modalContent} onChange={(e) => { setModalContent(e.target.value); masterContentRef.current = e.target.value; }}></textarea>
+                                    <textarea ref={focusIdeaTextarea} className="ideaContent" placeholder='Whats your idea?' onKeyDown={(e) => handleCreateShortcut(e, handleCreateIdea)} value={modalContent} onChange={(e) => { setModalContent(e.target.value); masterContentRef.current = e.target.value; }}></textarea>
                                     <div className="linkArea" ref={linkAreaRef}>
                                         <button className="linkButton neobrutal-button" onClick={toggleLinkBox}>
                                             Add Link
@@ -406,9 +415,10 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                         maxLength={100}
                                         value={noteTitle}
                                         onChange={e => setNoteTitle(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); noteBodyRef.current?.focus(); } }}
                                     />
                                     <section className="contentHolder" ref={noteContentHolderRef}>
-                                        <textarea ref={noteBodyRef} className="ideaContent note-body" placeholder="Write your note..." value={noteBody} onChange={(e) => { setNoteBody(e.target.value); masterContentRef.current = e.target.value; }} maxLength={NOTE_BODY_MAX_LENGTH}></textarea>
+                                        <textarea ref={noteBodyRef} className="ideaContent note-body" placeholder="Write your note..." onKeyDown={(e) => handleCreateShortcut(e, handleCreateNote)} value={noteBody} onChange={(e) => { setNoteBody(e.target.value); masterContentRef.current = e.target.value; }} maxLength={NOTE_BODY_MAX_LENGTH}></textarea>
                                     </section>
                                 </section>
                             </div>
@@ -433,7 +443,13 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                         <section className="modalButtons">
                             <button className="modalButton cancel neobrutal-button" onClick={handleClose}>Cancel</button>
                             {activeTab === 'idea' && (
-                                <button className="modalButton continue neobrutal-button" onClick={handleCreateIdea}>Create</button>
+                                <button
+                                    className="modalButton continue neobrutal-button"
+                                    onClick={handleCreateIdea}
+                                    disabled={!modalContent.trim()}
+                                >
+                                    Create
+                                </button>
                             )}
                             {activeTab === 'checklist' && (
                                 <button

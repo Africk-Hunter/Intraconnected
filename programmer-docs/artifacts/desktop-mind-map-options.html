@@ -1,0 +1,373 @@
+<!-- Artifact: https://claude.ai/artifact/RzpWpgGzZxXnWpWo7AQA1K | Generated: 2026-10-11 -->
+<title>Desktop Mind Map Options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,800&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* Layout: sticky key on the left, one reading column on the right; neobrutal borders and hard shadows to match the app. */
+:root {
+  --bg: #E9F9E5;
+  --surface: #F6FDF3;
+  --ink: #111111;
+  --muted: #3E4B3C;
+  --line: #111111;
+  --sky: #00A9D8;
+  --leaf: #41BC28;
+  --link: #E8E879;
+  --pink: #DB44A4;
+  --danger: #C80000;
+  --code-bg: #DDEBD8;
+  --shadow: #111111;
+  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101A0F; --surface: #17241A; --ink: #EAF6E6; --muted: #A9BCA5; --line: #EAF6E6;
+    --sky: #2BB9E2; --leaf: #5BD141; --link: #E8E879; --pink: #E866B5; --danger: #FF6B6B;
+    --code-bg: #0B130B; --shadow: #000000; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101A0F; --surface: #17241A; --ink: #EAF6E6; --muted: #A9BCA5; --line: #EAF6E6;
+  --sky: #2BB9E2; --leaf: #5BD141; --link: #E8E879; --pink: #E866B5; --danger: #FF6B6B;
+  --code-bg: #0B130B; --shadow: #000000; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 0; }
+a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+
+.shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 40px; max-width: 1180px; margin-inline: auto; }
+.key { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100vh; overflow-y: auto; padding-block: 24px; display: flex; flex-direction: column; gap: 14px; }
+.key h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin: 0; color: var(--muted); }
+.key input { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 2px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.key nav { display: flex; flex-direction: column; gap: 4px; }
+.key nav a { text-decoration: none; padding: 6px 10px; border: 2px solid transparent; border-radius: 8px; font-size: 14px; font-weight: 500; }
+.key nav a:hover { border-color: var(--line); }
+.key nav a[aria-current="true"] { background: var(--leaf); color: #111; border-color: var(--line); box-shadow: 3px 3px 0 var(--shadow); font-weight: 700; }
+.key nav a[hidden] { display: none; }
+.theme-btn, .menu-btn { font: inherit; font-size: 13px; font-weight: 700; padding: 6px 10px; border: 2px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; box-shadow: 3px 3px 0 var(--shadow); align-self: flex-start; }
+.menu-btn { display: none; }
+.key .collapsible { display: flex; flex-direction: column; gap: 14px; }
+
+main { padding-block: 40px 96px; min-width: 0; }
+header.top { border: 3px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 6px 6px 0 var(--shadow); padding: 24px; margin-bottom: 40px; }
+header.top h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; margin: 0 0 10px; text-wrap: balance; }
+header.top p { margin: 0 0 14px; max-width: 62ch; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; font-family: var(--font-mono); font-size: 13px; }
+.meta span { border: 2px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--bg); }
+
+section { scroll-margin-top: 24px; margin-bottom: 56px; }
+h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 1.75rem; line-height: 1.15; margin: 0 0 14px; text-wrap: balance; }
+h3 { font-size: 1.1rem; margin: 28px 0 8px; }
+p, li { max-width: 68ch; }
+ul, ol { padding-left: 1.2rem; }
+li { margin-bottom: 4px; }
+code { font-family: var(--font-mono); font-size: .92em; background: var(--code-bg); padding: 1px 6px; border-radius: 5px; }
+
+.callout { border: 3px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--link); color: #111; box-shadow: 4px 4px 0 var(--shadow); max-width: 68ch; }
+.callout p { margin: 0; }
+.callout.warn { background: #F3B8B8; }
+.callout strong { font-weight: 800; }
+
+.table-wrap { overflow-x: auto; border: 3px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14.5px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+td.yes::before { content: "Yes"; } td.no::before { content: "No"; } td.part::before { content: "Partly"; }
+.pill { display: inline-block; font-weight: 700; font-size: 12px; border: 2px solid var(--line); border-radius: 999px; padding: 0 8px; color: #111; }
+.pill.good { background: var(--leaf); } .pill.mid { background: var(--link); } .pill.bad { background: #F3B8B8; }
+
+.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.opt { border: 3px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; box-shadow: 5px 5px 0 var(--shadow); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.opt h3 { margin: 0; font-size: 1.15rem; }
+.opt .tag { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.opt p { margin: 0; font-size: 14.5px; }
+.opt.pick { background: var(--leaf); color: #111; }
+.opt.pick .tag { color: #111; }
+
+.codewrap { position: relative; margin: 12px 0; }
+pre { margin: 0; overflow-x: auto; background: var(--code-bg); border: 2px solid var(--line); border-radius: 10px; padding: 14px 16px; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.5; }
+.copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; font-weight: 700; padding: 3px 8px; border: 2px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
+
+.ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.idea { border: 2px solid var(--line); border-radius: 12px; background: var(--surface); padding: 14px; min-width: 0; }
+.idea h3 { margin: 0 0 4px; font-size: 1rem; }
+.idea p { margin: 0 0 8px; font-size: 14.5px; }
+.cost { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+
+#top-btn { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; padding: 8px 12px; border: 3px solid var(--line); border-radius: 10px; background: var(--sky); color: #111; box-shadow: 3px 3px 0 var(--shadow); cursor: pointer; }
+.refs li { margin-bottom: 8px; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .key { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); max-height: none; padding-block: 12px; border-bottom: 2px solid var(--line); flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .menu-btn { display: inline-block; }
+  .key .collapsible { display: none; width: 100%; }
+  .key.open .collapsible { display: flex; flex-direction: column; gap: 10px; }
+  .key > h2 { display: none; }
+  main { padding-block: 24px 96px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print { .key, #top-btn { display: none; } .shell { display: block; } }
+</style>
+
+<p style="margin:0;padding:8px 0;font-weight:700"><a href="https://claude.ai/artifact/RzpWpgGzZxXnWpWo7AQA1K" target="_blank" rel="noopener noreferrer">Open live artifact →</a></p>
+<div class="shell">
+  <aside class="key" id="key" aria-label="Page key">
+    <h2>Key</h2>
+    <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="key-body">Sections</button>
+    <div class="collapsible" id="key-body">
+      <input id="filter" type="search" placeholder="Filter sections" aria-label="Filter sections">
+      <nav id="legend" aria-label="Sections">
+        <a href="#overview">Overview</a>
+        <a href="#today">What it is today</a>
+        <a href="#gap">What search already covers</a>
+        <a href="#options">The four options</a>
+        <a href="#features">Features that would set it apart</a>
+        <a href="#declutter">Decluttering the sidebar</a>
+        <a href="#compare">Side by side</a>
+        <a href="#reach">What removal would touch</a>
+        <a href="#recommendation">Recommendation</a>
+        <a href="#state">State of the repo</a>
+        <a href="#questions">Open questions</a>
+        <a href="#references">References</a>
+      </nav>
+      <button class="theme-btn" id="theme-btn" type="button">Toggle theme</button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <h1>Desktop mind map: keep, change or cut</h1>
+      <p>Hunter is leaning toward removing the mind map from desktop because the sidebar feels cluttered and the map seems like a nice look more than a tool. This page lays out the alternatives so the call is made on trade-offs, not on a hunch.</p>
+      <div class="meta"><span>Intraconnected</span><span>2026-10-11</span><span>branch main</span><span>base commit 861249a</span></div>
+    </header>
+
+    <section id="overview">
+      <h2 class="sec">Overview</h2>
+      <p>Nothing has been removed. An earlier attempt at deleting the map was reverted, and the code is back as it was (see <a href="#state">State of the repo</a>).</p>
+      <p>The decision comes down to one question: is the map a feature you want to invest in, or one you want to stop carrying? There are four honest answers.</p>
+      <ul>
+        <li><strong>Keep it as is.</strong> Cheapest, but the clutter stays.</li>
+        <li><strong>Declutter it.</strong> Same feature, lighter footprint in the sidebar.</li>
+        <li><strong>Make it earn its place.</strong> Add things search cannot do, so it stops being a "glorified search".</li>
+        <li><strong>Remove it from desktop.</strong> Smallest surface, but you lose the whole-tree overview and the product's signature image.</li>
+      </ul>
+      <div class="callout"><p><strong>Short version:</strong> decluttering is nearly free and fixes the stated complaint. Whether to also invest in features depends on how much you want the map to be the app's identity on desktop. Removal can wait until you have tried the other two.</p></div>
+    </section>
+
+    <section id="today">
+      <h2 class="sec">What it is today</h2>
+      <p>On desktop the map is a full-screen overlay opened from the pink button in the left sidebar. It draws the whole idea tree as nested columns with connector lines, supports pan, zoom and center, and jumps to a node on click. The node you are in is marked brown. Ideas, links, notes and checklists each have their own look.</p>
+      <ul>
+        <li>Overlay component: <code>src/components/MindMap.tsx</code> (377 lines) and <code>src/styles/mindmap.scss</code> (349 lines).</li>
+        <li>Open state lives in <code>Idea.tsx</code> as <code>showMindMap</code>. While it is open, the create and home buttons and the trash hide and the main grid fades out.</li>
+        <li>Entry points: the sidebar toggle, and the "Toggle mind map" command in the Ctrl/Cmd+K palette.</li>
+        <li>It has its own keys (zoom, center, pan) listed in the shortcuts modal, and <code>useDesktopShortcuts</code> pauses the card keys while it is open.</li>
+        <li>Help page four, "The Mind Map", is entirely about it.</li>
+        <li>Mobile has a separate map sheet (<code>MobileMindMapSheet</code>) that shares none of the desktop component, so changes here do not touch the phone.</li>
+      </ul>
+      <p>The landing page hero animation also draws a mind map, so the marketing image would no longer match the desktop app if the map went away.</p>
+    </section>
+
+    <section id="gap">
+      <h2 class="sec">What search already covers</h2>
+      <p>You are right that much of the map's job is now done elsewhere. This is where the overlap ends.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job</th><th>Search / breadcrumb / Move to…</th><th>Mind map</th></tr></thead>
+          <tbody>
+            <tr><td>Jump to a known idea</td><td><span class="pill good">Better</span> type a few letters</td><td>Works, but you hunt visually</td></tr>
+            <tr><td>See where you are</td><td><span class="pill good">Better</span> breadcrumb</td><td>Brown node</td></tr>
+            <tr><td>Pick a new parent</td><td><span class="pill good">Better</span> Move to… modal</td><td>Not supported</td></tr>
+            <tr><td>See the shape of the whole tree at once</td><td><span class="pill bad">Cannot</span></td><td><span class="pill good">Only way</span></td></tr>
+            <tr><td>Spot lopsided or empty branches</td><td><span class="pill bad">Cannot</span></td><td><span class="pill good">Only way</span></td></tr>
+            <tr><td>Browse without a target in mind</td><td><span class="pill mid">Weak</span> one level at a time</td><td><span class="pill good">Only way</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>So the overlap is real for lookup and navigation. What remains is overview and browsing, which only matters if people have trees large enough to lose track of.</p>
+    </section>
+
+    <section id="options">
+      <h2 class="sec">The four options</h2>
+      <div class="options">
+        <article class="opt">
+          <span class="tag">Option A</span>
+          <h3>Keep as is</h3>
+          <p>No work. The sidebar keeps five buttons on the left and the clutter complaint stands.</p>
+        </article>
+        <article class="opt pick">
+          <span class="tag">Option B · low effort</span>
+          <h3>Declutter</h3>
+          <p>Keep the overlay, take the button out of the main sidebar. Open it from the command palette, a shortcut and the breadcrumb root instead.</p>
+        </article>
+        <article class="opt">
+          <span class="tag">Option C · real work</span>
+          <h3>Make it distinct</h3>
+          <p>Add views search can never give: filters, progress, recency, drag to reparent. It becomes a tool, not a picture.</p>
+        </article>
+        <article class="opt">
+          <span class="tag">Option D · one-way</span>
+          <h3>Remove from desktop</h3>
+          <p>Delete the overlay, its toggle, keys, help page and styles. Mobile keeps its map.</p>
+        </article>
+      </div>
+      <p style="margin-top:16px">B and C combine well: declutter first, then add features only to the ones you will actually use.</p>
+    </section>
+
+    <section id="features">
+      <h2 class="sec">Features that would set it apart</h2>
+      <p>Each of these answers a question search cannot. Effort is a rough guess against the current component, which renders from <code>fetchFullIdeaList()</code> and has no timestamps beyond the idea id (ids are creation times).</p>
+      <div class="ideas">
+        <div class="idea"><h3>Priority lens</h3><p>One toggle dims everything except priority 1 and 2 across the whole tree. Answers "what is urgent anywhere?"</p><span class="cost">Effort: small. Data already on each idea.</span></div>
+        <div class="idea"><h3>Recency lens</h3><p>Tint nodes by how recently they were created, using the id. Shows what you have been working on and what is stale.</p><span class="cost">Effort: small. Edits are not tracked, only creation.</span></div>
+        <div class="idea"><h3>Checklist progress on nodes</h3><p>Show 3/7 on checklist nodes and a rolled-up count on their parents.</p><span class="cost">Effort: small to medium.</span></div>
+        <div class="idea"><h3>Find on map</h3><p>Search box inside the overlay that highlights and centers matches instead of opening a list.</p><span class="cost">Effort: small. Reuse <code>idea/search.ts</code>.</span></div>
+        <div class="idea"><h3>Drag to reparent</h3><p>Drag a node onto another to move it, with the existing undo. The one thing that turns it from a viewer into an editor.</p><span class="cost">Effort: medium. Route through <code>useIdeaActions().moveIdea</code>.</span></div>
+        <div class="idea"><h3>Branch focus</h3><p>Open the map on the current branch only, with a button to widen to everything. Large trees stop being a wall.</p><span class="cost">Effort: small.</span></div>
+        <div class="idea"><h3>Export as image</h3><p>Save the map as PNG or SVG for sharing or printing. Gives it a use outside the app.</p><span class="cost">Effort: medium.</span></div>
+        <div class="idea"><h3>Free-form canvas</h3><p>Let nodes be placed by hand and remember positions. This is the classic mind-map tool, and a large step.</p><span class="cost">Effort: large. Needs a new synced field.</span></div>
+      </div>
+      <p style="margin-top:16px">If you only pick two, take the <strong>priority lens</strong> and <strong>drag to reparent</strong>. They are the clearest "this is not search" answers for the least work.</p>
+    </section>
+
+    <section id="declutter">
+      <h2 class="sec">Decluttering the sidebar</h2>
+      <p>The clutter is about the button, not the overlay. Options for getting it out of the way without losing the feature:</p>
+      <ul>
+        <li><strong>Shortcut plus palette only.</strong> Add a key (for example <code>G</code>, free in the shortcuts list) and keep the existing palette command. The sidebar drops to create, home and search.</li>
+        <li><strong>Breadcrumb entry.</strong> A small map icon at the start of the breadcrumb, where "where am I in the tree" already lives.</li>
+        <li><strong>Move it to the right sidebar</strong> next to help and patch notes, treating it as a view rather than an action.</li>
+      </ul>
+      <p>Whichever you choose, the help page and shortcuts modal should name the new entry point, since they currently point at the sidebar button.</p>
+    </section>
+
+    <section id="compare">
+      <h2 class="sec">Side by side</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Question</th><th>A · Keep</th><th>B · Declutter</th><th>C · Distinct</th><th>D · Remove</th></tr></thead>
+          <tbody>
+            <tr><td>Fixes sidebar clutter</td><td><span class="pill bad">No</span></td><td><span class="pill good">Yes</span></td><td><span class="pill mid">If paired with B</span></td><td><span class="pill good">Yes</span></td></tr>
+            <tr><td>Keeps whole-tree overview</td><td><span class="pill good">Yes</span></td><td><span class="pill good">Yes</span></td><td><span class="pill good">Yes, better</span></td><td><span class="pill bad">No</span></td></tr>
+            <tr><td>Effort</td><td>None</td><td>An hour or two</td><td>Days, per feature</td><td>An hour, plus help and marketing edits</td></tr>
+            <tr><td>Reversible</td><td><span class="pill good">Yes</span></td><td><span class="pill good">Yes</span></td><td><span class="pill good">Yes</span></td><td><span class="pill mid">Via git history only</span></td></tr>
+            <tr><td>Desktop matches landing page and mobile</td><td><span class="pill good">Yes</span></td><td><span class="pill good">Yes</span></td><td><span class="pill good">Yes</span></td><td><span class="pill bad">No</span></td></tr>
+            <tr><td>Ongoing maintenance</td><td>Small</td><td>Small</td><td>Grows with features</td><td>Lowest</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="reach">
+      <h2 class="sec">What removal would touch</h2>
+      <p>For option D only. This is the full list found by searching the source, so it is a bounded job.</p>
+      <div class="codewrap"><button class="copy" type="button">Copy</button><pre>delete   src/components/MindMap.tsx
+delete   src/styles/mindmap.scss
+delete   src/components/helpMenus/HelpMenuFour.tsx   (+ remove from Help.tsx SCREENS)
+edit     src/styles/help.scss          the "Help screen 4" demo block
+edit     src/styles/index.scss         @use "./mindmap"
+edit     src/pages/Idea.tsx            showMindMap state, props, mid--map-open, palette command
+edit     src/components/Navbar.tsx     toggle button, nav-btn-group, nav-btn--hidden
+edit     src/styles/navbar.scss        .nav-btn-group, .nav-btn--hidden
+edit     src/styles/idea.scss          .mid--map-open
+edit     src/utilities/useDesktopShortcuts.ts   mapOpen option
+edit     src/components/modals/ShortcutsModal.tsx   "In the mind map" group
+review   src/pages/Landing.tsx, Privacy.tsx, landing hero animation   (wording and imagery)</pre></div>
+      <p>Mobile files (<code>MobileMindMap</code>, <code>MobileMindMapSheet</code>) are independent and stay.</p>
+    </section>
+
+    <section id="recommendation">
+      <h2 class="sec">Recommendation</h2>
+      <div class="callout"><p><strong>Do B now, decide on C after living with it, and hold D.</strong> Moving the button out of the sidebar addresses the clutter you described at almost no risk. If a few weeks pass and you never open the map, that is real evidence for removing it. If you want it to be a selling point on desktop, add the priority lens and drag to reparent first.</p></div>
+      <p>A test worth running before cutting: open the map on your own tree and ask whether it ever showed you something you did not already know. If not, your tree may simply be small, and the map matters more for the trees of heavier users.</p>
+    </section>
+
+    <section id="state">
+      <h2 class="sec">State of the repo</h2>
+      <p>I started removing the map before you had decided. That has been undone.</p>
+      <ul>
+        <li><code>MindMap.tsx</code> was restored from a saved snapshot taken this morning. <code>HelpMenuFour.tsx</code> was rewritten from the contents I had just read. The edits to <code>Idea.tsx</code>, <code>Help.tsx</code>, <code>help.scss</code> and <code>index.scss</code> were reversed by hand. Typecheck passes.</li>
+        <li>Nothing was committed or staged.</li>
+      </ul>
+      <div class="callout warn"><p><strong>One thing to check:</strong> <code>src/styles/mindmap.scss</code> had uncommitted edits and no snapshot existed. It is back at the last committed version, so any recent tweaks to the map's styling may be missing. A quick look at the map overlay in the browser will show.</p></div>
+    </section>
+
+    <section id="questions">
+      <h2 class="sec">Open questions</h2>
+      <ol>
+        <li>How big are the trees your target users keep? The map matters in proportion to that.</li>
+        <li>Is the map part of how Intraconnected is sold on desktop (landing page, store listing), or only on mobile?</li>
+        <li>Which entry point do you prefer for option B: shortcut and palette, breadcrumb icon, or right sidebar?</li>
+        <li>If you do add features, do you want the map to become an editor (drag to reparent) or stay a viewer?</li>
+      </ol>
+    </section>
+
+    <section id="references">
+      <h2 class="sec">References</h2>
+      <p>This page draws on the project's own code and notes, so there are no external sources.</p>
+      <ul class="refs">
+        <li><code>CLAUDE.md</code>: Navigation Model, Desktop interaction layer, Mobile UI.</li>
+        <li><code>programmer-docs/artifacts/desktop-ux-audit.html</code>: the earlier desktop audit.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+<button id="top-btn" type="button" aria-label="Back to top">Top</button>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('dmm-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  document.getElementById('theme-btn').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('dmm-theme', next); } catch (e) {}
+  });
+
+  var key = document.getElementById('key'), menuBtn = document.getElementById('menu-btn');
+  menuBtn.addEventListener('click', function () {
+    var open = key.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', String(open));
+  });
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('#legend a'));
+  document.getElementById('filter').addEventListener('input', function (e) {
+    var q = e.target.value.toLowerCase();
+    links.forEach(function (a) { a.hidden = q && a.textContent.toLowerCase().indexOf(q) === -1; });
+  });
+  links.forEach(function (a) { a.addEventListener('click', function () { key.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }); });
+
+  var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) {
+        links.forEach(function (a) { a.removeAttribute('aria-current'); });
+        var a = document.querySelector('#legend a[href="#' + en.target.id + '"]');
+        if (a) a.setAttribute('aria-current', 'true');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(function (s) { if (s) io.observe(s); });
+
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentNode.querySelector('pre');
+      function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
+      function fallback() {
+        var r = document.createRange(); r.selectNodeContents(pre);
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = 'Selected';
+      }
+      try { navigator.clipboard.writeText(pre.innerText).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+
+  document.getElementById('top-btn').addEventListener('click', function () { window.scrollTo({ top: 0 }); });
+})();
+</script>

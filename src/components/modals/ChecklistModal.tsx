@@ -93,7 +93,7 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange,
                         e.target.style.height = e.target.scrollHeight + 'px';
                     }}
                     onBlur={commitEdit}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit(); } if (e.key === 'Escape') setIsEditing(false); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit(); } if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); } }}
                     maxLength={200}
                 />
             ) : (
@@ -135,7 +135,7 @@ function SortableChecklistItem({ item, onToggle, onDelete, onEdit, onLinkChange,
                         onBlur={commitLink}
                         onKeyDown={e => {
                             if (e.key === 'Enter') { e.preventDefault(); commitLink(); }
-                            if (e.key === 'Escape') { cancelLinkRef.current = true; setIsLinking(false); }
+                            if (e.key === 'Escape') { e.preventDefault(); cancelLinkRef.current = true; setIsLinking(false); }
                         }}
                         placeholder="Paste URL, press Enter"
                         maxLength={500}
@@ -250,7 +250,7 @@ function ChecklistModal() {
     const checkedCount = items.filter(i => i.checked).length;
 
     return (
-        <AnimatedOverlay open={checklistModalId !== null} scrollable onClick={close}>
+        <AnimatedOverlay open={checklistModalId !== null} scrollable onClick={close} onEscape={close}>
             <div className="modal neobrutal checklistModal" onClick={e => e.stopPropagation()}>
                 <div className="checklistModal-title-row">
                     <span className="checklistModal-title">{title}</span>

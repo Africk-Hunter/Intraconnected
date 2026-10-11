@@ -1,0 +1,75 @@
+@use "./variables" as *;
+
+.undo-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    transform: translateX(-50%);
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: min(90vw, 40rem);
+    padding: 0.7rem 0.9rem 0.7rem 1.2rem;
+    background: $background-color;
+    border: $neo-card-border;
+    border-radius: $neo-card-radius;
+    box-shadow: $neo-card-shadow;
+    font-size: 1.25rem;
+    font-weight: 600;
+    animation: undo-toast-in 0.2s ease-out;
+
+    @media (max-width: $mobile) {
+        display: none;
+    }
+}
+
+.undo-toast-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.undo-toast-undo {
+    flex-shrink: 0;
+    padding: 0.3rem 1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    background: $link;
+    color: #111;
+}
+
+.undo-toast-close {
+    all: unset;
+    flex-shrink: 0;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    font-size: 1.1rem;
+    opacity: 0.6;
+
+    &:hover,
+    &:focus-visible {
+        opacity: 1;
+    }
+
+    &:focus-visible {
+        outline: 5px solid $orange;
+        outline-offset: 2px;
+    }
+}
+
+@keyframes undo-toast-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 0.75rem);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .undo-toast {
+        animation: none;
+    }
+}

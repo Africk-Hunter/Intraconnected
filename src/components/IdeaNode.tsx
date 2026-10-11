@@ -6,7 +6,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, cleanLink, openIdeaLink, updateIdeaPriority, isNoteMode, isNoteWide, updateIdeaName } from '../utilities';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, cleanLink, openIdeaLink, isNoteMode, isNoteWide, updateIdeaName } from '../utilities';
 
 const NOTE_BODY_MAX_LENGTH = 2000;
 
@@ -157,7 +157,7 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCo
                         e.target.style.height = e.target.scrollHeight + 'px';
                     }}
                     onBlur={commitEdit}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); commitEdit(); } if (e.key === 'Escape') setIsEditing(false); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); commitEdit(); } if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); } }}
                     onClick={e => e.stopPropagation()}
                     maxLength={200}
                 />
@@ -206,7 +206,7 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCo
                         onBlur={commitLink}
                         onKeyDown={e => {
                             if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitLink(); }
-                            if (e.key === 'Escape') { cancelLinkRef.current = true; setIsLinking(false); }
+                            if (e.key === 'Escape') { e.preventDefault(); cancelLinkRef.current = true; setIsLinking(false); }
                         }}
                         onClick={e => e.stopPropagation()}
                         placeholder="Paste URL, press Enter"
@@ -228,14 +228,13 @@ function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCo
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
-    const { navigateToId, setRenameModalOpen, setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId } = useIdeaContext();
+    const { navigateToId, setRenameModalOpen, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId, setCardMenu } = useIdeaContext();
 
     const { id, content: title } = idea;
     const link = getIdeaLink(idea);
     const isChecklist = idea.type === 'checklist';
     const noteTitle = (idea as { noteTitle?: string }).noteTitle ?? '';
 
-    const [copyPath, setCopyPath] = useState('images/CopyIcon.svg');
     const [addItemDraft, setAddItemDraft] = useState('');
     const [localItems, setLocalItems] = useState<ChecklistItem[]>(isChecklist ? idea.items : []);
     const addInputRef = useRef<HTMLInputElement>(null);
@@ -281,8 +280,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     });
 
     const [priority, setPriority] = useState<1 | 2 | 3 | undefined>(idea.priority);
-    const [isRibbonAnimating, setIsRibbonAnimating] = useState(false);
-    const pendingResort = useRef(false);
     const [isFadingIn, setIsFadingIn] = useState(false);
     const prevPendingDeleteRef = useRef<number | null>(null);
 
@@ -378,39 +375,37 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     });
     const { isOver, setNodeRef: setDroppableRef, active } = useDroppable({
         id: `idea-${id}`,
-        disabled: isMobile || isChecklist || noteMode,
+        disabled: isMobile,
     });
+    // Checklists, notes and links can't hold children: they stay in collision detection
+    // (handleDragEnd refuses the drop) so they can tint red instead of lighting up.
+    const canAcceptDrop = !(isChecklist || noteMode || link !== '');
     const setNodeRef = (node: HTMLElement | null) => {
         setDraggableRef(node);
         setDroppableRef(node);
     };
-    const isBeingDraggedOver = isOver && active?.id !== `idea-${id}`;
+    const isHoveredByDrag = isOver && active?.id !== `idea-${id}`;
+    const isBeingDraggedOver = isHoveredByDrag && canAcceptDrop;
+    const isBlockedDragOver = isHoveredByDrag && !canAcceptDrop;
     const draggableStyle = {
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
         transition: 'none',
+        // Lift above sibling cards' priority ribbons (z-index 4) while dragging.
+        zIndex: isDragging ? 10 : undefined,
         cursor: isChecklist && !isDragging ? undefined : 'grabbing',
     };
     const dropStyle = {
         border: isBeingDraggedOver ? '3px dashed #000' : undefined,
         transition: isBeingDraggedOver ? 'scale 0.2s ease-in-out, border 0.2s ease-in-out' : undefined,
         scale: isBeingDraggedOver ? '1.15' : undefined,
+        boxShadow: isBlockedDragOver ? 'inset 0 0 0 100vmax rgba(220, 38, 38, 0.3)' : undefined,
     };
     const pendingStyle = isHidden ? { opacity: 0, pointerEvents: 'none' as const } : {};
     const combinedStyle = { ...draggableStyle, ...dropStyle, ...pendingStyle };
     const fadeInClass = isFadingIn ? ' ideaNode--fade-in' : '';
     const priorityClass = priority ? ' ideaNode--has-priority' : '';
 
-    function copyToClipboard(e: React.MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
-        const textToCopy = link !== '' ? link : title;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            setTimeout(() => setCopyPath('images/CopyIcon.svg'), 1000);
-            setCopyPath('images/Checkmark.svg');
-        });
-    }
-
-    function handleNodeClick(e: React.MouseEvent) {
+    function handleNodeClick(e: React.SyntheticEvent) {
         if (link !== '') {
             e.preventDefault();
             openIdeaLink(link);
@@ -419,12 +414,14 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         makeRoot();
     }
 
-    function changeLink(e: React.MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
-        setCurrentLinkID(id);
-        setCurrentLink(link);
-        setLinkChangeModalOpen(true);
+    // Cards are focusable (dnd-kit adds tabIndex), so Enter must do what a click does.
+    function handleCardKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (isChecklist) setChecklistModalId(id);
+            else if (!noteMode) handleNodeClick(e);
+        }
     }
 
     function changeName(e: React.MouseEvent) {
@@ -665,25 +662,38 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         }
     }
 
-    function cyclePriority(e: React.MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
-        if (isRibbonAnimating) return;
-        const next = priority === undefined ? 3 : priority === 3 ? 2 : priority === 2 ? 1 : undefined;
-        updateIdeaPriority(id, next);
-        pendingResort.current = true;
-        setIsRibbonAnimating(true);
-        setTimeout(() => {
-            setIsRibbonAnimating(false);
-            setPriority(next);
-        }, 180);
+    function openMenuAt(x: number, y: number) {
+        setCardMenu({ id, x, y });
     }
 
-    function flushResort() {
-        if (!pendingResort.current) return;
-        pendingResort.current = false;
-        setNewIdeaSwitch(prev => !prev);
+    // Right-click anywhere on the card. Text fields keep the browser's own menu (paste, spell check).
+    function handleContextMenu(e: React.MouseEvent) {
+        if ((e.target as HTMLElement).closest('input, textarea, [contenteditable="true"]')) return;
+        e.preventDefault();
+        openMenuAt(e.clientX, e.clientY);
     }
+
+    // The ⋯ button and the priority ribbon: open the menu just under the button.
+    function openMenuFromButton(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
+        e.preventDefault();
+        const rect = e.currentTarget.getBoundingClientRect();
+        openMenuAt(rect.left, rect.bottom + 4);
+    }
+
+    const moreButton = (
+        <button
+            className="card-more"
+            type="button"
+            aria-label="Idea actions"
+            aria-haspopup="menu"
+            title="More actions"
+            onClick={openMenuFromButton}
+            onPointerDown={e => e.stopPropagation()}
+        >
+            ⋯
+        </button>
+    );
 
     function toggleItem(e: React.MouseEvent, itemId: string) {
         e.stopPropagation();
@@ -759,16 +769,16 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 ref={setNodeRef}
                 style={combinedStyle}
                 className={`neobrutal-button ideaNode checklist${fadeInClass}${priorityClass}`}
-                onMouseLeave={flushResort}
+                onKeyDown={handleCardKeyDown}
+                onContextMenu={handleContextMenu}
+                data-idea-id={id}
                 {...attributes}
                 {...listeners}
             >
-                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}, click to change` : 'Click to set priority'} />
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {moreButton}
                 <div className="checklist-header" onClick={() => setChecklistModalId(id)}>
                     <span className="checklist-title-text">{title}</span>
-                    <button className="renameButtonNode copy" onClick={changeName}>
-                        <img src='images/Pen.svg' alt="Rename" className="copyImg" />
-                    </button>
                 </div>
                 <div className="checklist-items-wrapper" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
                     <DndContext
@@ -828,11 +838,13 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 ref={setNodeRef}
                 style={combinedStyle}
                 className={`neobrutal-button ideaNode note${wideClass}${fadeInClass}${priorityClass}`}
-                onMouseLeave={flushResort}
+                onContextMenu={handleContextMenu}
+                data-idea-id={id}
                 {...attributes}
                 {...listeners}
             >
-                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}, click to change` : 'Click to set priority'} />
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {moreButton}
                 <div className="note-main">
                     <div className="note-header">
                         <div className="note-header-main">
@@ -842,13 +854,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                             >
                                 {noteTitle}
                             </span>
-                            <button className="renameButtonNode copy" onClick={changeName}>
-                                <img src='images/Pen.svg' alt="Rename" className="copyImg" />
-                            </button>
                         </div>
-                        <button className="note-header-copy copy" onClick={copyToClipboard} title="Copy note content">
-                            <img src={copyPath} alt="Copy Note Content" className="copyImg" />
-                        </button>
                     </div>
                     <div className="note-body-wrapper" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
                         {isEditingBody ? (
@@ -899,8 +905,9 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }
 
     return (
-        <div onClick={handleNodeClick} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} onMouseLeave={flushResort} {...attributes} {...listeners}>
-            <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}${isRibbonAnimating ? ' priority-ribbon--animating' : ''}`} onClick={cyclePriority} title={priority ? `Priority ${priority}, click to change` : 'Click to set priority'} />
+        <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...listeners}>
+            <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {moreButton}
             <div className="ideaNode-content">
                 {isLeaf && link === '' ? (
                     <div
@@ -936,9 +943,6 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                         </button>
                     </div>
                 )}
-                {(isLeaf || link !== '') && <button className="editLink copy" onClick={changeLink}><img src='images/LinkBlack.svg' alt="Change Link" className="copyImg" /></button>}
-                <button className="renameButtonNode copy" onClick={changeName}><img src='images/Pen.svg' alt="Rename" className="copyImg" /></button>
-                <button className="copy" onClick={copyToClipboard}><img src={copyPath} alt={link !== '' ? 'Copy Link' : 'Copy Idea Content'} className="copyImg" /></button>
             </div>
         </div>
     );

@@ -15,6 +15,7 @@ import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } fr
 
 // Custom Libraries
 import { auth } from '../firebaseConfig';
+import { firstUnseenHelpScreen } from '../components/helpScreens';
 import { fetchLifetimeCelebrated, markLifetimeCelebrated } from '../utilities/firebase/preferences';
 import { useIdeaContext } from '../context/IdeaContext';
 import changelog from '../../programmer-docs/CHANGELOG.md?raw';
@@ -29,11 +30,12 @@ import {
     handleChecklistCreation,
     handleNoteCreation,
     getIdeasByParentID,
+    buildAncestorPath,
     IdeaType,
-    updateIdeaParentId,
     getParentID,
     getNameFromID,
     checkIfIdeaIsLeaf,
+    canCreateIdea,
     getIdeaLink,
     sortIdeas,
     isNoteWide,
@@ -60,6 +62,18 @@ import { useIsMobileUI } from '../utilities/useIsMobileUI';
 import { syncOnLoad, startSyncListener } from '../utilities/sync/syncEngine';
 import { onSyncRefreshed } from '../utilities/sync/syncStore';
 import SyncStatusBanner from '../components/SyncStatusBanner';
+import UndoToast from '../components/UndoToast';
+import CardMenu from '../components/CardMenu';
+import Breadcrumb from '../components/Breadcrumb';
+import RootTitle from '../components/RootTitle';
+import { readIdeaFromUrl, writeIdeaToUrl } from '../utilities/idea/ideaUrl';
+import { recordVisit } from '../utilities/idea/recentVisits';
+import MoveModal from '../components/modals/MoveModal';
+import SearchModal from '../components/modals/SearchModal';
+import ShortcutsModal from '../components/modals/ShortcutsModal';
+import { useDesktopShortcuts } from '../utilities/useDesktopShortcuts';
+import type { SearchResult } from '../utilities/idea/search';
+import { useIdeaActions } from '../utilities/idea/useIdeaActions';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -92,22 +106,34 @@ function Idea() {
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
+    const [showSearch, setShowSearch] = useState(false);
+    const [showShortcuts, setShowShortcuts] = useState(false);
     const [lastRootName, setLastRootName] = useState('');
     const [isNewPatchNotes, setIsNewPatchNotes] = useState(() =>
         isPatchNotesNew(auth.currentUser?.uid, _changelogEntries)
     );
+    const [hasNewHelp, setHasNewHelp] = useState(() => firstUnseenHelpScreen(auth.currentUser?.uid) >= 0);
     const [implementedTitles, setImplementedTitles] = useState<string[] | null>(null);
     const [sortMode, setSortMode] = useState<'priority' | 'recent'>(() =>
         (localStorage.getItem('idea_sort_mode') as 'priority' | 'recent') ?? 'priority'
     );
 
     const ideaNodesRef = useRef<HTMLDivElement>(null);
+    const urlAppliedRef = useRef(false);
     const flipSnapshot = useRef<Map<number, { top: number; left: number }>>(new Map());
     const prevFlipIds = useRef<number[]>([]);
 
     useEffect(() => {
         const uid = auth.currentUser?.uid;
         syncPatchNotesFromFirebase(uid, _changelogEntries).then(isNew => setIsNewPatchNotes(isNew));
+    }, []);
+
+    // auth.currentUser is still null on first render after a reload, so the
+    // initial state can't be trusted; re-check once the user resolves.
+    useEffect(() => {
+        return auth.onAuthStateChanged(user => {
+            setHasNewHelp(firstUnseenHelpScreen(user?.uid) >= 0);
+        });
     }, []);
 
     useEffect(() => {
@@ -154,11 +180,12 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setDeleteConfirmModalOpen, setPendingDeleteId, setDeleteModalOrigin, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan, setNewIdeaSwitch, checklistModalId, setChecklistModalId } = useIdeaContext();
+    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan, setNewIdeaSwitch, checklistModalId, setChecklistModalId, setCreationModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     useBillingPlanSync(setBillingPlan);
     useNodeCountResync(billingPlan, serverSynced);
     const isMobileUI = useIsMobileUI();
+    const { requestDelete, moveIdea } = useIdeaActions();
 
     // Lifetime granted without a checkout (Developer Testing): celebrate once
     // per account (flag lives in Firestore, not this browser) the next time the
@@ -194,7 +221,7 @@ function Idea() {
         return onSyncRefreshed(() => {
             setServerSynced(true);
             const all = fetchFullIdeaList();
-            if (rootId !== 1 && !all.some((idea) => idea.id === rootId)) navigateToId(1);
+            if (rootId !== 1 && !all.some((idea) => idea.id === rootId)) navigateToId(1, { history: 'replace' });
             if (checklistModalId !== null && !all.some((idea) => idea.id === checklistModalId)) setChecklistModalId(null);
             setNewIdeaSwitch((prev) => !prev);
         });
@@ -232,9 +259,24 @@ function Idea() {
                 setInitialFetch(true);
             }
 
-            const loadedIdeas = getIdeasByParentID(rootId);
+            // A link or refresh can name the level to open (?idea=ID). Use it only if
+            // that idea still exists; otherwise fall back to the top and fix the address.
+            let startId = rootId;
+            if (!urlAppliedRef.current && auth.currentUser) {
+                urlAppliedRef.current = true;
+                const wanted = readIdeaFromUrl();
+                const everything = fetchFullIdeaList();
+                if (wanted !== null && wanted !== 1 && everything.some((idea: IdeaType) => idea.id === wanted)) {
+                    startId = wanted;
+                    rootIdStack.current = buildAncestorPath(wanted, everything);
+                    setRootId(wanted);
+                } else if (wanted !== null) {
+                    writeIdeaToUrl(1, 'replace');
+                }
+            }
+            const loadedIdeas = getIdeasByParentID(startId);
             if (rootIdStack.current.length === 0) {
-                rootIdStack.current.push(rootId);
+                rootIdStack.current.push(startId);
             }
             setIdeas(loadedIdeas);
             setIsLoadingIdeas(false);
@@ -297,24 +339,63 @@ function Idea() {
 
         if (over.id === 'trash') {
             const trashEl = document.querySelector('.trashCan');
-            if (trashEl) {
-                const rect = trashEl.getBoundingClientRect();
-                setDeleteModalOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-            }
-            setPendingDeleteId(activeId);
-            setDeleteConfirmModalOpen(true);
+            const rect = trashEl?.getBoundingClientRect();
+            requestDelete(activeId, rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : undefined);
         } else if (over.id === 'last-idea') {
-            updateIdeaParentId(activeId, getParentID(rootId));
-            setIdeasFromStorage();
+            moveIdea(activeId, getParentID(rootId));
         } else {
             if (activeId === overId) return;
             if (overLink !== '') return;
             if (isNoteMode(overIdea)) return;
+            if (overIdea?.type === 'checklist') return;
             const newParentId = Number(String(over.id).split('-')[1]);
-            updateIdeaParentId(activeId, newParentId);
-            setIdeasFromStorage();
+            moveIdea(activeId, newParentId);
         }
     };
+
+    // Browser Back/Forward: the address already changed, so show that level without adding history.
+    useEffect(() => {
+        function onPopState() {
+            if (window.location.pathname !== '/main') return;
+            const wanted = readIdeaFromUrl() ?? 1;
+            const exists = wanted === 1 || fetchFullIdeaList().some((idea: IdeaType) => idea.id === wanted);
+            if (exists) navigateToId(wanted, { history: 'none' });
+            else navigateToId(1, { history: 'replace' });
+        }
+        window.addEventListener('popstate', onPopState);
+        return () => window.removeEventListener('popstate', onPopState);
+    }, [navigateToId]);
+
+    function openCreate() {
+        if (canCreateIdea()) {
+            setCreationModalOpen(true);
+        } else {
+            setUpgradeModalReason('limit');
+            setUpgradeModalOpen(true);
+        }
+    }
+
+    // Search result: go to the level the idea lives in and put the keyboard on its card.
+    function pickSearchResult(result: SearchResult) {
+        setShowMindMap(false);
+        recordVisit(result.id);
+        const focusIt = () => document.querySelector<HTMLElement>(`[data-idea-id="${result.id}"]`)?.focus();
+        if (result.parentID === rootId) {
+            setTimeout(focusIt, 50);
+        } else {
+            navigateToId(result.parentID);
+            setTimeout(focusIt, 400);
+        }
+    }
+
+    useDesktopShortcuts({
+        enabled: !isMobileUI,
+        mapOpen: showMindMap,
+        onNewIdea: openCreate,
+        onGoUp: () => { if (rootId !== 1) navigateToId(getParentID(rootId)); },
+        onShowShortcuts: () => setShowShortcuts(true),
+        onSearch: () => setShowSearch(true),
+    });
 
     function setIdeasFromStorage() {
         const loadedIdeas = getIdeasByParentID(rootId);
@@ -440,18 +521,19 @@ function Idea() {
         <DndContext onDragEnd={handleDragEnd} collisionDetection={nodePointerCollision} modifiers={[restrictToTopLeftRight]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
-                    <Navbar side="left" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
+                    <Navbar side="left" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} />
                     <Trash hidden={showMindMap} />
                 </section>
 
                     <section className={`mid${showMindMap ? ' mid--map-open' : ''}`}>
                         <section className="top">
+                            <Breadcrumb />
                             <section className="rootHolder">
                                 <section className="rootAdditionalButtons">
                                     <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => navigateToId(getParentID(rootId))}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
-                                    <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Age'}</button>
+                                    <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode} title={sortMode === 'priority' ? 'Sorted by priority. Click to sort oldest first.' : 'Sorted oldest first. Click to sort by priority.'}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Oldest'}</button>
                                 </section>
-                                <div className="ideaRoot neobrutal-button" onClick={() => { if (rootId !== 1) setRenameModalOpen(true); }}><span className="ideaRoot-text">{rootName}</span></div>
+                                <RootTitle name={rootName} renamable={rootId !== 1} onRename={() => setRenameModalOpen(true)} />
                                 <div className="rootSpacer">
                                     {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
                                 </div>
@@ -481,15 +563,34 @@ function Idea() {
                     </section>
 
                 <section className="right">
-                    <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} />
-                    <Help showHelp={showHelp} onClose={() => setShowHelp(false)} />
+                    <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} />
+                    <Help showHelp={showHelp} onClose={() => setShowHelp(false)} onSeenChange={() => setHasNewHelp(firstUnseenHelpScreen(auth.currentUser?.uid) >= 0)} />
                     <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>
             </section>
             {isMobileUI && <MobileMindMap />}
             <SyncStatusBanner />
+            {!isMobileUI && <UndoToast />}
             <MindMap onClose={() => setShowMindMap(false)} visible={showMindMap} />
             <RenameModal />
+            <MoveModal />
+            {!isMobileUI && (
+                <>
+                    <SearchModal
+                        open={showSearch}
+                        onClose={() => setShowSearch(false)}
+                        onPick={pickSearchResult}
+                        commands={[
+                            { label: 'New idea', hint: 'N', run: openCreate },
+                            ...(rootId !== 1 ? [{ label: 'Go to the top level', run: () => navigateToId(1) }] : []),
+                            { label: 'Toggle mind map', run: () => setShowMindMap(prev => !prev) },
+                            { label: 'Keyboard shortcuts', hint: '?', run: () => setShowShortcuts(true) },
+                        ]}
+                    />
+                    <ShortcutsModal open={showShortcuts} onClose={() => setShowShortcuts(false)} />
+                </>
+            )}
+            {!isMobileUI && <CardMenu />}
             <LinkChangeModal />
             <DeleteConfirmModal />
             <ChecklistModal />

@@ -7,7 +7,7 @@ const HelpMenuSix: React.FC = () => {
             <p className="subHeader">Put your most important ideas first</p>
 
             <div className="help-priority-demo">
-                {/* Left: ribbon cycling */}
+                {/* Left: the ribbon growing through the levels */}
                 <div className="help-rib-demo">
                     <div className="help-rib-card">
                         <div className="help-rib-anim" />
@@ -47,14 +47,14 @@ const HelpMenuSix: React.FC = () => {
                     <span className="help-chip-lbl help-chip-lbl--p3">P3</span>
                 </div>
                 <p className="details">
-                    Each idea has a <strong>priority ribbon</strong> in its top-left corner. Click it to cycle: <strong>Low (yellow)</strong>, <strong>Medium (orange)</strong>, <strong>High (red)</strong>, then none. The ribbon grows taller with each click to show urgency at a glance.
+                    Each idea has a <strong>priority ribbon</strong> in its top-left corner. Click it, or open the card's <strong>⋯</strong> menu, and pick <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong> or none. The ribbon grows taller with each level to show urgency at a glance.
                 </p>
                 <div className="helpGridIcon helpSort">
                     <img src="/images/sort.svg" className="helpSortImg" alt="" />
                     Sort
                 </div>
                 <p className="details">
-                    The <strong>Sort</strong> button below Back reorders your ideas by priority: P1 first, then P2, P3, then unprioritized. Toggle it to sort by <strong>Age</strong> (creation order) instead.
+                    The <strong>Sort</strong> button below Back reorders your ideas by priority: P1 first, then P2, P3, then unprioritized. Toggle it to sort by <strong>Oldest</strong> (creation order, oldest first) instead.
                 </p>
             </section>
         </section>

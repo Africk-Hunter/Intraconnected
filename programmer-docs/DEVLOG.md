@@ -4,6 +4,19 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Desktop UX Pass — 2026-10-11
+From the desktop audit (`programmer-docs/artifacts/desktop-ux-audit.html`); the findings the owner dropped (grabbing cursor, mind map wheel-zoom) were not changed. Typecheck, lint, 275 tests and build pass; **not clicked through in a browser yet.**
+- Bugs: the link dialog now starts from the card's current link (an untouched Change used to save an empty one and erase it); link cards no longer light up as drop targets; Create is disabled for a blank idea; cards react to Enter (they were focusable but dead).
+- Modals: `AnimatedOverlay` takes `onEscape` and gives the modal Esc, a Tab trap and focus return (`useModalFocusTrap`, now one trap at a time and latest-handler safe). Rename and Link save on Enter, Create on Ctrl/Cmd+Enter, Delete focuses Cancel. Checkout/Upgrade keep calling the hook directly.
+- Undo: `idea/undoStack.ts` + `UndoToast` + Ctrl/Cmd+Z. `useIdeaActions()` is the one place for delete, move, priority, open, rename, link, copy: drag, the card menu and the keyboard all call it. A card with nothing under it deletes at once with Undo; a branch asks first, with the count.
+- Cards: the hover-only link/pencil/copy icons are replaced by a visible ⋯ (`.card-more`) and right-click, both opening `CardMenu` (Open, Rename, Link, Copy, Move to…, Priority chips, Delete). The priority ribbon opens the same menu instead of cycling. New `MoveModal` (searchable destination tree) is the non-drag way to move.
+- Keyboard: `utilities/useDesktopShortcuts.ts` (arrows between cards, F2, Del, M, N, Backspace up, ? list, Ctrl/Cmd+K), `ShortcutsModal`, focus rings on cards and buttons, tooltips show on keyboard focus (400 ms hover delay, was 1 s) with the shortcut in the label. Mind map: −/+/Center buttons, keys (+ − 0, arrows, Esc).
+- Search: `idea/search.ts` (pure, tested) + `SearchModal` + a sidebar button; picking a result goes to its level and focuses the card.
+- Address: each level is `/main?idea=<id>` (`idea/ideaUrl.ts`); `navigateToId(id, { history })` pushes, Back/Forward come back through a popstate listener, a stale id falls back to the top. The depth dots are replaced by a breadcrumb above the title (`Breadcrumb.tsx`); `DepthIndicator.tsx` and `depth.scss` deleted.
+- Smaller: sort button reads Priority/Oldest with a tooltip; the title bar is a focusable button with a Rename tooltip below the top level.
+- Help (desktop) rewritten for all of the above: screen 2 covers N, Back, the ⋯ menu / right-click / Move to… and delete with Undo; priority screen says pick from a menu and Sort reads Oldest; mind map screen mentions the buttons and Esc; new `HelpMenuSeven` (Keyboard & Search) before "Where you are"; onboarding step 3 mentions right-click and ⋯. Arrow keys no longer double-fire (Help pages and card focus) while the help panel is open.
+- New tests: `undoStack`, `ideaUrl`, `search`.
+
 ## Native Apps (Android + iOS) — Capacitor Shell, 2026-10-10
 - Capacitor 8 added (`capacitor.config.ts`, `android/`, `ios/`, `npm run cap:sync`/`cap:android`). Wraps the built web app; no `server.url`. Not released: plan, live progress ticks and device checklist are in the native-app-plan artifact (`programmer-docs/artifacts/native-app-plan.html`). Verified on the Android emulator so far: sign-in, stay signed in after a force-quit, Back button, main features, offline edit.
 - `utilities/platform.ts` is the one place that asks "is this the app?" (`isNative`, `apiUrl`, `openExternal`, `haptic`, `hideSplash`, `onAppResume`). All 12 `/.netlify/functions/*` calls go through `apiUrl()` (a relative URL does not work inside the app); CORS allows `capacitor://localhost` and `https://localhost` (`cors.test.ts`). **That CORS change must be deployed before account deletion, feature requests and billing work in the app.**

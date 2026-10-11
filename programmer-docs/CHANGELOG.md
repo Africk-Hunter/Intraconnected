@@ -1,6 +1,6 @@
-## V 1.09 | Easier on Your Phone
-image: /images/ArrowBack.svg
-Using Intraconnected on your phone is now simpler. Your phone's Back button now takes you up one level instead of closing the app. Tap ⋯ on any idea, or press and hold it, to edit, move, prioritize, or delete it, and undo if you slip.
+## V 1.10 | Faster on Desktop, Easier on Phone
+image: /images/Plus.svg
+Desktop gets a right-click menu on every idea, keyboard shortcuts, search, undo, and a breadcrumb that keeps your place. On your phone, Back now goes up one level, and every idea has a quick-actions menu with undo.
 
 ## V 1.07 | Note Ideas
 image: /images/Pen.svg

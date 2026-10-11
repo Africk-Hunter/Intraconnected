@@ -254,10 +254,10 @@ Add `confirmModal` to `.modal` for modals without a textarea (fixes `min-height`
 `currentNameChangeId === -1` = renaming root. `setNewIdeaSwitch` must be called inside the Firebase `.then()` after `updateIdeaName`.
 
 ### Delete Flow
-Dragging to trash sets `pendingDeleteId` → `DeleteConfirmModal` → `recursivelyDeleteChildren(id)` (localStorage + Firestore) → filter `ideas` state.
+Desktop: trash drop, the card menu and Del all go through `useIdeaActions().requestDelete(id)` (`utilities/idea/useIdeaActions.ts`). An idea with nothing under it is deleted at once; a branch sets `pendingDeleteId` → `DeleteConfirmModal` (shows the count) → `deleteIdea(id)`. `deleteIdea` calls `recursivelyDeleteChildren`, pushes an entry on `idea/undoStack.ts` (`restoreIdeas(removed)`) and refreshes; `UndoToast` and Ctrl/Cmd+Z undo it. Moves go through `moveIdea` and are undoable the same way. Mobile has its own toast (`MobileUndoToast`).
 
 ### Priority System
-`priority?: 1 | 2 | 3` (1=High/red, 2=Medium/orange, 3=Low/yellow). Corner ribbon in top-left of each node. One `updateIdeaPriority(id, priority)` call does both halves (see Critical Gotchas above).
+`priority?: 1 | 2 | 3` (1=High/red, 2=Medium/orange, 3=Low/yellow). Corner ribbon in top-left of each node; on desktop it opens the card menu, whose Priority chips call `useIdeaActions().setPriority`. One `updateIdeaPriority(id, priority)` call does both halves (see Critical Gotchas above).
 
 Sorting via `sortIdeas(ideas, mode)` in `parsing.tsx`: `'priority'` (P1→P2→P3→none) or `'recent'` (ascending `id`). Persisted to localStorage as `idea_sort_mode`.
 
@@ -265,6 +265,14 @@ Sorting via `sortIdeas(ideas, mode)` in `parsing.tsx`: `'priority'` (P1→P2→P
 Disabled on mobile. Drop targets: `trash`, `last-idea`, `idea-{id}`. Checklist nodes cannot receive drops. `PointerSensor` requires 10px movement.
 
 Custom collision detection: `trash`/`last-idea` use rect intersection; idea nodes use pointer-proximity with 10px buffer. Custom drag modifier constrains left/right/top edges but leaves bottom open (so trash is reachable). Do not restore `restrictToWindowEdges`.
+
+### Desktop interaction layer
+- **Cards** (`IdeaNode.tsx`) carry `data-idea-id`, open `CardMenu` on right-click or the ⋯ button (`setCardMenu` in context), and react to Enter. There are no hover-only icons any more: anything a card can do is in the menu, a shortcut, or both.
+- **`useIdeaActions()`** is the single path for delete, move, priority, open, rename, link edit, copy and undo; drag, `CardMenu`, `MoveModal` and `useDesktopShortcuts` all call it. Add new card actions there, not in components.
+- **Keyboard** (`utilities/useDesktopShortcuts.ts`, mounted in `Idea.tsx`): arrows, F2, Del, M, N, Backspace, ?, Ctrl/Cmd+K. It ignores typing targets, an open `.overlay`/`.card-menu`, and Ctrl/Cmd/Alt combos; the mind map has its own keys. Keep `ShortcutsModal` in step when adding one.
+- **Modals**: pass `onEscape` to `AnimatedOverlay` to get Esc, a Tab trap and focus return (one trap at a time, via `useModalFocusTrap`). Omit it only for forced modals (`SessionEndedModal`). An inline editor that uses Esc must `preventDefault()` it so the modal doesn't also close.
+- **Address**: the level you are in is `/main?idea=<id>` (`idea/ideaUrl.ts`). `navigateToId(id, { history: 'push' | 'replace' | 'none' })` writes it; `Idea.tsx` reads it on load (only if the idea still exists) and on `popstate`. Mobile ignores it.
+- **Breadcrumb** (`Breadcrumb.tsx`, built from `rootIdStack`) replaced the depth dots. **Search** is `idea/search.ts` (pure) + `SearchModal`. **Move to…** is `MoveModal`.
 
 ### Desktop Navbar
 Left sidebar: **Create** (green, top) → **Home** (burnt-orange; grays out + disabled when `rootId === 1`, triggers fade transition via `setNodesVisible`) → **Mind Map toggle** (pink, `MindMapBlack.svg`; wraps in `.nav-btn-group` which gets `--active` class). Right sidebar: log out, help, patch notes.

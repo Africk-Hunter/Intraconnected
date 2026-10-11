@@ -1,10 +1,19 @@
 import React, { createContext, useContext, useRef, useState } from "react";
 import type { IdeaType } from "../utilities/types";
 import { buildAncestorPath, fetchFullIdeaList } from "../utilities/idea/helpers";
+import { writeIdeaToUrl } from "../utilities/idea/ideaUrl";
+import { recordVisit } from "../utilities/idea/recentVisits";
 // Type-only: this context wraps every route, so a value import here would
 // pull Firebase into the marketing pages' initial bundle.
 import type { BillingPlan } from "../utilities/billing/billingCache";
 import type { CheckoutPlan } from "../utilities/billing/billing";
+
+// Where the card menu is open: which idea, and the screen position it opened at.
+export interface CardMenuState {
+    id: number;
+    x: number;
+    y: number;
+}
 
 interface IdeaContextType {
     ideas: IdeaType[];
@@ -16,7 +25,9 @@ interface IdeaContextType {
     rootIdStack: React.RefObject<number[]>;
     nodesVisible: boolean;
     setNodesVisible: (visible: boolean) => void;
-    navigateToId: (id: number) => void;
+    // history: 'push' adds a browser history entry (the default), 'replace' swaps the current one,
+    // 'none' is for when the browser itself just moved (Back/Forward) and the address is already right.
+    navigateToId: (id: number, options?: { history?: 'push' | 'replace' | 'none' }) => void;
     creationModalOpen: boolean;
     setCreationModalOpen: (open: boolean) => void;
     renameModalOpen: boolean;
@@ -59,6 +70,10 @@ interface IdeaContextType {
     setCheckoutPlan: (plan: CheckoutPlan | null) => void;
     celebrationPlan: CheckoutPlan | null;
     setCelebrationPlan: (plan: CheckoutPlan | null) => void;
+    cardMenu: CardMenuState | null;
+    setCardMenu: (menu: CardMenuState | null) => void;
+    moveIdeaId: number | null;
+    setMoveIdeaId: (id: number | null) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -92,10 +107,13 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [upgradeModalReason, setUpgradeModalReason] = useState<'limit' | null>(null);
     const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
     const [celebrationPlan, setCelebrationPlan] = useState<CheckoutPlan | null>(null);
+    const [cardMenu, setCardMenu] = useState<CardMenuState | null>(null);
+    const [moveIdeaId, setMoveIdeaId] = useState<number | null>(null);
 
     const rootIdStack = useRef<number[]>([]);
 
-    function navigateToId(targetId: number) {
+    function navigateToId(targetId: number, options?: { history?: 'push' | 'replace' | 'none' }) {
+        recordVisit(targetId);
         const navToken = ++navGeneration.current;
         navTimeouts.current.forEach(clearTimeout);
         setNodesVisible(false);
@@ -105,6 +123,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const allIdeas: IdeaType[] = fetchFullIdeaList();
                 rootIdStack.current = buildAncestorPath(targetId, allIdeas);
                 setRootId(targetId);
+                const historyMode = options?.history ?? 'push';
+                if (historyMode !== 'none') writeIdeaToUrl(targetId, historyMode);
                 const targetIdea = allIdeas.find(i => i.id === targetId);
                 setRootName(targetIdea ? targetIdea.content : "Ideas");
             }, 65),
@@ -169,6 +189,10 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setCheckoutPlan,
                 celebrationPlan,
                 setCelebrationPlan,
+                cardMenu,
+                setCardMenu,
+                moveIdeaId,
+                setMoveIdeaId,
             }}>
             {children}
         </IdeaContext.Provider>

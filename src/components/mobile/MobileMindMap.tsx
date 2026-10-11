@@ -956,9 +956,9 @@ function MobileMindMap() {
         closeSheet();
     }
 
-    function showToast(message: string, onUndo?: () => void) {
+    function showToast(message: string, onUndo?: () => void, action?: UndoToastState['action']) {
         toastKeyRef.current += 1;
-        setToast({ key: toastKeyRef.current, message, onUndo });
+        setToast({ key: toastKeyRef.current, message, onUndo, action });
     }
 
     function shortLabel(idea: IdeaType | undefined): string {
@@ -1019,7 +1019,7 @@ function MobileMindMap() {
             if (!list.some(i => i.id === nodeId)) return;
             updateIdeaParentId(nodeId, list.some(i => i.id === oldParentId) ? oldParentId : 1);
             setNewIdeaSwitch(prev => !prev);
-        });
+        }, { label: 'Take me there', run: () => setCurrentId(targetId) });
     }
 
     function openActions(nodeId: number) {

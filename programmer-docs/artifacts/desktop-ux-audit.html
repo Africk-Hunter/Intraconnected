@@ -1,0 +1,557 @@
+<!-- Artifact: https://claude.ai/artifact/4sNVMmM2KKocZheaeHTnNN | Generated: 2026-10-11 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desktop UX Audit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* Layout: sticky legend left, single reading column right. Neobrutal look taken from src/styles/variables.scss. */
+:root {
+  --bg: #E9F9E5;
+  --surface: #FFFFFF;
+  --surface-2: #D3DED1;
+  --fg: #111111;
+  --muted: #3f4a3c;
+  --line: #111111;
+  --shadow: #111111;
+  --leaf: #41BC28;
+  --sky: #00A9D8;
+  --link: #E8E879;
+  --danger: #C80000;
+  --orange: #EC8A13;
+  --indigo: #2049C5;
+  --on-accent: #111111;
+  --code-bg: #F3F7F1;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Courier Prime", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12170f; --surface: #1b2218; --surface-2: #26301f; --fg: #eef5ea; --muted: #b3c2ad;
+    --line: #eef5ea; --shadow: #000000; --leaf: #4fcf34; --sky: #29c0ea; --link: #e8e879;
+    --danger: #ff6b6b; --orange: #f4a03a; --indigo: #7e98ff; --code-bg: #10150d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12170f; --surface: #1b2218; --surface-2: #26301f; --fg: #eef5ea; --muted: #b3c2ad;
+  --line: #eef5ea; --shadow: #000000; --leaf: #4fcf34; --sky: #29c0ea; --link: #e8e879;
+  --danger: #ff6b6b; --orange: #f4a03a; --indigo: #7e98ff; --code-bg: #10150d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.55; margin: 0; }
+a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
+code { font-family: var(--font-mono); font-size: .9em; background: var(--code-bg); border: 1.5px solid var(--line); border-radius: 4px; padding: .05em .35em; overflow-wrap: anywhere; }
+
+.shell { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 2.5rem; max-width: 78rem; margin: 0 auto; padding-inline: 1rem; padding-block: 1.5rem 4rem; }
+.legend { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); align-self: start; max-height: calc(100vh - 2rem); overflow-y: auto; background: var(--surface); border: 3px solid var(--line); border-radius: 8px; box-shadow: 4px 4px 0 1px var(--shadow); padding: 1rem; }
+.legend h2 { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 .6rem; }
+.legend input { width: 100%; font: inherit; padding: .45rem .6rem; border: 2px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); margin-bottom: .6rem; }
+.legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .15rem; }
+.legend a { display: block; padding: .35rem .6rem; border-radius: 6px; text-decoration: none; font-size: .92rem; border: 2px solid transparent; }
+.legend a:hover { background: var(--surface-2); }
+.legend a[aria-current="true"] { background: var(--leaf); color: var(--on-accent); border-color: var(--line); font-weight: 700; }
+.legend .grp { font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: .6rem .6rem .1rem; }
+.legend-tools { display: flex; gap: .5rem; margin-top: .8rem; }
+.btn { font: inherit; font-weight: 700; font-size: .85rem; color: var(--on-accent); background: var(--link); border: 3px solid var(--line); border-radius: 8px; box-shadow: 3px 3px 0 1px var(--shadow); padding: .35rem .7rem; cursor: pointer; }
+.btn:hover { box-shadow: 0 0 0 1px var(--shadow); translate: 3px 3px; }
+.menu-btn { display: none; }
+
+main { min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: .4rem .9rem; font-size: .85rem; color: var(--muted); margin-bottom: .5rem; }
+.bar b { color: var(--fg); }
+h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.05; margin: .2rem 0 1rem; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+h2.sec { font-size: 1.6rem; margin: 3rem 0 .4rem; padding-top: .3rem; scroll-margin-top: 1rem; font-weight: 800; text-wrap: balance; }
+h3 { margin: 0; font-size: 1.15rem; text-wrap: balance; }
+p { margin: .6rem 0; max-width: 70ch; }
+.lead { font-size: 1.15rem; max-width: 62ch; }
+.sub { color: var(--muted); max-width: 70ch; margin-top: 0; }
+
+.topgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; margin: 1.2rem 0 0; }
+.panel { background: var(--surface); border: 3px solid var(--line); border-radius: 8px; box-shadow: 4px 4px 0 1px var(--shadow); padding: 1rem 1.1rem; min-width: 0; }
+.panel h3 { margin-bottom: .3rem; }
+.panel ol, .panel ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+.panel li { margin: .25rem 0; }
+
+.finding { background: var(--surface); border: 3px solid var(--line); border-radius: 8px; box-shadow: 4px 4px 0 1px var(--shadow); margin: 1.1rem 0; min-width: 0; scroll-margin-top: 1rem; }
+.finding > header { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .7rem; padding: .8rem 1rem; border-bottom: 3px solid var(--line); background: var(--surface-2); }
+.finding > header h3 { flex: 1 1 14rem; min-width: 0; }
+.id { font-family: var(--font-mono); font-weight: 700; font-size: .85rem; border: 2px solid var(--line); border-radius: 4px; padding: .05rem .4rem; background: var(--bg); }
+.pill { font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; border: 2px solid var(--line); border-radius: 999px; padding: .1rem .6rem; color: var(--on-accent); white-space: nowrap; }
+.pill.bug { background: var(--danger); color: #fff; }
+.pill.gap { background: var(--sky); }
+.pill.polish { background: var(--link); }
+.pill.effort { background: var(--bg); color: var(--fg); }
+.rows { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); }
+.rows > dt, .rows > dd { margin: 0; padding: .7rem 1rem; border-top: 2px solid var(--surface-2); }
+.rows > dt:first-of-type, .rows > dd:first-of-type { border-top: 0; }
+.rows > dt { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding-top: .85rem; }
+.rows > dd p { margin: 0 0 .5rem; max-width: 66ch; }
+.rows > dd p:last-child { margin-bottom: 0; }
+
+.codewrap { position: relative; margin: .5rem 0; }
+pre { margin: 0; overflow-x: auto; background: var(--code-bg); border: 2px solid var(--line); border-radius: 6px; padding: .8rem 1rem; font-family: var(--font-mono); font-size: .88rem; line-height: 1.45; }
+.copy { position: absolute; top: .4rem; right: .4rem; font: inherit; font-size: .72rem; font-weight: 700; background: var(--link); color: var(--on-accent); border: 2px solid var(--line); border-radius: 6px; padding: .1rem .5rem; cursor: pointer; }
+
+.tablewrap { overflow-x: auto; border: 3px solid var(--line); border-radius: 8px; box-shadow: 4px 4px 0 1px var(--shadow); background: var(--surface); margin: 1rem 0; }
+table { border-collapse: collapse; width: 100%; min-width: 40rem; font-size: .93rem; }
+th, td { text-align: left; padding: .6rem .8rem; border-bottom: 2px solid var(--surface-2); vertical-align: top; }
+th { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; background: var(--surface-2); border-bottom: 3px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 700; }
+
+.keep { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: .8rem; margin-top: 1rem; }
+.keep > div { background: var(--surface); border: 2px solid var(--line); border-radius: 8px; padding: .7rem .9rem; }
+.keep b { display: block; margin-bottom: .15rem; }
+.note { border: 3px dashed var(--line); border-radius: 8px; padding: .8rem 1rem; background: var(--surface); margin: 1rem 0; max-width: 72ch; }
+.refs { padding-left: 1.2rem; }
+.refs li { margin: .35rem 0; }
+.top { position: fixed; right: 1rem; bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem); display: none; }
+.top.show { display: block; }
+
+@media (max-width: 62rem) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .menu-btn { display: inline-block; position: sticky; top: calc(env(safe-area-inset-top, 0px) + .5rem); z-index: 5; justify-self: start; }
+  .legend { display: none; position: fixed; z-index: 6; inset: calc(env(safe-area-inset-top, 0px) + 3.2rem) 1rem auto 1rem; max-height: 70vh; }
+  .legend.open { display: block; }
+  .rows { grid-template-columns: minmax(0, 1fr); }
+  .rows > dt { border-top: 2px solid var(--surface-2); padding-bottom: 0; }
+  .rows > dd { border-top: 0; padding-top: .2rem; }
+  .rows > dt:first-of-type { border-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn:hover { translate: none; } }
+@media print { .legend, .menu-btn, .top, .copy { display: none !important; } .shell { display: block; } .finding, .panel { box-shadow: none; break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div style="padding:.5rem 1rem;background:#E8E879;color:#111;border-bottom:3px solid #111;font-family:sans-serif;font-size:.9rem"><a href="https://claude.ai/artifact/4sNVMmM2KKocZheaeHTnNN" style="color:#111;font-weight:700">Open live artifact →</a></div>
+
+<div class="shell">
+  <button class="btn menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="legend">Sections</button>
+
+  <nav class="legend" id="legend" aria-label="Sections">
+    <h2>Key</h2>
+    <input id="legendSearch" type="search" placeholder="Filter sections" aria-label="Filter sections">
+    <ul id="legendList">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#method">How this was checked</a></li>
+      <li class="grp">Fix first</li>
+      <li><a href="#f1">F1 Link modal can erase a link</a></li>
+      <li><a href="#f2">F2 Drop on a link card does nothing</a></li>
+      <li><a href="#f3">F3 Blank ideas can be created</a></li>
+      <li><a href="#f4">F4 Cards focus but do nothing</a></li>
+      <li class="grp">Remove or replace</li>
+      <li><a href="#r1">R1 Confirm on every delete</a></li>
+      <li><a href="#r2">R2 Hover-only card icons</a></li>
+      <li><a href="#r3">R3 Depth dots</a></li>
+      <li><a href="#r4">R4 Priority click-cycle</a></li>
+      <li><a href="#r5">R5 Sort and title labels</a></li>
+      <li class="grp">Add</li>
+      <li><a href="#a1">A1 Undo for delete and move</a></li>
+      <li><a href="#a2">A2 Keyboard navigation</a></li>
+      <li><a href="#a3">A3 Context menu and ⋯</a></li>
+      <li><a href="#a4">A4 Move to… picker</a></li>
+      <li><a href="#a5">A5 Esc, Enter, focus in modals</a></li>
+      <li><a href="#a6">A6 One URL per level</a></li>
+      <li><a href="#a7">A7 Search and quick jump</a></li>
+      <li><a href="#a8">A8 Mind map controls</a></li>
+      <li><a href="#a9">A9 Tooltips on focus</a></li>
+      <li class="grp">Wrap-up</li>
+      <li><a href="#keep">Keep as is</a></li>
+      <li><a href="#roadmap">Suggested order</a></li>
+      <li><a href="#unverified">Needs a visual check</a></li>
+      <li><a href="#references">References</a></li>
+    </ul>
+    <div class="legend-tools"><button class="btn" id="themeBtn" type="button">Theme</button></div>
+  </nav>
+
+  <main id="top-of-page">
+    <div class="bar"><span><b>Intraconnected</b></span><span>Generated 2026-10-11</span><span>Branch <b>main</b> @ <code>861249a</code></span><span>Desktop only</span></div>
+    <h1>Desktop UX Audit</h1>
+
+    <section id="overview" aria-labelledby="ov-h">
+      <h2 class="sec" id="ov-h" style="margin-top:.5rem">Overview</h2>
+      <p class="lead">The desktop app works well with a mouse and has almost nothing for the keyboard, no undo, and one URL for every level. Four small bugs should be fixed before anything else; one of them can silently erase a card's link.</p>
+      <p class="sub">Findings come from reading the desktop code against the principles in the saved <em>Desktop UX Principles</em> doc. Nothing was run in a browser, so appearance claims are marked for a visual check.</p>
+
+      <div class="topgrid">
+        <div class="panel">
+          <h3>Biggest gaps users will feel</h3>
+          <ol>
+            <li>Deleting or moving a branch cannot be undone (<a href="#a1">A1</a>).</li>
+            <li>No keyboard path to open, rename, move or delete a card (<a href="#a2">A2</a>, <a href="#a3">A3</a>).</li>
+            <li>Refresh or Back loses your place; the URL never changes (<a href="#a6">A6</a>).</li>
+            <li>Esc and Enter do nothing in most modals (<a href="#a5">A5</a>).</li>
+            <li>Dragging is the only way to move a card (<a href="#a4">A4</a>).</li>
+          </ol>
+        </div>
+        <div class="panel">
+          <h3>Bugs and misleading UI</h3>
+          <ul>
+            <li><a href="#f1">Link modal can erase a link</a></li>
+            <li><a href="#f2">Drop on a link card looks valid, does nothing</a></li>
+            <li><a href="#f3">Blank idea can be created</a></li>
+            <li><a href="#f4">Cards take focus but ignore Enter</a></li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Count</h3>
+          <ul>
+            <li><b>4</b> fix first</li>
+            <li><b>5</b> remove or replace</li>
+            <li><b>9</b> add</li>
+            <li><b>10</b> behaviors worth keeping</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="method" aria-labelledby="m-h">
+      <h2 class="sec" id="m-h">How this was checked</h2>
+      <p>Read: <code>pages/Idea.tsx</code>, <code>components/IdeaNode.tsx</code>, <code>Navbar.tsx</code>, <code>MindMap.tsx</code>, <code>TooltipButton.tsx</code>, <code>DepthIndicator.tsx</code>, <code>Trash.tsx</code>, <code>LastIdea.tsx</code>, <code>AnimatedOverlay.tsx</code>, the Rename, Link, Delete, Creation, Checklist and Onboarding modals, <code>Help.tsx</code>, <code>IdeaContext.tsx</code>, <code>useModalFocusTrap.ts</code>, plus the idea store and creation helpers.</p>
+      <p>Effort labels (S, M, L) are my estimates, not measured. S is under an hour, M is a day or less, L is several days.</p>
+      <p>Each finding has a tag: <span class="pill bug">Bug</span> behavior that is wrong, <span class="pill gap">Gap</span> something users expect and don't get, <span class="pill polish">Polish</span> wording or small affordance.</p>
+    </section>
+
+    <h2 class="sec" id="fix-first">Fix first</h2>
+    <p class="sub">Small changes that remove surprises. None needs a design decision.</p>
+
+    <article class="finding" id="f1">
+      <header><span class="id">F1</span><h3>Link modal can erase a card's link</h3><span class="pill bug">Bug</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Opening "Change link" shows the current link, and pressing Change without editing keeps it.</p></dd>
+        <dt>Today</dt><dd><p><code>LinkChangeModal.tsx:22-25</code> shows <code>currentLink</code> as the textarea's initial text but never copies it into <code>modalContent</code>. The Change button saves <code>cleanLink(modalContent)</code>. Rename and Creation both reset <code>modalContent</code> to <code>''</code> on close, so an untouched Change saves an empty link.</p><p>Cancelling after typing also leaves that text in <code>modalContent</code> for the next card.</p></dd>
+        <dt>Change</dt><dd><p>Seed <code>modalContent</code> from <code>currentLink</code> when the modal opens, as <code>RenameModal.tsx:19-30</code> already does for names. Submit on Enter, close on Esc.</p>
+          <div class="codewrap"><button class="copy" type="button">Copy</button><pre>useEffect(() =&gt; {
+  if (linkChangeModalOpen) setModalContent(currentLink);
+}, [linkChangeModalOpen, currentLink]);</pre></div></dd>
+        <dt>Caveat</dt><dd><p>Found by reading the code, not reproduced. Worth a 30-second manual test: add a link, reopen it, press Change.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="f2">
+      <header><span class="id">F2</span><h3>Dropping on a link card looks valid but does nothing</h3><span class="pill bug">Bug</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>A target that can't accept the drop doesn't light up. Principle: show a "not allowed" state over invalid targets.</p></dd>
+        <dt>Today</dt><dd><p>Link cards stay droppable (<code>IdeaNode.tsx:379-382</code> only disables checklists, notes and mobile), so they get the dashed border and 1.15 scale. On release <code>Idea.tsx:310-312</code> returns early with no message. The card snaps back and nothing explains why.</p></dd>
+        <dt>Change</dt><dd><p>Add <code>link !== ''</code> to the <code>disabled</code> condition so the card never highlights. Optionally show a short "Links can't hold ideas" hint when a card hovers one.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="f3">
+      <header><span class="id">F3</span><h3>A blank idea can be created</h3><span class="pill bug">Bug</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Today</dt><dd><p>Checklist and Note disable Create until the title has text (<code>CreationModal.tsx:442, 451</code>). The Idea tab's Create is always enabled, and <code>handleCreateIdea</code> (line 213) and <code>handleIdeaCreation</code> (<code>creation.ts:12</code>) don't check. An empty card counts toward the 50-idea free limit.</p></dd>
+        <dt>Change</dt><dd><p>Disable Create while <code>modalContent.trim()</code> is empty, same as the other two tabs. Add Ctrl/Cmd+Enter to create (see <a href="#a5">A5</a>).</p></dd>
+      </dl>
+    </article>
+
+
+    <article class="finding" id="f4">
+      <header><span class="id">F4</span><h3>Cards take keyboard focus but do nothing</h3><span class="pill bug">Bug</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Today</dt><dd><p>dnd-kit's <code>attributes</code> (spread at <code>IdeaNode.tsx:763, 833, 902</code>) give each card <code>role="button"</code> and <code>tabIndex=0</code>. Only <code>PointerSensor</code> is registered (<code>Idea.tsx:431</code>) and there is no key handler, so Tab lands on a card and Enter or Space do nothing. Keyboard users get a focus stop with no action.</p></dd>
+        <dt>Change</dt><dd><p>At minimum, Enter on a focused card opens it (same as click). The full model is in <a href="#a2">A2</a>.</p></dd>
+      </dl>
+    </article>
+
+    <h2 class="sec" id="remove">Remove or replace</h2>
+    <p class="sub">Things that exist today and work against what users expect.</p>
+
+    <article class="finding" id="r1">
+      <header><span class="id">R1</span><h3>Replace the confirm dialog on every delete</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Delete happens at once and an Undo toast appears. Confirmation dialogs are for actions that can't be undone, because people click through them out of habit (<a href="https://www.nngroup.com/articles/confirmation-dialog/" target="_blank" rel="noopener noreferrer">NN/g</a>). Material toasts stay 4–10 seconds (<a href="https://material.io/components/snackbars" target="_blank" rel="noopener noreferrer">Material</a>).</p></dd>
+        <dt>Today</dt><dd><p>Drop on trash → <code>DeleteConfirmModal</code> → delete. The text is "Delete 'name' and all of its children?" with no count, and the Delete button isn't focused, so Enter does nothing. The delete returns the removed ideas (<code>ideaStore.ts:86</code>) but <code>DeleteConfirmModal.tsx:12</code> throws them away.</p></dd>
+        <dt>Change</dt><dd><p>Match mobile: a card with no children deletes immediately with an Undo toast. A branch keeps one confirmation that states the count ("Delete 14 ideas"), then also offers Undo. Undo calls <code>restoreIdeas(removed)</code>, which already exists.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="r2">
+      <header><span class="id">R2</span><h3>Replace the hover-only copy, rename and link icons</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Row actions behind a visible ⋯ button and a right-click menu. Actions that appear only on hover are missed, and unusable for keyboard, eye-tracking and pointer-assist users.</p></dd>
+        <dt>Today</dt><dd><p>Three small icons (link, pencil, copy) fade in at 50% opacity on card hover (<code>idea.scss:693</code>). They are the only way to rename, edit a link or copy. There is no right-click menu (no <code>onContextMenu</code> anywhere in <code>src</code>).</p></dd>
+        <dt>Change</dt><dd><p>One visible ⋯ button per card plus right-click, opening the menu in <a href="#a3">A3</a>. Keep the hover icons only if they are also reachable by keyboard. Mobile already uses ⋯ on every row, so this also closes a cross-platform gap.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="r3">
+      <header><span class="id">R3</span><h3>Replace the depth dots with a breadcrumb trail</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>A readable path (Ideas › Project › Task) where each part is a link and the current level is plain text. Hierarchy, not history (<a href="https://www.nngroup.com/articles/breadcrumbs/" target="_blank" rel="noopener noreferrer">NN/g</a>). Workflowy shortens long paths to "···" (<a href="https://beta.workflowy.com/help/navigate-around" target="_blank" rel="noopener noreferrer">help</a>).</p></dd>
+        <dt>Today</dt><dd><p><code>DepthIndicator.tsx</code> renders an empty box per level in the right sidebar. The name shows only on hover (font-size animates from 0, <code>depth.scss</code>). Each is a <code>div</code> with <code>onClick</code>: not focusable, no label for screen readers. Back, Home and the dots are three separate "go up" controls.</p></dd>
+        <dt>Change</dt><dd><p>A breadcrumb row above the title, built from <code>rootIdStack</code>, with real buttons. Keep Back and Home. Delete the dots and the Help screen that explains them.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="r4">
+      <header><span class="id">R4</span><h3>Replace the one-click priority cycle with a picker</h3><span class="pill polish">Polish</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Today</dt><dd><p>Clicking the ribbon cycles none → Low → Medium → High → none (<code>IdeaNode.tsx:672</code>). Reaching High takes three clicks, with a re-sort pending until the pointer leaves the card. The ribbon is a narrow target, and its tooltip is the native <code>title</code>.</p></dd>
+        <dt>Change</dt><dd><p>Put Priority in the ⋯ menu (None / High / Medium / Low), as mobile does. Keep the ribbon as a display, optionally clickable to open the same menu.</p></dd>
+      </dl>
+    </article>
+
+
+    <article class="finding" id="r5">
+      <header><span class="id">R5</span><h3>Clarify the Sort button and the clickable title</h3><span class="pill polish">Polish</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Today</dt><dd><p>The Sort button reads "Priority" or "Age", which is the current state, not the action, and "Age" doesn't say which end comes first (the code sorts oldest first). The title bar is styled like a button and opens Rename when clicked (<code>Idea.tsx:454</code>), with no pencil or tooltip, and does nothing at the top level.</p></dd>
+        <dt>Change</dt><dd><p>Label the sort "Sort: Priority" / "Sort: Oldest first". Add a pencil to the title below the top level, or make it editable in place, and bind F2 (<a href="#a2">A2</a>).</p></dd>
+      </dl>
+    </article>
+
+    <h2 class="sec" id="add">Add</h2>
+    <p class="sub">Behaviors users bring from other apps that the desktop app doesn't have yet.</p>
+
+    <article class="finding" id="a1">
+      <header><span class="id">A1</span><h3>Undo for delete and move (Ctrl/Cmd+Z and a toast)</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Ctrl/Cmd+Z reverses the last structural change. Every outliner and file manager works this way.</p></dd>
+        <dt>Today</dt><dd><p>A drop on a card or the parent zone calls <code>updateIdeaParentId</code> (<code>Idea.tsx:306-316</code>) with no record of where it came from. Delete is covered by <a href="#r1">R1</a>. Undo exists only on mobile (<code>MobileUndoToast</code>).</p></dd>
+        <dt>Change</dt><dd><p>A small undo stack of the last action (delete → <code>restoreIdeas</code>, move → previous parent) shown as a toast for about 5 seconds and bound to Ctrl/Cmd+Z when focus isn't in a text field. Reuse the mobile toast logic.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a2">
+      <header><span class="id">A2</span><h3>Keyboard navigation and shortcuts</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Arrow keys move between cards, Enter opens, F2 renames, Del deletes, and mind-map tools use Tab for a child and Enter for a sibling (MindNode, Miro, MindMup). A <code>?</code> key lists the shortcuts.</p></dd>
+        <dt>Today</dt><dd><p>No global key handling on the main screen. The only listeners are in the Help panel (arrows, Esc) and inside text fields. <code>Help.tsx:90</code> already guards against firing while typing, so that pattern exists.</p></dd>
+        <dt>Change</dt><dd>
+          <div class="tablewrap" style="margin:.4rem 0;box-shadow:none"><table style="min-width:28rem"><thead><tr><th>Key</th><th>Action</th></tr></thead><tbody>
+            <tr><td class="n">← → ↑ ↓</td><td>Move focus between cards</td></tr>
+            <tr><td class="n">Enter</td><td>Open the focused card (or its link)</td></tr>
+            <tr><td class="n">Backspace / Alt+←</td><td>Go up one level</td></tr>
+            <tr><td class="n">F2</td><td>Rename</td></tr>
+            <tr><td class="n">Del</td><td>Delete (with Undo, <a href="#r1">R1</a>)</td></tr>
+            <tr><td class="n">N</td><td>New idea</td></tr>
+            <tr><td class="n">Ctrl/Cmd+Z</td><td>Undo (<a href="#a1">A1</a>)</td></tr>
+            <tr><td class="n">Ctrl/Cmd+K</td><td>Search (<a href="#a7">A7</a>)</td></tr>
+            <tr><td class="n">?</td><td>Show this list</td></tr>
+          </tbody></table></div>
+          <p>Single-key shortcuts (N, ?, Backspace) must not fire while a text field is focused, and nothing should override browser shortcuts. Show each key in its button's tooltip and in the ⋯ menu.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a3">
+      <header><span class="id">A3</span><h3>Right-click menu and ⋯ button on every card</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Right-click on an item shows what you can do with it. In GitLab's research, users right-clicked first when looking for rename and delete (<a href="https://gitlab.com/gitlab-org/gitlab/-/issues/197775" target="_blank" rel="noopener noreferrer">issue</a>). Menus should also be reachable without right-click, stay under 10–12 items and show shortcuts (<a href="https://www.nngroup.com/articles/contextual-menus/" target="_blank" rel="noopener noreferrer">NN/g</a>).</p></dd>
+        <dt>Change</dt><dd><p>Same items as mobile's actions sheet, with keys beside them: Open · Rename (F2) · Edit link · Priority ▸ · Copy · Move to… (<a href="#a4">A4</a>) · Delete (Del). Checklists add "Open full view"; notes omit Open and Edit link.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a4">
+      <header><span class="id">A4</span><h3>"Move to…" picker as an alternative to dragging</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Workflowy has a Move-to picker (Alt+Ctrl+M). WCAG 2.5.7 requires every drag to have a click or keyboard alternative (<a href="https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html" target="_blank" rel="noopener noreferrer">WCAG</a>).</p></dd>
+        <dt>Today</dt><dd><p>Moving a card is drag-only on desktop. Cards sit in a grid, so a long drag to a far branch needs the "move to parent" zone and several steps. Mobile has <code>MobileMoveSheet</code>.</p></dd>
+        <dt>Change</dt><dd><p>A modal with a searchable tree of valid targets (no links, checklists, notes, or the card's own subtree), opened from the ⋯ menu or a shortcut. Drag stays for quick moves.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a5">
+      <header><span class="id">A5</span><h3>Esc, Enter and focus handling in every modal</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Esc closes the dialog, Enter confirms single-line ones, focus stays inside, and returns to the button that opened it (<a href="https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/" target="_blank" rel="noopener noreferrer">ARIA dialog pattern</a>).</p></dd>
+        <dt>Today</dt><dd>
+          <div class="tablewrap" style="margin:.4rem 0;box-shadow:none"><table style="min-width:34rem"><thead><tr><th>Modal</th><th>Esc</th><th>Enter</th><th>Click outside</th></tr></thead><tbody>
+            <tr><td>Rename</td><td>No</td><td>New line (textarea)</td><td>No</td></tr>
+            <tr><td>Change link</td><td>No</td><td>New line</td><td>No</td></tr>
+            <tr><td>Delete confirm</td><td>No</td><td>No (nothing focused)</td><td>No</td></tr>
+            <tr><td>Create idea</td><td>No</td><td>New line; Checklist item field adds item</td><td>No</td></tr>
+            <tr><td>Profile</td><td>No</td><td>n/a</td><td>No</td></tr>
+            <tr><td>Checklist view</td><td>No</td><td>Item fields only</td><td>Closes</td></tr>
+            <tr><td>Checkout, Upgrade</td><td>Closes (focus trap)</td><td>n/a</td><td>Closes</td></tr>
+          </tbody></table></div>
+          <p>The focus trap exists only for Checkout and Upgrade. <code>useModalFocusTrap.ts:6-9</code> notes it was kept out of <code>AnimatedOverlay</code> to avoid changing every modal at once.</p></dd>
+        <dt>Change</dt><dd><p>Move the trap, Esc and focus return into <code>AnimatedOverlay</code> and test each modal once. Then per modal: Rename and Link submit on Enter (Shift+Enter for a new line); Create submits on Ctrl/Cmd+Enter; Delete focuses the safe button first. Esc acts as Cancel everywhere; in Create it can ask first if text was typed.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a6">
+      <header><span class="id">A6</span><h3>One URL per level: Back, refresh and deep links</h3><span class="pill gap">Gap</span><span class="pill effort">M</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>The address bar reflects where you are. Browser Back goes up a level, refresh keeps your place, and a copied link opens the same level. Rule of thumb: if someone would bookmark it, it belongs in the URL.</p></dd>
+        <dt>Today</dt><dd><p>Every level is <code>/main</code>. <code>rootId</code> is plain state starting at 1 (<code>IdeaContext.tsx:69</code>) and <code>navigateToId</code> only changes state (lines 98-115). So Back leaves the app or goes to the sign-in page, and refresh returns to the top level.</p></dd>
+        <dt>Change</dt><dd><p>Make the level part of the route (<code>/main?idea=ID</code> or <code>/main/:id</code>). <code>navigateToId</code> pushes an entry; a popstate listener sets <code>rootId</code>; on load read the id and fall back to 1 if it no longer exists. Keep one source of truth (the URL).</p></dd>
+        <dt>Not needed</dt><dd><p>A "leave site?" prompt for unsynced edits. The sync outbox is stored in <code>localStorage</code>, so closing the tab doesn't lose queued changes.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a7">
+      <header><span class="id">A7</span><h3>Search and quick jump (Ctrl/Cmd+K)</h3><span class="pill gap">Gap</span><span class="pill effort">L</span></header>
+      <dl class="rows">
+        <dt>Users expect</dt><dd><p>Workflowy, Notion, Linear and Slack all open a search box on Ctrl/Cmd+K. Many people don't know the key exists, so also give it a visible entry point (<a href="https://www.chameleon.io/patterns/cmd-k-search" target="_blank" rel="noopener noreferrer">Chameleon</a>).</p></dd>
+        <dt>Today</dt><dd><p>I found no idea search on desktop. The mind map is the only way to see ideas outside the current level, and it is read-only.</p></dd>
+        <dt>Change</dt><dd><p>A palette that searches idea text across all levels (<code>fetchFullIdeaList()</code> is already a local read) and jumps to the match's parent, highlighting the card. Later it can also list commands (New idea, Toggle mind map). Largest item here, but it matters most as the tree grows past the free 50.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a8">
+      <header><span class="id">A8</span><h3>Mind map controls: zoom buttons, fit, Esc to close</h3><span class="pill gap">Gap</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Today</dt><dd><p><code>MindMap.tsx</code> has no buttons, no Ctrl +/−/0, no "fit to screen", and no key to close it (toggle button only). After panning or zooming away there is no quick way back to the current idea.</p></dd>
+        <dt>Change</dt><dd><p>Small − / + / "fit" / "center on current" buttons, Ctrl +, −, 0, Esc to close, and arrow keys to pan. Re-centering already exists internally (the effect at line 184), so "center" is mostly wiring.</p></dd>
+      </dl>
+    </article>
+
+    <article class="finding" id="a9">
+      <header><span class="id">A9</span><h3>Tooltips on keyboard focus, with shortcuts</h3><span class="pill polish">Polish</span><span class="pill effort">S</span></header>
+      <dl class="rows">
+        <dt>Today</dt><dd><p><code>TooltipButton.tsx:23</code> shows the tooltip only after a 1000 ms hover and never on focus. Card icons use the native <code>title</code> attribute instead, so the two look and time differently.</p></dd>
+        <dt>Change</dt><dd><p>Show on focus as well as hover, shorten the delay for the five nav buttons, and append the shortcut ("Create new idea (N)"). Use the same component for card icons. No authoritative standard exists for the delay, so pick one by feel.</p></dd>
+      </dl>
+    </article>
+
+    <section id="keep" aria-labelledby="k-h">
+      <h2 class="sec" id="k-h">Keep as is</h2>
+      <p class="sub">Already matches what users expect. Don't redesign these while fixing the rest.</p>
+      <div class="keep">
+        <div><b>Click a card to go deeper</b>Matches Workflowy's zoom. Single-click opening fits a tree, so skip file-manager style click-to-select.</div>
+        <div><b>Back and Home buttons</b>Home grays out at the top level. Keep both once the breadcrumb replaces the dots.</div>
+        <div><b>Drag to nest, with feedback</b>Dashed border and scale on the target, 10 px activation distance, rectangle hit-test on trash and the parent zone.</div>
+        <div><b>Parent drop zone while dragging</b>"Move up a level" appears only during a drag. Good, and keep it alongside the new picker.</div>
+        <div><b>Sort mode is remembered</b>Stored per browser (<code>idea_sort_mode</code>).</div>
+        <div><b>Inline editing in notes and checklists</b>Enter saves and Esc cancels in checklist items and link fields. Extend the same to the rename modal.</div>
+        <div><b>Enter adds a checklist item</b>On both the card and the creation modal.</div>
+        <div><b>Help closes with Esc, arrows paginate</b>And it ignores keys while typing. Reuse that guard.</div>
+        <div><b>Safe link opening</b><code>openIdeaLink</code> only opens http(s) in a new tab; <code>cleanLink</code> rejects other schemes.</div>
+        <div><b>Offline-safe sync</b>Edits queue in <code>localStorage</code>, which is why no unload warning is needed.</div>
+      </div>
+    </section>
+
+    <section id="roadmap" aria-labelledby="rm-h">
+      <h2 class="sec" id="rm-h">Suggested order</h2>
+      <p class="sub">Cheap fixes first, then the pieces others depend on. Effort is my estimate.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>#</th><th>Do</th><th>Effort</th><th>Why now</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td><a href="#f1">F1</a> link modal, <a href="#f2">F2</a> link drop, <a href="#f3">F3</a> blank idea, <a href="#f4">F4</a> Enter on a card</td><td class="n">S each</td><td>Removes surprises, no decisions needed</td></tr>
+          <tr><td class="n">2</td><td><a href="#a5">A5</a> modal Esc, Enter, focus</td><td class="n">M</td><td>Touches every flow; do it before adding new modals</td></tr>
+          <tr><td class="n">3</td><td><a href="#a1">A1</a> Undo with <a href="#r1">R1</a> delete without confirm</td><td class="n">M</td><td>Biggest trust gain; code for restore already exists</td></tr>
+          <tr><td class="n">4</td><td><a href="#a3">A3</a> menu with <a href="#r2">R2</a>, <a href="#r4">R4</a>, then <a href="#a4">A4</a> Move to…</td><td class="n">M + M</td><td>Gives rename, link, priority, move and delete one home, mirroring mobile</td></tr>
+          <tr><td class="n">5</td><td><a href="#a2">A2</a> keyboard map, <a href="#a9">A9</a> tooltip hints</td><td class="n">M + S</td><td>Needs the menu actions to exist first</td></tr>
+          <tr><td class="n">6</td><td><a href="#a6">A6</a> URL per level, <a href="#r3">R3</a> breadcrumb</td><td class="n">M + M</td><td>Makes Back and refresh behave; the breadcrumb builds on the same path data</td></tr>
+          <tr><td class="n">7</td><td><a href="#a8">A8</a> mind map controls</td><td class="n">S</td><td>Independent; fix any time</td></tr>
+          <tr><td class="n">8</td><td><a href="#a7">A7</a> search / Ctrl+K, <a href="#r5">R5</a> labels</td><td class="n">L + S</td><td>Biggest build; most valuable once users pass 50 ideas</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="unverified" aria-labelledby="u-h">
+      <h2 class="sec" id="u-h">Needs a visual check</h2>
+      <p>Code reading can't settle these. Each is a quick look in the browser:</p>
+      <ul>
+        <li>Size of the hover icons and the priority ribbon against the 24×24 px minimum (<a href="https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html" target="_blank" rel="noopener noreferrer">WCAG 2.5.8</a>).</li>
+        <li>Visible focus ring on cards, nav buttons and modal controls. Only the tooltip highlight in <code>navbar.scss</code> sets one that I found.</li>
+        <li>Layout at 1366×768 and 1536×864, and at 200% browser zoom.</li>
+        <li>Whether the Rename textarea selects its text on open.</li>
+      </ul>
+      <div class="note">Not covered: mobile (separate UI), landing and pricing pages, checkout, Profile screens beyond Esc and focus handling, and the sync engine.</div>
+    </section>
+
+    <section id="references" aria-labelledby="rf-h">
+      <h2 class="sec" id="rf-h">References</h2>
+      <ul class="refs">
+        <li><a href="https://claude.ai/artifact/LfAr6jMV2uSnMiiq9UhCfk" target="_blank" rel="noopener noreferrer">Desktop UX Principles</a> (saved reference doc this audit is based on)</li>
+        <li><a href="https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html" target="_blank" rel="noopener noreferrer">WCAG 2.2, 2.5.7 Dragging Movements</a></li>
+        <li><a href="https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html" target="_blank" rel="noopener noreferrer">WCAG 2.2, 2.5.8 Target Size (Minimum)</a></li>
+        <li><a href="https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/" target="_blank" rel="noopener noreferrer">ARIA Authoring Practices, Modal Dialog</a></li>
+        <li><a href="https://www.nngroup.com/articles/confirmation-dialog/" target="_blank" rel="noopener noreferrer">NN/g, Confirmation Dialogs</a></li>
+        <li><a href="https://www.nngroup.com/articles/contextual-menus/" target="_blank" rel="noopener noreferrer">NN/g, Contextual Menus</a></li>
+        <li><a href="https://www.nngroup.com/articles/breadcrumbs/" target="_blank" rel="noopener noreferrer">NN/g, Breadcrumbs</a></li>
+        <li><a href="https://material.io/components/snackbars" target="_blank" rel="noopener noreferrer">Material, Snackbars</a></li>
+        <li><a href="https://workflowy.com/help/hotkeys" target="_blank" rel="noopener noreferrer">Workflowy, Hotkeys</a> · <a href="https://beta.workflowy.com/help/navigate-around" target="_blank" rel="noopener noreferrer">Navigate around</a></li>
+        <li><a href="https://mindnode.com/article/shortcuts-mac" target="_blank" rel="noopener noreferrer">MindNode shortcuts (Mac)</a> · <a href="https://blog.mindmup.com/tutorials/keyboard.html" target="_blank" rel="noopener noreferrer">MindMup shortcuts</a></li>
+        <li><a href="https://figma-signup.helpjuice.com/work-on-boards/pan-and-zoom-in-figjam" target="_blank" rel="noopener noreferrer">FigJam, Pan and zoom</a></li>
+        <li><a href="https://gitlab.com/gitlab-org/gitlab/-/issues/197775" target="_blank" rel="noopener noreferrer">GitLab issue #197775, right-click for rename/delete</a></li>
+        <li><a href="https://www.chameleon.io/patterns/cmd-k-search" target="_blank" rel="noopener noreferrer">Chameleon, Cmd+K pattern</a></li>
+      </ul>
+    </section>
+  </main>
+</div>
+<button class="btn top" id="toTop" type="button" aria-label="Back to top">↑ Top</button>
+
+<script>
+(function () {
+  var legend = document.getElementById('legend');
+  var links = Array.prototype.slice.call(document.querySelectorAll('#legendList a'));
+  var items = Array.prototype.slice.call(document.querySelectorAll('#legendList li'));
+
+  // Scroll-spy
+  var targets = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); });
+  function setCurrent(id) {
+    links.forEach(function (a) {
+      if (a.getAttribute('href') === '#' + id) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) setCurrent(e.target.id); });
+    }, { rootMargin: '-10% 0px -80% 0px' });
+    targets.forEach(function (t) { if (t) io.observe(t); });
+  }
+  setCurrent('overview');
+
+  // Filter
+  var search = document.getElementById('legendSearch');
+  search.addEventListener('input', function () {
+    var q = search.value.trim().toLowerCase();
+    items.forEach(function (li) {
+      var isGroup = li.classList.contains('grp');
+      li.hidden = q !== '' && (isGroup || li.textContent.toLowerCase().indexOf(q) === -1);
+    });
+  });
+
+  // Mobile menu
+  var menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', function () {
+    var open = legend.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  legend.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') { legend.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
+  });
+
+  // Theme toggle (remembered when storage works)
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('ux-audit-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('ux-audit-theme', next); } catch (e) {}
+  });
+
+  // Copy buttons
+  Array.prototype.forEach.call(document.querySelectorAll('.copy'), function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentNode.querySelector('pre');
+      var text = pre.innerText;
+      function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1200); }
+      function fallback() {
+        var r = document.createRange(); r.selectNodeContents(pre);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = 'Selected'; setTimeout(function () { btn.textContent = 'Copy'; }, 1200);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+      else fallback();
+    });
+  });
+
+  // Back to top
+  var toTop = document.getElementById('toTop');
+  window.addEventListener('scroll', function () { toTop.classList.toggle('show', window.scrollY > 600); }, { passive: true });
+  toTop.addEventListener('click', function () { window.scrollTo({ top: 0 }); });
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import { useState, useEffect, ReactNode, useRef } from 'react';
+import { useModalFocusTrap } from '../utilities/useModalFocusTrap';
 
 const lastPointer = { x: 0, y: 0 };
 if (typeof window !== 'undefined') {
@@ -12,15 +13,20 @@ interface Props {
     open: boolean;
     scrollable?: boolean;
     onClick?: () => void;
+    // Passing this makes the overlay a proper modal: Esc calls it, Tab stays inside,
+    // and focus goes back to whatever opened it. Omit for forced modals.
+    onEscape?: () => void;
     children: ReactNode;
     origin?: { x: number; y: number };
 }
 
-export default function AnimatedOverlay({ open, scrollable, onClick, children, origin }: Props) {
+export default function AnimatedOverlay({ open, scrollable, onClick, onEscape, children, origin }: Props) {
     const [show, setShow] = useState(open);
     const [closing, setClosing] = useState(false);
     const [animOrigin, setAnimOrigin] = useState({ x: 0, y: 0 });
     const everOpenedRef = useRef(open);
+    const sectionRef = useRef<HTMLElement>(null);
+    useModalFocusTrap(open && show && !!onEscape, sectionRef, onEscape ?? (() => {}));
 
     useEffect(() => {
         if (open) {
@@ -52,6 +58,7 @@ export default function AnimatedOverlay({ open, scrollable, onClick, children, o
 
     return (
         <section
+            ref={sectionRef}
             className={cls}
             onClick={onClick}
             style={{

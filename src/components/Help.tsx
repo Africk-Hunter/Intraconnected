@@ -1,13 +1,7 @@
 import React from 'react';
-import HelpMenuOne from './helpMenus/HelpMenuOne';
-import HelpMenuTwo from './helpMenus/HelpMenuTwo';
-import HelpMenuThree from './helpMenus/HelpMenuThree';
-import HelpMenuFour from './helpMenus/HelpMenuFour';
-import HelpMenuFive from './helpMenus/HelpMenuFive';
-import HelpMenuSix from './helpMenus/HelpMenuSix';
+import { auth } from '../firebaseConfig';
+import { HELP_SCREENS as SCREENS, firstUnseenHelpScreen, markHelpScreenSeen } from './helpScreens';
 
-// Display order — the file names predate the current order.
-const SCREENS: React.FC[] = [HelpMenuOne, HelpMenuTwo, HelpMenuThree, HelpMenuSix, HelpMenuFour, HelpMenuFive];
 const LAST = SCREENS.length - 1;
 
 // Matches the popup's fade-out in help.scss.
@@ -16,6 +10,8 @@ const CLOSE_TRANSITION_MS = 300;
 interface HelpProps {
     showHelp: boolean;
     onClose: () => void;
+    // Called after a page is marked viewed, so the Help button's dot can update.
+    onSeenChange: () => void;
 }
 
 function isTypingTarget(target: EventTarget | null) {
@@ -23,7 +19,7 @@ function isTypingTarget(target: EventTarget | null) {
         && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 }
 
-const Help: React.FC<HelpProps> = ({ showHelp, onClose }) => {
+const Help: React.FC<HelpProps> = ({ showHelp, onClose, onSeenChange }) => {
 
     const [screen, setScreen] = React.useState(0);
     const [direction, setDirection] = React.useState<'forward' | 'back'>('forward');
@@ -83,6 +79,22 @@ const Help: React.FC<HelpProps> = ({ showHelp, onClose }) => {
         return () => clearTimeout(timer);
     }, [showHelp, screen]);
 
+    // Opening Help lands on the first page added since the user last looked.
+    React.useEffect(() => {
+        if (!showHelp) return;
+        const unseen = firstUnseenHelpScreen(auth.currentUser?.uid);
+        if (unseen >= 0) goTo(unseen);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showHelp]);
+
+    // A page counts as read once it is on screen while Help is open.
+    React.useEffect(() => {
+        if (!showHelp) return;
+        markHelpScreenSeen(auth.currentUser?.uid, SCREENS[screen].id);
+        onSeenChange();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showHelp, screen]);
+
     React.useEffect(() => {
         if (!showHelp) return;
         function handleKeyDown(e: KeyboardEvent) {
@@ -95,7 +107,7 @@ const Help: React.FC<HelpProps> = ({ showHelp, onClose }) => {
         return () => document.removeEventListener('keydown', handleKeyDown);
     });
 
-    const Screen = SCREENS[screen];
+    const Screen = SCREENS[screen].Component;
 
     return (
         <section
