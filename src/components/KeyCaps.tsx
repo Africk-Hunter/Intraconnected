@@ -2,7 +2,32 @@
 // sizes, so arrows are drawn as one SVG, rotated, inside their own key cap.
 const ARROW_ROTATION: Record<string, number> = { '↑': 0, '→': 90, '↓': 180, '←': 270 };
 
+// "Ctrl+K" becomes two caps joined by a plus; "/ or ?" is two alternatives.
 function KeyCaps({ keys }: { keys: string }) {
+    if (keys.includes(' or ')) {
+        return (
+            <span className="keycaps-combo">
+                {keys.split(' or ').map((alt, i) => (
+                    <span key={alt} className="keycaps-combo">
+                        {i > 0 && <span className="keycaps-or">or</span>}
+                        <KeyCaps keys={alt} />
+                    </span>
+                ))}
+            </span>
+        );
+    }
+    if (/^[^\s+]+\+[^\s]+$/.test(keys)) {
+        return (
+            <span className="keycaps-combo">
+                {keys.split('+').map((k, i) => (
+                    <span key={k} className="keycaps-combo">
+                        {i > 0 && <span className="keycaps-plus" aria-hidden="true">+</span>}
+                        <kbd>{k}</kbd>
+                    </span>
+                ))}
+            </span>
+        );
+    }
     const tokens = keys.split(' ');
     if (!tokens.every((t) => t in ARROW_ROTATION)) return <kbd>{keys}</kbd>;
 

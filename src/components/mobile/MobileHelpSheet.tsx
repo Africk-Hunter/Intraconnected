@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 import MoreDotsIcon from './MoreDotsIcon';
+import HelpTreeAnim from '../helpMenus/HelpTreeAnim';
 
 interface Props {
     onClose: () => void;
@@ -15,63 +16,44 @@ const SCREENS: React.FC[] = [
         <>
             <div className="help-one-title-row">
                 <h2 className="mmobile-help-title">Welcome to<br />Intraconnected</h2>
-                <svg
-                    className="help-one-anim"
-                    viewBox="0 0 95 76"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                >
-                    <line x1="24" y1="37" x2="66" y2="18" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
-                    <line x1="24" y1="37" x2="66" y2="58" stroke="#111" strokeWidth="2.5" strokeLinecap="round" />
-
-                    <rect x="2" y="27" width="22" height="22" rx="4" fill="#A3703E" stroke="#111" strokeWidth="2" className="help-one-root-pulse" />
-                    <rect x="66" y="8" width="24" height="20" rx="4" fill="#41BC28" stroke="#111" strokeWidth="2" />
-                    <rect x="66" y="48" width="24" height="20" rx="4" fill="#00A9D8" stroke="#111" strokeWidth="2" />
-
-                    <circle r="4" fill="#41BC28" stroke="#111" strokeWidth="1.5">
-                        <animateMotion dur="1.6s" repeatCount="indefinite" begin="0s" path="M 24 37 L 66 18" />
-                    </circle>
-                    <circle r="4" fill="#00A9D8" stroke="#111" strokeWidth="1.5">
-                        <animateMotion dur="1.6s" repeatCount="indefinite" begin="0.8s" path="M 24 37 L 66 58" />
-                    </circle>
-                </svg>
+                <HelpTreeAnim />
             </div>
             <p className="mmobile-help-text">Intraconnected is like a visual canvas for your ideas.</p>
-            <p className="mmobile-help-text">Everything starts with a root idea. From there, build and explore related ideas as a growing network. Tap any node to dive in and make it the new root.</p>
-            <p className="mmobile-help-text">It's all about building connections that you can explore intuitively, not just keeping track of scattered notes.</p>
+            <p className="mmobile-help-text">Start with one big idea, then add smaller ideas inside it. Tap any idea to open it and add more inside.</p>
+            <p className="mmobile-help-text">Related ideas stay connected, so they're easy to find again.</p>
         </>
     ),
     () => (
         <>
             <h2 className="mmobile-help-title">How Do I Use This?</h2>
-            <p className="mmobile-help-subtext">The controls you'll use the most</p>
+            <p className="mmobile-help-subtext">The buttons you'll use most</p>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--root">Root</span>
-                <p className="mmobile-help-text">The large card at the top is the current root. All nodes below belong to it.</p>
+                <p className="mmobile-help-text">The big card at the top is the idea you're inside. The ideas below belong to it.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--add"><img src="/images/Plus.svg" className="mmobile-help-badge-icon" alt="+" /></span>
-                <p className="mmobile-help-text">Tap + at the bottom to create a new idea under the current root.</p>
+                <p className="mmobile-help-text">Tap + at the bottom to add a new idea.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--back"><img src="/images/ArrowBack.svg" className="mmobile-help-badge-icon" alt="Back" /></span>
-                <p className="mmobile-help-text">Tap Back at the bottom, or use your phone's back gesture, to go up one level.</p>
+                <p className="mmobile-help-text">Tap Back, or use your phone's back gesture, to go up one level.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--delete"><img src="/images/Trash.svg" className="mmobile-help-badge-icon" alt="Delete" /></span>
-                <p className="mmobile-help-text">Tap <span className="mmobile-help-inline-icon"><MoreDotsIcon size={16} /></span> on a node (or press and hold it) for Edit, Move, Priority and Delete. Deleted something by mistake? Tap <strong>Undo</strong>.</p>
+                <p className="mmobile-help-text">Tap <span className="mmobile-help-inline-icon"><MoreDotsIcon size={16} /></span> on an idea (or press and hold it) to edit, move, set a priority or delete. Made a mistake? Tap <strong>Undo</strong>.</p>
             </div>
         </>
     ),
     () => (
         <>
             <h2 className="mmobile-help-title">The Nitty Gritty</h2>
-            <p className="mmobile-help-subtext">Node colours tell you what's inside</p>
+            <p className="mmobile-help-subtext">What each color means</p>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--leaf">Leaf</span>
-                <p className="mmobile-help-text">Green nodes have no children yet. Tap to dive in and add some!</p>
+                <p className="mmobile-help-text">Green ideas have nothing inside them yet. Tap one to open it and start adding related ideas.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--parent">Parent</span>
-                <p className="mmobile-help-text">Blue nodes have related ideas inside. Tap to explore them.</p>
+                <p className="mmobile-help-text">Blue ideas already have other ideas inside them. Tap one to open it and see what's in there.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--link">Link</span>
-                <p className="mmobile-help-text">Yellow nodes link to external pages. They can't have child ideas.</p>
+                <p className="mmobile-help-text">Yellow ideas open a web page when you tap them. A link can't hold other ideas.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--checklist-node">
                     <span className="mmobile-checklist-inline-cb mmobile-checklist-inline-cb--checked" />
                 </span>
-                <p className="mmobile-help-text">Indigo nodes are checklists. Tap the count to open the items inline; once open, tap Full view to edit, reorder or link them.</p>
+                <p className="mmobile-help-text">Indigo cards are to-do lists. Tap one to see its items and tick them off, or tap Full view to edit them. A checklist can't hold other ideas.</p>
             </div>
         </>
     ),
@@ -86,16 +68,16 @@ const SCREENS: React.FC[] = [
             </div>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--p1">P1</span>
-                <p className="mmobile-help-text">Each idea has a <strong>priority ribbon</strong>. Tap it to cycle: <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong>, then none, or pick one directly from <span className="mmobile-help-inline-icon"><MoreDotsIcon size={16} /></span> or Edit. The ribbon height shows urgency at a glance.</p>
+                <p className="mmobile-help-text">Mark how important an idea is with its <strong>ribbon</strong>. Tap it to switch between <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong> and none. The more important, the longer the ribbon.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--sort"><img src="/images/sort.svg" className="mmobile-help-badge-icon" alt="Sort" /></span>
-                <p className="mmobile-help-text">Tap the <strong>Sort</strong> button in the idea count row to reorder by priority. Tap again to switch back to Age (creation) order.</p>
+                <p className="mmobile-help-text">Tap <strong>Sort</strong> to put the most important ideas first. Tap again to go back to oldest first.</p>
             </div>
         </>
     ),
     () => (
         <>
             <h2 className="mmobile-help-title">The Full Picture</h2>
-            <p className="mmobile-help-subtext">Jump anywhere in your tree instantly</p>
+            <p className="mmobile-help-subtext">See all your ideas at once</p>
             <div className="mmobile-help-vtree-demo">
                 <div className="mmobile-help-vtree-root">My Ideas</div>
                 <div className="mmobile-help-vtree-row">
@@ -114,7 +96,7 @@ const SCREENS: React.FC[] = [
             </div>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapBlack.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
-                <p className="mmobile-help-text">The <strong>Mind Map</strong> button opens a full tree of all your ideas. Tap any node to jump there, or use ▸ / ▾ to expand and collapse branches.</p>
+                <p className="mmobile-help-text">The <strong>Mind Map</strong> button shows all your ideas as a tree. Tap one to jump to it, or tap ▸ / ▾ to open and close branches.</p>
             </div>
         </>
     ),
@@ -128,9 +110,9 @@ const SCREENS: React.FC[] = [
                     <span className="mmobile-help-swipe-seg mmobile-help-swipe-seg--move"><img src="/images/Move.svg" alt="" /></span>
                     <span className="mmobile-help-swipe-seg mmobile-help-swipe-seg--delete"><img src="/images/Trash.svg" alt="" /></span>
                 </span>
-                <p className="mmobile-help-text">Swipe a node <strong>left</strong> for quick Edit, Move and Delete. To move by dragging, press and hold, then drag it onto another node.</p>
+                <p className="mmobile-help-text">Swipe an idea <strong>left</strong> for quick Edit, Move and Delete. To move it by dragging, press and hold, then drop it onto another idea.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--patchnotes"><img src="/images/PatchNotesIconSkinny.svg" className="mmobile-help-badge-icon" alt="Patch notes" /></span>
-                <p className="mmobile-help-text">Tap <strong>What's new</strong> at the top of this menu for a running log of new features and changes. Want to see a new feature? Recommend it from there!</p>
+                <p className="mmobile-help-text">Tap <strong>What's new</strong> at the top of this menu to see new features. Want a feature? Suggest it from there!</p>
             </div>
         </>
     )

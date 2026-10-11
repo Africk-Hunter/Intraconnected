@@ -1,0 +1,534 @@
+<!-- Artifact: https://claude.ai/artifact/58EzPrz6frain9ZKcBfRFH | Generated: 2026-10-11 -->
+<title>Intraconnected Positioning</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,800&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* Layout: sticky key on the left, one reading column on the right; neobrutal borders and hard shadows to match the app. */
+:root {
+  --bg: #E9F9E5;
+  --surface: #F6FDF3;
+  --ink: #111111;
+  --muted: #3E4B3C;
+  --line: #111111;
+  --sky: #00A9D8;
+  --leaf: #41BC28;
+  --link: #E8E879;
+  --pink: #DB44A4;
+  --danger-bg: #F3B8B8;
+  --code-bg: #DDEBD8;
+  --shadow: #111111;
+  --on-accent: #111111;
+  --font-display: 'DM Sans', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101A0F; --surface: #17241A; --ink: #EAF6E6; --muted: #A9BCA5; --line: #EAF6E6;
+    --sky: #2BB9E2; --leaf: #5BD141; --link: #E8E879; --pink: #E866B5; --danger-bg: #5A2A2A;
+    --code-bg: #0B130B; --shadow: #000000; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101A0F; --surface: #17241A; --ink: #EAF6E6; --muted: #A9BCA5; --line: #EAF6E6;
+  --sky: #2BB9E2; --leaf: #5BD141; --link: #E8E879; --pink: #E866B5; --danger-bg: #5A2A2A;
+  --code-bg: #0B130B; --shadow: #000000; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 0; }
+a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+
+.shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 40px; max-width: 1180px; margin-inline: auto; }
+.key { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100vh; overflow-y: auto; padding-block: 24px; display: flex; flex-direction: column; gap: 14px; }
+.key h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; margin: 0; color: var(--muted); }
+.key input { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border: 2px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
+.key nav { display: flex; flex-direction: column; gap: 4px; }
+.key nav a { text-decoration: none; padding: 6px 10px; border: 2px solid transparent; border-radius: 8px; font-size: 14px; font-weight: 500; }
+.key nav a:hover { border-color: var(--line); }
+.key nav a[aria-current="true"] { background: var(--leaf); color: var(--on-accent); border-color: var(--line); box-shadow: 3px 3px 0 var(--shadow); font-weight: 700; }
+.key nav a[hidden] { display: none; }
+.theme-btn, .menu-btn { font: inherit; font-size: 13px; font-weight: 700; padding: 6px 10px; border: 2px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); cursor: pointer; box-shadow: 3px 3px 0 var(--shadow); align-self: flex-start; }
+.menu-btn { display: none; }
+.key .collapsible { display: flex; flex-direction: column; gap: 14px; }
+
+main { padding-block: 40px 96px; min-width: 0; }
+header.top { border: 3px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: 6px 6px 0 var(--shadow); padding: 24px; margin-bottom: 40px; }
+header.top h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.05; margin: 0 0 10px; text-wrap: balance; }
+header.top p { margin: 0 0 14px; max-width: 62ch; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; font-family: var(--font-mono); font-size: 13px; }
+.meta span { border: 2px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--bg); }
+
+section { scroll-margin-top: 24px; margin-bottom: 56px; }
+h2.sec { font-family: var(--font-display); font-weight: 800; font-size: 1.75rem; line-height: 1.15; margin: 0 0 14px; text-wrap: balance; }
+h3 { font-size: 1.1rem; margin: 24px 0 8px; text-wrap: balance; }
+p, li { max-width: 68ch; }
+ul, ol { padding-left: 1.2rem; }
+li { margin-bottom: 4px; }
+code { font-family: var(--font-mono); font-size: .92em; background: var(--code-bg); padding: 1px 6px; border-radius: 5px; }
+
+.callout { border: 3px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--link); color: var(--on-accent); box-shadow: 4px 4px 0 var(--shadow); max-width: 68ch; }
+.callout p { margin: 0; }
+.callout.warn { background: var(--danger-bg); color: var(--ink); }
+.callout.statement { background: var(--leaf); font-size: 1.15rem; font-weight: 700; line-height: 1.4; }
+
+.table-wrap { overflow-x: auto; border: 3px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14.5px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.pill { display: inline-block; font-weight: 700; font-size: 12px; border: 2px solid var(--line); border-radius: 999px; padding: 0 8px; color: var(--on-accent); }
+.pill.good { background: var(--leaf); } .pill.mid { background: var(--link); } .pill.bad { background: var(--danger-bg); color: var(--ink); }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+.card { border: 3px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; box-shadow: 5px 5px 0 var(--shadow); min-width: 0; }
+.card h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.card p { margin: 0 0 8px; font-size: 14.5px; }
+.card .tag { display: block; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.card.pick { background: var(--leaf); color: var(--on-accent); }
+.card.pick .tag { color: var(--on-accent); }
+.cost { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.card.pick .cost { color: var(--on-accent); }
+
+.phases { display: flex; flex-direction: column; gap: 14px; }
+.phase { border: 3px solid var(--line); border-radius: 12px; background: var(--surface); padding: 14px 16px; display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 16px; }
+.phase .when { font-family: var(--font-mono); font-weight: 700; font-size: 14px; }
+.phase h3 { margin: 0 0 4px; }
+.phase ul { margin: 0; }
+.copy-line { font-family: var(--font-mono); background: var(--code-bg); border: 2px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; max-width: 68ch; position: relative; padding-right: 76px; }
+.copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; font-weight: 700; padding: 3px 8px; border: 2px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
+#top-btn { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; padding: 8px 12px; border: 3px solid var(--line); border-radius: 10px; background: var(--sky); color: var(--on-accent); box-shadow: 3px 3px 0 var(--shadow); cursor: pointer; }
+.refs li { margin-bottom: 8px; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .key { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); max-height: none; padding-block: 12px; border-bottom: 2px solid var(--line); flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .menu-btn { display: inline-block; }
+  .key .collapsible { display: none; width: 100%; }
+  .key.open .collapsible { display: flex; flex-direction: column; gap: 10px; }
+  .key > h2 { display: none; }
+  main { padding-block: 24px 96px; }
+  .phase { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media print { .key, #top-btn { display: none; } .shell { display: block; } }
+</style>
+
+<p style="margin:0;padding:8px 0;font-weight:700"><a href="https://claude.ai/artifact/58EzPrz6frain9ZKcBfRFH" target="_blank" rel="noopener noreferrer">Open live artifact →</a></p>
+<div class="shell">
+  <aside class="key" id="key" aria-label="Page key">
+    <h2>Key</h2>
+    <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="key-body">Sections</button>
+    <div class="collapsible" id="key-body">
+      <input id="filter" type="search" placeholder="Filter sections" aria-label="Filter sections">
+      <nav id="legend" aria-label="Sections">
+        <a href="#overview">Overview</a>
+        <a href="#standing">Where the product stands</a>
+        <a href="#statement">Positioning statement</a>
+        <a href="#audience">Who it is for</a>
+        <a href="#landscape">The landscape</a>
+        <a href="#differentiators">What sets it apart</a>
+        <a href="#map">The mind map's role</a>
+        <a href="#skip">What to skip</a>
+        <a href="#messaging">Messaging</a>
+        <a href="#plan">Preliminary marketing plan</a>
+        <a href="#measure">What to measure</a>
+        <a href="#risks">Risks</a>
+        <a href="#next">Open questions and next steps</a>
+        <a href="#references">References</a>
+      </nav>
+      <button class="theme-btn" id="theme-btn" type="button">Toggle theme</button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <h1>Intraconnected: positioning and first marketing plan</h1>
+      <p>How to describe the product so a stranger can tell why it exists, and a first pass at how to reach people. The marketing half is a starting point. Each channel gets its own deeper session later.</p>
+      <div class="meta"><span>Intraconnected</span><span>2026-10-11</span><span>branch main</span><span>commit 8cb0a6d</span></div>
+    </header>
+
+    <section id="overview">
+      <h2 class="sec">Overview</h2>
+      <p>Mind mapping is a crowded category, so "a mind-mapping app" is not a position. The product is strongest as a small, bright, playful tool for capturing a thought and growing it into a plan, in one tree, that you fully own.</p>
+      <ul>
+        <li><strong>Position:</strong> fast capture, one tree for ideas, notes and checklists, and no lock-in.</li>
+        <li><strong>Proof points you already have:</strong> offline editing with sync, full export, a one-time Lifetime price, and honest wording about encryption.</li>
+        <li><strong>The mind map's job:</strong> the whole-tree view that makes the product recognizable, upgraded with a priority lens and a recency lens so it does something search cannot.</li>
+        <li><strong>Marketing:</strong> pick one audience, get 10 to 20 real users, and let what they say shape the message before spending on reach.</li>
+      </ul>
+      <div class="callout"><p><strong>Short version:</strong> do not compete on features with Miro or Notion. Compete on feeling: quick to open, quick to write, easy to leave. Then find one group of people who think in hierarchies and show them.</p></div>
+    </section>
+
+    <section id="standing">
+      <h2 class="sec">Where the product stands</h2>
+      <p>This is the product as it exists after the desktop update, not a wish list.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>State</th><th>What it means for positioning</th></tr></thead>
+          <tbody>
+            <tr><td>Core experience</td><td><span class="pill good">Strong</span></td><td>Drill-down tree with ideas, notes, checklists, links and priorities. Simple to explain.</td></tr>
+            <tr><td>Desktop polish</td><td><span class="pill good">Strong</span></td><td>Search, right-click menu, shortcuts, undo, breadcrumb. Still needs a browser click-through before commit.</td></tr>
+            <tr><td>Mobile</td><td><span class="pill good">Good</span></td><td>Touch UI with a Back gesture, row actions, undo. Capture speed on a phone is a selling point.</td></tr>
+            <tr><td>Sync and offline</td><td><span class="pill good">Good</span></td><td>Offline-first with an outbox. A real answer to "what if I am on a train."</td></tr>
+            <tr><td>Data ownership</td><td><span class="pill good">Strong</span></td><td>Export to Markdown, OPML and JSON is never plan-gated. Import from several tools.</td></tr>
+            <tr><td>Billing</td><td><span class="pill mid">Built, not live</span></td><td>Live Stripe keys, webhook events and a test refund run are still open.</td></tr>
+            <tr><td>Native apps</td><td><span class="pill mid">Early</span></td><td>Android works on an emulator. iOS builds on Codemagic, untested. The app sells nothing yet.</td></tr>
+            <tr><td>Users and proof</td><td><span class="pill bad">None yet</span></td><td>No retention data and no testimonials. This is the biggest gap, and marketing cannot fix it.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="statement">
+      <h2 class="sec">Positioning statement</h2>
+      <div class="callout statement"><p>Intraconnected is the fun, colorful place to catch an idea and grow it into a plan. One tree holds your ideas, notes and checklists, it works offline, and you can take everything with you whenever you like.</p></div>
+      <h3>Shorter forms</h3>
+      <p>Pick the one that fits the space. Test them on real people before settling.</p>
+      <ul>
+        <li><strong>Tagline:</strong> Catch the idea. Grow the plan.</li>
+        <li><strong>One line:</strong> A bold, colorful mind map where ideas, notes and checklists live in one tree.</li>
+        <li><strong>Store subtitle:</strong> Ideas, notes and checklists in one tree.</li>
+      </ul>
+      <p>These taglines are drafts. Only the statement above comes straight from the product's strengths.</p>
+    </section>
+
+    <section id="audience">
+      <h2 class="sec">Who it is for</h2>
+      <p>You need one group to start with. A tool that is "for everyone" gets no word of mouth. Three candidates, with a lean toward the first.</p>
+      <div class="cards">
+        <article class="card pick">
+          <span class="tag">Lead with this</span>
+          <h3>Planners and project thinkers</h3>
+          <p>People who turn a loose idea into steps: side-project builders, freelancers, small-team leads. They use ideas, notes and checklists together, which is what the product is built for.</p>
+          <span class="cost">Fit: highest. Uses every feature.</span>
+        </article>
+        <article class="card">
+          <span class="tag">Second</span>
+          <h3>Writers and researchers</h3>
+          <p>People who outline, collect sources and restructure. They value export, links and a tree they can reorganize by dragging.</p>
+          <span class="cost">Fit: good. Needs strong import and Markdown export, which you have.</span>
+        </article>
+        <article class="card">
+          <span class="tag">Later</span>
+          <h3>Students</h3>
+          <p>Large, price-sensitive, and good for word of mouth. The 50-node free tier is tight for them, and the Lifetime price matters most here.</p>
+          <span class="cost">Fit: medium. Revisit after launch.</span>
+        </article>
+      </div>
+      <p style="margin-top:16px">Whichever you pick, write the landing page for one person in that group. You can widen it later; narrowing it later is harder.</p>
+    </section>
+
+    <section id="landscape">
+      <h2 class="sec">The landscape</h2>
+      <p>This is a rough, qualitative read of the neighbors, not research. Check each product's current plans and pricing before quoting anything publicly.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>What it is known for</th><th>Where Intraconnected can differ</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://workflowy.com" target="_blank" rel="noopener noreferrer">Workflowy</a></td><td>Infinite nested lists. The closest in spirit.</td><td>The same core idea with a far more colorful, visual interface, a real whole-tree map, checklists and notes as distinct types, and a one-time price. Your sharpest comparison: "Workflowy, but fun to look at."</td></tr>
+            <tr><td><a href="https://whimsical.com" target="_blank" rel="noopener noreferrer">Whimsical</a></td><td>Clean diagrams and mind maps, built for teams.</td><td>Personal and offline-first, with no collaboration overhead.</td></tr>
+            <tr><td><a href="https://miro.com" target="_blank" rel="noopener noreferrer">Miro</a></td><td>Giant shared canvas for workshops.</td><td>Fast and playful instead of a blank canvas. Do not compete on scale.</td></tr>
+            <tr><td><a href="https://obsidian.md" target="_blank" rel="noopener noreferrer">Obsidian</a></td><td>Local notes with links and plugins.</td><td>No setup and no plugins to manage, with a structure that is visual by default.</td></tr>
+            <tr><td><a href="https://www.notion.so" target="_blank" rel="noopener noreferrer">Notion</a></td><td>All-in-one workspace.</td><td>Much lighter. Opens instantly and does one job.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:12px">The pattern: the big tools are workspaces, and the small ones are lists. A tree you can also see as a map, in a tool that stays out of the way, is the gap.</p>
+    </section>
+
+    <section id="differentiators">
+      <h2 class="sec">What sets it apart</h2>
+      <p>Five claims, each backed by something that already exists in the product. Do not claim anything on this page that you cannot show.</p>
+      <div class="cards">
+        <article class="card">
+          <span class="tag">1 · Core story</span>
+          <h3>Ideas, notes and checklists in one tree</h3>
+          <p>A thought becomes notes, then steps, then ticked-off steps, without leaving the tree. Most tools do one of these well.</p>
+          <span class="cost">Proof: the three creation types and the tree.</span>
+        </article>
+        <article class="card">
+          <span class="tag">2 · Feel</span>
+          <h3>Fast capture</h3>
+          <p>The quickest way to get a thought down. Keyboard shortcuts on desktop, a one-tap add on the phone.</p>
+          <span class="cost">Proof today: shortcuts and mobile sheets. A quick-add shortcut and share-in from other apps would deepen it.</span>
+        </article>
+        <article class="card">
+          <span class="tag">3 · Trust</span>
+          <h3>Works offline, never locks you in</h3>
+          <p>Edits are saved on the device and sync later. Export to Markdown, OPML or JSON at any time, on every plan.</p>
+          <span class="cost">Proof: the sync outbox and the export tools.</span>
+        </article>
+        <article class="card">
+          <span class="tag">4 · Price</span>
+          <h3>Pay once if you want to</h3>
+          <p>An annual plan or a one-time Lifetime purchase. Subscription fatigue is real, and many competitors are subscription only.</p>
+          <span class="cost">Annual is $14.99 in the code. The Lifetime price comes from Stripe, so confirm it before quoting.</span>
+        </article>
+        <article class="card">
+          <span class="tag">5 · Privacy</span>
+          <h3>Encrypted on your device before it is stored</h3>
+          <p>Say exactly that. Do not say end-to-end, or "we cannot read your ideas": the email recovery option means the service technically could.</p>
+          <span class="cost">Rule: keep the wording in the privacy page and store listings.</span>
+        </article>
+      </div>
+      <h3>Ideas for later, in order of fit</h3>
+      <ul>
+        <li><strong>Review mode:</strong> a prompt that surfaces ideas you have neglected, so the map becomes something you revisit. Built on the recency lens below.</li>
+        <li><strong>Light sharing:</strong> a read-only link or an image of one branch. Sharing without collaboration infrastructure.</li>
+        <li><strong>AI help on your tree:</strong> suggest sub-ideas or summarize a branch. It costs money to run, so it would likely be a paid feature, and it needs its own privacy review because ideas are encrypted on the device.</li>
+      </ul>
+    </section>
+
+    <section id="map">
+      <h2 class="sec">The mind map's role</h2>
+      <p>The mind map decision artifact recommended <strong>Option B plus C</strong>: take the button out of the crowded sidebar, and give the map jobs that search cannot do. That fits this positioning.</p>
+      <ul>
+        <li><strong>It is the image of the product.</strong> The landing page animation already shows a map. Removing it from desktop would make the app look like any other outliner and disagree with your own marketing.</li>
+        <li><strong>It is the only whole-tree view.</strong> Search, the breadcrumb and Move to… cover lookup. Only the map shows the shape of everything.</li>
+        <li><strong>It is the base for review mode.</strong> A recency lens (tint by creation date) and a priority lens (dim all but High and Medium) answer "what have I neglected" and "what is urgent anywhere."</li>
+      </ul>
+      <h3>Order of work</h3>
+      <ol>
+        <li>Move the toggle out of the left sidebar. Add a shortcut such as <code>G</code> and a map icon in the breadcrumb, and update the help page and shortcuts list.</li>
+        <li>Add the priority lens and the recency lens. Both use data already on each idea.</li>
+        <li>Add drag to reparent only if you want the map to be an editor, and only after you see the lenses used.</li>
+        <li>Add image export when you work on sharing.</li>
+      </ol>
+      <div class="callout warn"><p><strong>Check first:</strong> the map's stylesheet was restored to its last committed version during the earlier attempt to remove it, so recent styling edits may be missing. Open the overlay in a browser before you commit.</p></div>
+    </section>
+
+    <section id="skip">
+      <h2 class="sec">What to skip</h2>
+      <p>Each of these puts you against a much larger product, or adds weight that works against "fast and fun."</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Skip</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Real-time collaboration</td><td>Large build, and it moves you toward Miro and Whimsical. Light read-only sharing covers most of the need.</td></tr>
+            <tr><td>Free-form canvas</td><td>The map would need hand-placed nodes and a new synced field. It is the classic mind-map tool, and it is where the big players already are.</td></tr>
+            <tr><td>Templates library</td><td>Content upkeep with little payoff before you have users.</td></tr>
+            <tr><td>Selling inside the native apps</td><td>Already decided: the apps sell nothing for now.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="messaging">
+      <h2 class="sec">Messaging</h2>
+      <h3>Principles</h3>
+      <ul>
+        <li>Lead with the feeling and the job: catch an idea, grow it into a plan.</li>
+        <li>Show the product in the first screen of the landing page: a real tree, a checklist ticking, the map opening.</li>
+        <li>Let the look carry the tone. The app's bright colors and bold outlines are part of the pitch, so use real screenshots and keep the copy light and a little cheeky. Avoid "calm", "minimal" and "zen".</li>
+        <li>Name what you are not: not a canvas, not a team workspace. That helps the right people recognize themselves.</li>
+        <li>Make the exit visible. "Export everything, any time" earns more trust than a feature list.</li>
+      </ul>
+      <h3>Phrases to use and avoid</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Use</th><th>Avoid</th></tr></thead>
+          <tbody>
+            <tr><td>Encrypted on your device before it is stored</td><td>End-to-end encrypted. Only you can read it. We cannot read your data.</td></tr>
+            <tr><td>Pay once, keep it (once the Lifetime price is confirmed)</td><td>Any price or discount that is not live in Stripe</td></tr>
+            <tr><td>Works offline and syncs when you are back</td><td>Claims about speed or scale you have not measured</td></tr>
+            <tr><td>Export to Markdown, OPML or JSON</td><td>"Unlimited" anything. The free plan is 50 nodes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>A first draft of the landing page opening</h3>
+      <div class="copy-line" id="draft-hero">Catch the idea. Grow the plan. Intraconnected keeps ideas, notes and checklists in one tree, works offline, and lets you take everything with you. Start free.<button class="copy" type="button">Copy</button></div>
+      <p style="margin-top:12px">This is a draft to react to, not final copy.</p>
+    </section>
+
+    <section id="plan">
+      <h2 class="sec">Preliminary marketing plan</h2>
+      <p>Sequenced so each phase teaches you something for the next. The order matters more than the exact dates, and none of this starts until the launch blockers are done.</p>
+      <div class="phases">
+        <div class="phase">
+          <div class="when">Phase 0<br>Before anything</div>
+          <div>
+            <h3>Get launch-ready</h3>
+            <ul>
+              <li>Click through the desktop update in a browser, then commit.</li>
+              <li>Finish the open items in the launch checklist: live Stripe keys, webhook events, a test refund run, and deploying the CORS change.</li>
+              <li>Rewrite the landing page for one audience, with the product visible on first screen.</li>
+              <li>Add basic privacy-respecting analytics so you can see where visitors drop off. Pick the tool later.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="when">Phase 1<br>Small and personal</div>
+          <div>
+            <h3>10 to 20 real users</h3>
+            <ul>
+              <li>Invite people from your own circle who match the lead audience.</li>
+              <li>Watch or ask about their first session. Where did they get stuck? What did they call it?</li>
+              <li>Collect a few honest quotes you may use, with permission.</li>
+              <li>Fix what repeats, then update the messaging using their words.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="when">Phase 2<br>Show it in public</div>
+          <div>
+            <h3>Content and communities</h3>
+            <ul>
+              <li>Short screen recordings: "capture to plan in 30 seconds," the map lenses, offline editing.</li>
+              <li>A few useful posts about thinking in trees, written for the lead audience, with the product as an example.</li>
+              <li>Join communities where your audience already talks about notes and planning, and take part before posting. Read each community's self-promotion rules first.</li>
+              <li>Publish an import guide for people leaving other tools, since you already import several formats.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="when">Phase 3<br>Launch day</div>
+          <div>
+            <h3>One focused launch</h3>
+            <ul>
+              <li>A <a href="https://www.producthunt.com" target="_blank" rel="noopener noreferrer">Product Hunt</a> launch and a <a href="https://news.ycombinator.com" target="_blank" rel="noopener noreferrer">Show HN</a> post, each with its own framing.</li>
+              <li>A launch offer for Lifetime buyers, if the pricing decision supports it.</li>
+              <li>Be present for the day to answer every comment. That is where most of the value is.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="when">Phase 4<br>Keep going</div>
+          <div>
+            <h3>Stores and referrals</h3>
+            <ul>
+              <li>Release the native apps with store listings that follow the encryption wording rules.</li>
+              <li>Add a simple referral or share loop only after retention looks healthy.</li>
+              <li>Revisit paid ads last, if at all. They are expensive before the message is proven.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <h3>Assets to prepare</h3>
+      <ul>
+        <li>A landing page rewrite and a short demo video.</li>
+        <li>Three or four clean screenshots for desktop and phone, in light and dark.</li>
+        <li>A one-page "why Intraconnected" for people comparing tools.</li>
+        <li>An email list from day one, so you do not depend on any one platform.</li>
+      </ul>
+    </section>
+
+    <section id="measure">
+      <h2 class="sec">What to measure</h2>
+      <p>Few numbers, chosen to tell you whether the position is working. Set targets after Phase 1, when you know what normal looks like.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Measure</th><th>Question it answers</th></tr></thead>
+          <tbody>
+            <tr><td>Visitors who start sign-up</td><td>Does the landing page make the promise clear?</td></tr>
+            <tr><td>New users who create their first 5 ideas</td><td>Do people get value in the first session?</td></tr>
+            <tr><td>Users who return in week 2</td><td>Is it a tool people come back to?</td></tr>
+            <tr><td>Free users who reach the 50-node limit</td><td>Is the cap the right size, and is the upgrade prompt fair?</td></tr>
+            <tr><td>Annual versus Lifetime split</td><td>Which price message lands?</td></tr>
+            <tr><td>Where new users say they heard of you</td><td>Which channel deserves more effort?</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="risks">
+      <h2 class="sec">Risks</h2>
+      <ul>
+        <li><strong>Hard to tell apart.</strong> Easy to slip back into "a mind-mapping app." Return to the statement above when writing any copy.</li>
+        <li><strong>The 50-node free cap.</strong> It may block people before they see the value. Watch how many reach it and how fast.</li>
+        <li><strong>Lifetime price versus ongoing costs.</strong> A one-time payment brings in cash once while hosting and any future AI features cost money every month. Decide with real cost numbers before you push Lifetime hard.</li>
+        <li><strong>Over-claiming on privacy.</strong> One careless phrase could undo trust. Keep to the approved wording everywhere, including store listings.</li>
+        <li><strong>Apps arriving later than the website.</strong> People on phones may find an Android or iOS app missing or unfinished. Be clear about what is available.</li>
+        <li><strong>Doing marketing before the product has proof.</strong> Without users or quotes, early campaigns teach little.</li>
+      </ul>
+    </section>
+
+    <section id="next">
+      <h2 class="sec">Open questions and next steps</h2>
+      <h3>Questions for you</h3>
+      <ol>
+        <li>Which audience first: planners and project thinkers, writers and researchers, or students?</li>
+        <li>What is the Lifetime price, and are you willing to promote it as the headline offer?</li>
+        <li>Do you want to build review mode, light sharing or AI help first, or hold all three until you have users?</li>
+        <li>Who are the first 10 to 20 people you can invite?</li>
+      </ol>
+      <h3>Next steps</h3>
+      <ol>
+        <li>Move the mind map button and add the two lenses.</li>
+        <li>Finish launch blockers from the checklist.</li>
+        <li>Rewrite the landing page for the chosen audience.</li>
+        <li>Run Phase 1, then come back to refine the messaging and pick the first channel to go deep on.</li>
+      </ol>
+    </section>
+
+    <section id="references">
+      <h2 class="sec">References</h2>
+      <p>Competitor links point to each product's own site. Plans and prices change, so check them before quoting.</p>
+      <ul class="refs">
+        <li><a href="https://workflowy.com" target="_blank" rel="noopener noreferrer">Workflowy</a></li>
+        <li><a href="https://whimsical.com" target="_blank" rel="noopener noreferrer">Whimsical</a></li>
+        <li><a href="https://miro.com" target="_blank" rel="noopener noreferrer">Miro</a></li>
+        <li><a href="https://obsidian.md" target="_blank" rel="noopener noreferrer">Obsidian</a></li>
+        <li><a href="https://www.notion.so" target="_blank" rel="noopener noreferrer">Notion</a></li>
+        <li><a href="https://www.producthunt.com" target="_blank" rel="noopener noreferrer">Product Hunt</a></li>
+        <li><a href="https://news.ycombinator.com" target="_blank" rel="noopener noreferrer">Hacker News</a></li>
+        <li>Project files: <code>CLAUDE.md</code>, <code>shared/pricing.ts</code>, <code>programmer-docs/artifacts/desktop-mind-map-options.html</code>, <code>programmer-docs/artifacts/launch-checklist.html</code>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+<button id="top-btn" type="button" aria-label="Back to top">Top</button>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('pos-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  document.getElementById('theme-btn').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('pos-theme', next); } catch (e) {}
+  });
+
+  var key = document.getElementById('key'), menuBtn = document.getElementById('menu-btn');
+  menuBtn.addEventListener('click', function () {
+    var open = key.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', String(open));
+  });
+
+  var links = Array.prototype.slice.call(document.querySelectorAll('#legend a'));
+  document.getElementById('filter').addEventListener('input', function (e) {
+    var q = e.target.value.toLowerCase();
+    links.forEach(function (a) { a.hidden = q && a.textContent.toLowerCase().indexOf(q) === -1; });
+  });
+  links.forEach(function (a) { a.addEventListener('click', function () { key.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }); });
+
+  var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) {
+      if (en.isIntersecting) {
+        links.forEach(function (a) { a.removeAttribute('aria-current'); });
+        var a = document.querySelector('#legend a[href="#' + en.target.id + '"]');
+        if (a) a.setAttribute('aria-current', 'true');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(function (s) { if (s) io.observe(s); });
+
+  document.querySelectorAll('.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var box = btn.parentNode;
+      var text = Array.prototype.map.call(box.childNodes, function (n) { return n === btn ? '' : n.textContent; }).join('').trim();
+      function done() { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
+      function fallback() {
+        var r = document.createRange(); r.selectNodeContents(box);
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        btn.textContent = 'Selected';
+      }
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+
+  document.getElementById('top-btn').addEventListener('click', function () { window.scrollTo({ top: 0 }); });
+})();
+</script>

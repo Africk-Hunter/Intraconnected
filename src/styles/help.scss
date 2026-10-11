@@ -243,14 +243,15 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 }
 
-.help-one-anim {
-    width: 5.5rem;
-    height: 4.5rem;
+.help-tree {
+    width: 6rem;
+    height: 5rem;
     flex-shrink: 0;
+    overflow: visible;
 
     @media (max-width: $mobile) {
-        width: 3.75rem;
-        height: 3rem;
+        width: 4.5rem;
+        height: 3.75rem;
     }
 
     @media (min-width: $large-desktop) {
@@ -259,21 +260,127 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 }
 
-.help-one-root-pulse {
-    animation: help-one-root-pulse 2.4s ease-in-out infinite;
-    transform-box: fill-box;
-    transform-origin: center;
-}
+// One 8s loop on a single clock (% of the loop): root pops → first branches
+// draw and their ideas pop → second branches draw and theirs pop → hold →
+// fade and restart. Without the media query the finished tree is shown.
+$help-tree-loop: 8s;
+$help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-@keyframes help-one-root-pulse {
-
-    0%,
-    100% {
-        transform: scale(1);
+@media (prefers-reduced-motion: no-preference) {
+    .help-tree-scene {
+        animation: help-tree-scene $help-tree-loop linear infinite;
     }
 
-    50% {
-        transform: scale(1.1);
+    .help-tree-node {
+        transform-box: fill-box;
+        transform-origin: center;
+    }
+
+    .help-tree-link {
+        stroke-dasharray: 1 2;
+    }
+
+    .help-tree-node--root {
+        animation: help-tree-root $help-tree-loop $help-tree-spring infinite both;
+    }
+
+    .help-tree-node--2 {
+        animation: help-tree-node-2 $help-tree-loop $help-tree-spring infinite both;
+    }
+
+    .help-tree-node--3 {
+        animation: help-tree-node-3 $help-tree-loop $help-tree-spring infinite both;
+    }
+
+    .help-tree-link--1 {
+        animation: help-tree-link-1 $help-tree-loop $help-ease infinite both;
+    }
+
+    .help-tree-link--2 {
+        animation: help-tree-link-2 $help-tree-loop $help-ease infinite both;
+    }
+}
+
+@keyframes help-tree-scene {
+
+    0%,
+    92% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes help-tree-root {
+
+    0%,
+    4% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    14%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes help-tree-node-2 {
+
+    0%,
+    24% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    34%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes help-tree-node-3 {
+
+    0%,
+    46% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    56%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes help-tree-link-1 {
+
+    0%,
+    14% {
+        stroke-dashoffset: 1;
+    }
+
+    26%,
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes help-tree-link-2 {
+
+    0%,
+    36% {
+        stroke-dashoffset: 1;
+    }
+
+    48%,
+    100% {
+        stroke-dashoffset: 0;
     }
 }
 
@@ -329,7 +436,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     display: flex;
     justify-content: center;
     align-items: center;
-    justify-self: center;
+    justify-self: start;
     width: fit-content;
     height: fit-content;
     padding: 0.55rem 1.1rem;
@@ -436,13 +543,13 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
 .helpGrid {
     display: grid;
-    grid-template-columns: 7rem 1fr;
+    grid-template-columns: 8.25rem 1fr;
     align-items: center;
     gap: 1.25rem 1.5rem;
     width: 100%;
 
     @media (min-width: $large-desktop) {
-        grid-template-columns: 9.5rem 1fr;
+        grid-template-columns: 11rem 1fr;
         gap: 1.75rem 2rem;
     }
 }
@@ -824,7 +931,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .help-rib-card-text {
-    padding-left: 1rem;
+    padding-left: 1.5rem;
 }
 
 .help-rib-caption {
@@ -868,7 +975,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     box-shadow: 2px 2px 0 1px #111;
     display: flex;
     align-items: center;
-    padding: 0 0.6rem 0 1.2rem;
+    padding: 0 0.6rem 0 1.9rem;
     font-size: 0.8rem;
     font-weight: 600;
     overflow: visible;
@@ -896,6 +1003,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     @media (min-width: $large-desktop) {
         height: 2.6rem;
         font-size: 1rem;
+        padding-left: 2.3rem;
 
         &--notes {
             top: 3.1rem;
@@ -1405,7 +1513,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
 .help-shortcut-row {
     display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr);
+    grid-template-columns: 8rem minmax(0, 1fr);
     align-items: baseline;
     gap: 0.7rem;
     font-size: 1.05rem;

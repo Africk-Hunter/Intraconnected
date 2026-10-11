@@ -8,9 +8,10 @@ interface Props {
 
 const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
-const GROUPS: { title: string; rows: { keys: string; action: string }[] }[] = [
+const GROUPS: { title: string; accent: string; rows: { keys: string; action: string }[] }[] = [
     {
         title: 'Move around',
+        accent: 'sky',
         rows: [
             { keys: '← → ↑ ↓', action: 'Move between cards' },
             { keys: 'Enter', action: 'Open the selected card' },
@@ -20,29 +21,36 @@ const GROUPS: { title: string; rows: { keys: string; action: string }[] }[] = [
     },
     {
         title: 'Change things',
+        accent: 'leaf',
         rows: [
-            { keys: 'N', action: 'New idea' },
-            { keys: 'F2', action: 'Rename the card under the pointer or selected (or the idea you are in)' },
-            { keys: 'M', action: 'Move the card under the pointer or selected' },
-            { keys: 'Del', action: 'Delete the card under the pointer or selected' },
-            { keys: `${MOD}+C`, action: 'Copy the card under the pointer or selected' },
+            { keys: 'C', action: 'Create Shortcut' },
+            { keys: 'F2', action: 'Rename the card (or this idea)' },
+            { keys: 'M', action: 'Move the card' },
+            { keys: 'Del', action: 'Delete the card' },
+            { keys: `${MOD}+C`, action: 'Copy the card' },
             { keys: `${MOD}+Z`, action: 'Undo a delete or move' },
-            { keys: 'Shift+F10', action: 'Open the card menu (or right-click)' },
+            { keys: 'Shift+F10', action: 'Open the card menu' },
         ],
     },
     {
         title: 'Anywhere',
+        accent: 'link',
         rows: [
-            { keys: 'Esc', action: 'Close a menu, dialog or the mind map' },
-            { keys: '?', action: 'Show this list' },
+            { keys: 'Esc', action: 'Close a menu or dialog' },
+            { keys: 'G', action: 'Open or close the mind map' },
+            { keys: '/ or ?', action: 'Show this list' },
         ],
     },
     {
         title: 'In the mind map',
+        accent: 'pink',
         rows: [
             { keys: '+ / −', action: 'Zoom in / out' },
             { keys: '0', action: 'Center on the current idea' },
             { keys: '← → ↑ ↓', action: 'Pan' },
+            { keys: 'Esc', action: 'Cancel a node drag' },
+            { keys: 'P', action: 'Priority lens' },
+            { keys: 'N', action: 'Newest lens (last 30 days)' },
         ],
     },
 ];
@@ -51,10 +59,13 @@ function ShortcutsModal({ open, onClose }: Props) {
     return (
         <AnimatedOverlay open={open} scrollable onClick={onClose} onEscape={onClose}>
             <div className="modal neobrutal shortcuts-modal" role="dialog" aria-label="Keyboard shortcuts" onClick={(e) => e.stopPropagation()}>
-                <h2 className="shortcuts-title">Keyboard shortcuts</h2>
+                <header className="shortcuts-head">
+                    <h2 className="shortcuts-title">Keyboard shortcuts</h2>
+                    <p className="shortcuts-sub">Card actions use the card under the pointer, or the selected one. Press <kbd>/</kbd> any time to bring this back.</p>
+                </header>
                 <div className="shortcuts-groups">
                     {GROUPS.map((group) => (
-                        <section key={group.title} className="shortcuts-group">
+                        <section key={group.title} className={`shortcuts-group accent-${group.accent}`}>
                             <h3>{group.title}</h3>
                             <dl>
                                 {group.rows.map((row) => (
@@ -67,9 +78,9 @@ function ShortcutsModal({ open, onClose }: Props) {
                         </section>
                     ))}
                 </div>
-                <section className="modalButtons">
+                <footer className="move-modal-footer shortcuts-footer">
                     <button className="modalButton continue neobrutal-button" onClick={onClose} autoFocus>Close</button>
-                </section>
+                </footer>
             </div>
         </AnimatedOverlay>
     );

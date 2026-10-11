@@ -5,15 +5,19 @@ import { getNameFromID } from '../utilities';
 // Longer paths show the first level and the last two, with the middle folded.
 const MAX_SHOWN = 4;
 
-// Where you are: the ideas above this one, each a button that jumps straight
-// there. The idea you are inside is the big title below, so it is not repeated
-// (and not a link) here. Hidden at the top level, where there is nothing above.
-function Breadcrumb() {
+interface BreadcrumbProps {
+    onOpenMap: () => void;
+}
+
+// Where you are: a mind map button, then the ideas above this one, each a
+// button that jumps straight there. The idea you are inside is the big title
+// below, so it is not repeated (and not a link) here. At the top level there is
+// nothing above, so only the map button shows.
+function Breadcrumb({ onOpenMap }: BreadcrumbProps) {
     const { rootIdStack, rootId, navigateToId } = useIdeaContext();
 
     // The stack runs from the top level down to the current idea.
-    const ancestors = rootIdStack.current.slice(0, -1);
-    if (rootId === 1 || ancestors.length === 0) return null;
+    const ancestors = rootId === 1 ? [] : rootIdStack.current.slice(0, -1);
 
     const label = (id: number) => (id === 1 ? 'Ideas' : getNameFromID(id).replace(/\s+/g, ' ').trim() || 'Untitled');
     const folded = ancestors.length > MAX_SHOWN;
@@ -23,6 +27,11 @@ function Breadcrumb() {
     return (
         <nav className="breadcrumb" aria-label="Breadcrumb">
             <ol>
+                <li className="breadcrumb-map-item">
+                    <button type="button" className="breadcrumb-map" onClick={onOpenMap} title="Mind map (G)" aria-label="Open the mind map">
+                        <img src="/images/MindMapBlack.svg" alt="" />
+                    </button>
+                </li>
                 {visible.map((id, i) => (
                     <Fragment key={id}>
                         {folded && i === 1 && (

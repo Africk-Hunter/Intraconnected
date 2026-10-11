@@ -1,0 +1,249 @@
+@use 'sass:color';
+@use './variables' as *;
+@use './focusEffects' as *;
+
+// Checklist rows (ChecklistItemRow) and the card's progress strip. One set of styles for both
+// the card on the grid (--card, on indigo) and the full-view modal (--modal, on white).
+
+$cl-ease: cubic-bezier(0.22, 1, 0.36, 1);
+$cl-fast: 140ms;
+$cl-base: 200ms;
+
+@keyframes cl-item-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cl-item-out {
+    to { opacity: 0; transform: translateX(10px); }
+}
+
+@keyframes cl-check-pop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
+.cl-item {
+    --cl-fg: currentColor;
+    --cl-hover: rgba(0, 0, 0, 0.08);
+    --cl-line: #{$indigo};
+    --cl-icon: none;
+    --cl-handle: none;
+
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5rem;
+
+    &--card {
+        --cl-hover: rgba(255, 255, 255, 0.18);
+        --cl-line: rgba(255, 255, 255, 0.6);
+        --cl-icon: invert(1);
+        --cl-handle: brightness(0) invert(1);
+        padding: 0.3rem 0.75rem;
+        font-size: 1rem;
+
+        @media (min-width: $large-desktop) { font-size: 1.3rem; }
+    }
+
+    &--modal {
+        gap: 0.6rem;
+        padding: 0.55rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        font-size: 1.1rem;
+
+        &:last-child { border-bottom: none; }
+
+        @media (min-width: $large-desktop) { font-size: 1.4rem; }
+    }
+
+    &--entering { animation: cl-item-in $cl-base $cl-ease; }
+    &--leaving  { animation: cl-item-out $cl-fast ease-in forwards; pointer-events: none; }
+}
+
+.cl-drag {
+    all: unset;
+    cursor: grab;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 6px 3px 0;
+    touch-action: none;
+    user-select: none;
+    opacity: 0;
+    transition: opacity $cl-fast ease;
+
+    img { width: 9px; height: 15px; filter: var(--cl-handle); }
+
+    .cl-item:hover &, .cl-item:focus-within &, &:focus-visible { opacity: 0.7; }
+    &:hover { opacity: 1; }
+    @media (pointer: coarse) { opacity: 0.7; }
+    &:active { cursor: grabbing; }
+    &:focus-visible { @include focus-ring(1px); }
+}
+
+.cl-cb {
+    all: unset;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    padding-top: 3px;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    line-height: 1;
+
+    &:focus-visible { @include focus-ring(1px); }
+    &--pop svg { animation: cl-check-pop 260ms $cl-ease; }
+}
+
+.cl-text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+    text-decoration: line-through;
+    text-decoration-color: transparent;
+    transition: text-decoration-color $cl-base ease, opacity $cl-base ease;
+
+    &--linked {
+        text-decoration-line: underline;
+        text-decoration-color: currentColor;
+        cursor: pointer;
+    }
+
+    .cl-item--card &--linked { color: color.adjust($sky, $lightness: 25%); }
+    .cl-item--modal &--linked { color: $indigo; }
+
+    .cl-item--checked & {
+        text-decoration-color: currentColor;
+        opacity: 0.5;
+    }
+}
+
+// The row's one visible control besides the checkbox; everything else is in its menu.
+.cl-more {
+    all: unset;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    opacity: 0;
+    transition: opacity $cl-fast ease, background-color $cl-fast ease, transform $cl-fast ease;
+
+    .cl-item--modal & { width: 30px; height: 30px; }
+
+    .cl-item:hover &, .cl-item:focus-within &, &[aria-expanded='true'] { opacity: 0.8; }
+    &:hover { opacity: 1; background: var(--cl-hover); }
+    &:active { transform: scale(0.88); }
+    &:focus-visible { opacity: 1; @include focus-ring(1px); }
+
+    // A touch screen has no hover to reveal it.
+    @media (pointer: coarse) { opacity: 0.8; }
+}
+
+.cl-link-row {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.15rem 0 0.25rem 2.2rem;
+}
+
+.cl-link-input,
+.cl-edit-input {
+    all: unset;
+    flex: 1;
+    min-width: 0;
+    font-family: inherit;
+    border-bottom: 1.5px solid var(--cl-line);
+    padding-bottom: 1px;
+    cursor: text;
+}
+
+.cl-link-input {
+    font-size: 0.9rem;
+    opacity: 0.9;
+
+    &::placeholder { color: currentColor; opacity: 0.4; }
+
+    @media (min-width: $large-desktop) { font-size: 1.15rem; }
+}
+
+.cl-edit-input {
+    font-size: inherit;
+    line-height: inherit;
+    display: block;
+    word-break: break-word;
+    resize: none;
+    overflow: hidden;
+}
+
+.cl-link-clear {
+    all: unset;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 2px 5px;
+    font-size: 0.8rem;
+    opacity: 0.55;
+    transition: opacity $cl-fast ease;
+
+    &:hover { opacity: 1; }
+}
+
+// Progress strip under the card's title: how much of the list is done, at a glance.
+.checklist-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 1rem 0;
+
+    &-track {
+        flex: 1;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.25);
+        overflow: hidden;
+    }
+
+    &-fill {
+        height: 100%;
+        width: 100%;
+        border-radius: 3px;
+        background: white;
+        transform-origin: left;
+        transition: transform 300ms $cl-ease;
+    }
+
+    &-count {
+        font-size: 0.85rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        opacity: 0.85;
+
+        @media (min-width: $large-desktop) { font-size: 1.1rem; }
+    }
+
+    &--done &-fill { background: $leaf; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cl-item--entering,
+    .cl-item--leaving,
+    .cl-cb--pop svg { animation: none; }
+
+    .cl-text,
+    .cl-more,
+    .cl-drag,
+    .cl-link-clear,
+    .checklist-progress-fill { transition: none; }
+}

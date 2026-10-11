@@ -9,10 +9,8 @@ const ITEM_REMOVE_ANIM_MS = 300;
 // enforced on already-created notes (IdeaNode.tsx's contentEditable body).
 const CHECKLIST_TITLE_MAX_LENGTH = 100;
 const NOTE_BODY_MAX_LENGTH = 2000;
-// Fallback if the CSS transitionend backing finishAddItem() never fires
-// (backgrounded tab, browser quirk) — keeps the add row from getting stuck
-// mid-press forever. Comfortably longer than the 0.3s press transition.
-const ITEM_PRESS_FALLBACK_MS = 500;
+// How long the add input stays visually "pressed" after Enter.
+const ITEM_PRESS_MS = 120;
 
 interface CreationModalProps {
     handleIdeaCreation: (content: string, parentId: number, link: string, priority?: 1 | 2 | 3) => void;
@@ -30,8 +28,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [itemDraft, setItemDraft] = useState('');
-    // True for the brief moment between Enter and the press-in transition
-    // finishing on the input (see finishAddItem()).
+    // True for a blink after Enter, so the add input looks pressed.
     const [isPressingActive, setIsPressingActive] = useState(false);
     const [noteTitle, setNoteTitle] = useState('');
     const [noteBody, setNoteBody] = useState('');
@@ -52,9 +49,6 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     const noteContentHolderRef = useRef<HTMLElement>(null);
     const noteBodyRef = useRef<HTMLTextAreaElement>(null);
     const removeTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-    // Guards finishAddItem() against double-firing (transitionend AND the
-    // fallback timeout both landing) and against a stray Enter mid-press.
-    const isPressingRef = useRef(false);
     const pressFallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Full, untruncated text last typed into the idea or note fields (the two
     // uncapped/near-uncapped long-form tabs). Checklist title is capped at 100
@@ -159,8 +153,14 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         // re-measure once that transition actually settles.
         const items = checklistItemsRef.current;
         if (activeTab === 'checklist' && items) {
+            // New rows grow in via a keyframe animation (animationend), removed
+            // rows collapse via a transition (transitionend) — both change height.
             items.addEventListener('transitionend', recomputePanelHeight);
-            return () => items.removeEventListener('transitionend', recomputePanelHeight);
+            items.addEventListener('animationend', recomputePanelHeight);
+            return () => {
+                items.removeEventListener('transitionend', recomputePanelHeight);
+                items.removeEventListener('animationend', recomputePanelHeight);
+            };
         }
     }, [recomputePanelHeight, checklistItems, removingItemIds, modalContent, isLinkBoxShown, link, noteTitle, noteBody]);
 
@@ -194,7 +194,6 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         setChecklistItems([]);
         setItemDraft('');
         setIsPressingActive(false);
-        isPressingRef.current = false;
         if (pressFallbackTimeoutRef.current) clearTimeout(pressFallbackTimeoutRef.current);
         setNoteTitle('');
         setNoteBody('');
@@ -234,40 +233,17 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         reset();
     }
 
-    // Enter only starts the press-in feedback on the input (same "click" look
-    // as a neobrutal box on hover: shadow off, translate 3px/3px) — the
-    // actual commit happens once that finishes, in finishAddItem().
     function addItem() {
-        if (isPressingRef.current) return;
         const text = itemDraft.trim();
         if (!text) return;
-        isPressingRef.current = true;
-        setIsPressingActive(true);
-        if (pressFallbackTimeoutRef.current) clearTimeout(pressFallbackTimeoutRef.current);
-        pressFallbackTimeoutRef.current = setTimeout(finishAddItem, ITEM_PRESS_FALLBACK_MS);
-    }
-
-    // Commits the pressed input's text as a real item (landing in the exact
-    // spot the pressed input just occupied, same border/shadow/translate —
-    // no visible jump) and clears the input for the next entry. Fires once,
-    // from whichever comes first: the press transition finishing or the
-    // fallback timeout.
-    function finishAddItem() {
-        if (!isPressingRef.current) return;
-        isPressingRef.current = false;
-        if (pressFallbackTimeoutRef.current) clearTimeout(pressFallbackTimeoutRef.current);
-        setIsPressingActive(false);
-        const text = itemDraft.trim();
-        if (!text) return;
-        const id = String(Date.now());
+        // Commit right away — waiting on the press animation made adding feel laggy.
+        const id = `${Date.now()}-${checklistItems.length}`;
         setChecklistItems(prev => [...prev, { id, text, checked: false }]);
         setItemDraft('');
-        itemInputRef.current?.focus();
-    }
-
-    function handlePressTransitionEnd(e: React.TransitionEvent<HTMLInputElement>) {
-        if (e.propertyName !== 'box-shadow') return;
-        finishAddItem();
+        // Brief cosmetic press on the input; never gates the add.
+        setIsPressingActive(true);
+        if (pressFallbackTimeoutRef.current) clearTimeout(pressFallbackTimeoutRef.current);
+        pressFallbackTimeoutRef.current = setTimeout(() => setIsPressingActive(false), ITEM_PRESS_MS);
     }
 
     function removeItem(itemId: string) {
@@ -385,8 +361,16 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                                 className={`checklist-creation-item-wrap${removingItemIds.has(item.id) ? ' checklist-creation-item-wrap--collapsed' : ''}`}
                                             >
                                                 <div className="checklist-creation-item">
-                                                    <span>☐ {item.text}</span>
-                                                    <button className="checklist-creation-remove" onClick={() => removeItem(item.id)}>✕</button>
+                                                    <span className="checklist-creation-box" aria-hidden="true" />
+                                                    <span className="checklist-creation-text">{item.text}</span>
+                                                    <button
+                                                        type="button"
+                                                        className="checklist-creation-remove"
+                                                        aria-label={`Remove ${item.text}`}
+                                                        onClick={() => removeItem(item.id)}
+                                                    >
+                                                        ✕
+                                                    </button>
                                                 </div>
                                             </li>
                                         ))}
@@ -399,7 +383,6 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                             value={itemDraft}
                                             onChange={e => setItemDraft(e.target.value)}
                                             onKeyDown={handleItemKeyDown}
-                                            onTransitionEnd={handlePressTransitionEnd}
                                             maxLength={200}
                                         />
                                     </div>

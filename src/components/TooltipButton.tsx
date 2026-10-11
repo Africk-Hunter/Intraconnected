@@ -7,7 +7,7 @@ const HOVER_DELAY_MS = 400;
 
 interface TooltipButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     tooltip: string;
-    // Keyboard shortcut shown after the label, e.g. "N" -> "Create new idea (N)".
+    // Keyboard shortcut shown after the label, e.g. "C" -> "Create new idea (C)".
     shortcut?: string;
     tooltipSide?: 'left' | 'right';
     alwaysVisible?: boolean;

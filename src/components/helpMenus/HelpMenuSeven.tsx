@@ -6,14 +6,14 @@ const MOD = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator
 const SHORTCUTS: { keys: string; action: string }[] = [
     { keys: '← → ↑ ↓', action: 'Move between cards' },
     { keys: 'Enter', action: 'Open the selected card' },
-    { keys: 'N', action: 'New idea' },
+    { keys: 'C', action: 'Create Shortcut' },
     { keys: 'F2', action: 'Rename the selected card' },
     { keys: 'M', action: 'Move the selected card' },
     { keys: 'Del', action: 'Delete the selected card' },
     { keys: `${MOD}+Z`, action: 'Undo a delete or move' },
     { keys: 'Backspace', action: 'Go up one level' },
     { keys: `${MOD}+K`, action: 'Search every idea' },
-    { keys: '?', action: 'Show the full shortcut list' },
+    { keys: '/ or ?', action: 'Show the full shortcut list' },
 ];
 
 const HelpMenuSeven: React.FC = () => {

@@ -4,6 +4,23 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Desktop Checklist Makeover — 2026-10-11
+Typecheck, lint (no new warnings), 298 tests and build pass; **not clicked through in a browser yet.**
+- One shared row: `ChecklistItemRow` replaces `SortableNodeItem` (card) and `SortableChecklistItem` (modal); one stylesheet, `checklistItem.scss` (`cl-*`, `--card` / `--modal`), replaces ~300 lines of duplicated SCSS in `idea.scss` and `ideaCreationModal.scss`. Timings are `$cl-fast`/`$cl-base`/`$cl-ease` at its top.
+- At rest a row is checkbox + text + a dim ⋯ (full on hover/focus, always on touch). Copy, link, rename and delete live in `ChecklistItemMenu` (reuses the `.card-menu` look and keys; opened by ⋯, right-click on the row; double-click the text renames). The drag handle shows on hover/focus. Checkbox is `role="checkbox"` with the item text as its name; icon buttons have labels; focus rings use the shared `focus-ring` mixin.
+- Motion (all off under reduced motion): strikethrough colour fades, checkbox pop, new rows fade in (`useEnteringIds`), deleted rows slide out, Show more/less animates `max-height` via WAAPI (was a snap), "Show more" bounces 3 times instead of forever.
+- Progress: bar + `n/m` under the card title (turns green when done); thin bar under the modal title.
+- Deleting an item now has Undo (`idea/checklistUndo.ts`, desktop `UndoToast` / Ctrl+Z); fixed the modal not refreshing the card after a link edit.
+- Not done: mobile checklist untouched; deleted rows leave with a fade, but the rows below jump up rather than glide.
+
+## Desktop Mind Map: Declutter + Lenses — 2026-10-11
+Typecheck, lint, 280 tests and build pass; **not clicked through in a browser yet.** Options write-up: `programmer-docs/artifacts/desktop-mind-map-options.html`.
+- Declutter: the pink map button is out of the left sidebar. G toggles the map (`useDesktopShortcuts`, new `onToggleMap`), a map icon starts the breadcrumb (also shown at the top level, where it is the only item), and the palette command now shows the G hint. The overlay gets a Close button since the sidebar toggle was its visible way out. Help page 4 and the shortcuts modal updated.
+- Lenses: Priority (P) and Newest (N; renamed from "Recent", which read as recently visited) in the map's control bar. `idea/mapLens.ts` + `mapLens.test.ts`. A lens prunes the map to the matching nodes and the branches leading to them (ring + badge on matches, paths faded to 70%) and zooms to fit; the +/− toggles are hidden while on. The first version opened every branch and drew the whole tree, far too wide on a real tree. New Fit button; zoom floor lowered to 5%. Choice kept in `mindmap_lens`.
+- `mindmap.scss` lost its uncommitted zoom-control styles in an accidental delete/restore earlier today; `.mm-controls`, `.mm-ctrl-*` were rewritten from scratch, so their look may differ from before.
+- Drag to reparent in the map: press, move 6px, release on another node (dashed outline on valid targets, ghost label, Esc cancels). Uses `moveIdea`, so Undo and "Take me there" work. The node dropped into opens if it was collapsed. Refused targets (and the whole page's cursor) go red / "not allowed" while hovered; the card grid got the same not-allowed cursor via a `dnd-blocked` body class set from `onDragOver` in `Idea.tsx`. Targets that are checklists, notes, links, the node's current parent or inside its own subtree are refused (the grid's `moveIdea` has no cycle guard of its own; the map checks `subtreeIds`).
+- Not done (per the options page): export as image.
+
 ## Desktop UX Pass — 2026-10-11
 From the desktop audit (`programmer-docs/artifacts/desktop-ux-audit.html`); the findings the owner dropped (grabbing cursor, mind map wheel-zoom) were not changed. Typecheck, lint, 275 tests and build pass; **not clicked through in a browser yet.**
 - Bugs: the link dialog now starts from the card's current link (an untouched Change used to save an empty one and erase it); link cards no longer light up as drop targets; Create is disabled for a blank idea; cards react to Enter (they were focusable but dead).

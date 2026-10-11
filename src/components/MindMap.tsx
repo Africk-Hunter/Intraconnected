@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState, useMemo, MouseEvent } from 'react';
+import { useEffect, useRef, useState, useMemo, type MouseEvent, type MutableRefObject } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
+import { useIdeaActions, subtreeIds } from '../utilities/idea/useIdeaActions';
+import { computeLens, type MapLens, type LensInfo } from '../utilities/idea/mapLens';
 import { fetchFullIdeaList, IdeaType, ChecklistIdea, getIdeaLink, openIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
 
 interface TreeNodeProps {
@@ -8,9 +10,18 @@ interface TreeNodeProps {
     currentRootId: number;
     onNavigate: (idea: IdeaType) => void;
     expandedIds: Set<number>;
+    lens: MapLens;
+    lensInfo: Map<number, LensInfo>;
+    // The idea being dragged, the one it would land on, and a hovered one it can't land on.
+    drag: { id: number; over: number | null; bad: number | null } | null;
+    onNodePress: (e: MouseEvent<HTMLElement>, idea: IdeaType) => void;
+    // Set for a moment after a drag ends, so the release isn't also a click.
+    suppressClick: MutableRefObject<boolean>;
+    // Opens this node when something has just been dropped into it (`tick` makes each drop a new request).
+    expandReq: { id: number; tick: number } | null;
 }
 
-function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: TreeNodeProps) {
+function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, lens, lensInfo, drag, onNodePress, suppressClick, expandReq }: TreeNodeProps) {
     const idea = allIdeas.find(i => Number(i.id) === ideaId);
     const [collapsed, setCollapsed] = useState(!expandedIds.has(ideaId));
     const wasOnPathRef = useRef(expandedIds.has(ideaId));
@@ -27,6 +38,10 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
             wasOnPathRef.current = isOnPath;
         }
     }, [expandedIds, ideaId]);
+
+    useEffect(() => {
+        if (expandReq?.id === ideaId) setCollapsed(false);
+    }, [expandReq, ideaId]);
 
     if (!idea) return null;
 
@@ -55,7 +70,21 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
 
     const isRoot = ideaId === 1;
 
+    // A lens prunes the tree to the matching ideas and the branches leading to them
+    // (collapsing is ignored meanwhile); the path nodes are drawn a little faded.
+    const lensOn = lens !== 'off';
+    const info = lensOn ? lensInfo.get(ideaId) : undefined;
+    const lensClass = !lensOn ? '' : info?.tone ? ' mm-lens--match' : ' mm-lens--path';
+    const ringClass = info?.tone ? ` mm-lens-ring--${info.tone}` : '';
+    const badge = info?.badge ? <span className={`mm-lens-badge mm-lens-badge--${info.tone}`}>{info.badge}</span> : null;
+    const isCollapsed = collapsed && !lensOn;
+    const dragClass = drag?.over === ideaId ? ' mm-drop-target' : drag?.bad === ideaId ? ' mm-drop-denied' : drag?.id === ideaId ? ' mm-drag-source' : '';
+    const shownKids = lensOn
+        ? children.filter(c => { const ci = lensInfo.get(Number(c.id)); return !!(ci?.tone || ci?.onPath); })
+        : children;
+
     function handleClick() {
+        if (suppressClick.current) return;
         if (!idea || isChecklist || isNote) return;
         if (isLink) {
             openIdeaLink(getIdeaLink(idea));
@@ -69,6 +98,8 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
         const items = checklistIdea.items ?? [];
         return (
             <div className="mm-node-col">
+                <div className={`mm-node-wrap${lensClass}${ringClass}`}>
+                {badge}
                 <div className="mm-checklist-card">
                     <span className="mm-checklist-card__title">{idea.content.split('\n')[0]}</span>
                     {items.length > 0 && (
@@ -87,33 +118,40 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
                         </ul>
                     )}
                 </div>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="mm-node-col">
-            <button
-                className={btnClass}
-                style={isRoot ? { fontSize: '1.9rem', padding: '1rem 2rem', maxWidth: '300px', fontWeight: 800 } : undefined}
-                onClick={handleClick}
-            >
-                {resolveIdeaLabel(idea).split('\n')[0]}
-            </button>
-            {hasKids && (
+            <div className={`mm-node-wrap${lensClass}${ringClass}${dragClass}`} data-mm-id={ideaId}>
+                {badge}
+                <button
+                    className={btnClass}
+                    onMouseDown={e => onNodePress(e, idea)}
+                    style={isRoot ? { fontSize: '1.9rem', padding: '1rem 2rem', maxWidth: '300px', fontWeight: 800 } : undefined}
+                    onClick={handleClick}
+                >
+                    {resolveIdeaLabel(idea).split('\n')[0]}
+                </button>
+            </div>
+            {(lensOn ? shownKids.length > 0 : hasKids) && (
                 <>
-                    <button
-                        className={`mm-toggle-btn${collapsed ? ' mm-toggle-btn--collapsed' : ''}`}
-                        onClick={() => setCollapsed(c => !c)}
-                        title={collapsed ? 'Expand' : 'Collapse'}
-                    >
-                        <span>{collapsed ? '+' : '−'}</span>
-                    </button>
-                    {!collapsed && (
+                    {!lensOn && (
+                        <button
+                            className={`mm-toggle-btn${collapsed ? ' mm-toggle-btn--collapsed' : ''}`}
+                            onClick={() => setCollapsed(c => !c)}
+                            title={collapsed ? 'Expand' : 'Collapse'}
+                        >
+                            <span>{collapsed ? '+' : '−'}</span>
+                        </button>
+                    )}
+                    {!isCollapsed && (
                         <>
                             <div className="mm-connector-v" />
                             <div className="mm-children-row">
-                                {children.map(child => (
+                                {shownKids.map(child => (
                                     <div key={child.id} className="mm-child-wrap">
                                         <TreeNode
                                             ideaId={Number(child.id)}
@@ -121,6 +159,12 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
                                             currentRootId={currentRootId}
                                             onNavigate={onNavigate}
                                             expandedIds={expandedIds}
+                                            lens={lens}
+                                            lensInfo={lensInfo}
+                                            drag={drag}
+                                            onNodePress={onNodePress}
+                                            suppressClick={suppressClick}
+                                            expandReq={expandReq}
                                         />
                                     </div>
                                 ))}
@@ -132,6 +176,21 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds }: 
         </div>
     );
 }
+
+const LENS_KEY = 'mindmap_lens';
+
+const LEGENDS: Record<'priority' | 'recent', { tone: string; label: string }[]> = {
+    priority: [
+        { tone: 'p1', label: 'P1 High' },
+        { tone: 'p2', label: 'P2 Medium' },
+        { tone: 'p3', label: 'P3 Low' },
+    ],
+    recent: [
+        { tone: 'today', label: 'Created today' },
+        { tone: 'week', label: 'Created this week' },
+        { tone: 'month', label: 'Created this month' },
+    ],
+};
 
 interface MindMapProps {
     onClose: () => void;
@@ -167,6 +226,37 @@ function MindMap({ onClose, visible }: MindMapProps) {
         }
         return ids;
     }, [allIdeas, rootId]);
+
+    const [lens, setLens] = useState<MapLens>(() => {
+        try {
+            const saved = localStorage.getItem(LENS_KEY);
+            return saved === 'priority' || saved === 'recent' ? saved : 'off';
+        } catch {
+            return 'off';
+        }
+    });
+    // Legend chips the viewer has picked to narrow the lens (empty = show them all).
+    const [tones, setTones] = useState<ReadonlySet<string>>(new Set());
+    useEffect(() => { setTones(new Set()); }, [lens]);
+    const toggleTone = (tone: string) => setTones(prev => {
+        const next = new Set(prev);
+        if (!next.delete(tone)) next.add(tone);
+        return next;
+    });
+    useEffect(() => {
+        try { localStorage.setItem(LENS_KEY, lens); } catch { /* storage unavailable */ }
+    }, [lens]);
+    // `visible` re-dates the "recent" buckets each time the map opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const lensInfo = useMemo(() => computeLens(allIdeas, lens, Date.now(), tones), [allIdeas, lens, tones, visible]);
+    const noMatches = lens !== 'off' && ![...lensInfo.values()].some(i => i.tone);
+    const toggleLens = (which: 'priority' | 'recent') => setLens(prev => (prev === which ? 'off' : which));
+
+    const { moveIdea } = useIdeaActions();
+    const [drag, setDrag] = useState<{ id: number; label: string; x: number; y: number; over: number | null; bad: number | null } | null>(null);
+    const suppressClick = useRef(false);
+    const [expandReq, setExpandReq] = useState<{ id: number; tick: number } | null>(null);
+    const dropLabel = drag?.over != null ? resolveIdeaLabel(allIdeas.find(i => Number(i.id) === drag.over)!).split('\n')[0] : null;
 
     const [treeKey, setTreeKey] = useState(0);
     const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
@@ -228,7 +318,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
         const cx = rect.width / 2;
         const cy = rect.height / 2;
         setView(prev => {
-            const newZoom = Math.min(4, Math.max(0.2, prev.zoom * factor));
+            const newZoom = Math.min(4, Math.max(0.05, prev.zoom * factor));
             const scale = newZoom / prev.zoom;
             return { zoom: newZoom, x: cx - (cx - prev.x) * scale, y: cy - (cy - prev.y) * scale };
         });
@@ -250,8 +340,36 @@ function MindMap({ onClose, visible }: MindMapProps) {
         });
     }
 
+    // Zoom out (never in past 100%) until the whole drawn tree fits, with room
+    // left at the bottom for the controls.
+    function fitToView() {
+        const body = bodyRef.current;
+        const canvas = canvasRef.current;
+        if (!body || !canvas) return;
+        const rect = body.getBoundingClientRect();
+        const w = canvas.offsetWidth;
+        const h = canvas.offsetHeight;
+        if (!w || !h) return;
+        const usableH = Math.max(120, rect.height - 170);
+        const zoom = Math.max(0.05, Math.min(1, rect.width / w, usableH / h));
+        setView({ zoom, x: (rect.width - w * zoom) / 2, y: Math.max(16, (usableH - h * zoom) / 2) });
+    }
+
+    // Switching a lens on, or a legend chip, fits the pruned tree; switching it off goes back to the current idea.
+    const prevLens = useRef<MapLens>(lens);
+    useEffect(() => {
+        if (!visible) return;
+        const was = prevLens.current;
+        prevLens.current = lens;
+        if (lens === 'off' && was === 'off') return;
+        const raf = requestAnimationFrame(() => (lens === 'off' ? centerOnCurrent() : fitToView()));
+        return () => cancelAnimationFrame(raf);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lens, tones, visible, allIdeas]);
+
     // Keyboard while the map is open: Esc closes, + / - zoom, 0 recentres,
-    // arrows pan. Ignored while typing and while any modal is on top.
+    // arrows pan, P and N switch the lenses (G, which also closes it, is handled
+    // with the other global shortcuts). Ignored while typing and while any modal is on top.
     useEffect(() => {
         if (!visible) return;
         const PAN_STEP = 80;
@@ -265,6 +383,8 @@ function MindMap({ onClose, visible }: MindMapProps) {
                 case '+': case '=': zoomBy(1.2); break;
                 case '-': case '_': zoomBy(1 / 1.2); break;
                 case '0': centerOnCurrent(); break;
+                case 'p': case 'P': toggleLens('priority'); break;
+                case 'n': case 'N': toggleLens('recent'); break;
                 case 'ArrowLeft': setView(v => ({ ...v, x: v.x + PAN_STEP })); break;
                 case 'ArrowRight': setView(v => ({ ...v, x: v.x - PAN_STEP })); break;
                 case 'ArrowUp': setView(v => ({ ...v, y: v.y + PAN_STEP })); break;
@@ -288,7 +408,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
             setView(prev => {
-                const newZoom = Math.min(4, Math.max(0.2, prev.zoom * factor));
+                const newZoom = Math.min(4, Math.max(0.05, prev.zoom * factor));
                 const scale = newZoom / prev.zoom;
                 return {
                     zoom: newZoom,
@@ -330,16 +450,85 @@ function MindMap({ onClose, visible }: MindMapProps) {
         document.addEventListener('mouseup', handleUp);
     }
 
+    // Drag a node onto another to make it a child there. Press, move 6px to start,
+    // release over a node to drop (Esc cancels); the move goes through moveIdea,
+    // so it can be undone like any other.
+    function canDropOn(sourceId: number, targetId: number): boolean {
+        if (targetId === sourceId) return false;
+        const source = allIdeas.find(i => Number(i.id) === sourceId);
+        const target = allIdeas.find(i => Number(i.id) === targetId);
+        if (!source || !target) return false;
+        if (Number(source.parentID) === targetId) return false;
+        if (target.type === 'checklist' || isNoteMode(target) || getIdeaLink(target)) return false;
+        return !subtreeIds(allIdeas as { id: number; parentID: number }[], sourceId).has(targetId);
+    }
+
+    function startNodePress(e: MouseEvent<HTMLElement>, idea: IdeaType) {
+        const sourceId = Number(idea.id);
+        if (e.button !== 0 || sourceId === 1) return;
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const label = resolveIdeaLabel(idea).split('\n')[0];
+        let started = false;
+        let cancelled = false;
+
+        // The node under the pointer: `over` when the drag may land there, `bad` when it may not.
+        function hoverAt(ev: globalThis.MouseEvent): { over: number | null; bad: number | null } {
+            const el = document.elementFromPoint(ev.clientX, ev.clientY)?.closest<HTMLElement>('[data-mm-id]');
+            const id = el ? Number(el.dataset.mmId) : null;
+            if (id === null || id === sourceId) return { over: null, bad: null };
+            return canDropOn(sourceId, id) ? { over: id, bad: null } : { over: null, bad: id };
+        }
+        function onMove(ev: globalThis.MouseEvent) {
+            if (cancelled) return;
+            if (!started) {
+                if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
+                started = true;
+            }
+            setDrag({ id: sourceId, label, x: ev.clientX, y: ev.clientY, ...hoverAt(ev) });
+        }
+        function finish() {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            document.removeEventListener('keydown', onKey, true);
+            setDrag(null);
+        }
+        function onUp(ev: globalThis.MouseEvent) {
+            const target = started && !cancelled ? hoverAt(ev).over : null;
+            finish();
+            if (started) {
+                suppressClick.current = true;
+                setTimeout(() => { suppressClick.current = false; }, 0);
+            }
+            if (target !== null) {
+                moveIdea(sourceId, target);
+                setExpandReq({ id: target, tick: Date.now() });
+            }
+        }
+        function onKey(ev: KeyboardEvent) {
+            if (ev.key !== 'Escape') return;
+            // Cancels the drag only; the map stays open.
+            ev.stopImmediatePropagation();
+            ev.preventDefault();
+            cancelled = true;
+            setDrag(null);
+        }
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('keydown', onKey, true);
+    }
+
     function navigateTo(idea: IdeaType) {
         navigateToId(Number(idea.id));
         onClose();
     }
 
     return (
-        <div className={`mm-wrap${visible ? ' mm-wrap--visible' : ''}`}>
+        <div className={`mm-wrap${visible ? ' mm-wrap--visible' : ''}${drag && drag.bad !== null ? ' mm-wrap--denied' : ''}`}>
             <div
                 ref={bodyRef}
-                className={`mm-body${dragging ? ' mm-body--dragging' : ''}`}
+                className={`mm-body${dragging || drag ? ' mm-body--dragging' : ''}`}
                 onMouseDown={onMouseDown}
             >
                 <div
@@ -360,15 +549,48 @@ function MindMap({ onClose, visible }: MindMapProps) {
                             currentRootId={rootId}
                             onNavigate={navigateTo}
                             expandedIds={expandedIds}
+                            lens={lens}
+                            lensInfo={lensInfo}
+                            drag={drag}
+                            onNodePress={startNodePress}
+                            suppressClick={suppressClick}
+                            expandReq={expandReq}
                         />
                     )}
                 </div>
             </div>
+            {drag && (
+                <div className={`mm-drag-ghost${drag.bad !== null ? ' mm-drag-ghost--denied' : ''}`} style={{ left: drag.x, top: drag.y }}>
+                    <span>{drag.label}</span>
+                    <small>{dropLabel ? `Move into “${dropLabel}”` : drag.bad !== null ? 'Can’t move it there' : 'Drop on an idea · Esc cancels'}</small>
+                </div>
+            )}
+            {lens !== 'off' && (
+                <div className="mm-legend" aria-label="Lens key">
+                    {LEGENDS[lens].map(entry => (
+                        <button
+                            key={entry.tone}
+                            type="button"
+                            className={`mm-lens-badge mm-lens-badge--${entry.tone} mm-lens-badge--static${tones.size > 0 && !tones.has(entry.tone) ? ' mm-lens-badge--off' : ''}`}
+                            aria-pressed={tones.has(entry.tone)}
+                            title={tones.has(entry.tone) ? 'Show all again' : `Show only ${entry.label}`}
+                            onClick={() => toggleTone(entry.tone)}
+                        >{entry.label}</button>
+                    ))}
+                    <span className="mm-legend__note">{noMatches ? (tones.size > 0 ? 'Nothing matches those' : lens === 'priority' ? 'No ideas have a priority yet' : 'Nothing created in the last 30 days') : tones.size > 0 ? 'Click a chip again to widen' : 'Click a chip to narrow further'}</span>
+                </div>
+            )}
             <div className="mm-controls" role="group" aria-label="Mind map view">
                 <button className="mm-ctrl-btn neobrutal-button" type="button" onClick={() => zoomBy(1 / 1.2)} title="Zoom out (-)" aria-label="Zoom out">−</button>
                 <span className="mm-ctrl-zoom" aria-live="polite">{Math.round(view.zoom * 100)}%</span>
                 <button className="mm-ctrl-btn neobrutal-button" type="button" onClick={() => zoomBy(1.2)} title="Zoom in (+)" aria-label="Zoom in">+</button>
                 <button className="mm-ctrl-btn mm-ctrl-btn--wide neobrutal-button" type="button" onClick={centerOnCurrent} title="Center on the current idea (0)">Center</button>
+                <button className="mm-ctrl-btn mm-ctrl-btn--wide neobrutal-button" type="button" onClick={fitToView} title="Zoom out to fit everything drawn">Fit</button>
+                <span className="mm-ctrl-sep" aria-hidden="true" />
+                <button className="mm-ctrl-btn mm-ctrl-btn--wide neobrutal-button" type="button" aria-pressed={lens === 'priority'} onClick={() => toggleLens('priority')} title="Highlight ideas by priority (P)">Priority</button>
+                <button className="mm-ctrl-btn mm-ctrl-btn--wide neobrutal-button" type="button" aria-pressed={lens === 'recent'} onClick={() => toggleLens('recent')} title="Highlight the newest ideas, by when they were created (N)">Newest</button>
+                <span className="mm-ctrl-sep" aria-hidden="true" />
+                <button className="mm-ctrl-btn mm-ctrl-btn--wide mm-ctrl-btn--close neobrutal-button" type="button" onClick={onClose} title="Close the map (G or Esc)">Close</button>
             </div>
         </div>
     );

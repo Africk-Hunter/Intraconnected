@@ -1,4 +1,5 @@
 @use "./variables" as *;
+@use "./focusEffects" as *;
 
 // In flow above the title row (.top stacks them), so a tall title card pushes
 // the breadcrumb up instead of running under it.
@@ -59,9 +60,45 @@
     }
 
     &:focus-visible {
+        @include focus-ring(2px);
+    }
+}
+
+.breadcrumb-map {
+    all: unset;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+    cursor: pointer;
+    background: $neo-pink;
+    border: $neo-detail-border;
+
+    img {
+        width: 1.3rem;
+        height: 1.3rem;
+        display: block;
+
+        @media (min-width: $large-desktop) {
+            width: 1.7rem;
+            height: 1.7rem;
+        }
+    }
+
+    &:hover {
+        filter: brightness(1.12);
+    }
+
+    &:focus-visible {
         outline: 5px solid $orange;
         outline-offset: 2px;
     }
+}
+
+// Alone at the top level: no separator, since no path follows.
+.breadcrumb li.breadcrumb-map-item:only-child::after {
+    content: none;
 }
 
 .breadcrumb-fold {

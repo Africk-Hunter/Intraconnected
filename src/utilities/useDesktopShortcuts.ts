@@ -6,6 +6,7 @@ interface Options {
     enabled: boolean;
     // The mind map has its own keys; only search still works over it.
     mapOpen: boolean;
+    onToggleMap: () => void;
     onNewIdea: () => void;
     onGoUp: () => void;
     onShowShortcuts: () => void;
@@ -56,13 +57,13 @@ function focusCard(id: number) {
 }
 
 // Keyboard control of the idea grid: arrows move between cards, Enter opens
-// (handled on the card), F2 renames, Del deletes, M moves, N creates, Backspace
-// goes up a level, ? lists these. Never fires while typing, with a modal or
+// (handled on the card), F2 renames, Del deletes, M moves, C creates, Backspace
+// goes up a level, / or ? lists these. Never fires while typing, with a modal or
 // menu open, or with Ctrl/Cmd/Alt held, so browser and text shortcuts keep working.
-export function useDesktopShortcuts({ enabled, mapOpen, onNewIdea, onGoUp, onShowShortcuts, onSearch }: Options) {
+export function useDesktopShortcuts({ enabled, mapOpen, onToggleMap, onNewIdea, onGoUp, onShowShortcuts, onSearch }: Options) {
     const actions = useIdeaActions();
-    const latest = useRef({ actions, mapOpen, onNewIdea, onGoUp, onShowShortcuts, onSearch });
-    latest.current = { actions, mapOpen, onNewIdea, onGoUp, onShowShortcuts, onSearch };
+    const latest = useRef({ actions, mapOpen, onToggleMap, onNewIdea, onGoUp, onShowShortcuts, onSearch });
+    latest.current = { actions, mapOpen, onToggleMap, onNewIdea, onGoUp, onShowShortcuts, onSearch };
 
     useEffect(() => {
         if (!enabled) return;
@@ -93,13 +94,35 @@ export function useDesktopShortcuts({ enabled, mapOpen, onNewIdea, onGoUp, onSho
 
         function onKeyDown(e: KeyboardEvent) {
             if (e.defaultPrevented || e.isComposing) return;
-            const { actions: act, mapOpen: map, onNewIdea: newIdea, onGoUp: goUp, onShowShortcuts: showKeys, onSearch: search } = latest.current;
+            const { actions: act, mapOpen: map, onToggleMap: toggleMap, onNewIdea: newIdea, onGoUp: goUp, onShowShortcuts: showKeys, onSearch: search } = latest.current;
 
             // Ctrl/Cmd+K opens search from anywhere that isn't already a modal.
             if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
                 if (document.querySelector('.overlay, .card-menu')) return;
                 e.preventDefault();
                 search();
+                return;
+            }
+
+            // G opens and closes the mind map. Like N, it leaves other focused controls alone.
+            if ((e.key === 'g' || e.key === 'G') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+                if (isTypingTarget(e.target)) return;
+                if (document.querySelector('.overlay, .card-menu, .howToUsePopup.show')) return;
+                const focused = document.activeElement as HTMLElement | null;
+                if (focused && focused !== document.body && !focused.closest('[data-idea-id]') && !focused.closest('.mm-wrap')) return;
+                e.preventDefault();
+                toggleMap();
+                return;
+            }
+
+            // / and ? (Shift+/) open the shortcut list, even over the mind map.
+            if ((e.key === '/' || e.key === '?') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                if (isTypingTarget(e.target)) return;
+                if (document.querySelector('.overlay, .card-menu, .howToUsePopup.show')) return;
+                const focused = document.activeElement as HTMLElement | null;
+                if (focused && focused !== document.body && !focused.closest('[data-idea-id]') && !focused.closest('.mm-wrap')) return;
+                e.preventDefault();
+                showKeys();
                 return;
             }
 
@@ -167,7 +190,7 @@ export function useDesktopShortcuts({ enabled, mapOpen, onNewIdea, onGoUp, onSho
                     e.preventDefault();
                     act.openMovePicker(focusedId);
                     return;
-                case 'n': case 'N':
+                case 'c': case 'C':
                     if (!cardEl && !onBody) return;
                     if (e.shiftKey) return;
                     e.preventDefault();
@@ -177,11 +200,6 @@ export function useDesktopShortcuts({ enabled, mapOpen, onNewIdea, onGoUp, onSho
                     if (!cardEl && !onBody) return;
                     e.preventDefault();
                     goUp();
-                    return;
-                case '?':
-                    if (!cardEl && !onBody) return;
-                    e.preventDefault();
-                    showKeys();
                     return;
             }
         }

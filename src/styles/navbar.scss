@@ -47,25 +47,6 @@
 }
 
 
-.nav-btn-group {
-    display: inline-flex;
-    flex-direction: column;
-    gap: 2rem;
-    border: 3px solid transparent;
-    border-radius: 14px;
-    padding: 0;
-    box-shadow: 4px 4px 0 2px transparent;
-    background: transparent;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, padding 0.3s ease;
-
-    &--active {
-        background: $background-color;
-        border-color: #111;
-        padding: 10px 18px 18px 10px;
-        box-shadow: 4px 4px 0 2px #111;
-    }
-}
-
 .nav-btn--hidden {
     opacity: 0;
     pointer-events: none;

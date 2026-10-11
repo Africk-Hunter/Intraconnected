@@ -47,14 +47,14 @@ const HelpMenuSix: React.FC = () => {
                     <span className="help-chip-lbl help-chip-lbl--p3">P3</span>
                 </div>
                 <p className="details">
-                    Each idea has a <strong>priority ribbon</strong> in its top-left corner. Click it, or open the card's <strong>⋯</strong> menu, and pick <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong> or none. The ribbon grows taller with each level to show urgency at a glance.
+                    Mark how important an idea is with the <strong>ribbon</strong> in its top-left corner: <strong>High (red)</strong>, <strong>Medium (orange)</strong> or <strong>Low (yellow)</strong>. The more important, the longer the ribbon.
                 </p>
                 <div className="helpGridIcon helpSort">
                     <img src="/images/sort.svg" className="helpSortImg" alt="" />
                     Sort
                 </div>
                 <p className="details">
-                    The <strong>Sort</strong> button below Back reorders your ideas by priority: P1 first, then P2, P3, then unprioritized. Toggle it to sort by <strong>Oldest</strong> (creation order, oldest first) instead.
+                    The <strong>Sort</strong> button below Back puts the most important ideas first. Click again to go back to <strong>Oldest</strong> first.
                 </p>
             </section>
         </section>

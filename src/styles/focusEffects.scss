@@ -18,10 +18,11 @@
 }
 
 // Thick orange ring a little away from the edge, so the focused button is
-// clear even on a coloured background.
-@mixin focus-ring {
+// clear even on a coloured background. Small controls pass a tighter offset
+// (negative draws it inside, for rows that sit flush in a container).
+@mixin focus-ring($offset: 3px) {
     outline: 5px solid $orange;
-    outline-offset: 3px;
+    outline-offset: $offset;
 }
 
 // Highlighted-row look for cards: orange fill (--card-bg also colours the

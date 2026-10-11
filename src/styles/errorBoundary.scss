@@ -1,0 +1,236 @@
+@use './variables' as *;
+
+// Crash screen (ErrorBoundary). Same card anatomy as the session-ended modal:
+// coloured header band with a tilted icon badge, then the message and actions.
+$error-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+.neobrutal.modal.error-boundary {
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0;
+    width: min(32rem, 90vw);
+    min-height: auto;
+    padding: 0;
+    overflow: hidden;
+    text-align: left;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    background-size: 40px 40px;
+
+    @media (max-width: $mobile) {
+        width: 90%;
+        min-height: auto;
+        padding: 0;
+        margin-block: auto;
+    }
+}
+
+.error-boundary-header {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 1.4rem 1.75rem;
+    background: $burnt-orange;
+    color: #fff;
+    border-bottom: 3px solid #000;
+}
+
+.error-boundary-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: $link;
+    color: #000;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    box-shadow: $neo-detail-shadow;
+    transform: rotate(-6deg);
+
+    svg {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
+.error-boundary-title {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.error-boundary-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.6rem 1.75rem 1.9rem;
+}
+
+.error-boundary-text {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.4;
+    color: #222;
+}
+
+// The reassurance gets its own chip so "nothing was lost" is the first thing
+// the eye lands on after the headline.
+.error-boundary-safe {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0;
+    padding: 0.7rem 0.9rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #000;
+    background: rgba($leaf, 0.22);
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+
+    svg {
+        flex: none;
+        width: 1.4rem;
+        height: 1.4rem;
+        color: $neo-green;
+    }
+}
+
+.error-boundary-submit {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.error-boundary-details {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+}
+
+// Opens by animating the grid row 0fr -> 1fr (height without animating height).
+.error-boundary-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+
+    &.is-open {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        transition:
+            grid-template-rows 0.34s $error-ease,
+            opacity 0.22s ease;
+
+        &.is-open {
+            transition-delay: 0s, 0.06s;
+        }
+    }
+}
+
+.error-boundary-panel-clip {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.error-boundary-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem 0 0.3rem; // room for the copy button's hard shadow
+}
+
+// Same size as Reload, in white/red so it reads as the "something is wrong" one.
+.error-boundary-toggle {
+    width: 100%;
+    padding: 1rem 1.2rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #7a0000;
+    background: #fff4f4;
+    cursor: pointer;
+
+    @media (prefers-reduced-motion: no-preference) {
+        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.12s ease, transform 0.12s ease;
+    }
+}
+
+.error-boundary-withheld {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.3;
+    text-align: center;
+    color: #333;
+}
+
+.error-boundary-message {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0.7rem 0.9rem;
+    font-family: $note-font;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: #000;
+    background: #fff;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    overflow-wrap: anywhere;
+
+    span {
+        flex: 1;
+        min-width: 0;
+        padding-block: 0.25rem;
+    }
+}
+
+// Nested in the box, so smaller than the main buttons.
+.error-boundary-copy {
+    flex: none;
+    padding: 0.25rem 0.8rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .error-boundary-icon {
+        animation: errorIconIn 0.5s $error-ease 0.1s backwards;
+    }
+
+    .error-boundary-body > * {
+        animation: errorRise 0.4s $error-ease backwards;
+
+        @for $i from 1 through 3 {
+            &:nth-child(#{$i}) {
+                animation-delay: 0.12s + 0.06s * $i;
+            }
+        }
+    }
+}
+
+@keyframes errorIconIn {
+    from {
+        opacity: 0;
+        transform: rotate(-24deg) scale(0.6);
+    }
+}
+
+@keyframes errorRise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}

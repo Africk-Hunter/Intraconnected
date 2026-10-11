@@ -1,12 +1,14 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useIdeaContext } from '../context/IdeaContext';
-import { CheckboxIcon } from './Icons';
+import ChecklistItemRow from './ChecklistItemRow';
+import { useEnteringIds } from '../utilities/idea/useEnteringIds';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, cleanLink, openIdeaLink, isNoteMode, isNoteWide, updateIdeaName } from '../utilities';
+import { pushItemDeleteUndo } from '../utilities/idea/checklistUndo';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, openIdeaLink, isNoteMode, isNoteWide, updateIdeaName } from '../utilities';
 
 const NOTE_BODY_MAX_LENGTH = 2000;
 
@@ -69,164 +71,6 @@ interface IdeaNodeProps {
     isLeaf: boolean;
 }
 
-interface SortableNodeItemProps {
-    item: ChecklistItem;
-    onToggle: (e: React.MouseEvent, id: string) => void;
-    onDelete: (e: React.MouseEvent, id: string) => void;
-    onEdit: (id: string, newText: string) => void;
-    onLinkChange: (id: string, link: string) => void;
-    onCopy: (text: string) => void;
-}
-
-function SortableNodeItem({ item, onToggle, onDelete, onEdit, onLinkChange, onCopy }: SortableNodeItemProps) {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
-    const [isEditing, setIsEditing] = useState(false);
-    const [editDraft, setEditDraft] = useState('');
-    const editInputRef = useRef<HTMLTextAreaElement>(null);
-    const [copied, setCopied] = useState(false);
-    const [isLinking, setIsLinking] = useState(false);
-    const [linkDraft, setLinkDraft] = useState('');
-    const linkInputRef = useRef<HTMLInputElement>(null);
-    const cancelLinkRef = useRef(false);
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.4 : undefined,
-        zIndex: isDragging ? 1 : undefined,
-        position: isDragging ? 'relative' as const : undefined,
-    };
-
-    useLayoutEffect(() => {
-        if (!isEditing) return;
-        const el = editInputRef.current;
-        if (!el) return;
-        el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
-        el.focus();
-    }, [isEditing]);
-
-    useLayoutEffect(() => {
-        if (!isLinking) return;
-        linkInputRef.current?.focus();
-    }, [isLinking]);
-
-    function startEdit(e: React.MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
-        setEditDraft(item.text);
-        setIsEditing(true);
-    }
-
-    function commitEdit() {
-        const text = editDraft.trim();
-        if (text && text !== item.text) onEdit(item.id, text);
-        setIsEditing(false);
-    }
-
-    function openLink(e: React.MouseEvent) {
-        e.stopPropagation();
-        e.preventDefault();
-        setLinkDraft(item.link ?? '');
-        setIsLinking(true);
-    }
-
-    function commitLink() {
-        if (cancelLinkRef.current) { cancelLinkRef.current = false; return; }
-        const url = linkDraft.trim() ? cleanLink(linkDraft.trim()) : '';
-        if (url !== (item.link ?? '')) onLinkChange(item.id, url);
-        setIsLinking(false);
-    }
-
-    return (
-        <li ref={setNodeRef} style={style} className={`checklist-item${item.checked ? ' checklist-item--checked' : ''}`}>
-            <button className="checklist-drag" {...attributes} {...listeners}>
-                <img src="images/DragHandle.svg" alt="" />
-            </button>
-            <button className="checklist-checkbox" onClick={e => onToggle(e, item.id)}>
-                <CheckboxIcon checked={item.checked} />
-            </button>
-            {isEditing ? (
-                <textarea
-                    ref={editInputRef}
-                    className="checklist-item-edit-input"
-                    value={editDraft}
-                    onChange={e => {
-                        setEditDraft(e.target.value);
-                        e.target.style.height = 'auto';
-                        e.target.style.height = e.target.scrollHeight + 'px';
-                    }}
-                    onBlur={commitEdit}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.stopPropagation(); commitEdit(); } if (e.key === 'Escape') { e.preventDefault(); setIsEditing(false); } }}
-                    onClick={e => e.stopPropagation()}
-                    maxLength={200}
-                />
-            ) : (
-                item.link ? (
-                    <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="checklist-item-text checklist-item-text--linked"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {item.text}
-                    </a>
-                ) : (
-                    <span className="checklist-item-text">{item.text}</span>
-                )
-            )}
-            {!isEditing && (
-                <div className={`checklist-item-actions${item.link ? ' has-active-link' : ''}`}>
-                    <button className="checklist-item-copy" onClick={e => { e.stopPropagation(); e.preventDefault(); onCopy(item.text); setCopied(true); setTimeout(() => setCopied(false), 1000); }} title="Copy text">
-                        <img src={copied ? 'images/Checkmark.svg' : 'images/CopyIcon.svg'} alt="Copy" />
-                    </button>
-                    <button
-                        className={`checklist-item-link${item.link ? ' checklist-item-link--active' : ''}`}
-                        onClick={e => { e.stopPropagation(); e.preventDefault(); if (isLinking) { setIsLinking(false); } else { openLink(e); } }}
-                        title={item.link ? 'Edit link' : 'Add link'}
-                    >
-                        <img src="images/LinkBlack.svg" alt="Link" />
-                    </button>
-                    <button className="checklist-item-edit" onClick={startEdit} title="Rename">
-                        <img src="images/Pen.svg" alt="Rename" />
-                    </button>
-                    <button className="checklist-item-delete" onClick={e => onDelete(e, item.id)} title="Delete">
-                        <img src="images/Trash.svg" alt="Delete" />
-                    </button>
-                </div>
-            )}
-            {isLinking && (
-                <div className="checklist-item-link-row" onClick={e => { e.stopPropagation(); e.preventDefault(); }}>
-                    <input
-                        ref={linkInputRef}
-                        className="checklist-item-link-input"
-                        value={linkDraft}
-                        onChange={e => setLinkDraft(e.target.value)}
-                        onBlur={commitLink}
-                        onKeyDown={e => {
-                            if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); commitLink(); }
-                            if (e.key === 'Escape') { e.preventDefault(); cancelLinkRef.current = true; setIsLinking(false); }
-                        }}
-                        onClick={e => e.stopPropagation()}
-                        placeholder="Paste URL, press Enter"
-                        maxLength={500}
-                    />
-                    {item.link && (
-                        <button
-                            className="checklist-item-link-clear"
-                            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onLinkChange(item.id, ''); setIsLinking(false); }}
-                            title="Remove link"
-                        >
-                            ✕
-                        </button>
-                    )}
-                </div>
-            )}
-        </li>
-    );
-}
-
 const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const { navigateToId, setRenameModalOpen, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId, setCardMenu } = useIdeaContext();
 
@@ -237,6 +81,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
 
     const [addItemDraft, setAddItemDraft] = useState('');
     const [localItems, setLocalItems] = useState<ChecklistItem[]>(isChecklist ? idea.items : []);
+    const enteringIds = useEnteringIds(localItems);
     const addInputRef = useRef<HTMLInputElement>(null);
     const checklistItemsRef = useRef<HTMLUListElement>(null);
     const [isChecklistExpanded, setIsChecklistExpanded] = useState(false);
@@ -695,9 +540,9 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         </button>
     );
 
-    function toggleItem(e: React.MouseEvent, itemId: string) {
-        e.stopPropagation();
-        e.preventDefault();
+    const checkedCount = localItems.filter(i => i.checked).length;
+
+    function toggleItem(itemId: string) {
         const newItems = localItems.map(item =>
             item.id === itemId ? { ...item, checked: !item.checked } : item
         );
@@ -728,12 +573,36 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         navigator.clipboard.writeText(text).catch(() => {});
     }
 
-    function deleteItem(e: React.MouseEvent, itemId: string) {
-        e.stopPropagation();
-        e.preventDefault();
+    function deleteItem(itemId: string) {
+        const index = localItems.findIndex(item => item.id === itemId);
+        if (index === -1) return;
+        const removed = localItems[index];
         const newItems = localItems.filter(item => item.id !== itemId);
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
+        pushItemDeleteUndo(id, removed, index, restored => {
+            setLocalItems(restored);
+            setNewIdeaSwitch(prev => !prev);
+        });
+    }
+
+    // Grows or shrinks the list to its new height instead of snapping.
+    function setChecklistExpanded(next: boolean) {
+        const el = checklistItemsRef.current;
+        if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            setIsChecklistExpanded(next);
+            return;
+        }
+        const from = el.getBoundingClientRect().height;
+        flushSync(() => setIsChecklistExpanded(next));
+        const to = el.getBoundingClientRect().height;
+        if (from === to) return;
+        el.style.overflow = 'hidden';
+        const anim = el.animate(
+            { maxHeight: [`${from}px`, `${to}px`] },
+            { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+        );
+        anim.onfinish = anim.oncancel = () => { el.style.overflow = ''; };
     }
 
     function editItem(itemId: string, newText: string) {
@@ -771,7 +640,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 className={`neobrutal-button ideaNode checklist${fadeInClass}${priorityClass}`}
                 onKeyDown={handleCardKeyDown}
                 onContextMenu={handleContextMenu}
-                data-idea-id={id}
+                data-idea-id={id} data-dragging={isDragging || undefined}
                 {...attributes}
                 {...listeners}
             >
@@ -780,6 +649,21 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 <div className="checklist-header" onClick={() => setChecklistModalId(id)}>
                     <span className="checklist-title-text">{title}</span>
                 </div>
+                {localItems.length > 0 && (
+                    <div
+                        className={`checklist-progress${checkedCount === localItems.length ? ' checklist-progress--done' : ''}`}
+                        role="progressbar"
+                        aria-label="Checklist progress"
+                        aria-valuemin={0}
+                        aria-valuemax={localItems.length}
+                        aria-valuenow={checkedCount}
+                    >
+                        <div className="checklist-progress-track">
+                            <div className="checklist-progress-fill" style={{ transform: `scaleX(${checkedCount / localItems.length})` }} />
+                        </div>
+                        <span className="checklist-progress-count">{checkedCount}/{localItems.length}</span>
+                    </div>
+                )}
                 <div className="checklist-items-wrapper" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()}>
                     <DndContext
                         sensors={itemSensors}
@@ -790,8 +674,10 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                         <SortableContext items={localItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
                             <ul ref={checklistItemsRef} className={`checklist-items${!isChecklistExpanded ? ' checklist-items--collapsed' : ''}`}>
                                 {localItems.map(item => (
-                                    <SortableNodeItem
+                                    <ChecklistItemRow
                                         key={item.id}
+                                        variant="card"
+                                        entering={enteringIds.has(item.id)}
                                         item={item}
                                         onToggle={toggleItem}
                                         onDelete={deleteItem}
@@ -805,14 +691,14 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                     </DndContext>
                     {needsChecklistExpand && !isChecklistExpanded && (
                         <div className="checklist-fade-overlay">
-                            <button className="checklist-expand-btn" onClick={e => { e.stopPropagation(); e.preventDefault(); setIsChecklistExpanded(true); }}>
+                            <button className="checklist-expand-btn" onClick={e => { e.stopPropagation(); e.preventDefault(); setChecklistExpanded(true); }}>
                                 Show more ▾
                             </button>
                         </div>
                     )}
                 </div>
                 {needsChecklistExpand && isChecklistExpanded && (
-                    <button className="checklist-expand-btn checklist-expand-btn--collapse" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); e.preventDefault(); setIsChecklistExpanded(false); }}>
+                    <button className="checklist-expand-btn checklist-expand-btn--collapse" onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); e.preventDefault(); setChecklistExpanded(false); }}>
                         Show less ▴
                     </button>
                 )}
@@ -820,6 +706,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                     <input
                         ref={addInputRef}
                         className="checklist-add-input"
+                        aria-label="Add item"
                         placeholder="+ Add item"
                         value={addItemDraft}
                         onChange={e => setAddItemDraft(e.target.value)}
@@ -839,7 +726,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 style={combinedStyle}
                 className={`neobrutal-button ideaNode note${wideClass}${fadeInClass}${priorityClass}`}
                 onContextMenu={handleContextMenu}
-                data-idea-id={id}
+                data-idea-id={id} data-dragging={isDragging || undefined}
                 {...attributes}
                 {...listeners}
             >
@@ -905,7 +792,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }
 
     return (
-        <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...listeners}>
+        <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} data-dragging={isDragging || undefined} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...listeners}>
             <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
                 {moreButton}
             <div className="ideaNode-content">

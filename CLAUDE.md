@@ -275,7 +275,7 @@ Custom collision detection: `trash`/`last-idea` use rect intersection; idea node
 - **Breadcrumb** (`Breadcrumb.tsx`, built from `rootIdStack`) replaced the depth dots. **Search** is `idea/search.ts` (pure) + `SearchModal`. **Move to…** is `MoveModal`.
 
 ### Desktop Navbar
-Left sidebar: **Create** (green, top) → **Home** (burnt-orange; grays out + disabled when `rootId === 1`, triggers fade transition via `setNodesVisible`) → **Mind Map toggle** (pink, `MindMapBlack.svg`; wraps in `.nav-btn-group` which gets `--active` class). Right sidebar: log out, help, patch notes.
+Left sidebar: **Create** (green, top) → **Home** (burnt-orange; grays out + disabled when `rootId === 1`, triggers fade transition via `setNodesVisible`) → **Search**. The mind map has no sidebar button: **G** toggles it (`useDesktopShortcuts`), as do the pink map icon at the start of `Breadcrumb` and the "Toggle mind map" palette command; the overlay's own **Close** button, G and Esc shut it. Its **Priority** (P) / **Newest** (N) lenses are `idea/mapLens.ts` (pure, tested): prune the map to the matching nodes and the paths to them (ring + badge on matches, paths faded), then zoom to fit; the **Fit** button does that on demand (`mindmap_lens` in localStorage). Nodes can be dragged onto another to reparent (own mouse listeners in `MindMap.tsx`, not dnd-kit; goes through `useIdeaActions().moveIdea`, so it is undoable; refuses checklists, notes, links and the node's own subtree as targets). The Newest lens (internally `recent`) reads the creation time out of the idea id. Right sidebar: log out, help, patch notes.
 
 `navigateToId(1)` (from `useIdeaContext()`) handles returning to root and rebuilding the stack.
 

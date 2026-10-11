@@ -307,3 +307,215 @@
         &__item  { font-size: 0.95rem; }
     }
 }
+
+// ── Controls, lenses ─────────────────────────────────────────────
+
+.mm-controls {
+    position: absolute;
+    left: 50%;
+    bottom: 1.75rem;
+    translate: -50% 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    max-width: calc(100% - 2rem);
+    padding: 0.5rem 0.7rem;
+    background: $background-color;
+    border: 3px solid #111;
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 2px #111;
+}
+
+.mm-ctrl-btn {
+    min-width: 2.4rem;
+    height: 2.4rem;
+    padding: 0 0.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #111;
+    background: $neutral;
+
+    &--wide { padding: 0 0.9rem; }
+
+    &--close {
+        background: $danger;
+        color: #fff;
+    }
+
+    &[aria-pressed='true'] { background: $leaf; }
+}
+
+.mm-ctrl-zoom {
+    min-width: 3.2rem;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.mm-ctrl-sep {
+    align-self: stretch;
+    width: 3px;
+    border-radius: 2px;
+    background: #111;
+    opacity: 0.2;
+}
+
+// Key for the active lens, just above the controls.
+.mm-legend {
+    position: absolute;
+    left: 50%;
+    bottom: 6.4rem;
+    translate: -50% 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: calc(100% - 2rem);
+    padding: 0.4rem 0.7rem;
+    background: $background-color;
+    border: 3px solid #111;
+    border-radius: 12px;
+
+    &__note {
+        font-size: 0.85rem;
+        font-weight: 600;
+        opacity: 0.75;
+    }
+}
+
+// The node (or checklist card) plus its lens badge. Same size as the node, so
+// the badge can hang off a corner.
+.mm-node-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    border-radius: 10px;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.mm-lens--path { opacity: 0.7; }
+
+.mm-lens-badge {
+    position: absolute;
+    top: -0.85rem;
+    right: -0.6rem;
+    z-index: 1;
+    padding: 0.05rem 0.5rem;
+    border: 2px solid #111;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+
+    &--static {
+        position: static;
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 800;
+        line-height: 1.4;
+        pointer-events: auto;
+        cursor: pointer;
+        transition: opacity 0.15s ease, translate 0.15s ease;
+
+        &:hover { translate: 0 -1px; }
+        &:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
+        &[aria-pressed='true'] { box-shadow: 0 0 0 3px #111; }
+    }
+
+    // A chip that isn't picked while others are.
+    &--off { opacity: 0.4; }
+
+    &--p1 { background: #D62000; color: #fff; }
+    &--p2 { background: #E07800; color: #111; }
+    &--p3 { background: #C8A200; color: #111; }
+    &--today { background: #5A189A; color: #fff; }
+    &--week { background: #8E4FD6; color: #fff; }
+    &--month { background: #BE9BEA; color: #111; }
+}
+
+// Ring around matching nodes, in the badge's colour.
+.mm-lens-ring {
+    &--p1 { box-shadow: 0 0 0 5px #D62000; }
+    &--p2 { box-shadow: 0 0 0 5px #E07800; }
+    &--p3 { box-shadow: 0 0 0 5px #C8A200; }
+    &--today { box-shadow: 0 0 0 5px #5A189A; }
+    &--week { box-shadow: 0 0 0 5px #8E4FD6; }
+    &--month { box-shadow: 0 0 0 5px #BE9BEA; }
+}
+
+// Dragging a node onto another to move it.
+.mm-drag-source { opacity: 0.4; }
+
+.mm-drop-target {
+    outline: 4px dashed #111;
+    outline-offset: 6px;
+}
+
+// The "not allowed" cursor everywhere while a drag hovers a refused node.
+.mm-wrap--denied,
+.mm-wrap--denied * {
+    cursor: not-allowed !important;
+}
+
+// Hovered while dragging, but the node can't go there.
+.mm-drop-denied {
+    outline: 4px dashed $danger;
+    outline-offset: 6px;
+
+    .mm-node-btn,
+    .mm-checklist-card {
+        background: $danger;
+        color: #fff;
+        cursor: not-allowed;
+    }
+}
+
+.mm-drag-ghost {
+    position: fixed;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    max-width: 260px;
+    padding: 0.4rem 0.8rem;
+    translate: 14px 14px;
+    background: $background-color;
+    border: 3px solid #111;
+    border-radius: 8px;
+    box-shadow: 4px 4px 0 2px #111;
+    font-weight: 700;
+    pointer-events: none;
+
+    &--denied {
+        border-color: $danger;
+        box-shadow: 4px 4px 0 2px $danger;
+
+        small {
+            color: $danger;
+            opacity: 1;
+        }
+    }
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    small {
+        font-size: 0.75rem;
+        font-weight: 600;
+        opacity: 0.75;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mm-node-wrap { transition: none; }
+}

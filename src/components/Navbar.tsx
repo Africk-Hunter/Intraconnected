@@ -12,14 +12,13 @@ interface NavbarProps {
     showHelp: boolean;
     setShowPatchNotes: () => void;
     showPatchNotes: boolean;
-    setShowMindMap: React.Dispatch<React.SetStateAction<boolean>>;
     showMindMap: boolean;
     isNewPatchNotes?: boolean;
     hasNewHelp?: boolean;
     onSearch: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, setShowMindMap, showMindMap, isNewPatchNotes, hasNewHelp, onSearch }) => {
+const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, showMindMap, isNewPatchNotes, hasNewHelp, onSearch }) => {
 
     const { setCreationModalOpen, rootId, navigateToId, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
@@ -48,11 +47,8 @@ const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPat
                 :
 
                 <nav className="navbar">
-                    <TooltipButton tooltip="Create new idea" shortcut="N" tooltipSide="right" wrapperClassName={showMindMap ? 'nav-btn--hidden' : ''} className="largeSideButton leaf neobrutal-button navButton" onClick={handleCreateClick}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg buttonImg--large" /></TooltipButton>
+                    <TooltipButton tooltip="Create new idea" shortcut="C" tooltipSide="right" wrapperClassName={showMindMap ? 'nav-btn--hidden' : ''} className="largeSideButton leaf neobrutal-button navButton" onClick={handleCreateClick}><img src="/images/Plus.svg" alt="Create new idea" className="buttonImg buttonImg--large" /></TooltipButton>
                     <TooltipButton tooltip="Return to root" tooltipSide="right" wrapperClassName={`nav-btn--return-root${rootId === 1 ? ' nav-btn--at-root' : ''}${showMindMap ? ' nav-btn--hidden' : ''}`} className="medLargeSideButton burnt-orange neobrutal-button navButton" onClick={rootId === 1 ? undefined : () => navigateToId(1)}><img src="/images/Home.svg" alt="Return to root" className="buttonImg buttonImg--boost" /></TooltipButton>
-                    <div className={`nav-btn-group${showMindMap ? ' nav-btn-group--active' : ''}`}>
-                        <TooltipButton tooltip="Toggle mind map" tooltipSide="right" className="mediumSideButton neo-pink neobrutal-button navButton" onClick={() => setShowMindMap(prev => !prev)}><img src="/images/MindMapBlack.svg" alt="" className="buttonImg logoButton" /></TooltipButton>
-                    </div>
                     <TooltipButton tooltip="Search ideas" shortcut={SEARCH_KEY} tooltipSide="right" className="mediumSideButton neutral neobrutal-button navButton" onClick={onSearch}>
                         <svg className="buttonImg" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21" /></svg>
                     </TooltipButton>

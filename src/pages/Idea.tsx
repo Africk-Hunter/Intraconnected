@@ -10,7 +10,7 @@ import LastIdea from '../components/LastIdea';
 
 // 3rd Party Libraries
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { Modifier, CollisionDetection, DragEndEvent } from '@dnd-kit/core';
+import type { Modifier, CollisionDetection, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
 import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } from '@dnd-kit/core';
 
 // Custom Libraries
@@ -328,7 +328,22 @@ function Idea() {
         return collisions.map(c => ({ id: c.id }));
     };
 
+    // The dragged card follows the pointer, so its own cursor is the one shown. While it
+    // hovers a card that can't take a drop (checklist, note, link), a body class swaps the
+    // whole page to the "not allowed" cursor.
+    const handleDragOver = (event: DragOverEvent) => {
+        const { active, over } = event;
+        let blocked = false;
+        if (active && over && String(over.id).startsWith('idea-') && over.id !== active.id) {
+            const overIdea = fetchFullIdeaList().find((i: IdeaType) => i.id === Number(String(over.id).split('-')[1]));
+            blocked = getIdeaLink(overIdea) !== '' || isNoteMode(overIdea) || overIdea?.type === 'checklist';
+        }
+        document.body.classList.toggle('dnd-blocked', blocked);
+    };
+    const clearBlockedCursor = () => document.body.classList.remove('dnd-blocked');
+
     const handleDragEnd = (event: DragEndEvent) => {
+        clearBlockedCursor();
         const { active, over } = event;
         if (!active || !over) return;
 
@@ -391,6 +406,7 @@ function Idea() {
     useDesktopShortcuts({
         enabled: !isMobileUI,
         mapOpen: showMindMap,
+        onToggleMap: () => setShowMindMap(prev => !prev),
         onNewIdea: openCreate,
         onGoUp: () => { if (rootId !== 1) navigateToId(getParentID(rootId)); },
         onShowShortcuts: () => setShowShortcuts(true),
@@ -518,16 +534,16 @@ function Idea() {
     );
 
     return (
-        <DndContext onDragEnd={handleDragEnd} collisionDetection={nodePointerCollision} modifiers={[restrictToTopLeftRight]} sensors={sensors}>
+        <DndContext onDragOver={handleDragOver} onDragCancel={clearBlockedCursor} onDragEnd={handleDragEnd} collisionDetection={nodePointerCollision} modifiers={[restrictToTopLeftRight]} sensors={sensors}>
             <section className="ideaPage">
                 <section className="left">
-                    <Navbar side="left" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} />
+                    <Navbar side="left" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} />
                     <Trash hidden={showMindMap} />
                 </section>
 
                     <section className={`mid${showMindMap ? ' mid--map-open' : ''}`}>
                         <section className="top">
-                            <Breadcrumb />
+                            <Breadcrumb onOpenMap={() => setShowMindMap(true)} />
                             <section className="rootHolder">
                                 <section className="rootAdditionalButtons">
                                     <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => navigateToId(getParentID(rootId))}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
@@ -563,7 +579,7 @@ function Idea() {
                     </section>
 
                 <section className="right">
-                    <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} setShowMindMap={setShowMindMap} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} />
+                    <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} />
                     <Help showHelp={showHelp} onClose={() => setShowHelp(false)} onSeenChange={() => setHasNewHelp(firstUnseenHelpScreen(auth.currentUser?.uid) >= 0)} />
                     <PatchNotes showPatchNotes={showPatchNotes} />
                 </section>
@@ -581,10 +597,10 @@ function Idea() {
                         onClose={() => setShowSearch(false)}
                         onPick={pickSearchResult}
                         commands={[
-                            { label: 'New idea', hint: 'N', run: openCreate },
+                            { label: 'Create Shortcut', hint: 'C', run: openCreate },
                             ...(rootId !== 1 ? [{ label: 'Go to the top level', run: () => navigateToId(1) }] : []),
-                            { label: 'Toggle mind map', run: () => setShowMindMap(prev => !prev) },
-                            { label: 'Keyboard shortcuts', hint: '?', run: () => setShowShortcuts(true) },
+                            { label: 'Toggle mind map', hint: 'G', run: () => setShowMindMap(prev => !prev) },
+                            { label: 'Keyboard shortcuts', hint: '/', run: () => setShowShortcuts(true) },
                         ]}
                     />
                     <ShortcutsModal open={showShortcuts} onClose={() => setShowShortcuts(false)} />
