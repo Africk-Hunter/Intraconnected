@@ -1,0 +1,625 @@
+<!-- Live version: https://claude.ai/artifact/8AfWNA2bCDKhoEq7AumzaC -->
+<title>Native App Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Work+Sans:wght@400;500;600&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* Layout: one neobrutal column; diagrams are CSS boxes and inline SVG. Palette borrowed from Intraconnected's SCSS (same as the launch checklist). */
+:root {
+  --bg: #E9F9E5; --card: #FFFFFF; --ink: #111111; --muted: #4A5A47; --line: #111111;
+  --leaf: #41BC28; --sky: #00A9D8; --link: #E8E879; --danger: #C80000; --pink: #DB44A4;
+  --tint: #F3FBF1; --shadow: #111111; --ondanger: #FFFFFF;
+  --display: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Courier Prime", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1A0D; --card: #18241A; --ink: #EEF6EC; --muted: #A9BCA5; --line: #EEF6EC;
+    --leaf: #52D236; --sky: #2DC3EE; --link: #D9D95E; --danger: #FF5A5A; --pink: #F068BE;
+    --tint: #1F2E21; --shadow: #000000; --ondanger: #111111; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1A0D; --card: #18241A; --ink: #EEF6EC; --muted: #A9BCA5; --line: #EEF6EC;
+  --leaf: #52D236; --sky: #2DC3EE; --link: #D9D95E; --danger: #FF5A5A; --pink: #F068BE;
+  --tint: #1F2E21; --shadow: #000000; --ondanger: #111111; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); padding: 0 16px 64px; }
+.wrap { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+header.hero { padding-block: 36px 4px; display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font: 700 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 400 clamp(30px, 6vw, 46px)/1.05 var(--display); margin: 0; text-wrap: balance; }
+h1 mark { background: var(--link); color: #111; padding: 0 .15em; border: 3px solid var(--line); box-shadow: 4px 4px 0 var(--shadow); }
+h2 { font: 400 22px/1.15 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 15px/1.3 var(--body); margin: 0; }
+p { margin: 0; }
+.lede { max-width: 64ch; color: var(--muted); }
+code { font: 700 .92em var(--mono); background: var(--tint); border: 1px solid var(--line); padding: 0 .3em; overflow-wrap: anywhere; }
+.card { background: var(--card); border: 4px solid var(--line); box-shadow: 6px 6px 0 var(--shadow); }
+.sec { display: flex; flex-direction: column; gap: 14px; }
+.sec > .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+.sec > .head { padding: 14px 18px 10px; border-bottom: 3px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.sub { color: var(--muted); font-size: 13.5px; }
+.scroll { overflow-x: auto; }
+.pill { display: inline-block; font: 700 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border: 2px solid var(--line); background: var(--link); color: #111; white-space: nowrap; }
+.pill.leaf { background: var(--leaf); } .pill.sky { background: var(--sky); } .pill.pink { background: var(--pink); } .pill.danger { background: var(--danger); color: var(--ondanger); } .pill.plain { background: var(--card); color: var(--ink); }
+
+/* stat strip */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.stat { border: 3px solid var(--line); padding: 10px 12px; background: var(--tint); display: flex; flex-direction: column; gap: 4px; }
+.stat b { font: 400 15px/1.2 var(--display); }
+.stat span { font-size: 13px; color: var(--muted); }
+
+/* architecture diagram */
+.arch { display: grid; grid-template-columns: 1fr; gap: 10px; justify-items: center; min-width: 0; }
+.node { border: 3px solid var(--line); background: var(--card); padding: 8px 12px; text-align: center; font-size: 13.5px; min-width: 0; box-shadow: 3px 3px 0 var(--shadow); }
+.node b { display: block; font: 700 13px var(--mono); }
+.node.src { background: var(--link); color: #111; width: min(100%, 420px); }
+.node.build { background: var(--sky); color: #111; width: min(100%, 420px); }
+.arrow { font: 700 18px/1 var(--mono); color: var(--muted); }
+.targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; width: 100%; }
+.targets .node.web { background: var(--leaf); color: #111; }
+.targets .node.and { background: var(--card); }
+.targets .node.ios { background: var(--card); }
+.apibox { width: 100%; border: 3px dashed var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--tint); }
+.apibox .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.apibox .cell { font-size: 12.5px; border-left: 4px solid var(--sky); padding-left: 8px; }
+@media (max-width: 560px) { .targets, .apibox .row { grid-template-columns: 1fr; } }
+
+/* flow */
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.step { flex: 1 1 130px; border: 3px solid var(--line); padding: 8px 10px; font-size: 13px; background: var(--card); position: relative; min-width: 0; }
+.step b { display: block; font: 700 12px var(--mono); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
+.step.go { background: var(--leaf); color: #111; } .step.stop { background: var(--link); color: #111; } .step.dec { background: var(--sky); color: #111; }
+.branches { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 520px; }
+th, td { border: 2px solid var(--line); padding: 7px 9px; text-align: left; vertical-align: top; }
+th { background: var(--tint); font: 700 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+td.c { text-align: center; }
+
+/* timeline lanes */
+.lanes { display: grid; grid-template-columns: 76px repeat(10, minmax(46px, 1fr)); gap: 4px; min-width: 700px; align-items: center; }
+.lanes .lbl { font: 700 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.lanes .hd { font: 700 11px var(--mono); text-align: center; border-bottom: 3px solid var(--line); padding-bottom: 3px; }
+.bar { border: 3px solid var(--line); padding: 5px 6px; font-size: 12px; font-weight: 600; text-align: center; background: var(--card); color: var(--ink); min-width: 0; }
+.bar.u { background: var(--pink); color: #111; } .bar.sh { background: var(--leaf); color: #111; } .bar.an { background: var(--sky); color: #111; } .bar.io { background: var(--link); color: #111; } .bar.st { background: var(--card); }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12.5px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border: 2px solid var(--line); display: inline-block; }
+
+/* phases */
+.phase { display: flex; flex-direction: column; }
+.ph-head { display: flex; align-items: baseline; gap: 14px; padding: 14px 18px 10px; border-bottom: 3px solid var(--line); flex-wrap: wrap; }
+.ph-num { font: 400 20px/1 var(--display); background: var(--sky); color: #111; border: 3px solid var(--line); min-width: 44px; text-align: center; padding: 6px 4px; flex: none; }
+.ph-title { display: flex; flex-direction: column; gap: 2px; flex: 1 1 220px; min-width: 0; }
+.ph-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+ul.t { margin: 0; padding: 12px 18px 16px 36px; display: flex; flex-direction: column; gap: 7px; font-size: 14px; }
+ul.t li::marker { color: var(--muted); }
+
+/* two-up */
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.box { border: 3px solid var(--line); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; background: var(--tint); min-width: 0; }
+.box.bad { border-left: 10px solid var(--danger); } .box.good { border-left: 10px solid var(--leaf); }
+.box ul { margin: 0; padding-left: 18px; font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
+
+/* checklist */
+.chk { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 18px; margin: 0; padding: 0; list-style: none; font-size: 13.5px; }
+.chk li { display: flex; gap: 9px; align-items: flex-start; }
+.chk li::before { content: ""; flex: none; width: 15px; height: 15px; margin-top: 3px; border: 2px solid var(--line); background: var(--card); }
+/* code chips on colored surfaces keep dark text on a light chip in both themes */
+.step.go code, .step.stop code, .step.dec code, .node.src code, .node.build code, .targets .node.web code, .bar code, .pill code { background: rgba(255,255,255,.7); color: #111; border-color: #111; }
+/* progress tracker */
+.pg-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pg-meter { flex: 1 1 200px; height: 16px; border: 3px solid var(--line); background: var(--tint); min-width: 0; }
+.pg-meter span { display: block; height: 100%; width: 0; background: var(--leaf); transition: width .25s; }
+.pg-count { font: 700 14px var(--mono); font-variant-numeric: tabular-nums; }
+.pg-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px; }
+.pg-group { border: 3px solid var(--line); background: var(--tint); display: flex; flex-direction: column; min-width: 0; }
+.pg-group > header { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 3px solid var(--line); background: var(--card); }
+.pg-group > header b { font: 400 13px/1.2 var(--display); flex: 1 1 auto; min-width: 0; }
+.pg-group > header span { font: 700 12px var(--mono); font-variant-numeric: tabular-nums; }
+.pg-group.done > header { background: var(--leaf); color: #111; }
+.pg-group label { display: flex; gap: 9px; align-items: flex-start; padding: 6px 10px; font-size: 13.5px; cursor: pointer; }
+.pg-group label + label { border-top: 1px solid color-mix(in srgb, var(--line) 25%, transparent); }
+.pg-group input { flex: none; width: 17px; height: 17px; margin: 2px 0 0; accent-color: var(--leaf); cursor: pointer; }
+.pg-group input:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.pg-group input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.pg-group .you { font: 700 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; background: var(--pink); color: #111; border: 2px solid var(--line); padding: 1px 4px; margin-left: 6px; white-space: nowrap; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--sky); text-decoration-thickness: 2px; text-underline-offset: 2px; overflow-wrap: anywhere; }
+a:hover { background: var(--link); color: #111; text-decoration-color: #111; }
+a:hover code { background: transparent; }
+a:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+.refs { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.refs ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; }
+.refs h3 { font: 700 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+</style>
+
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow"><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-15">Launch checklist</a> sections <a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-15">15</a> to <a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-18">18</a> · plan of Oct 10</div>
+  <h1>Intraconnected on <mark>Android</mark> and iOS</h1>
+  <p class="lede">One Capacitor shell around the existing web build. Android goes first because it builds on Windows with a USB phone. Every code change is shared, so iOS loses nothing by waiting. The app sells nothing.</p>
+</header>
+
+<section class="card sec">
+  <div class="head"><h2>Decisions</h2><p class="sub">Settled in this session.</p></div>
+  <div class="body">
+    <div class="stats">
+      <div class="stat"><b>Wrapper: Capacitor</b><span>Wraps <a href="https://vite.dev/guide/build"><code>dist/</code></a>. No <a href="https://capacitorjs.com/docs/config"><code>server.url</code></a> (<a href="https://developer.apple.com/app-store/review/guidelines/#minimum-functionality">Apple 4.2</a>).</span></div>
+      <div class="stat"><b>Money (C2)</b><span>App sells nothing. US storefront gets a link to <code>/pricing</code>. Everyone else sees no prompt.</span></div>
+      <div class="stat"><b>Order</b><span>Android first, iOS right behind it. Apple enrollment starts on day one.</span></div>
+      <div class="stat"><b>Sign-in</b><span>Always stay signed in. Key in Keychain / Keystore. No Remember me box.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="card sec" id="progress">
+  <div class="head"><h2>Progress</h2><p class="sub">Tick steps as they finish. Ticks are saved with this page and are the same on every device. Claude updates them as it works.</p></div>
+  <div class="body">
+    <div class="pg-top">
+      <div class="pg-meter" role="progressbar" aria-label="Overall progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="pgmeter"><span id="pgfill"></span></div>
+      <b class="pg-count" id="pgcount">0 of 0</b>
+      <span class="pill plain" id="pgstatus">Loading…</span>
+    </div>
+    <div class="pg-groups" id="pggroups"></div>
+  </div>
+</section>
+
+<section class="card sec">
+  <div class="head"><h2>How the pieces fit</h2><p class="sub">One bundle, three ways to run it. Only the shell and a few platform switches differ.</p></div>
+  <div class="body">
+    <div class="scroll"><div class="arch" style="min-width:560px">
+      <div class="node src"><b>src/ (React + TypeScript)</b>one codebase, plus <code>platform.ts</code> for native checks</div>
+      <div class="arrow">↓</div>
+      <div class="node build"><b>vite build → dist/</b><a href="https://vite.dev/guide/env-and-mode"><code>--mode native</code></a> adds the CSP meta tag</div>
+      <div class="arrow">↓</div>
+      <div class="targets">
+        <div class="node web"><b>Web</b>Netlify. Unchanged.</div>
+        <div class="node and"><b>Android shell</b><code>android/</code> · built in <a href="https://developer.android.com/studio">Android Studio</a></div>
+        <div class="node ios"><b>iOS shell</b><code>ios/</code> · built on <a href="https://codemagic.io">Codemagic</a></div>
+      </div>
+      <div class="arrow">↓ every network call</div>
+      <div class="apibox">
+        <div class="eyebrow">Server side, no changes except CORS</div>
+        <div class="row">
+          <div class="cell"><b>Firebase</b><br>Auth + Firestore directly from the device</div>
+          <div class="cell"><b>Netlify Functions</b><br>Reached through <code>apiUrl()</code> at <code>intraconnected.app</code></div>
+          <div class="cell"><b>Stripe</b><br>Web only. Never loaded in the app.</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<section class="card sec">
+  <div class="head"><h2>What the review found</h2><p class="sub">The checklist's section 15 missed or misdescribed these. Most serious first.</p></div>
+  <div class="body">
+    <div class="scroll"><table>
+      <thead><tr><th>Issue</th><th>Why it matters on a phone</th><th>Fix</th><th>Phase</th></tr></thead>
+      <tbody>
+        <tr><td><b>Auth may hang on iOS</b><br><a href="https://firebase.google.com/docs/reference/js/auth#getauth"><code>getAuth()</code></a> loads the popup resolver</td><td>Sign-in can stall in the WKWebView on <code>capacitor://localhost</code></td><td><a href="https://firebase.google.com/docs/reference/js/auth#initializeauth"><code>initializeAuth</code></a> with IndexedDB persistence</td><td class="c">3</td></tr>
+        <tr><td><b>Logged out on every app kill</b></td><td>Key sits in <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage"><code>sessionStorage</code></a>; the OS clears it; <code>Idea.tsx:196</code> redirects to login</td><td>Key in secure storage, persistent Firebase auth</td><td class="c">3</td></tr>
+        <tr><td><b>App opens on the marketing site</b></td><td>Landing page and Stripe checkout one tap away: breaks "sells nothing" and risks a 4.2 rejection</td><td><code>NativeEntry</code> at <code>/</code>; redirect <code>/pricing</code> and <code>/landing</code></td><td class="c">3, 4</td></tr>
+        <tr><td><b>Top bar under the notch</b></td><td><code>.mmobile-header</code> ignores <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/env"><code>safe-area-inset-top</code></a></td><td>Top inset padding on header and full-screen pages</td><td class="c">4</td></tr>
+        <tr><td><b>9 relative function calls</b></td><td>Checklist says 8 and names old <code>.tsx</code> files. Relative URLs hit nothing inside the app</td><td><code>apiUrl()</code> plus CORS origins</td><td class="c">2</td></tr>
+        <tr><td><b>Link nodes</b></td><td><a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/open"><code>window.open</code></a> is unreliable in a WebView</td><td><a href="https://capacitorjs.com/docs/apis/browser"><code>@capacitor/browser</code></a> inside <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/idea/helpers.ts"><code>openIdeaLink</code></a></td><td class="c">4</td></tr>
+        <tr><td><b>No haptics on iOS</b></td><td><a href="https://developer.mozilla.org/en-US/docs/Web/API/Navigator/vibrate"><code>navigator.vibrate</code></a> does not exist there</td><td><code>haptic()</code> helper using <a href="https://capacitorjs.com/docs/apis/haptics"><code>@capacitor/haptics</code></a></td><td class="c">4</td></tr>
+        <tr><td><b>Back button</b></td><td>Already handled by <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/backStack.ts"><code>backStack.ts</code></a>. The checklist's extra listener would fight it</td><td>Rely on the default; test on a device</td><td class="c">4, 6</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section class="card sec">
+  <div class="head"><h2>Cold start in the app</h2><p class="sub">A new <code>NativeEntry</code> component owns route <code>/</code> on native and keeps the splash up until it decides.</p></div>
+  <div class="body">
+    <div class="flow">
+      <div class="step stop"><b>Launch</b>Splash stays visible</div>
+      <div class="step dec"><b>Check</b>First auth state + key from secure storage</div>
+    </div>
+    <div class="branches">
+      <div class="step go"><b>Signed in, key found</b><code>location.replace('/main')</code>. No login flash.</div>
+      <div class="step stop"><b>Signed in, key missing</b>Go to <code>/login</code> to re-derive the key from the password.</div>
+      <div class="step stop"><b>Signed out</b>Go to <code>/login</code>. No landing page, ever.</div>
+    </div>
+    <p class="sub">Account deletion, Terms and Privacy back buttons all end up at <code>/login</code> on native. Auth and Idea pages also hide the splash as a safety net.</p>
+  </div>
+</section>
+
+<section class="card sec">
+  <div class="head"><h2>What the app shows for upgrades</h2><p class="sub">One pure function, <code>purchaseModeFor(isNative, storeCountry)</code>, decides. Unknown always means no prompt.</p></div>
+  <div class="body">
+    <div class="scroll"><table>
+      <thead><tr><th>Where</th><th>Store country</th><th>Mode</th><th>User sees</th></tr></thead>
+      <tbody>
+        <tr><td>Web</td><td>n/a</td><td><span class="pill leaf">checkout</span></td><td>Today's Stripe checkout, unchanged</td></tr>
+        <tr><td>App</td><td>US</td><td><span class="pill">link-out</span></td><td>Plan cards and one "Continue on intraconnected.app" button that opens <code>/pricing</code> in the system browser</td></tr>
+        <tr><td>App</td><td>Any other country</td><td><span class="pill danger">none</span></td><td>At the 50-idea cap: a neutral "Free plan holds 50 ideas" notice. No price, no link</td></tr>
+        <tr><td>App</td><td>Unknown or lookup failed</td><td><span class="pill danger">none</span></td><td>Same as above. This is the state until Phase 8 ships</td></tr>
+      </tbody>
+    </table></div>
+    <p class="sub">Cancel subscription and Lifetime refund stay visible in Profile: managing an existing web purchase is allowed. Applied to <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/components/modals/UpgradeModal.tsx"><code>UpgradeModal</code></a>, <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/components/modals/ProfileModal.tsx"><code>ProfileModal</code></a> (both Upgrade buttons and the import prompt) and the <code>/pricing</code> link in Support.</p>
+  </div>
+</section>
+
+<section class="card sec">
+  <div class="head"><h2>Sequence</h2><p class="sub">Rough order of work. Apple's enrollment wait overlaps everything on the Android side.</p></div>
+  <div class="body">
+    <div class="scroll"><div class="lanes">
+      <div></div>
+      <div class="hd">P0</div><div class="hd">P1</div><div class="hd">P2</div><div class="hd">P3</div><div class="hd">P4</div><div class="hd">P5</div><div class="hd">P6</div><div class="hd">P7</div><div class="hd">P8</div><div class="hd">P9-10</div>
+
+      <div class="lbl">You</div>
+      <div class="bar u" style="grid-column: 2 / 4">Apple enroll, Play account, Android Studio</div>
+      <div style="grid-column: 4 / 11"></div>
+
+      <div class="lbl">Shared code</div>
+      <div></div>
+      <div class="bar sh">Scaffold</div>
+      <div class="bar sh">apiUrl, CORS</div>
+      <div class="bar sh">Auth + key</div>
+      <div class="bar sh">Shell, purchase</div>
+      <div class="bar sh">Icons</div>
+      <div style="grid-column: 8 / 10"></div>
+      <div class="bar sh">CSP, docs</div>
+
+      <div class="lbl">Android</div>
+      <div style="grid-column: 2 / 7"></div>
+      <div class="bar an" style="grid-column: 7 / 8">Phone test, Play</div>
+      <div style="grid-column: 8 / 11"></div>
+
+      <div class="lbl">iOS</div>
+      <div style="grid-column: 2 / 8"></div>
+      <div class="bar io" style="grid-column: 8 / 9">Codemagic, TestFlight</div>
+      <div style="grid-column: 9 / 11"></div>
+
+      <div class="lbl">Store</div>
+      <div style="grid-column: 2 / 9"></div>
+      <div class="bar st" style="grid-column: 9 / 10">US region</div>
+      <div class="bar st" style="grid-column: 10 / 11">Review</div>
+    </div></div>
+    <div class="legend"><span><i style="background:var(--pink)"></i>Your accounts and tools</span><span><i style="background:var(--leaf)"></i>Code both platforms use</span><span><i style="background:var(--sky)"></i>Android only</span><span><i style="background:var(--link)"></i>iOS only</span></div>
+    <p class="sub">The <code>ios/</code> project is created in Phase 1 (works on Windows; CocoaPods runs later on Codemagic), so nothing about Android first blocks iOS. Android cannot show WebKit-only problems, which is why Phase 7 checks them first.</p>
+  </div>
+</section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">0</div><div class="ph-title"><h2>Prerequisites</h2><span class="sub">You, in parallel with Phase 1</span></div><div class="ph-tags"><span class="pill pink">You</span></div></div>
+<ul class="t">
+  <li>Enroll in the <a href="https://developer.apple.com/programs/enroll/">Apple Developer Program</a> as <b>Individual</b> ($99/yr, up to 48 h). Accept the App Store Connect agreements when the welcome email arrives.</li>
+  <li>Create the <a href="https://play.google.com/console">Play Console</a> account ($25). Install Android Studio and turn on <a href="https://developer.android.com/studio/debug/dev-options">USB debugging</a> on a phone.</li>
+  <li>Check the Firebase API key in <a href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</a> for an HTTP-referrer restriction. If present, sign-in from the app fails until it is changed.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">1</div><div class="ph-title"><h2>Capacitor scaffold</h2><span class="sub"><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-15">Checklist D1</a></span></div><div class="ph-tags"><span class="pill leaf">Shared</span></div></div>
+<ul class="t">
+  <li>Install <a href="https://capacitorjs.com/docs/getting-started"><code>@capacitor/core</code>, <code>android</code>, <code>ios</code></a>, dev <a href="https://capacitorjs.com/docs/cli"><code>cli</code></a>, and plugins: <a href="https://capacitorjs.com/docs/apis/app">app</a>, <a href="https://capacitorjs.com/docs/apis/status-bar">status-bar</a>, <a href="https://capacitorjs.com/docs/apis/splash-screen">splash-screen</a>, <a href="https://capacitorjs.com/docs/apis/keyboard">keyboard</a>, <a href="https://capacitorjs.com/docs/apis/haptics">haptics</a>, <a href="https://capacitorjs.com/docs/apis/browser">browser</a>, plus a secure-storage plugin such as <a href="https://github.com/aparajita/capacitor-secure-storage">@aparajita/capacitor-secure-storage</a> (confirm it supports the installed Capacitor major).</li>
+  <li><a href="https://capacitorjs.com/docs/config"><code>capacitor.config.ts</code></a>: id <code>com.intraconnected.app</code>, <code>webDir: 'dist'</code>, <code>androidScheme: 'https'</code>, no <a href="https://capacitorjs.com/docs/config"><code>server.url</code></a>. Splash held manually on mint, keyboard <code>resize: 'none'</code>, status bar overlays the page.</li>
+  <li>Scripts: <code>build:native</code>, <code>cap:sync</code>, <code>cap:android</code>. Always use <code>cap:sync</code>, never a bare <code>cap sync</code>.</li>
+  <li><a href="https://capacitorjs.com/docs/android"><code>cap add android</code></a> and <a href="https://capacitorjs.com/docs/ios"><code>cap add ios</code></a>. Commit both folders, gitignore build output. <a href="https://capacitorjs.com/docs/cli/doctor"><code>cap doctor</code></a> is clean.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">2</div><div class="ph-title"><h2>Platform module and reachability</h2></div><div class="ph-tags"><span class="pill leaf">Shared</span></div></div>
+<ul class="t">
+  <li>New <code>src/utilities/platform.ts</code>: <code>isNative()</code>, <code>nativePlatform()</code>, <code>WEB_ORIGIN</code>, <code>apiUrl(path)</code> (optional <a href="https://vite.dev/guide/env-and-mode"><code>VITE_API_ORIGIN</code></a> to test against a deploy preview).</li>
+  <li>Route all 9 function calls through <code>apiUrl</code>: <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/billing/billing.ts"><code>billing.ts</code></a> (4), <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/firebase/authFirebase.ts"><code>authFirebase.ts</code></a> (3), <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/firebase/featureRequests.ts"><code>featureRequests.ts</code></a> (2).</li>
+  <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/netlify/functions/lib/cors.ts"><code>cors.ts</code></a>: allow <code>capacitor://localhost</code> and <code>https://localhost</code>. Every function still checks the ID token. Update the file's comment.</li>
+  <li>Tests for <code>apiUrl</code> and the two CORS origins.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">3</div><div class="ph-title"><h2>Auth and key storage</h2></div><div class="ph-tags"><span class="pill leaf">Shared</span><span class="pill danger">Highest risk</span></div></div>
+<ul class="t">
+  <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/firebaseConfig.ts"><code>firebaseConfig.ts</code></a>: on native use <a href="https://firebase.google.com/docs/reference/js/auth#initializeauth"><code>initializeAuth</code></a> with <a href="https://firebase.google.com/docs/reference/js/auth#indexeddblocalpersistence"><code>indexedDBLocalPersistence</code></a> and no popup resolver. Web keeps <code>getAuth</code>.</li>
+  <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/dekStore.ts"><code>dekStore.ts</code></a>: on native, store the raw key in Keychain / Keystore. <code>loadDEKFromSession</code> becomes <code>loadPersistedDEK</code>; <code>clearDEK</code> becomes async and its callers await it. Web path unchanged.</li>
+  <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/components/Auth.tsx"><code>Auth.tsx</code></a>: hide Remember me on native, treat it as on, skip <a href="https://firebase.google.com/docs/auth/web/auth-state-persistence"><code>setPersistence</code></a>, hide the "See what Intraconnected does" link.</li>
+  <li>New <code>NativeEntry</code> at <code>/</code> (see cold start above).</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">4</div><div class="ph-title"><h2>App shell behavior</h2></div><div class="ph-tags"><span class="pill leaf">Shared</span></div></div>
+<ul class="t">
+  <li><b>Routing:</b> <code>/landing</code> and <code>/pricing</code> redirect on native. Terms and Privacy back go to <code>/login</code>.</li>
+  <li><b>Purchases:</b> new <code>purchaseMode.ts</code> with tests, applied to UpgradeModal, ProfileModal and Support.</li>
+  <li><b>Links:</b> <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/idea/helpers.ts"><code>openIdeaLink</code></a> uses <a href="https://capacitorjs.com/docs/apis/browser"><code>Browser.open</code></a> on native for http(s). Check <a href="https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/mailto"><code>mailto:</code></a> on both platforms.</li>
+  <li><b>Android Back:</b> rely on the default WebView behavior feeding <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/backStack.ts"><code>backStack.ts</code></a>. Add one <code>App</code> listener only if a device test shows it misbehaves.</li>
+  <li><b>Safe areas:</b> top inset on <code>.mmobile-header</code>, auth, legal and AuthAction pages. Check <a href="https://developer.android.com/develop/ui/views/layout/edge-to-edge">Android 15 edge-to-edge</a> on the phone.</li>
+  <li><b>Haptics:</b> <code>haptic(kind)</code> replaces the two <a href="https://developer.mozilla.org/en-US/docs/Web/API/Navigator/vibrate"><code>navigator.vibrate</code></a> calls in <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/components/mobile/MobileMindMap.tsx"><code>MobileMindMap.tsx</code></a>.</li>
+  <li><b>Resume:</b> on app resume, refresh email-verified state (<a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/firebase/authFirebase.ts"><code>refreshEmailVerified</code></a>) and, if needed, kick the sync pull.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">5</div><div class="ph-title"><h2>Icons and splash</h2><span class="sub"><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-15">Checklist D2</a></span></div><div class="ph-tags"><span class="pill leaf">Shared</span></div></div>
+<ul class="t">
+  <li>Rasterize <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/public/images/MainLargerLogo.svg"><code>public/images/MainLargerLogo.svg</code></a> to a 1024² icon, an Android adaptive foreground and a 2732² mint splash. Generate native resources with <a href="https://github.com/ionic-team/capacitor-assets"><code>@capacitor/assets</code></a> using background <code>#E9F9E5</code>.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">6</div><div class="ph-title"><h2>Android on a real phone, then Play</h2><span class="sub"><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-16">Checklist section 16</a></span></div><div class="ph-tags"><span class="pill sky">Android</span></div></div>
+<ul class="t">
+  <li>Run from Android Studio to a USB phone and work the device checklist below.</li>
+  <li>Signed <a href="https://developer.android.com/guide/app-bundle"><code>.aab</code></a> with <a href="https://developer.android.com/studio/publish/app-signing">Play App Signing</a>; keystore in a password manager; bump <a href="https://developer.android.com/studio/publish/versioning"><code>versionCode</code></a> each release.</li>
+  <li><a href="https://support.google.com/googleplay/android-developer/answer/10787469">Data safety form</a>: encrypted in transit and at rest. Never "end-to-end" (C1). Release to internal testing.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">7</div><div class="ph-title"><h2>iOS through <a href="https://codemagic.io">Codemagic</a> to <a href="https://developer.apple.com/testflight/">TestFlight</a></h2><span class="sub"><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-17">Checklist section 17</a></span></div><div class="ph-tags"><span class="pill">iOS</span></div></div>
+<ul class="t">
+  <li>Follow section 17 as written. One change: the yaml's web build step runs <code>npm run build:native</code>.</li>
+  <li>iPhone only (<code>TARGETED_DEVICE_FAMILY = 1</code>); add <a href="https://developer.apple.com/documentation/bundleresources/information-property-list/itsappusesnonexemptencryption"><code>ITSAppUsesNonExemptEncryption</code></a> after answering the <a href="https://developer.apple.com/documentation/security/complying-with-encryption-export-regulations">export question</a> honestly.</li>
+  <li>Check the WebKit-only risks first: sign-in completes, reopen stays signed in, nothing under the notch, sheets clear the keyboard, links open in Safari View Controller, haptics fire.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">8</div><div class="ph-title"><h2>US storefront link-out</h2><span class="sub">Before store submission</span></div><div class="ph-tags"><span class="pill leaf">Shared</span><span class="pill">Small native plugin</span></div></div>
+<ul class="t">
+  <li>Local plugin <code>StoreRegion.getCountry()</code>: StoreKit <a href="https://developer.apple.com/documentation/storekit/storefront"><code>Storefront.current</code></a> on iOS, Play Billing <a href="https://developer.android.com/reference/com/android/billingclient/api/BillingClient#getBillingConfigAsync(com.android.billingclient.api.GetBillingConfigParams,com.android.billingclient.api.BillingConfigResponseListener)"><code>getBillingConfigAsync</code></a> on Android. Normalize to two letters, cache per session, any failure returns null.</li>
+  <li>Feed it to <code>usePurchaseMode()</code>. Re-read <a href="https://developer.apple.com/app-store/review/guidelines/#in-app-purchase">Apple 3.1.1 / 3.1.3</a> and <a href="https://support.google.com/googleplay/android-developer/answer/9858738">Google's US external-link policy</a> before submitting; both keep changing.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">9</div><div class="ph-title"><h2>Hardening</h2><span class="sub"><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-15">Checklist D4</a></span></div><div class="ph-tags"><span class="pill leaf">Shared</span></div></div>
+<ul class="t">
+  <li>A small Vite plugin adds a CSP <code>&lt;meta&gt;</code> only in <code>native</code> mode: the <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/netlify.toml"><code>netlify.toml</code></a> allowlist minus Stripe, plus the API origin. Web keeps the header only.</li>
+  <li>Optional: self-host fonts so a first offline launch still looks right.</li>
+</ul></section>
+
+<section class="phase card"><div class="ph-head"><div class="ph-num">10</div><div class="ph-title"><h2>Store review and docs</h2><span class="sub"><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag#phase-18">Checklist section 18</a></span></div><div class="ph-tags"><span class="pill pink">You</span><span class="pill leaf">Docs</span></div></div>
+<ul class="t">
+  <li>Listing, <a href="https://developer.apple.com/app-store/app-privacy-details/">App Privacy label</a> (no tracking), demo account with sample ideas. Review note: plans are managed on the website, deletion is in Profile, ideas are encrypted on the device.</li>
+  <li><b><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/CLAUDE.md">CLAUDE.md</a>:</b> new native section (<code>platform.ts</code> is the only place for native checks; use <code>cap:sync</code>; purchase modes; secure-storage key; Back rides on <a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/backStack.ts"><code>backStack.ts</code></a>; any new function call must use <code>apiUrl</code>).</li>
+  <li><b><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag">Launch checklist</a>:</b> correct section 15 and append new steps at the end of each phase. Ticks are keyed by step position, so inserting steps would move existing ticks. Republish to the same URL.</li>
+  <li><b><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/programmer-docs/DEVLOG.md">DEVLOG</a>:</b> one concise entry per phase. Nothing is committed unless you say so.</li>
+</ul></section>
+
+<section class="card sec">
+  <div class="head"><h2>Known risks, accepted for v1</h2></div>
+  <div class="body two">
+    <div class="box bad"><h3>iOS can evict WebView storage</h3><p class="sub">Ideas re-download and the key survives in Keychain. Unsent offline edits and the Firebase login could be lost. Later fix: mirror the outbox to <a href="https://capacitorjs.com/docs/apis/preferences"><code>@capacitor/preferences</code></a>.</p></div>
+    <div class="box bad"><h3>Email links open in the browser</h3><p class="sub">Verify and reset links finish on the web, then the user returns to the app. <a href="https://capacitorjs.com/docs/guides/deep-links">Universal / App Links</a> come later.</p></div>
+    <div class="box bad"><h3>Tablets</h3><p class="sub">Android tablets at 1024px or wider get the desktop layout. iOS ships iPhone-only.</p></div>
+    <div class="box good"><h3>Unchanged</h3><p class="sub">Sync layer, outbox, Firestore rules, encryption format and Stripe billing are shared with the web and not touched.</p></div>
+  </div>
+</section>
+
+<section class="card sec">
+  <div class="head"><h2>Device test checklist</h2><p class="sub">Run on Android in Phase 6 and again on iPhone in Phase 7. Also each phase: typecheck, lint, tests, web build.</p></div>
+  <div class="body">
+    <ul class="chk">
+      <li>Cold start signed out: login, no landing page</li>
+      <li>Cold start signed in: straight to the map, no login flash</li>
+      <li>Force-quit and reopen: still signed in, ideas present</li>
+      <li>Sign up, verify email in the browser, return: banner clears</li>
+      <li>Create, rename, move, delete; checklists, notes and links work</li>
+      <li>Long-press lift gives a haptic</li>
+      <li>Link node opens in Custom Tabs / Safari View Controller</li>
+      <li>Android Back: closes sheet, goes up a level, leaves at the top</li>
+      <li>Edit on a second device or the site appears after resume</li>
+      <li>Airplane mode edit goes out on reconnect, no stuck banner</li>
+      <li>No checkout UI anywhere; 50-idea cap shows the neutral notice</li>
+      <li>After Phase 8, US account link opens <code>/pricing</code> outside the app</li>
+      <li>Delete a throwaway account: works and lands on login</li>
+      <li>Nothing under the notch, status bar or home indicator</li>
+      <li>Sheets rise above the keyboard</li>
+      <li>Web regression: Remember me both ways, checkout opens, <code>/</code> is the landing page</li>
+    </ul>
+  </div>
+</section>
+
+<section class="card sec">
+  <div class="head"><h2>References</h2><p class="sub">Everything linked above, grouped. Store rules change often, so re-read them at submission time.</p></div>
+  <div class="body refs">
+    <div><h3>This project</h3><ul>
+      <li><a href="https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag">Launch checklist</a> (live ticks)</li>
+      <li><a href="https://github.com/Africk-Hunter/Intraconnected">Repository</a></li>
+      <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/CLAUDE.md">CLAUDE.md</a></li>
+      <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/programmer-docs/DEVLOG.md">DEVLOG.md</a></li>
+      <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/netlify.toml">netlify.toml</a> (current CSP)</li>
+      <li><a href="https://github.com/Africk-Hunter/Intraconnected/blob/main/src/utilities/backStack.ts">backStack.ts</a> (Back handling)</li>
+    </ul></div>
+    <div><h3>Capacitor</h3><ul>
+      <li><a href="https://capacitorjs.com/docs">Documentation home</a></li>
+      <li><a href="https://capacitorjs.com/docs/config">Configuration</a></li>
+      <li><a href="https://capacitorjs.com/docs/android">Android guide</a> · <a href="https://capacitorjs.com/docs/ios">iOS guide</a></li>
+      <li><a href="https://capacitorjs.com/docs/cli">CLI commands</a> · <a href="https://capacitorjs.com/docs/cli/doctor">doctor</a></li>
+      <li><a href="https://capacitorjs.com/docs/plugins">Writing a plugin</a> (StoreRegion, Phase 8)</li>
+      <li><a href="https://github.com/ionic-team/capacitor-assets">@capacitor/assets</a> (icons and splash)</li>
+      <li><a href="https://github.com/aparajita/capacitor-secure-storage">Secure storage plugin</a></li>
+    </ul></div>
+    <div><h3>Apple</h3><ul>
+      <li><a href="https://developer.apple.com/programs/enroll/">Enroll in the Developer Program</a></li>
+      <li><a href="https://developer.apple.com/app-store/review/guidelines/">App Store Review Guidelines</a></li>
+      <li><a href="https://developer.apple.com/app-store/review/guidelines/#minimum-functionality">4.2 minimum functionality</a></li>
+      <li><a href="https://developer.apple.com/app-store/review/guidelines/#in-app-purchase">3.1.1 in-app purchase</a></li>
+      <li><a href="https://developer.apple.com/app-store/review/guidelines/#data-collection-and-storage">5.1.1 data and account deletion</a></li>
+      <li><a href="https://developer.apple.com/app-store/app-privacy-details/">App Privacy details</a></li>
+      <li><a href="https://developer.apple.com/documentation/storekit/storefront">StoreKit Storefront</a></li>
+      <li><a href="https://developer.apple.com/documentation/security/complying-with-encryption-export-regulations">Encryption export compliance</a></li>
+      <li><a href="https://appstoreconnect.apple.com">App Store Connect</a> · <a href="https://developer.apple.com/testflight/">TestFlight</a></li>
+      <li><a href="https://codemagic.io">Codemagic</a> · <a href="https://docs.codemagic.io/">docs</a></li>
+    </ul></div>
+    <div><h3>Google and Android</h3><ul>
+      <li><a href="https://play.google.com/console">Play Console</a></li>
+      <li><a href="https://developer.android.com/studio">Android Studio</a></li>
+      <li><a href="https://developer.android.com/studio/debug/dev-options">USB debugging</a></li>
+      <li><a href="https://developer.android.com/studio/publish/app-signing">App signing</a></li>
+      <li><a href="https://support.google.com/googleplay/android-developer/answer/10787469">Data safety form</a></li>
+      <li><a href="https://support.google.com/googleplay/android-developer/answer/9858738">Payments policy</a></li>
+      <li><a href="https://developer.android.com/develop/ui/views/layout/edge-to-edge">Edge-to-edge (Android 15)</a></li>
+      <li><a href="https://console.cloud.google.com/apis/credentials">Cloud Console API keys</a></li>
+    </ul></div>
+    <div><h3>Firebase and web</h3><ul>
+      <li><a href="https://firebase.google.com/docs/auth/web/auth-state-persistence">Auth persistence</a></li>
+      <li><a href="https://firebase.google.com/docs/reference/js/auth#initializeauth">initializeAuth</a></li>
+      <li><a href="https://firebase.google.com/docs/projects/api-keys">API key restrictions</a></li>
+      <li><a href="https://vite.dev/guide/env-and-mode">Vite modes and env</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/env">CSS env() safe areas</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">Content-Security-Policy</a></li>
+      <li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilitychange">visibilitychange</a></li>
+    </ul></div>
+  </div>
+</section>
+</div>
+<script>
+(function () {
+  // Phases and steps. Ids are permanent: ticks are stored under them, so add new steps, never reuse an id.
+  var PHASES = [
+    ["P0", "Prerequisites", [
+      ["p0-apple", "Apple Developer enrollment (Individual)", 1],
+      ["p0-play", "Play Console account", 1],
+      ["p0-studio", "Android Studio installed", 1],
+      ["p0-phone", "Android phone with USB debugging", 1],
+      ["p0-key", "Firebase API key referrer check", 1]]],
+    ["P1", "Capacitor scaffold", [
+      ["p1-install", "Capacitor and plugins installed"],
+      ["p1-config", "capacitor.config.ts written"],
+      ["p1-scripts", "build:native, cap:sync, cap:android scripts"],
+      ["p1-platforms", "android/ and ios/ added, cap doctor run"],
+      ["p1-ignore", "Build output gitignored, lint and tests skip native"]]],
+    ["P2", "Platform module and reachability", [
+      ["p2-platform", "platform.ts: isNative, apiUrl"],
+      ["p2-fetch", "All 12 function calls use apiUrl"],
+      ["p2-cors", "CORS allows the app's origins"],
+      ["p2-tests", "Tests for apiUrl and CORS"],
+      ["p2-deploy", "CORS change deployed to production", 1]]],
+    ["P3", "Auth and key storage", [
+      ["p3-auth", "Native auth setup (initializeAuth, IndexedDB)"],
+      ["p3-dek", "Key in Keychain / Keystore (dekStore.ts)"],
+      ["p3-signin", "Sign-in page: no Remember me in the app"],
+      ["p3-entry", "NativeEntry front door and splash hide"],
+      ["p3-tests", "dekStore tests (web and native paths)"],
+      ["p3-device", "Verified on an emulator or phone"]]],
+    ["P4", "App shell behavior", [
+      ["p4-routing", "Terms and Privacy back go to /login in the app"],
+      ["p4-purchase", "purchaseMode.ts applied to upgrade surfaces"],
+      ["p4-links", "Links open in the system browser"],
+      ["p4-back", "Android Back verified on a device", 1],
+      ["p4-safe", "Safe-area padding on top bar and full-screen pages"],
+      ["p4-haptics", "haptic() replaces navigator.vibrate"],
+      ["p4-resume", "Resume refreshes email-verified state"]]],
+    ["P5", "Icons and splash", [
+      ["p5-icons", "Icon, adaptive icon and splash generated"]]],
+    ["P6", "Android and Play", [
+      ["p6-run", "Runs on a real phone, device checklist passed", 1],
+      ["p6-aab", "Signed .aab built", 1],
+      ["p6-data", "Data safety form filled in", 1],
+      ["p6-internal", "Released to internal testing", 1]]],
+    ["P7", "iOS and TestFlight", [
+      ["p7-apple", "App ID, App Store Connect app and API key", 1],
+      ["p7-codemagic", "Codemagic account, signing and codemagic.yaml", 1],
+      ["p7-build", "First green build"],
+      ["p7-testflight", "Installed from TestFlight", 1],
+      ["p7-webkit", "WebKit checks passed (sign-in, notch, keyboard, links)", 1]]],
+    ["P8", "US storefront link-out", [
+      ["p8-plugin", "StoreRegion plugin (iOS and Android)"],
+      ["p8-wire", "usePurchaseMode uses the store country"],
+      ["p8-rules", "Store link rules re-read before submission", 1]]],
+    ["P9", "Hardening", [
+      ["p9-csp", "CSP meta tag in native builds"],
+      ["p9-fonts", "Fonts self-hosted (optional)"]]],
+    ["P10", "Review and docs", [
+      ["p10-claude", "CLAUDE.md native section"],
+      ["p10-checklist", "Launch checklist section 15 corrected"],
+      ["p10-devlog", "DEVLOG entries"],
+      ["p10-listing", "Store listings, privacy labels, demo account", 1],
+      ["p10-submit", "Submitted for review", 1]]]
+  ];
+  var ALL = [];
+  PHASES.forEach(function (p) { p[2].forEach(function (s) { ALL.push(s[0]); }); });
+
+  var state = {};
+  var docRef = null, docExists = false, queue = Promise.resolve(), mode = "loading";
+  var LS = "native-plan-ticks:v1";
+  var groups = document.getElementById("pggroups");
+  var statusEl = document.getElementById("pgstatus");
+
+  function lsRead() { try { return JSON.parse(localStorage.getItem(LS) || "{}") || {}; } catch (e) { return {}; } }
+  function lsWrite() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = "pill " + (kind || "plain");
+  }
+
+  function build() {
+    var html = "";
+    PHASES.forEach(function (p) {
+      html += '<div class="pg-group" data-phase="' + p[0] + '"><header><b>' + p[0] + " · " + p[1] + '</b><span></span></header>';
+      p[2].forEach(function (s) {
+        html += '<label><input type="checkbox" id="' + s[0] + '" data-id="' + s[0] + '"><span>' + s[1] + (s[2] ? '<em class="you">You</em>' : "") + "</span></label>";
+      });
+      html += "</div>";
+    });
+    groups.innerHTML = html;
+    groups.addEventListener("change", function (e) {
+      var t = e.target;
+      if (!t || !t.dataset || !t.dataset.id) return;
+      toggle(t.dataset.id, t.checked);
+    });
+  }
+
+  function render() {
+    var done = 0;
+    PHASES.forEach(function (p) {
+      var g = groups.querySelector('[data-phase="' + p[0] + '"]');
+      var n = 0;
+      p[2].forEach(function (s) {
+        var on = state[s[0]] === true;
+        var box = document.getElementById(s[0]);
+        if (box && box.checked !== on) box.checked = on;
+        if (on) n++;
+      });
+      done += n;
+      g.classList.toggle("done", n === p[2].length);
+      g.querySelector("header span").textContent = n + "/" + p[2].length;
+    });
+    document.getElementById("pgcount").textContent = done + " of " + ALL.length;
+    var pct = ALL.length ? Math.round((done / ALL.length) * 100) : 0;
+    document.getElementById("pgfill").style.width = pct + "%";
+    document.getElementById("pgmeter").setAttribute("aria-valuenow", String(pct));
+  }
+
+  function toggle(id, value) {
+    state[id] = value;
+    render();
+    if (mode !== "db") { lsWrite(); return; }
+    setStatus("Saving…", "link");
+    var patch = {}; patch[id] = value;
+    queue = queue.then(function () {
+      return docExists ? docRef.update(patch) : docRef.set(patch).then(function () { docExists = true; });
+    }).then(function () {
+      setStatus("Saved", "leaf");
+    }).catch(function (err) {
+      setStatus("Not saved", "danger");
+      state[id] = !value;
+      render();
+      if (err && err.code === "invalid_argument") statusEl.title = "You need edit access to save ticks.";
+    });
+  }
+
+  build();
+  state = lsRead();
+  render();
+
+  Promise.resolve(window.claude && window.claude.use ? window.claude.use("db") : null).then(function (db) {
+    if (!db) {
+      mode = "local";
+      setStatus("Saved in this browser only", "link");
+      return;
+    }
+    mode = "db";
+    docRef = db.doc("progress/ticks");
+    docRef.onSnapshot(function (snap) {
+      docExists = snap.exists;
+      var data = snap.exists ? snap.data() : {};
+      state = {};
+      ALL.forEach(function (id) { if (data && data[id] === true) state[id] = true; });
+      render();
+      if (!snap.metadata.hasPendingWrites) setStatus("Saved", "leaf");
+    }, function () {
+      mode = "local";
+      state = lsRead();
+      render();
+      setStatus("Saved in this browser only", "link");
+    });
+  }).catch(function () {
+    mode = "local";
+    setStatus("Saved in this browser only", "link");
+  });
+})();
+</script>

@@ -244,3 +244,13 @@
     position: fixed;
     z-index: 20;
 }
+
+// The app's version of the plan cards: one link to the website (US store only).
+.upgradeModalLink {
+    align-self: center;
+    background: $leaf;
+    padding: 0.8rem 1.6rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+}

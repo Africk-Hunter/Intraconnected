@@ -17,11 +17,13 @@ npm run build          # tsc -b && vite build
 npm run typecheck      # app + functions (tsconfig.functions.json)
 npm run lint
 npm test               # vitest run
+npm run cap:sync       # native: build:native (--mode native) + `cap sync` into android/ and ios/
+npm run cap:android    # cap:sync, then open Android Studio
 ```
 CI (`.github/workflows/test.yml`) runs typecheck → lint → test → build.
 
 ## Pre-launch status
-Not launched. `programmer-docs/artifacts/launch-checklist.html` (published as an artifact, open it in a browser) is the single source of truth for what still blocks paying customers and the native app (Console/Dashboard steps, pending decisions, the Capacitor plan). Check it before assuming something is live.
+Not launched. `programmer-docs/artifacts/launch-checklist.html` (published as an artifact, open it in a browser) is the single source of truth for what still blocks paying customers and the native app (Console/Dashboard steps, pending decisions, the Capacitor plan). Check it before assuming something is live. The native apps have their own plan with live progress ticks: https://claude.ai/artifact/8AfWNA2bCDKhoEq7AumzaC (copy: `programmer-docs/artifacts/native-app-plan.html`); see "Native app (Capacitor)" below.
 
 ## Tech Stack
 - **React 19**, **TypeScript** (strict), **Vite**, **SCSS**
@@ -136,6 +138,9 @@ Use `ideaStore.ts` / `enqueue()` — a direct `setDoc`/`deleteDoc` on `users/{ui
 ### Firebase collection path
 Ideas at `users/{uid}/ideas/{ideaId}`; per-user meta docs at `users/{uid}/meta/{billing|nodeCount|sync|encryption|preferences|featureRequests|rateLimit_*}`. Firebase web config is hardcoded in `src/firebaseConfig.ts` (public by design). The only client env var is `VITE_STRIPE_PUBLISHABLE_KEY`; server secrets live in Netlify env vars.
 
+### Every Netlify Function call goes through `apiUrl()`
+Never `fetch('/.netlify/functions/…')` directly. `apiUrl(path)` (`utilities/platform.ts`) leaves the path relative on the web and prefixes `https://intraconnected.app` inside the app, where a relative URL would resolve against the bundled files. A new function needs nothing extra for CORS: `netlify/functions/lib/cors.ts` already allows the app's WebView origins (`capacitor://localhost`, `https://localhost`).
+
 ### Password change requires DEK re-wrap
 If adding "change password" via `updatePassword()`, re-wrap the DEK with the new password and update `encryptedDEK` in Firestore — otherwise next login throws on `unwrapDEK` and falls through to email recovery.
 
@@ -144,7 +149,7 @@ All idea text fields are AES-256-GCM encrypted on the device before Firestore wr
 
 Email changes (Profile → Account → `requestEmailChange`, `AuthAction` `verifyAndChangeEmail`) must keep that email wrap valid: `meta/encryption.emailWrapFor` records which email it was wrapped for, `Auth.tsx` re-wraps on sign-in when it differs from the current email, and `pendingEmailEncryptedDEK` (written when the change is requested) lets password-reset recovery work if the user resets before signing in again. The new email is also pushed to the Stripe Customer via `sync-billing-email`.
 
-At runtime the DEK is held in module-level `_dek` (`dekStore.ts`) + `sessionStorage` `dek_session`, and also `localStorage` `dek_local` when "Remember me" is checked (raw key, no expiry — known item E3). `clearDEK()` wipes all three on sign-out.
+At runtime the DEK is held in module-level `_dek` (`dekStore.ts`) + `sessionStorage` `dek_session`, and also `localStorage` `dek_local` when "Remember me" is checked (raw key, no expiry — known item E3). `clearDEK()` wipes all three on sign-out. In the native app the key lives in the iOS Keychain / Android Keystore instead (see "Native app (Capacitor)").
 
 ## Pricing & Billing
 
@@ -211,6 +216,20 @@ service cloud.firestore {
 **This has no effect until it's pointed to from the Firebase Console** (project `interconnectedness-3a37b`) → Authentication → Templates → each template's edit icon → "Customize action URL" → set to `https://intraconnected.app/auth/action`. This is a per-project Console setting covering all three templates at once, not a per-`sendEmailVerification()`-call `actionCodeSettings` — same "authored here, published there, can't be verified or changed from this repo" caveat as the Firestore rules above.
 
 The `resetPassword` branch intentionally just calls `confirmPasswordReset` and sends the user back to `/`; it does **not** attempt to re-wrap the DEK. `Auth.tsx`'s existing `handleSignIn` → `handleEmailRecovery` flow already handles that on the user's next sign-in (old-password `unwrapDEK` fails → falls back to `emailEncryptedDEK` → re-wraps with the new password) — see Critical Gotchas → Password change requires DEK re-wrap. Duplicating that here would race it.
+
+## Native app (Capacitor)
+Android and iOS shells (`android/`, `ios/`, committed; their build output is gitignored) wrap the built web app. **Not released yet**; the plan and progress ticks are the artifact linked under Pre-launch status.
+- **Build**: `npm run cap:sync` (never a bare `build && cap sync`: it must be `--mode native`). That mode also adds a Content-Security-Policy `<meta>` (`vite-plugins/nativeCsp.ts`, mirrors `netlify.toml` minus Stripe plus the API origin; keep the two in step). `capacitor.config.ts` never sets `server.url` (Apple 4.2). `VITE_API_ORIGIN` points a device build at a deploy preview. From a terminal: `cd android && ./gradlew assembleDebug`, then `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
+- **`utilities/platform.ts` is the only place that asks "is this the app?"**: `isNative`, `apiUrl`, `openExternal`, `haptic`, `hideSplash`, `onAppResume`. Use `openIdeaLink`/`openExternal`, not `window.open`, and `haptic()`, not `navigator.vibrate`.
+- **Auth and entry**: `firebaseConfig.ts` uses `initializeAuth` + IndexedDB persistence on native (`getAuth` can hang in the iOS WebView). The app is always "remembered": `Auth.tsx` hides the checkbox. Route `/` is `NativeEntry` (map or `/login`, never the landing page); `/pricing` redirects to `/`; Terms/Privacy go back to `/login`.
+- **Key storage**: `dekStore.ts` keeps the DEK in the Keychain/Keystore (`@aparajita/capacitor-secure-storage`, no iCloud sync, device-only). `loadPersistedDEK()` replaced `loadDEKFromSession()`; `clearDEK()` returns a promise that must be awaited before leaving the page, but clears the in-memory key synchronously (SessionEndedModal depends on that order).
+- **The app sells nothing** (launch-checklist C2). `billing/purchaseMode.ts` (`purchaseModeFor`, `usePurchaseMode`): web = `checkout`; app + US store = `link-out` (one button to `/pricing`, no prices); app anywhere else or unknown = `none` (no upgrade UI at all, the node-cap message just says to delete ideas). The store-country lookup is **not built** (Phase 8 of the plan), so the app is always `none`. Any new upgrade surface must check `usePurchaseMode()`. Cancel and refund stay available.
+- **Android Back** rides on `backStack.ts` through WebView history; there is deliberately no `App.addListener('backButton')`.
+- **Safe areas**: `env(safe-area-inset-top)` on `.mmobile-nav` and `.legalPage`; the status bar overlays the page (`capacitor.config.ts`).
+- **Icons and splash**: `scripts/generate-native-assets.cjs` is the source (draws the BrandLogo mark; also writes the website's `public/` icons). Then `npx capacitor-assets generate --android --ios --iconBackgroundColor "#E9F9E5" --splashBackgroundColor "#E9F9E5"`. Android 12+ ignores `splash.png`: its launch screen comes from the `AppTheme.NoActionBarLaunch` theme (`splashBackground` colour + `drawable-xxxhdpi/splash_icon.png`).
+- **Android release**: signing reads `android/keystore.properties` (gitignored, see `keystore.properties.example`); bump `versionCode` for every Play upload. `allowBackup` is off on purpose (cloud backup would copy the local ideas without the Keystore key).
+- **iOS**: iPhone-only, Swift Package Manager (no Podfile), built on Codemagic (`codemagic.yaml`, fill in `APP_STORE_APPLE_ID`). `ITSAppUsesNonExemptEncryption` is intentionally unset: the export-compliance answer is the owner's to give in App Store Connect.
+- **Known gaps**: iOS may evict WebView storage (unsent outbox ops would be lost; idea: mirror the outbox to `@capacitor/preferences`); email-action links open in the browser, not the app.
 
 ## Shared code (`shared/`)
 Plain TypeScript imported by both `src/` and `netlify/functions/` (functions can't import from `src/`): `SUPPORT_EMAIL`, the profanity filter, `FREE_NODE_LIMIT`, `ANNUAL_PRICE_CENTS` (the app's displayed price *and* the server's Lifetime-upgrade credit), `BillingPlan`, `TrackedIssue`. `firestore.rules` can't import anything, so its `< 50` is a literal — `netlify/tests/firestore-rules.test.ts` fails if it drifts from `FREE_NODE_LIMIT`. Keep `shared/` free of browser, Node and third-party imports. `src/utilities/support.ts`, `profanityFilter.ts` and the `netlify/functions/lib` twins are one-line re-exports.

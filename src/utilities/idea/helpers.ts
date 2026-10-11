@@ -1,4 +1,5 @@
 import { IdeaType } from "../types";
+import { isNative, openExternal } from "../platform";
 
 export function isNoteMode(idea: IdeaType | undefined): boolean {
     if (!idea || idea.type === 'checklist') return false;
@@ -79,11 +80,18 @@ export function isOpenableLink(url: string): boolean {
     }
 }
 
-// Opens an idea's link in a new tab, if it is a web or mail address.
+// Opens an idea's link outside the app (a new tab on the web, the system
+// browser in the app), if it is a web or mail address.
 export function openIdeaLink(url: string): void {
     const target = /^www\./i.test(url.trim()) ? 'https://' + url.trim() : url.trim();
     if (!isOpenableLink(target)) return;
-    window.open(target, '_blank', 'noopener,noreferrer');
+    // The system hands a mailto: link to the mail app; only web addresses
+    // need the in-app browser.
+    if (isNative() && target.toLowerCase().startsWith('mailto:')) {
+        window.location.href = target;
+        return;
+    }
+    openExternal(target);
 }
 
 export function cleanLink(userLink: string): string {

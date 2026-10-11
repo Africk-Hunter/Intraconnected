@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { SUPPORT_EMAIL } from "../utilities/support";
+import { isNative } from "../utilities/platform";
 
 const Privacy: React.FC = () => {
     const navigate = useNavigate();
@@ -8,7 +9,7 @@ const Privacy: React.FC = () => {
     return (
         <div className="legalPage">
             <div className="legalContainer">
-                <button className="legalBack neobrutal-button" onClick={() => navigate("/")}>
+                <button className="legalBack neobrutal-button" onClick={() => navigate(isNative() ? "/login" : "/")}>
                     ← Back
                 </button>
                 <h1 className="legalTitle">Privacy Policy</h1>

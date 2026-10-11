@@ -1,15 +1,28 @@
-// Every browser call these functions receive is a same-origin fetch to
-// "/.netlify/functions/..." (see billing.tsx, authFirebase.tsx, etc.) and
+// Browser calls these functions receive are fetches to
+// "/.netlify/functions/..." (see billing.ts, authFirebase.ts, etc.) and
 // every one of them requires an Authorization header, which forces the
 // browser to preflight — so a cross-origin caller was already blocked by
 // the browser with zero CORS headers set at all. This makes that implicit
 // behavior an explicit, intentional policy instead of "no stated policy
-// either way": only the site's own deploy origins are ever granted access,
-// nothing is reflected blindly, and there's no wildcard.
+// either way": only the site's own deploy origins and the native app's
+// WebView origins are ever granted access, nothing is reflected blindly,
+// and there's no wildcard.
+//
+// The Capacitor app (capacitor.config.ts) calls these functions cross-origin
+// through apiUrl(): iOS serves its bundle from capacitor://localhost, and
+// Android from https://localhost because of `androidScheme: 'https'`. Every
+// function still verifies the Firebase ID token, so allowing these origins
+// grants nothing a signed-in user couldn't already do.
+export const NATIVE_APP_ORIGINS = ["capacitor://localhost", "https://localhost"];
+
 const allowedOrigins = new Set(
-    [process.env.URL, process.env.DEPLOY_PRIME_URL, process.env.DEPLOY_URL, "http://localhost:8888"].filter(
-        (value): value is string => Boolean(value)
-    )
+    [
+        process.env.URL,
+        process.env.DEPLOY_PRIME_URL,
+        process.env.DEPLOY_URL,
+        "http://localhost:8888",
+        ...NATIVE_APP_ORIGINS,
+    ].filter((value): value is string => Boolean(value))
 );
 
 export function corsHeaders(req: Request): Record<string, string> {

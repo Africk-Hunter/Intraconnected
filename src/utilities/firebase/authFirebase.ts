@@ -1,4 +1,5 @@
 import { auth } from "../../firebaseConfig";
+import { apiUrl } from "../platform";
 import { clearDEK, getDEK } from "../dekStore";
 import { wrapDEKWithEmail } from "../crypto";
 import { storePendingEmailWrap } from "./encryptionKeys";
@@ -20,7 +21,7 @@ export async function signUserOut() {
     try {
         // Before clearDEK — sending a change needs the key to encrypt it.
         await flushOutbox(SIGN_OUT_FLUSH_MS);
-        clearDEK();
+        await clearDEK();
         await auth.signOut();
         window.location.href = '/login';
     } catch (error) {
@@ -41,7 +42,7 @@ export async function deleteUserAccount(password: string): Promise<void> {
     await reauthenticateWithCredential(user, credential);
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/delete-account', {
+    const res = await fetch(apiUrl('/.netlify/functions/delete-account'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}` },
     });
@@ -59,7 +60,7 @@ export async function deleteUserAccount(password: string): Promise<void> {
     // The Auth user record is already gone server-side at this point —
     // signOut just clears the client's local session state to match.
     // Key first: the session-ended modal only opens while the key is still held.
-    clearDEK();
+    await clearDEK();
     try {
         await auth.signOut();
     } catch {
@@ -76,7 +77,7 @@ async function isEmailAvailable(email: string): Promise<boolean> {
     const user = auth.currentUser;
     if (!user) throw new Error("No authenticated user");
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/check-email-available', {
+    const res = await fetch(apiUrl('/.netlify/functions/check-email-available'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: JSON.stringify({ email }),
@@ -119,7 +120,7 @@ export async function syncBillingEmail(): Promise<void> {
     const user = auth.currentUser;
     if (!user) return;
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/sync-billing-email', {
+    const res = await fetch(apiUrl('/.netlify/functions/sync-billing-email'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}` },
     });

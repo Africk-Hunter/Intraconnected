@@ -1,4 +1,5 @@
 import { auth } from "../../firebaseConfig";
+import { apiUrl } from "../platform";
 
 async function parseJsonOrThrow<T>(res: Response): Promise<T> {
     const data = await res.json().catch(() => null);
@@ -15,7 +16,7 @@ export async function submitFeatureRequest(title: string, body?: string): Promis
         throw new Error("You must be signed in to submit a feature request.");
     }
     const idToken = await user.getIdToken();
-    const res = await fetch("/.netlify/functions/submit-feature-request", {
+    const res = await fetch(apiUrl("/.netlify/functions/submit-feature-request"), {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -31,7 +32,7 @@ export async function checkAndMarkImplementedFeatures(): Promise<string[] | null
     const user = auth.currentUser;
     if (!user) return null;
     const idToken = await user.getIdToken();
-    const res = await fetch("/.netlify/functions/check-feature-request-status", {
+    const res = await fetch(apiUrl("/.netlify/functions/check-feature-request-status"), {
         headers: { Authorization: `Bearer ${idToken}` },
     });
     return parseJsonOrThrow<string[] | null>(res);

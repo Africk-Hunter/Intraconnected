@@ -14,6 +14,7 @@ import type { SortMode } from '../../utilities/idea/sorting';
 import { downloadFile } from '../../utilities/download';
 import { useSmoothHeight } from '../../utilities/useSmoothHeight';
 import ImportDataSection from './ImportDataSection';
+import { usePurchaseMode } from '../../utilities/billing/purchaseMode';
 import '../../styles/profileModal.scss';
 import '../../styles/sessionEndedModal.scss';
 
@@ -38,6 +39,8 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
 ];
 
 function ProfileModal() {
+    // The app offers no upgrade prompts (purchaseMode.ts); managing a plan bought on the website still works.
+    const purchaseMode = usePurchaseMode();
     const { profileModalOpen, setProfileModalOpen, billingPlan, setBillingPlan, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     const [activeTab, setActiveTab] = useState<Tab>('account');
@@ -374,19 +377,21 @@ function ProfileModal() {
             <section className="profile-section profile-section--plan">
                 <h3 className="profile-section-title">Plan</h3>
                 <p className="profile-section-desc">You're on the <strong>{planLabel}</strong> plan.</p>
-                {billingPlan === 'free' && (
+                {billingPlan === 'free' && purchaseMode !== 'none' && (
                     <button className="profile-action-btn neobrutal-button" onClick={handleOpenUpgrade}>
                         Upgrade
                     </button>
                 )}
                 {billingPlan === 'annual' && (
                     <div className="profile-plan-actions">
-                        <button
-                            className="profile-action-btn neobrutal-button"
-                            onClick={handleOpenUpgrade}
-                        >
-                            Upgrade to Lifetime
-                        </button>
+                        {purchaseMode !== 'none' && (
+                            <button
+                                className="profile-action-btn neobrutal-button"
+                                onClick={handleOpenUpgrade}
+                            >
+                                Upgrade to Lifetime
+                            </button>
+                        )}
 
                         {billingStatus.cancelAtPeriodEnd ? (
                             <p className="profile-section-desc profile-plan-cancel-note">
@@ -486,7 +491,9 @@ function ProfileModal() {
                 <section className="profile-section profile-section--verify">
                     <h3 className="profile-section-title">Verify Your Email</h3>
                     <p className="profile-section-desc">
-                        Confirm your email address, it's required before you can upgrade, and it's how we'd reach you about your account.
+                        {purchaseMode === 'none'
+                            ? "Confirm your email address. It's how we'd reach you about your account."
+                            : "Confirm your email address, it's required before you can upgrade, and it's how we'd reach you about your account."}
                     </p>
                     <div className="profile-plan-actions">
                         <button

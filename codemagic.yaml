@@ -1,0 +1,58 @@
+# iOS builds for TestFlight. Runs only when started by hand in Codemagic
+# (Start new build). Setup steps are in the launch checklist, section 17.
+#
+# Before the first build:
+#   1. Replace APP_STORE_APPLE_ID below with the app's Apple ID number (App
+#      Store Connect > the app > App Information).
+#   2. In Codemagic, the App Store Connect integration must be named
+#      `intraconnected-asc`, and the signing certificate and profile fetched
+#      with the reference names used in section 17.
+# The web build needs no environment variables: the app has no checkout, so it
+# never loads Stripe.
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: intraconnected-asc
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.intraconnected.app
+      vars:
+        APP_STORE_APPLE_ID: 0000000000
+      node: 22
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+      - name: Build web app for the native shell
+        script: npm run build:native
+      - name: Sync Capacitor
+        script: npx cap sync ios
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Set build number
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          NEW=$((LATEST + 1))
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $NEW;/g" ios/App/App.xcodeproj/project.pbxproj
+          echo "Build number: $NEW"
+      - name: Build signed IPA
+        script: |
+          # Capacitor 8 projects use Swift Package Manager (no Podfile); older
+          # ones use CocoaPods. Handle both.
+          if [ -f ios/App/Podfile ]; then
+            xcode-project build-ipa --workspace ios/App/App.xcworkspace --scheme App
+          else
+            xcode-project build-ipa --project ios/App/App.xcodeproj --scheme App
+          fi
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

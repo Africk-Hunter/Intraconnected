@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { SheetState, SWIPE_REVEAL_W, SWIPE_THRESHOLD } from './mobileTypes';
 import MobileChecklistItemSheet from './MobileChecklistItemSheet';
+import { haptic } from '../../utilities/platform';
 import {
     IdeaType,
     ChecklistItem,
@@ -34,7 +35,6 @@ import MobilePriorityPicker from './MobilePriorityPicker';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 import MoreDotsIcon from './MoreDotsIcon';
 import { LinkOutIcon } from '../Icons';
-import BrandLogo from '../BrandLogo';
 import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../../utilities/patchNotesState';
@@ -432,7 +432,7 @@ function MobileMindMap() {
             // ours to turn into a drag (touchmove is only cancelable before
             // the browser starts scrolling).
             setIsHolding(true);
-            navigator.vibrate?.(25);
+            haptic('hold');
             resetSwipeNode(nodeId);
             setSheet({ type: 'actions', nodeId });
         }, LONG_PRESS_MS);
@@ -908,7 +908,7 @@ function MobileMindMap() {
 
     function flashMissingName() {
         setNameFlash(n => n + 1); // keeps the field red until something is typed
-        navigator.vibrate?.(40);
+        haptic('warn');
         const field = createNameRef.current;
         field?.focus();
         // Replays on every attempt without remounting (which could drop the keyboard)
@@ -1112,7 +1112,7 @@ function MobileMindMap() {
                     <img src="/images/QuestionMark.svg" alt="" />
                 </button>
                 {currentId === 1 || !parentCrumb ? (
-                    <BrandLogo className="mmobile-nav-logo" />
+                    <img src="/images/MainLargerLogo.svg" alt="Intraconnected" className="mmobile-nav-logo" />
                 ) : (
                     <div className="mmobile-path">
                         <button

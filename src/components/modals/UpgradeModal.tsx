@@ -8,17 +8,26 @@ import { useLifetimePrice } from "../../utilities/billing/useLifetimePrice";
 import { FREE_NODE_LIMIT } from "../../utilities/billing/limits";
 import { ANNUAL_PRICE_DISPLAY, ANNUAL_PRICE_PER_MONTH_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../../utilities/billing/pricingDisplay";
 import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
+import { usePurchaseMode, PRICING_URL } from "../../utilities/billing/purchaseMode";
+import { openExternal } from "../../utilities/platform";
 
 function UpgradeModal() {
     const { upgradeModalOpen, setUpgradeModalOpen, billingPlan, upgradeModalReason, setCheckoutPlan } = useIdeaContext();
     const containerRef = useRef<HTMLDivElement>(null);
-    const { preview: lifetimePreview, loading: lifetimeLoading } = useLifetimePrice(upgradeModalOpen, billingPlan === 'annual');
+    // In the app the website's checkout isn't offered (see purchaseMode.ts).
+    const mode = usePurchaseMode();
+    const { preview: lifetimePreview, loading: lifetimeLoading } = useLifetimePrice(upgradeModalOpen && mode === 'checkout', billingPlan === 'annual');
 
     function handleClose() {
         setUpgradeModalOpen(false);
     }
 
     useModalFocusTrap(upgradeModalOpen, containerRef, handleClose);
+
+    function handleOpenPricing() {
+        setUpgradeModalOpen(false);
+        openExternal(PRICING_URL);
+    }
 
     function handleUpgrade(plan: 'annual' | 'lifetime') {
         setUpgradeModalOpen(false);
@@ -32,7 +41,9 @@ function UpgradeModal() {
     // them) — forced opens get an explanation of what just happened instead
     // of the generic "browse plans" copy a voluntary open gets.
     const forced = upgradeModalReason === 'limit' && billingPlan === 'free';
-    const title = billingPlan === 'annual'
+    const title = mode === 'none'
+        ? `You've hit the free plan's ${FREE_NODE_LIMIT}-node limit`
+        : billingPlan === 'annual'
         ? 'Go Lifetime, never renew again'
         : forced
             ? `You've hit the free plan's ${FREE_NODE_LIMIT}-node limit`
@@ -42,7 +53,7 @@ function UpgradeModal() {
         : `Free plans are limited to ${FREE_NODE_LIMIT} nodes. Upgrade for unlimited nodes and full feature access.`;
 
     return (
-        <AnimatedOverlay open={upgradeModalOpen} scrollable onClick={handleClose}>
+        <AnimatedOverlay open={upgradeModalOpen && (mode !== 'none' || forced)} scrollable onClick={handleClose}>
             <div
                 className={`modal neobrutal confirmModal upgradeModal${showAnnual ? '' : ' upgradeModal--single'}`}
                 onClick={(e) => e.stopPropagation()}
@@ -57,11 +68,19 @@ function UpgradeModal() {
                 {forced ? (
                     <p className="upgradeModalNotice">
                         <span className="upgradeModalNotice-icon" aria-hidden="true"><WarningIcon /></span>
-                        Your idea tree has reached {FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused until you upgrade.
+                        {mode === 'none'
+                            ? `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused. Deleting ideas you no longer need makes room.`
+                            : `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused until you upgrade.`}
                     </p>
                 ) : (
                     <p className="upgradeModalSubtitle">{subtitle}</p>
                 )}
+                {mode === 'link-out' && (
+                    <button className="upgradeModalLink neobrutal-button" onClick={handleOpenPricing}>
+                        See plans on intraconnected.app
+                    </button>
+                )}
+                {mode === 'checkout' && (
                 <section className={`upgradeModalPlans${showAnnual ? '' : ' upgradeModalPlans--single'}`}>
                     {showAnnual && (
                         <PriceCard
@@ -112,7 +131,8 @@ function UpgradeModal() {
                         footNote="Access Forever"
                     />
                 </section>
-                <button className="upgradeModalDismiss" onClick={handleClose}>Not now</button>
+                )}
+                <button className="upgradeModalDismiss" onClick={handleClose}>{mode === 'none' ? 'OK' : 'Not now'}</button>
             </div>
         </AnimatedOverlay>
     );

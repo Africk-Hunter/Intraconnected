@@ -1,4 +1,5 @@
 import { auth } from '../../firebaseConfig';
+import { apiUrl, isNative } from '../platform';
 
 const PENDING_CHECKOUT_KEY = 'pending_checkout_plan';
 
@@ -10,6 +11,8 @@ export type CheckoutPlan = 'annual' | 'lifetime';
 // post-signup state — see Idea.tsx). Signed-in visitors are handed back to
 // `onReady`, which opens the embedded checkout modal for the chosen plan.
 export function startCheckout(plan: CheckoutPlan, onReady: (plan: CheckoutPlan) => void): void {
+    // The app never starts a purchase (see purchaseMode.ts); nothing there calls this.
+    if (isNative()) return;
     const user = auth.currentUser;
     if (!user) {
         sessionStorage.setItem(PENDING_CHECKOUT_KEY, plan);
@@ -44,7 +47,7 @@ export async function fetchCheckoutIntent(plan: CheckoutPlan): Promise<CheckoutI
     }
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/create-payment-intent', {
+    const res = await fetch(apiUrl('/.netlify/functions/create-payment-intent'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: JSON.stringify({ plan }),
@@ -89,7 +92,7 @@ export async function fetchLifetimePricePreview(): Promise<LifetimePricePreview>
     }
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/get-lifetime-price', {
+    const res = await fetch(apiUrl('/.netlify/functions/get-lifetime-price'), {
         headers: { Authorization: `Bearer ${idToken}` },
     });
 
@@ -140,7 +143,7 @@ export async function requestLifetimeRefund(): Promise<void> {
     }
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/refund-lifetime', {
+    const res = await fetch(apiUrl('/.netlify/functions/refund-lifetime'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}` },
     });
@@ -164,7 +167,7 @@ export async function cancelSubscription(): Promise<void> {
     }
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/cancel-subscription', {
+    const res = await fetch(apiUrl('/.netlify/functions/cancel-subscription'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}` },
     });
@@ -184,7 +187,7 @@ export async function resetSubscriptionForTesting(): Promise<void> {
     }
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/reset-subscription-test', {
+    const res = await fetch(apiUrl('/.netlify/functions/reset-subscription-test'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}` },
     });
@@ -203,7 +206,7 @@ export async function setPlanForTesting(plan: 'annual' | 'lifetime'): Promise<vo
     }
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/set-plan-test', {
+    const res = await fetch(apiUrl('/.netlify/functions/set-plan-test'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan }),
@@ -227,7 +230,7 @@ async function callGrantLifetimeTest<T>(payload: object): Promise<T> {
     }
 
     const idToken = await user.getIdToken();
-    const res = await fetch('/.netlify/functions/grant-lifetime-test', {
+    const res = await fetch(apiUrl('/.netlify/functions/grant-lifetime-test'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

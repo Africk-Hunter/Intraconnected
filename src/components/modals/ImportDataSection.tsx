@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { ImportError, parseImportFiles, SUPPORTED_IMPORT_EXTENSIONS } from '../../utilities/idea/importers';
 import { applyImport, ImportPlan, MAX_IMPORT_IDEAS, planImport } from '../../utilities/idea/importIdeas';
+import { usePurchaseMode } from '../../utilities/billing/purchaseMode';
 
 // The File System Access picker (Chrome/Edge). Not in TypeScript's DOM lib yet.
 type OpenFilePicker = (options: {
@@ -28,6 +29,7 @@ type ImportState =
 // idea, so an import never mixes into existing ideas and is one drag to undo.
 function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
     const { profileModalOpen, setNewIdeaSwitch } = useIdeaContext();
+    const canUpgrade = usePurchaseMode() !== 'none';
     const [state, setState] = useState<ImportState>({ step: 'idle' });
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -119,11 +121,11 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                 <>
                     {summary}
                     <p className="profile-import-error">
-                        The Free plan has room for {room} more {room === 1 ? 'idea' : 'ideas'}. Upgrade for unlimited ideas to bring
-                        everything over.
+                        The Free plan has room for {room} more {room === 1 ? 'idea' : 'ideas'}.{' '}
+                        {canUpgrade ? 'Upgrade for unlimited ideas to bring everything over.' : 'Import fewer ideas, or delete some first.'}
                     </p>
                     <div className="profile-export-buttons">
-                        <button className="profile-action-btn neobrutal-button" onClick={onUpgrade}>Upgrade</button>
+                        {canUpgrade && <button className="profile-action-btn neobrutal-button" onClick={onUpgrade}>Upgrade</button>}
                         <button className="profile-action-btn neutral neobrutal-button" onClick={() => setState({ step: 'idle' })}>Cancel</button>
                     </div>
                 </>

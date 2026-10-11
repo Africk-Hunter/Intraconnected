@@ -4,6 +4,17 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Native Apps (Android + iOS) — Capacitor Shell, 2026-10-10
+- Capacitor 8 added (`capacitor.config.ts`, `android/`, `ios/`, `npm run cap:sync`/`cap:android`). Wraps the built web app; no `server.url`. Not released: plan, live progress ticks and device checklist are in the native-app-plan artifact (`programmer-docs/artifacts/native-app-plan.html`). Verified on the Android emulator so far: sign-in, stay signed in after a force-quit, Back button, main features, offline edit.
+- `utilities/platform.ts` is the one place that asks "is this the app?" (`isNative`, `apiUrl`, `openExternal`, `haptic`, `hideSplash`, `onAppResume`). All 12 `/.netlify/functions/*` calls go through `apiUrl()` (a relative URL does not work inside the app); CORS allows `capacitor://localhost` and `https://localhost` (`cors.test.ts`). **That CORS change must be deployed before account deletion, feature requests and billing work in the app.**
+- Auth/key: native `initializeAuth` + IndexedDB (plain `getAuth` can hang in the iOS WebView); the encryption key lives in the Keychain/Keystore (`dekStore.ts`, no iCloud sync) and the app is always signed-in (no Remember me). `loadDEKFromSession` → `loadPersistedDEK`; `clearDEK()` now returns a promise. `dekStore.test.ts` covers both paths with a mocked Keychain. New `NativeEntry` at `/`: map or `/login`, never the landing page; `/pricing` redirects; 8 s fallback to `/login` if Firebase never answers.
+- The app sells nothing (C2): `billing/purchaseMode.ts` (+ test) hides every upgrade surface in the app (UpgradeModal, Profile, import dialog, Support's pricing link, `startCheckout`); at the node cap it says to delete ideas. The US-store link-out is wired but the store-country lookup is not built, so the app is always "none".
+- App shell: idea links open in the system browser, `haptic()` replaces `navigator.vibrate` (works on iPhone), resume re-checks email verification, `env(safe-area-inset-top)` on the mobile top bar and legal pages. Phone login inputs: 1.15rem text (was ~26px), field size unchanged.
+- Icons/splash redrawn from the BrandLogo mark on mint (`scripts/generate-native-assets.cjs` also rewrites the website's favicon, PWA and apple-touch icons to match). Android 12+ ignores `splash.png`: launch screen comes from the launch theme (`splashBackground`, `splash_icon.png`).
+- Native-only CSP `<meta>` (`vite-plugins/nativeCsp.ts` + test; mirrors netlify.toml minus Stripe); a sign-in attempt on the emulator reaches Firebase under it. Android: version 1.0.0, `allowBackup` off, release signing from a gitignored `android/keystore.properties`. iOS: iPhone-only, `codemagic.yaml` (fill in `APP_STORE_APPLE_ID`). `ITSAppUsesNonExemptEncryption` left unset on purpose. Store copy and answers: `programmer-docs/native-store-listing.md`.
+- CLAUDE.md: new "Native app (Capacitor)" section and an `apiUrl()` gotcha.
+
+
 ## Landing "Drag to Reorganize" Animation — 2026-10-10
 - The How it works step 3 scene now shows an actual drop: Guitar is picked up (tilts, grows, goes slightly see-through), dragged onto Music, which grows and gets a dashed drop-target ring, and is released into it, then pops out underneath as Music's child before the line draws. It used to slide sideways into the child slot without touching Music. The cursor is its own element, so it stays on Music after the drop and then fades out.
 

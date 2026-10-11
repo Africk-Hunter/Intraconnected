@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import LandingNavbar from "../components/landing/LandingNavbar";
 import SupportIcon, { type SupportIconName } from "../components/landing/SupportIcons";
 import { SUPPORT_EMAIL } from "../utilities/support";
+import { isNative } from "../utilities/platform";
 
 // Mirrors FREE_NODE_LIMIT (utilities/billing/limits.tsx), which is not
 // imported here because that module pulls Firebase into the marketing bundle.
@@ -102,7 +103,7 @@ const GROUPS: FaqGroup[] = [
                 a: (
                     <>
                         Everything, up to {FREE_NODE_LIMIT} nodes. No card needed. Annual and Lifetime
-                        remove the limit. See <Link to="/pricing">pricing</Link>.
+                        remove the limit.{!isNative() && <> See <Link to="/pricing">pricing</Link>.</>}
                     </>
                 ),
             },

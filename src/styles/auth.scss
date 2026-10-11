@@ -82,6 +82,10 @@ div.largeLogo:not(.brandLogo){
     @media (max-width: $mobile) {
         width: 20rem;
         height: 2rem;
+        // Phone text size: stay at or above 16px, the point where iOS stops
+        // zooming the page when an input takes focus. Only the text changes: the
+        // field's size comes from its height plus the padding above.
+        font-size: 1.15rem;
     }
 }
 
@@ -158,6 +162,8 @@ div.largeLogo:not(.brandLogo){
         }
     }
 }
+
+.passwordFieldRow.nativeRow { justify-content: flex-end; }
 
 .passwordFieldRow {
     display: flex;
@@ -471,7 +477,7 @@ div.largeLogo:not(.brandLogo){
     min-height: 100vh;
     background: $background-color;
     font-family: "DM Sans", sans-serif;
-    padding: 4rem 2rem;
+    padding: calc(4rem + env(safe-area-inset-top, 0px)) 2rem 4rem;
 }
 
 .legalContainer {

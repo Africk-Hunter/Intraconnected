@@ -20,7 +20,9 @@ import { useIdeaContext } from '../context/IdeaContext';
 import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { isPatchNotesNew, markPatchNotesSeen, syncPatchNotesFromFirebase } from '../utilities/patchNotesState';
-import { getDEK, loadDEKFromSession } from '../utilities/dekStore';
+import { getDEK, loadPersistedDEK } from '../utilities/dekStore';
+import { hideSplash, onAppResume } from '../utilities/platform';
+import { refreshEmailVerified } from '../utilities/firebase/authFirebase';
 import {
     fetchFullIdeaList,
     handleIdeaCreation,
@@ -71,6 +73,16 @@ const restrictToTopLeftRight: Modifier = ({ transform, draggingNodeRect, windowR
 };
 
 function Idea() {
+    // The app's splash stays up until a screen is ready (capacitor.config.ts).
+    useEffect(() => { hideSplash(); }, []);
+
+    // Verifying the email happens in the browser; when the user comes back to
+    // the app, pick that up so the "verify your email" prompt clears.
+    useEffect(() => onAppResume(() => {
+        const user = auth.currentUser;
+        if (user && !user.emailVerified) refreshEmailVerified().catch(() => { /* offline: try next time */ });
+    }), []);
+
     const [initialFetch, setInitialFetch] = useState(false);
     // True once this session has a confirmed-current copy from the server —
     // false while offline on load. Gates anything that would write local
@@ -192,7 +204,7 @@ function Idea() {
         const handleVisibilityChange = async () => {
             if (document.visibilityState === 'visible') {
                 try { getDEK(); return; } catch { /* not in memory — check session */ }
-                const dekLoaded = await loadDEKFromSession();
+                const dekLoaded = await loadPersistedDEK();
                 if (!dekLoaded) window.location.href = '/login';
             }
         };
@@ -206,7 +218,7 @@ function Idea() {
                 try {
                     getDEK();
                 } catch {
-                    const restored = await loadDEKFromSession();
+                    const restored = await loadPersistedDEK();
                     if (!restored) {
                         window.location.href = '/login';
                         return;

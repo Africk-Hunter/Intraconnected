@@ -6,10 +6,11 @@ import MessageBox from "./MessageBox";
 import { LinkOutIcon } from "./Icons";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
-import { setDEK, loadDEKFromSession } from "../utilities/dekStore";
+import { setDEK, loadPersistedDEK } from "../utilities/dekStore";
 import { getMailProvider, resetMailUrl } from "../utilities/mailProvider";
 import { storeEncryptedDEK, fetchEncryptedDEK, storeEmailWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
 import { syncBillingEmail } from "../utilities/firebase/authFirebase";
+import { isNative, hideSplash } from "../utilities/platform";
 
 const Auth: React.FC = () => {
 
@@ -17,7 +18,10 @@ const Auth: React.FC = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
+    // The app always keeps you signed in (the key goes to the Keychain / Keystore),
+    // so it has no "Keep me signed in" choice.
+    const native = isNative();
+    const [rememberMe, setRememberMe] = useState(native);
 
     const [resetSentTo, setResetSentTo] = useState('');
 
@@ -28,10 +32,12 @@ const Auth: React.FC = () => {
 
     const { setMessageBoxMessage, setMessageType } = useIdeaContext();
 
+    useEffect(() => { hideSplash(); }, []);
+
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user && !isSigningIn.current) {
-                const dekLoaded = await loadDEKFromSession();
+                const dekLoaded = await loadPersistedDEK();
                 if (dekLoaded) window.location.replace('/main');
             }
         });
@@ -91,6 +97,8 @@ const Auth: React.FC = () => {
     // Must be applied before the sign-in/sign-up call for that call to pick
     // it up.
     async function applyPersistence() {
+        // The app's auth is already set up with persistent storage (firebaseConfig.ts).
+        if (native) return;
         try {
             await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
         } catch (error) {
@@ -276,12 +284,12 @@ const Auth: React.FC = () => {
                     <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     <div className="passwordField">
                         <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                        <div className="passwordFieldRow">
-                            <label className={`rememberMe ${showConfirmPassword ? "hidden" : ""}`} inert={showConfirmPassword}>
+                        <div className={`passwordFieldRow${native ? " nativeRow" : ""}`}>
+                            {!native && <label className={`rememberMe ${showConfirmPassword ? "hidden" : ""}`} inert={showConfirmPassword}>
                                 <input type="checkbox" className="rememberMeInput" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                                 <span className="rememberMeBox" aria-hidden="true" />
                                 Keep me signed in
-                            </label>
+                            </label>}
                             {resetProvider ? (
                                 <a
                                     className={`openGmail neobrutal-button ${showConfirmPassword ? "hidden" : ""}`}
@@ -315,7 +323,7 @@ const Auth: React.FC = () => {
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={(show) => { setConfirmPassword(""); setShowConfirmPassword(show); }} />
             </section>
-            <a href="/" className="authLearnMore">New here? See what Intraconnected does →</a>
+            {!native && <a href="/" className="authLearnMore">New here? See what Intraconnected does →</a>}
             <div className="legalLinks">
                 <a href="/terms" className="legalLink">Terms of Service</a>
                 <a href="/privacy" className="legalLink">Privacy Policy</a>
