@@ -102,8 +102,8 @@ export function useDesktopShortcuts({ enabled, mapOpen, onToggleMap, onNewIdea, 
             if (e.defaultPrevented || e.isComposing) return;
             const { actions: act, mapOpen: map, onToggleMap: toggleMap, onNewIdea: newIdea, onGoUp: goUp, onShowShortcuts: showKeys, onSearch: search } = latest.current;
 
-            // Ctrl/Cmd+K opens search from anywhere that isn't already a modal.
-            if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+            // Ctrl/Cmd+F opens search from anywhere that isn't already a modal (replaces the browser's find).
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
                 if (document.querySelector('.overlay, .card-menu')) return;
                 e.preventDefault();
                 search();

@@ -166,6 +166,11 @@
         width: 3.5rem;
         height: 3.5rem;
     }
+
+    @media (min-width: 1439px) and (max-width: #{$large-desktop - 1px}) {
+        width: 4.25rem;
+        height: 4.25rem;
+    }
 }
 
 .smallSideButton {
@@ -183,6 +188,11 @@
         align-items: center;
         justify-content: center;
         display: none;
+    }
+
+    @media (min-width: 1439px) and (max-width: #{$large-desktop - 1px}) {
+        width: 3.25rem;
+        height: 3.25rem;
     }
 
     @media (min-width: $large-desktop) {

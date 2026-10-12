@@ -2,7 +2,7 @@ import type { Context } from "@netlify/functions";
 import type Stripe from "stripe";
 import { firestore, adminAuth } from "./lib/firebaseAdmin";
 import { stripe } from "./lib/stripe";
-import { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent, type BillingEventResult } from "./lib/billingEvents";
+import { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent, isStaleSubscriptionEvent, type BillingEventResult } from "./lib/billingEvents";
 import { getBillingDoc } from "./lib/lifetimePricing";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -201,7 +201,10 @@ export default async (req: Request, _context: Context) => {
             // objects.
             const uid = extractUidFromEvent(event);
             const currentBilling = uid ? await getBillingDoc(uid) : null;
-            result = deriveBillingUpdate(event, currentBilling);
+            result = isStaleSubscriptionEvent(event, currentBilling) ? null : deriveBillingUpdate(event, currentBilling);
+            if (result && (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted")) {
+                result.update.lastSubscriptionEventAt = event.created;
+            }
         }
 
         if (result && !(await accountExists(result.uid))) {

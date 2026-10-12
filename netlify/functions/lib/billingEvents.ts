@@ -26,6 +26,16 @@ export interface BillingDoc {
     // Lifetime purchase). Cleared once consumed by a refund, same lifecycle
     // as previousPlan; `null` on docs written before this field existed.
     lifetimePaymentIntentId: string | null;
+    // Stripe `created` (seconds) of the newest customer.subscription.updated /
+    // .deleted event applied. stripe-webhook.ts skips an older one that
+    // arrives late, which would otherwise overwrite newer state. Optional:
+    // absent on docs written before this field existed.
+    lastSubscriptionEventAt?: number;
+}
+
+export function isStaleSubscriptionEvent(event: Stripe.Event, current: BillingDoc | null): boolean {
+    if (event.type !== "customer.subscription.updated" && event.type !== "customer.subscription.deleted") return false;
+    return typeof current?.lastSubscriptionEventAt === "number" && event.created < current.lastSubscriptionEventAt;
 }
 
 export interface BillingEventResult {

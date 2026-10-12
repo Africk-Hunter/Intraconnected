@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type Stripe from 'stripe';
-import { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent, isEligibleForLifetimeUpgradeDiscount, type BillingDoc } from './billingEvents';
+import { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent, isStaleSubscriptionEvent, isEligibleForLifetimeUpgradeDiscount, type BillingDoc } from './billingEvents';
 
 function fakeEvent(type: string, object: Record<string, unknown>): Stripe.Event {
     return { type, data: { object } } as unknown as Stripe.Event;
@@ -20,6 +20,26 @@ function fakeBilling(overrides: Partial<BillingDoc>): BillingDoc {
         ...overrides,
     };
 }
+
+describe('isStaleSubscriptionEvent', () => {
+    const at = (type: string, created: number) => ({ type, created, data: { object: {} } }) as unknown as Stripe.Event;
+
+    it('flags a subscription event older than the last one applied', () => {
+        expect(isStaleSubscriptionEvent(at('customer.subscription.updated', 100), fakeBilling({ lastSubscriptionEventAt: 200 }))).toBe(true);
+        expect(isStaleSubscriptionEvent(at('customer.subscription.deleted', 100), fakeBilling({ lastSubscriptionEventAt: 200 }))).toBe(true);
+    });
+
+    it('lets newer, equal, or first events through', () => {
+        expect(isStaleSubscriptionEvent(at('customer.subscription.updated', 200), fakeBilling({ lastSubscriptionEventAt: 200 }))).toBe(false);
+        expect(isStaleSubscriptionEvent(at('customer.subscription.updated', 300), fakeBilling({ lastSubscriptionEventAt: 200 }))).toBe(false);
+        expect(isStaleSubscriptionEvent(at('customer.subscription.updated', 100), fakeBilling({}))).toBe(false);
+        expect(isStaleSubscriptionEvent(at('customer.subscription.updated', 100), null)).toBe(false);
+    });
+
+    it('ignores other event types', () => {
+        expect(isStaleSubscriptionEvent(at('payment_intent.succeeded', 100), fakeBilling({ lastSubscriptionEventAt: 200 }))).toBe(false);
+    });
+});
 
 describe('extractUidFromEvent', () => {
     it('reads firebaseUid from a payment intent', () => {

@@ -35,7 +35,7 @@ const HelpMenuFour: React.FC = () => {
                 </div>
             </div>
             <p className="details">
-                Open it with <strong>G</strong> or the <span className="detailsBox help-logo-chip"><img src="/images/MindMapBlack.svg" alt="mind map" className="help-logo-img" /></span> button next to the breadcrumb. Click any idea to jump to it, or drag one onto another to move it. The <span className="detailsBox help-mm-current-chip">brown node</span> is where you are now.
+                Open it with <strong>G</strong> or the <span className="detailsBox help-logo-chip"><img src="/images/MindMapBlack.svg" alt="mind map" className="help-logo-img" /></span> button above the root node. Click any idea to jump to it, or drag one onto another to move it.
             </p>
             <p className="details">
                 <strong>Priority</strong> (P) and <strong>Newest</strong> (N) show only ideas with a priority, or ideas added in the last 30 days.

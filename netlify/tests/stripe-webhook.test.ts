@@ -29,7 +29,12 @@ const { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent } =
     deriveLifetimeRefundUpdate: vi.fn(),
     extractUidFromEvent: vi.fn(),
 }));
-vi.mock("../functions/lib/billingEvents", () => ({ deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent }));
+vi.mock("../functions/lib/billingEvents", async (importOriginal) => ({
+    ...(await importOriginal<typeof import("../functions/lib/billingEvents")>()),
+    deriveBillingUpdate,
+    deriveLifetimeRefundUpdate,
+    extractUidFromEvent,
+}));
 
 const { getBillingDoc } = vi.hoisted(() => ({ getBillingDoc: vi.fn() }));
 vi.mock("../functions/lib/lifetimePricing", () => ({ getBillingDoc }));
@@ -160,6 +165,22 @@ describe("stripe-webhook", () => {
             expect.objectContaining({ status: "processed" }),
             { merge: true }
         );
+    });
+
+    it("skips a delayed older subscription event and records the newest one's time", async () => {
+        extractUidFromEvent.mockReturnValue("uid-1");
+        deriveBillingUpdate.mockReturnValue({ uid: "uid-1", update: { plan: "free" } });
+        getBillingDoc.mockResolvedValue({ plan: "annual", lastSubscriptionEventAt: 200 });
+
+        constructEvent.mockReturnValue({ id: "evt_old", type: "customer.subscription.updated", created: 100, data: { object: {} } });
+        const stale = mockDb({ eventData: null });
+        expect((await handler(fakeWebhookRequest(), {} as never)).status).toBe(200);
+        expect(stale.billingSet).not.toHaveBeenCalled();
+
+        constructEvent.mockReturnValue({ id: "evt_new", type: "customer.subscription.updated", created: 300, data: { object: {} } });
+        const fresh = mockDb({ eventData: null });
+        await handler(fakeWebhookRequest(), {} as never);
+        expect(fresh.billingSet).toHaveBeenCalledWith({ plan: "free", lastSubscriptionEventAt: 300 }, { merge: true });
     });
 
     it("marks the event processed even when nothing needs to change", async () => {

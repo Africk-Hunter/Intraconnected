@@ -18,6 +18,24 @@ const PICKER_TYPES = [{
     accept: { 'application/octet-stream': SUPPORTED_IMPORT_EXTENSIONS },
 }];
 
+// Handed to an AI along with the user's notes; the answer is a Markdown outline
+// that the Markdown importer in importers.ts reads directly.
+const AI_PROMPT = `Turn the notes I give you into a nested Markdown bullet list for import into a mind-mapping app.
+
+Rules:
+- Output only the list, in one code block, with no commentary.
+- One idea per line, starting with "- ".
+- Indent a child idea by 2 spaces under its parent. Group related ideas under a short parent idea.
+- Keep each idea short, a phrase or one sentence, and keep my wording where you can.
+- If an idea has a web link, write it as [text](https://example.com).
+- No headings, tables, bold, italics or emojis.
+- Do not invent ideas that are not in my notes.
+
+My notes:
+`;
+
+const FORMAT_CHIPS = ['OPML', 'Markdown', 'Notion .zip', 'Plain text', 'FreeMind', 'XMind', 'CSV', 'JSON'];
+
 type ImportState =
     | { step: 'idle' }
     | { step: 'reading' }
@@ -32,6 +50,8 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
     const { profileModalOpen, setNewIdeaSwitch } = useIdeaContext();
     const canUpgrade = usePurchaseMode() !== 'none';
     const [state, setState] = useState<ImportState>({ step: 'idle' });
+    const [promptCopied, setPromptCopied] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -88,9 +108,49 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
         }
     }
 
+    async function copyPrompt() {
+        try {
+            await navigator.clipboard.writeText(AI_PROMPT);
+            setPromptCopied(true);
+            window.setTimeout(() => setPromptCopied(false), 2000);
+        } catch {
+            // Clipboard blocked: nothing useful to do, the button just stays as is.
+        }
+    }
+
+    function handleDrop(e: React.DragEvent) {
+        e.preventDefault();
+        setDragOver(false);
+        void handleFiles([...e.dataTransfer.files]);
+    }
+
     const chooseButton = (label: string) => (
         <button className="profile-action-btn neobrutal-button" onClick={chooseFiles}>
             {label}
+        </button>
+    );
+
+    // A touch screen has nothing to drop from, so it gets the short label.
+    const dropzone = (pointerLabel: string, touchLabel: string) => (
+        <button
+            type="button"
+            className={`profile-dropzone${dragOver ? ' profile-dropzone--over' : ''}`}
+            onClick={chooseFiles}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            // Moving onto the zone's own children fires dragleave too; only clear on a real exit.
+            onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragOver(false); }}
+            onDrop={handleDrop}
+        >
+            <svg className="profile-dropzone-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 16V4M7 9l5-5 5 5M5 20h14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="profile-dropzone-text">
+                <span className="profile-dropzone-title">
+                    <span className="profile-dropzone-pointer">{pointerLabel}</span>
+                    <span className="profile-dropzone-touch">{touchLabel}</span>
+                </span>
+                <span className="profile-dropzone-hint">Up to {MAX_IMPORT_IDEAS.toLocaleString()} ideas per import</span>
+            </span>
         </button>
     );
 
@@ -157,14 +217,14 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                         </p>
                     </div>
                 </div>
-                <div className="profile-export-buttons">{chooseButton('Import another file')}</div>
+                {dropzone('Drop another file or click to choose', 'Import another file')}
             </>
         );
     } else {
         body = (
             <>
                 {state.step === 'error' && <p className="profile-import-error" role="alert">{state.message} <ReportLink area="import" error={state.message} /></p>}
-                <div className="profile-export-buttons">{chooseButton('Choose file…')}</div>
+                {dropzone('Drop files here or click to choose', 'Choose files')}
             </>
         );
     }
@@ -173,8 +233,18 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
         <section className="profile-section profile-section--import">
             <h3 className="profile-section-title">Import Data</h3>
             <p className="profile-section-desc">
-                Bring your ideas over from Workflowy, XMind, MindNode, MindMeister, Obsidian, Notion, Todoist and more. Accepts OPML,
-                Markdown, Notion’s .zip export, plain text, FreeMind (.mm), XMind (.xmind), Todoist/TickTick CSV and Intraconnected JSON.
+                Bring ideas over from Workflowy, Notion, Obsidian, XMind and more. They’re added under one new top-level idea.
+            </p>
+            <ul className="profile-format-chips" aria-label="Supported formats">
+                {FORMAT_CHIPS.map((chip, i) => <li key={chip} className={`profile-format-chip--${i % 4}`}>{chip}</li>)}
+            </ul>
+            <div className="profile-import-body" key={state.step}>{body}</div>
+            <p className="profile-import-ai">
+                Have unstructured notes?{' '}
+                <button type="button" className="profile-link-btn" onClick={copyPrompt}>
+                    {promptCopied ? 'Copied' : 'Copy an AI prompt'}
+                </button>
+                {' '}to turn them into an outline, save its answer as a .md file and import it above.
             </p>
             <input
                 ref={inputRef}
@@ -184,7 +254,6 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                 className="profile-import-input"
                 onChange={(e) => handleFiles(e.target.files ? [...e.target.files] : [])}
             />
-            {body}
         </section>
     );
 }

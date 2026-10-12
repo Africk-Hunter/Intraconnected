@@ -4,7 +4,7 @@ import { useIdeaContext } from '../context/IdeaContext';
 import { canCreateIdea } from '../utilities/index';
 
 
-const SEARCH_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl+K';
+const SEARCH_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘F' : 'Ctrl+F';
 
 interface NavbarProps {
     side: string;

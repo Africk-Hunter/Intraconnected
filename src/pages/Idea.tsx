@@ -641,7 +641,7 @@ function Idea() {
                         onClose={() => setShowSearch(false)}
                         onPick={pickSearchResult}
                         commands={[
-                            { label: 'Create Shortcut', hint: 'C', run: openCreate },
+                            { label: 'Create a new idea', hint: 'C', run: openCreate },
                             ...(rootId !== 1 ? [{ label: 'Go to the top level', run: () => navigateToId(1) }] : []),
                             { label: 'Toggle mind map', hint: 'G', run: () => setShowMindMap(prev => !prev) },
                             { label: 'Keyboard shortcuts', hint: '/', run: () => setShowShortcuts(true) },

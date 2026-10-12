@@ -675,19 +675,29 @@ function ProfileModal() {
             <section className="profile-section profile-section--export">
                 <h3 className="profile-section-title">Export Your Data</h3>
                 <p className="profile-section-desc">
-                    Download a copy of your ideas anytime. Markdown for notes apps, OPML for other
-                    mind-map and outliner apps, JSON for a full backup.
+                    Download a copy of your ideas anytime. Pick the format that fits where they're going.
                 </p>
-                <div className="profile-export-buttons">
-                    <button className="profile-action-btn neobrutal-button" onClick={() => handleExportData('md')}>
-                        Markdown (.md)
-                    </button>
-                    <button className="profile-action-btn neobrutal-button" onClick={() => handleExportData('opml')}>
-                        OPML (.opml)
-                    </button>
-                    <button className="profile-action-btn neobrutal-button" onClick={() => handleExportData('json')}>
-                        JSON (.json)
-                    </button>
+                <div className="profile-format-list">
+                    {([
+                        ['md', 'Markdown', '.md', 'For notes apps like Obsidian'],
+                        ['opml', 'OPML', '.opml', 'For mind-map and outliner apps'],
+                        ['json', 'JSON', '.json', 'A full backup you can re-import'],
+                    ] as const).map(([format, name, ext, hint]) => (
+                        <button
+                            key={format}
+                            type="button"
+                            className={`profile-format profile-format--${format}`}
+                            onClick={() => handleExportData(format)}
+                        >
+                            <span className="profile-format-text">
+                                <span className="profile-format-name">{name} <span className="profile-format-ext">{ext}</span></span>
+                                <span className="profile-format-hint">{hint}</span>
+                            </span>
+                            <svg className="profile-format-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 4v11M7 11l5 5 5-5M5 20h14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </button>
+                    ))}
                 </div>
             </section>
 

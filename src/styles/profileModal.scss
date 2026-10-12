@@ -438,6 +438,266 @@ $profile-scrollbar-end-gap: 6px;
     }
 }
 
+// ── Data tab ─────────────────────────────────────────────
+$data-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+// Export: one tile per format, name + what it's for, download glyph on the right.
+.profile-format-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    align-self: stretch;
+}
+
+.profile-format {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 0.85rem;
+    font-family: inherit;
+    text-align: left;
+    color: #111;
+    background: #fff;
+    border: 3px solid #111;
+    border-radius: 10px;
+    box-shadow: 3px 3px 0 #111;
+    cursor: pointer;
+    transition: transform 0.14s $data-ease, box-shadow 0.14s $data-ease, background-color 0.14s ease;
+
+    &:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 4px 4px 0 #111;
+    }
+
+    &:active {
+        transform: translate(3px, 3px);
+        box-shadow: 0 0 0 #111;
+    }
+
+    &:focus-visible {
+        outline: 3px solid $sky;
+        outline-offset: 3px;
+    }
+}
+
+.profile-format-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.profile-format-name {
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.profile-format-ext {
+    font-weight: 600;
+    color: #555;
+}
+
+.profile-format-hint {
+    font-size: 0.88rem;
+    color: #444;
+}
+
+// Each format owns a colour: it tints the arrow chip and the hover wash.
+.profile-format-icon {
+    flex: none;
+    box-sizing: content-box;
+    width: 1.3rem;
+    height: 1.3rem;
+    padding: 0.4rem;
+    background: var(--format-color);
+    border: 2px solid #111;
+    border-radius: 9px;
+    box-shadow: 2px 2px 0 #111;
+    transition: transform 0.18s $data-ease;
+}
+
+.profile-format:hover .profile-format-icon {
+    transform: translateY(2px);
+}
+
+.profile-format:hover {
+    background: var(--format-wash);
+}
+
+.profile-format--md   { --format-color: #{$leaf};  --format-wash: #{lighten($leaf, 38%)}; }
+.profile-format--opml { --format-color: #{$link};  --format-wash: #{lighten($link, 36%)}; }
+.profile-format--json { --format-color: #{$sky};   --format-wash: #{lighten($sky, 38%)}; }
+
+// Import: supported formats as chips, then the drop target.
+.profile-format-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        padding: 0.15rem 0.6rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        border: 2px solid #111;
+        border-radius: 999px;
+    }
+
+    .profile-format-chip--0 { background: lighten($leaf, 30%); }
+    .profile-format-chip--1 { background: lighten($link, 28%); }
+    .profile-format-chip--2 { background: lighten($sky, 30%); }
+    .profile-format-chip--3 { background: lighten($orange, 30%); }
+}
+
+.profile-import-body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    align-self: stretch;
+    animation: profileImportIn 0.24s $data-ease both;
+
+    > .profile-import-status,
+    > .profile-import-error,
+    > .profile-import-success {
+        margin: 0;
+    }
+}
+
+.profile-dropzone {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.8rem 1rem;
+    font-family: inherit;
+    color: #111;
+    text-align: left;
+    background: lighten($sky, 42%);
+    border: 3px dashed #111;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.16s ease, transform 0.16s $data-ease, border-style 0s;
+
+    &:hover {
+        background: lighten($sky, 36%);
+    }
+
+    &:focus-visible {
+        outline: 3px solid $sky;
+        outline-offset: 3px;
+    }
+
+    &--over {
+        background: lighten($sky, 32%);
+        border-style: solid;
+        transform: scale(1.015);
+    }
+}
+
+.profile-dropzone-icon {
+    flex: none;
+    box-sizing: content-box;
+    width: 1.3rem;
+    height: 1.3rem;
+    padding: 0.4rem;
+    background: $sky;
+    color: #fff;
+    border: 2px solid #111;
+    border-radius: 11px;
+    box-shadow: 2px 2px 0 #111;
+    transition: transform 0.2s $data-ease;
+}
+
+.profile-dropzone:hover .profile-dropzone-icon,
+.profile-dropzone--over .profile-dropzone-icon {
+    transform: translateY(-3px);
+}
+
+.profile-dropzone-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.profile-dropzone-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.profile-dropzone-hint {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+// Show the wording that fits the device: dragging only makes sense with a mouse.
+.profile-dropzone-touch { display: none; }
+
+@media (pointer: coarse) {
+    .profile-dropzone-pointer { display: none; }
+    .profile-dropzone-touch { display: inline; }
+}
+
+.profile-import-ai {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #444;
+}
+
+.profile-link-btn {
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    color: #111;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    &:hover {
+        color: $sky;
+    }
+
+    &:focus-visible {
+        outline: 3px solid $sky;
+        outline-offset: 2px;
+        border-radius: 3px;
+    }
+}
+
+@keyframes profileImportIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-import-body { animation: none; }
+
+    .profile-format,
+    .profile-format-icon,
+    .profile-dropzone,
+    .profile-dropzone-icon {
+        transition: background-color 0.1s ease;
+    }
+
+    .profile-format:hover,
+    .profile-format:active,
+    .profile-format:hover .profile-format-icon,
+    .profile-dropzone--over,
+    .profile-dropzone:hover .profile-dropzone-icon,
+    .profile-dropzone--over .profile-dropzone-icon {
+        transform: none;
+    }
+}
+
 // "Send reset link" + "Open <mail provider>"; wraps (and stacks on mobile,
 // where buttons are full width) with room between the two.
 .profile-reset-actions {

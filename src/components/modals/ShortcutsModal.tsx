@@ -16,14 +16,14 @@ const GROUPS: { title: string; accent: string; rows: { keys: string; action: str
             { keys: '← → ↑ ↓', action: 'Move between cards' },
             { keys: 'Enter', action: 'Open the selected card' },
             { keys: 'Backspace', action: 'Go up one level' },
-            { keys: `${MOD}+K`, action: 'Search all ideas' },
+            { keys: `${MOD}+F`, action: 'Search all ideas' },
         ],
     },
     {
         title: 'Change things',
         accent: 'leaf',
         rows: [
-            { keys: 'C', action: 'Create Shortcut' },
+            { keys: 'C', action: 'Create a new idea' },
             { keys: 'F2 / R', action: 'Rename the card (or this idea)' },
             { keys: 'M', action: 'Move the card' },
             { keys: 'D', action: 'Delete the card' },
