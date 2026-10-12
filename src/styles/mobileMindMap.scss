@@ -952,6 +952,17 @@
     &--checklist { overflow: hidden; }
 }
 
+// Create / Edit: hang from the top of the screen like the search sheet, so the
+// keyboard only ever covers the bottom of the sheet, never the field at its
+// top. MobileMindMap trims max-height to the space above the keyboard.
+// Doubled class to win over the wider-screen `.mmobile-sheet` rule below.
+.mmobile-sheet.mmobile-sheet--top {
+    top: max(8px, env(safe-area-inset-top, 8px));
+    bottom: auto;
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top, 8px)) - max(10px, env(safe-area-inset-bottom, 10px)) - 110px);
+    transform-origin: 50% 0;
+}
+
 // Grab handle + title: drag down here to close (useSheetSwipeDown)
 .mmobile-sheet-top {
     position: sticky;
@@ -1922,6 +1933,11 @@
         border-radius: 26px;
         border-width: 4px;
         max-height: 72dvh;
+    }
+
+    .mmobile-sheet.mmobile-sheet--top {
+        top: max(14px, env(safe-area-inset-top, 14px));
+        max-height: calc(100dvh - max(14px, env(safe-area-inset-top, 14px)) - max(14px, env(safe-area-inset-bottom, 14px)) - 140px);
     }
 
     .mmobile-sheet-title {

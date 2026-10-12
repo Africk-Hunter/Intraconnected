@@ -61,6 +61,12 @@ if (typeof window !== 'undefined') {
 }
 
 // Where the last tap was, relative to the screen's centre: full-screen panels grow out of it.
+// Sheets that open with the keyboard up. They hang from the top of the screen
+// (like search), so the field being typed in is never pushed off the top.
+function isTypingSheet(sheet: SheetState | null): boolean {
+    return sheet?.type === 'create' || sheet?.type === 'edit';
+}
+
 function pointerOrigin() {
     return { dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 };
 }
@@ -184,7 +190,8 @@ function MobileMindMap() {
         if (isOpen && sheetWasNullRef.current) {
             setSheetOrigin({
                 dx: lastPointer.x - window.innerWidth / 2,
-                dy: lastPointer.y - (window.innerHeight - 10),
+                // Typing sheets grow from their top edge, the rest from their bottom
+                dy: isTypingSheet(sheet) ? lastPointer.y - 10 : lastPointer.y - (window.innerHeight - 10),
             });
         }
         sheetWasNullRef.current = !isOpen;
@@ -1629,7 +1636,7 @@ function MobileMindMap() {
                     <div className="mmobile-scrim" onClick={() => { if (Date.now() - lastLongPressTime.current < 400) return; requestCloseSheet(); }} />
                     <div
                         ref={sheetSwipe.sheetRef}
-                        className={`mmobile-sheet${sheet.type === 'checklist' ? ' mmobile-sheet--checklist' : ''}`}
+                        className={`mmobile-sheet${sheet.type === 'checklist' ? ' mmobile-sheet--checklist' : ''}${isTypingSheet(sheet) ? ' mmobile-sheet--top' : ''}`}
                         role="dialog"
                         aria-modal="true"
                         aria-label={sheetTitle || 'Sheet'}
@@ -1640,7 +1647,11 @@ function MobileMindMap() {
                             // what's left of the screen (dvh doesn't shrink for
                             // the keyboard on iOS), scrolling inside if needed.
                             // In the app the status bar overlays the page, so stay below it.
-                            ...(keyboardOpen ? { bottom: `${keyboardInset + 8}px`, maxHeight: `max(160px, calc(${viewportHeight - 16}px - env(safe-area-inset-top, 0px)))` } : {}),
+                            // Typing sheets keep their top and only stop short of the keyboard.
+                            ...(keyboardOpen && isTypingSheet(sheet)
+                                ? { maxHeight: `max(160px, calc(${viewportHeight - 8}px - max(8px, env(safe-area-inset-top, 8px))))` }
+                                : {}),
+                            ...(keyboardOpen && !isTypingSheet(sheet) ? { bottom:`${keyboardInset + 8}px`, maxHeight: `max(160px, calc(${viewportHeight - 16}px - env(safe-area-inset-top, 0px)))` } : {}),
                         } as React.CSSProperties}
                     >
                         <div className="mmobile-sheet-top" {...sheetSwipe.dragProps}>
