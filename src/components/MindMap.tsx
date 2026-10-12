@@ -18,10 +18,12 @@ interface TreeNodeProps {
     // Set for a moment after a drag ends, so the release isn't also a click.
     suppressClick: MutableRefObject<boolean>;
     // Opens this node when something has just been dropped into it (`tick` makes each drop a new request).
-    expandReq: { id: number; tick: number } | null;
+    expandReq: { ids: number[]; tick: number } | null;
+    // The idea a search just revealed (ringed for a moment).
+    foundId: number | null;
 }
 
-function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, lens, lensInfo, drag, onNodePress, suppressClick, expandReq }: TreeNodeProps) {
+function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, lens, lensInfo, drag, onNodePress, suppressClick, expandReq, foundId }: TreeNodeProps) {
     const idea = allIdeas.find(i => Number(i.id) === ideaId);
     const [collapsed, setCollapsed] = useState(!expandedIds.has(ideaId));
     const wasOnPathRef = useRef(expandedIds.has(ideaId));
@@ -40,7 +42,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, le
     }, [expandedIds, ideaId]);
 
     useEffect(() => {
-        if (expandReq?.id === ideaId) setCollapsed(false);
+        if (expandReq?.ids.includes(ideaId)) setCollapsed(false);
     }, [expandReq, ideaId]);
 
     if (!idea) return null;
@@ -78,6 +80,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, le
     const ringClass = info?.tone ? ` mm-lens-ring--${info.tone}` : '';
     const badge = info?.badge ? <span className={`mm-lens-badge mm-lens-badge--${info.tone}`}>{info.badge}</span> : null;
     const isCollapsed = collapsed && !lensOn;
+    const foundClass = foundId === ideaId ? ' mm-found' : '';
     const dragClass = drag?.over === ideaId ? ' mm-drop-target' : drag?.bad === ideaId ? ' mm-drop-denied' : drag?.id === ideaId ? ' mm-drag-source' : '';
     const shownKids = lensOn
         ? children.filter(c => { const ci = lensInfo.get(Number(c.id)); return !!(ci?.tone || ci?.onPath); })
@@ -98,7 +101,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, le
         const items = checklistIdea.items ?? [];
         return (
             <div className="mm-node-col">
-                <div className={`mm-node-wrap${lensClass}${ringClass}`}>
+                <div className={`mm-node-wrap${lensClass}${ringClass}${foundClass}`} data-mm-find={ideaId}>
                 {badge}
                 <div className="mm-checklist-card">
                     <span className="mm-checklist-card__title">{idea.content.split('\n')[0]}</span>
@@ -125,7 +128,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, le
 
     return (
         <div className="mm-node-col">
-            <div className={`mm-node-wrap${lensClass}${ringClass}${dragClass}`} data-mm-id={ideaId}>
+            <div className={`mm-node-wrap${lensClass}${ringClass}${dragClass}${foundClass}`} data-mm-id={ideaId} data-mm-find={ideaId}>
                 {badge}
                 <button
                     className={btnClass}
@@ -165,6 +168,7 @@ function TreeNode({ ideaId, allIdeas, currentRootId, onNavigate, expandedIds, le
                                             onNodePress={onNodePress}
                                             suppressClick={suppressClick}
                                             expandReq={expandReq}
+                                            foundId={foundId}
                                         />
                                     </div>
                                 ))}
@@ -195,9 +199,11 @@ const LEGENDS: Record<'priority' | 'recent', { tone: string; label: string }[]> 
 interface MindMapProps {
     onClose: () => void;
     visible: boolean;
+    // Set by a search while the map is open: open the branches down to this idea and pan to it.
+    reveal?: { id: number; tick: number } | null;
 }
 
-function MindMap({ onClose, visible }: MindMapProps) {
+function MindMap({ onClose, visible, reveal }: MindMapProps) {
     const { rootId, navigateToId, newIdeaSwitch } = useIdeaContext();
     const [allIdeas, setAllIdeas] = useState<IdeaType[]>([]);
 
@@ -255,7 +261,8 @@ function MindMap({ onClose, visible }: MindMapProps) {
     const { moveIdea } = useIdeaActions();
     const [drag, setDrag] = useState<{ id: number; label: string; x: number; y: number; over: number | null; bad: number | null } | null>(null);
     const suppressClick = useRef(false);
-    const [expandReq, setExpandReq] = useState<{ id: number; tick: number } | null>(null);
+    const [expandReq, setExpandReq] = useState<{ ids: number[]; tick: number } | null>(null);
+    const [foundId, setFoundId] = useState<number | null>(null);
     const dropLabel = drag?.over != null ? resolveIdeaLabel(allIdeas.find(i => Number(i.id) === drag.over)!).split('\n')[0] : null;
 
     const [treeKey, setTreeKey] = useState(0);
@@ -366,6 +373,38 @@ function MindMap({ onClose, visible }: MindMapProps) {
         return () => cancelAnimationFrame(raf);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lens, tones, visible, allIdeas]);
+
+    // A search result while the map is open: drop any lens (it hides unmatched branches),
+    // open every branch down to the idea, then pan to it and ring it.
+    useEffect(() => {
+        if (!reveal) return;
+        const chain: number[] = [];
+        let cur = allIdeas.find(i => Number(i.id) === reveal.id);
+        while (cur && Number(cur.parentID)) {
+            chain.push(Number(cur.parentID));
+            cur = allIdeas.find(i => Number(i.id) === Number(cur!.parentID));
+        }
+        setLens('off');
+        setExpandReq({ ids: chain, tick: reveal.tick });
+        setFoundId(reveal.id);
+        const pan = setTimeout(() => {
+            const body = bodyRef.current;
+            const node = canvasRef.current?.querySelector<HTMLElement>(`[data-mm-find="${reveal.id}"]`);
+            if (!body || !node) return;
+            const b = body.getBoundingClientRect();
+            const n = node.getBoundingClientRect();
+            const nx = n.left - b.left + n.width / 2;
+            const ny = n.top - b.top + n.height / 2;
+            setView(prev => ({
+                zoom: 1,
+                x: b.width / 2 - (nx - prev.x) / prev.zoom,
+                y: b.height / 2 - (ny - prev.y) / prev.zoom,
+            }));
+        }, 120);
+        const clear = setTimeout(() => setFoundId(null), 2600);
+        return () => { clearTimeout(pan); clearTimeout(clear); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reveal]);
 
     // Keyboard while the map is open: Esc closes, + / - zoom, 0 recentres,
     // arrows pan, P and N switch the lenses (G, which also closes it, is handled
@@ -502,7 +541,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
             }
             if (target !== null) {
                 moveIdea(sourceId, target);
-                setExpandReq({ id: target, tick: Date.now() });
+                setExpandReq({ ids: [target], tick: Date.now() });
             }
         }
         function onKey(ev: KeyboardEvent) {
@@ -555,6 +594,7 @@ function MindMap({ onClose, visible }: MindMapProps) {
                             onNodePress={startNodePress}
                             suppressClick={suppressClick}
                             expandReq={expandReq}
+                            foundId={foundId}
                         />
                     )}
                 </div>

@@ -707,3 +707,57 @@
     font-size: 0.85rem;
     opacity: 0.6;
 }
+
+// Lock marker beside ⋯ on a locked idea.
+.card-lock {
+    all: unset;
+    box-sizing: border-box;
+    position: absolute;
+    top: 0.6rem;
+    right: 2.8rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: #111;
+    opacity: 0.75;
+    transition: opacity 0.2s ease, background 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.45);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #111;
+        outline-offset: 1px;
+    }
+}
+
+.ideaNode--locked {
+    cursor: pointer;
+
+    .ideaNode-locked {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .ideaNode-locked-dots {
+        font-size: 1.8rem;
+        letter-spacing: 0.15em;
+    }
+
+    .ideaNode-locked-hint {
+        font-size: 1.1rem;
+        opacity: 0.6;
+    }
+}

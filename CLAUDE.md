@@ -236,6 +236,9 @@ Plain TypeScript imported by both `src/` and `netlify/functions/` (functions can
 
 ## Key Conventions
 
+### No emojis, ever
+The site must NEVER contain emojis (UI, copy, titles, toasts, aria labels shown on screen). Icons are hand-made inline SVGs (`currentColor` stroke/fill so they follow the theme), never emoji characters and never an icon font. Plain typographic glyphs already in use (⋯ › ↗ ▾) are not emojis; anything that renders as a colour picture is.
+
 ### Modals
 ```tsx
 <section className="overlay">
@@ -254,7 +257,7 @@ Add `confirmModal` to `.modal` for modals without a textarea (fixes `min-height`
 `currentNameChangeId === -1` = renaming root. `setNewIdeaSwitch` must be called inside the Firebase `.then()` after `updateIdeaName`.
 
 ### Delete Flow
-Desktop: trash drop, the card menu and Del all go through `useIdeaActions().requestDelete(id)` (`utilities/idea/useIdeaActions.ts`). An idea with nothing under it is deleted at once; a branch sets `pendingDeleteId` → `DeleteConfirmModal` (shows the count) → `deleteIdea(id)`. `deleteIdea` calls `recursivelyDeleteChildren`, pushes an entry on `idea/undoStack.ts` (`restoreIdeas(removed)`) and refreshes; `UndoToast` and Ctrl/Cmd+Z undo it. Moves go through `moveIdea` and are undoable the same way. Mobile has its own toast (`MobileUndoToast`).
+Desktop: trash drop, the card menu and D all go through `useIdeaActions().requestDelete(id)` (`utilities/idea/useIdeaActions.ts`). An idea with nothing under it is deleted at once; a branch sets `pendingDeleteId` → `DeleteConfirmModal` (shows the count) → `deleteIdea(id)`. `deleteIdea` calls `recursivelyDeleteChildren`, pushes an entry on `idea/undoStack.ts` (`restoreIdeas(removed)`) and refreshes; `UndoToast` and Ctrl/Cmd+Z undo it. Moves go through `moveIdea` and are undoable the same way. Mobile has its own toast (`MobileUndoToast`).
 
 ### Priority System
 `priority?: 1 | 2 | 3` (1=High/red, 2=Medium/orange, 3=Low/yellow). Corner ribbon in top-left of each node; on desktop it opens the card menu, whose Priority chips call `useIdeaActions().setPriority`. One `updateIdeaPriority(id, priority)` call does both halves (see Critical Gotchas above).
@@ -269,7 +272,7 @@ Custom collision detection: `trash`/`last-idea` use rect intersection; idea node
 ### Desktop interaction layer
 - **Cards** (`IdeaNode.tsx`) carry `data-idea-id`, open `CardMenu` on right-click or the ⋯ button (`setCardMenu` in context), and react to Enter. There are no hover-only icons any more: anything a card can do is in the menu, a shortcut, or both.
 - **`useIdeaActions()`** is the single path for delete, move, priority, open, rename, link edit, copy and undo; drag, `CardMenu`, `MoveModal` and `useDesktopShortcuts` all call it. Add new card actions there, not in components.
-- **Keyboard** (`utilities/useDesktopShortcuts.ts`, mounted in `Idea.tsx`): arrows, F2, Del, M, N, Backspace, ?, Ctrl/Cmd+K. It ignores typing targets, an open `.overlay`/`.card-menu`, and Ctrl/Cmd/Alt combos; the mind map has its own keys. Keep `ShortcutsModal` in step when adding one.
+- **Keyboard** (`utilities/useDesktopShortcuts.ts`, mounted in `Idea.tsx`): arrows, F2, D, M, N, Backspace, ?, Ctrl/Cmd+K. It ignores typing targets, an open `.overlay`/`.card-menu`, and Ctrl/Cmd/Alt combos; the mind map has its own keys. Keep `ShortcutsModal` in step when adding one.
 - **Modals**: pass `onEscape` to `AnimatedOverlay` to get Esc, a Tab trap and focus return (one trap at a time, via `useModalFocusTrap`). Omit it only for forced modals (`SessionEndedModal`). An inline editor that uses Esc must `preventDefault()` it so the modal doesn't also close.
 - **Address**: the level you are in is `/main?idea=<id>` (`idea/ideaUrl.ts`). `navigateToId(id, { history: 'push' | 'replace' | 'none' })` writes it; `Idea.tsx` reads it on load (only if the idea still exists) and on `popstate`. Mobile ignores it.
 - **Breadcrumb** (`Breadcrumb.tsx`, built from `rootIdStack`) replaced the depth dots. **Search** is `idea/search.ts` (pure) + `SearchModal`. **Move to…** is `MoveModal`.

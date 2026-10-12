@@ -1,8 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { SheetState, SWIPE_REVEAL_W, SWIPE_THRESHOLD } from './mobileTypes';
 import MobileChecklistItemSheet from './MobileChecklistItemSheet';
 import { haptic, onKeyboardHeight } from '../../utilities/platform';
+import { useShake } from '../../utilities/useShake';
 import {
     IdeaType,
     ChecklistItem,
@@ -115,6 +117,7 @@ function MobileMindMap() {
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
+    const checklistItemInputRef = useRef<HTMLInputElement>(null);
     const [newNoteTitle, setNewNoteTitle] = useState('');
     const [newNoteBody, setNewNoteBody] = useState('');
     const [newIdeaLink, setNewIdeaLink] = useState('');
@@ -151,6 +154,8 @@ function MobileMindMap() {
     const [isHolding, setIsHolding] = useState(false);
     const [toast, setToast] = useState<UndoToastState | null>(null);
     const toastKeyRef = useRef(0);
+    // The newest change that can still be undone, kept after its toast is gone so a shake can use it.
+    const lastUndoRef = useRef<(() => void) | null>(null);
     const [editPriority, setEditPriority] = useState<1 | 2 | 3 | undefined>(undefined);
     const [dragNodeId, setDragNodeId] = useState<number | null>(null);
     const [pressingNodeId, setPressingNodeId] = useState<number | null>(null);
@@ -273,7 +278,16 @@ function MobileMindMap() {
             const visible = vv?.height ?? window.innerHeight;
             const fromViewport = vv ? window.innerHeight - vv.height - vv.offsetTop : 0;
             const fromNative = nativeKeyboard - (fullHeight - window.innerHeight);
-            const inset = Math.max(0, fromViewport, fromNative);
+            // A keyboard can't be up with no field focused. iOS sometimes drops it
+            // without a final viewport event, which left the sheet floating high.
+            const active = document.activeElement;
+            const typing = active instanceof HTMLElement
+                && (active.isContentEditable || active instanceof HTMLTextAreaElement
+                    || (active instanceof HTMLInputElement && !['checkbox', 'radio', 'button', 'submit', 'range'].includes(active.type)));
+            // Also capped: no keyboard is taller than 60% of the screen.
+            const inset = typing || nativeKeyboard > 0
+                ? Math.min(Math.max(0, fromViewport, fromNative), window.innerHeight * 0.6)
+                : 0;
             // iOS Safari can shrink the layout viewport along with the visual
             // one, leaving `inset` at 0 while the keyboard takes half the
             // screen. So "open" is judged by how far the visible height fell
@@ -281,7 +295,7 @@ function MobileMindMap() {
             // it by less than 150px).
             if (vv && vv.width !== tallestViewport.current.width) tallestViewport.current = { width: vv.width, height: 0 };
             tallestViewport.current.height = Math.max(tallestViewport.current.height, visible);
-            setKeyboardOpen(inset > 0 || tallestViewport.current.height - visible > 150);
+            setKeyboardOpen(inset > 0 || (typing && tallestViewport.current.height - visible > 150));
             setKeyboardInset(inset);
             setViewportHeight(Math.min(visible, window.innerHeight - inset));
         }
@@ -291,7 +305,19 @@ function MobileMindMap() {
         vv?.addEventListener('resize', update);
         // iOS also pans the visual viewport when the keyboard opens
         vv?.addEventListener('scroll', update);
+        // Focus moving between fields (or away) changes the keyboard without a
+        // reliable viewport event; measure again once iOS has settled.
+        let timers: number[] = [];
+        function settle() {
+            timers.forEach(clearTimeout);
+            timers = [0, 150, 400].map(ms => window.setTimeout(update, ms));
+        }
+        document.addEventListener('focusin', settle);
+        document.addEventListener('focusout', settle);
         return () => {
+            timers.forEach(clearTimeout);
+            document.removeEventListener('focusin', settle);
+            document.removeEventListener('focusout', settle);
             stopNative();
             window.removeEventListener('resize', update);
             vv?.removeEventListener('resize', update);
@@ -957,8 +983,14 @@ function MobileMindMap() {
 
     function goBack() {
         if (currentId === 1) return;
-        setCurrentId(currentIdea?.parentID || 1);
-        setSheet(null);
+        // Synchronous so that, on reaching the top level, the Back handler is
+        // unregistered before backStack re-pushes its history trap; otherwise
+        // the trap is pushed and immediately history.back()'d, which stalls
+        // the WebView for seconds after a back swipe.
+        flushSync(() => {
+            setCurrentId(currentIdea?.parentID || 1);
+            setSheet(null);
+        });
     }
 
     function openPatchNotes() {
@@ -1066,8 +1098,27 @@ function MobileMindMap() {
 
     function showToast(message: string, onUndo?: () => void, action?: UndoToastState['action']) {
         toastKeyRef.current += 1;
-        setToast({ key: toastKeyRef.current, message, onUndo, action });
+        if (onUndo) {
+            lastUndoRef.current = () => {
+                lastUndoRef.current = null;
+                onUndo();
+            };
+        }
+        setToast({
+            key: toastKeyRef.current,
+            message,
+            onUndo: onUndo && (() => { lastUndoRef.current = null; onUndo(); }),
+            action,
+        });
     }
+
+    useShake(() => {
+        const undo = lastUndoRef.current;
+        if (!undo || sheet !== null) return;
+        haptic('hold');
+        undo();
+        setToast(null);
+    });
 
     function shortLabel(idea: IdeaType | undefined): string {
         const label = resolveIdeaLabel(idea).split('\n')[0].trim() || 'Untitled';
@@ -1738,21 +1789,29 @@ function MobileMindMap() {
                                             onChange={e => setChecklistTitle(e.target.value)}
                                             enterKeyHint="next"
                                             maxLength={100}
+                                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); checklistItemInputRef.current?.focus(); } }}
                                         />
                                         {checklistItems.length > 0 && (
                                             <ul className="mmobile-sheet-cl-items">
                                                 {checklistItems.map(item => (
                                                     <li key={item.id} className="mmobile-sheet-cl-item">
-                                                        <span className="mmobile-sheet-cl-item-text">☐ {item.text}</span>
-                                                        <button className="mmobile-sheet-cl-item-del" onClick={() => removeChecklistItem(item.id)}>✕</button>
+                                                        <span className="mmobile-sheet-cl-box" aria-hidden="true" />
+                                                        <span className="mmobile-sheet-cl-item-text">{item.text}</span>
+                                                        <button
+                                                            type="button"
+                                                            className="mmobile-sheet-cl-item-del"
+                                                            aria-label={`Remove ${item.text}`}
+                                                            onClick={() => removeChecklistItem(item.id)}
+                                                        >✕</button>
                                                     </li>
                                                 ))}
                                             </ul>
                                         )}
                                         <div className="mmobile-sheet-cl-add-row">
                                             <input
+                                                ref={checklistItemInputRef}
                                                 className="mmobile-rename-input"
-                                                placeholder="Add item"
+                                                placeholder="Add an item"
                                                 value={checklistItemDraft}
                                                 onChange={e => setChecklistItemDraft(e.target.value)}
                                                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChecklistItem(); } }}

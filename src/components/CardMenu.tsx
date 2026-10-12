@@ -19,7 +19,7 @@ const PRIORITIES: { value: 1 | 2 | 3 | undefined; label: string; key: string }[]
 
 // The one menu for an idea card: right-click on a card, the ⋯ button, the
 // priority ribbon, or the keyboard (see useCardShortcuts) all open it. The same
-// actions are what drag, F2 and Del call, so nothing is reachable only here.
+// actions are what drag, F2 and D call, so nothing is reachable only here.
 function CardMenu() {
     const { cardMenu, setCardMenu } = useIdeaContext();
     const actions = useIdeaActions();
@@ -118,10 +118,12 @@ function CardMenu() {
     if (isChecklist) items.push({ label: 'Open checklist', hint: 'Enter', run: () => actions.openIdea(id) });
     else if (link !== '') items.push({ label: 'Open link', hint: 'Enter', run: () => actions.openIdea(id) });
     else if (!isNote) items.push({ label: 'Open', hint: 'Enter', run: () => actions.openIdea(id) });
-    items.push({ label: isNote ? 'Rename note' : isChecklist ? 'Rename checklist' : hasChildren ? 'Rename' : 'Rewrite', hint: 'F2', run: () => actions.renameIdea(id) });
+    items.push({ label: isNote ? 'Rename note' : isChecklist ? 'Rename checklist' : hasChildren ? 'Rename' : 'Rewrite', hint: 'R', run: () => actions.renameIdea(id) });
     if (canEditLink) items.push({ label: link !== '' ? 'Change link' : 'Add link', run: () => actions.editIdeaLink(id) });
     items.push({ label: link !== '' ? 'Copy link' : isChecklist ? 'Copy checklist' : isNote ? 'Copy note' : 'Copy text', run: () => actions.copyIdea(id) });
+    if (hasChildren) items.push({ label: 'Copy all ideas', run: () => actions.copyChildren(id) });
     items.push({ label: 'Move to…', hint: 'M', run: () => actions.openMovePicker(id) });
+    items.push({ label: idea.locked ? 'Unlock idea' : 'Lock idea', run: () => actions.setLocked(id, !idea.locked) });
 
     const rect = document.querySelector<HTMLElement>(`[data-idea-id="${id}"]`)?.getBoundingClientRect();
     const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : undefined;
@@ -161,7 +163,7 @@ function CardMenu() {
                 </div>
                 <button className="card-menu-item card-menu-item--danger" role="menuitem" type="button" onClick={() => run(() => actions.requestDelete(id, origin))}>
                     <span>Delete</span>
-                    <kbd>Del</kbd>
+                    <kbd>D</kbd>
                 </button>
             </div>
         </>

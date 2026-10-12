@@ -50,14 +50,14 @@ function neighbour(from: HTMLElement, cards: HTMLElement[], dir: Direction): HTM
 function focusCard(id: number) {
     // The list re-renders after a change; wait a beat for the card to exist.
     setTimeout(() => {
-        // A confirm modal may have opened (Del on a branch); it keeps the focus.
+        // A confirm modal may have opened (D on a branch); it keeps the focus.
         if (document.querySelector('.overlay')) return;
         document.querySelector<HTMLElement>(`[data-idea-id="${id}"]`)?.focus({ preventScroll: false });
     }, 60);
 }
 
 // Keyboard control of the idea grid: arrows move between cards, Enter opens
-// (handled on the card), F2 renames, Del deletes, M moves, C creates, Backspace
+// (handled on the card), F2 or R renames, D deletes, M moves, C creates, Backspace
 // goes up a level, / or ? lists these. Never fires while typing, with a modal or
 // menu open, or with Ctrl/Cmd/Alt held, so browser and text shortcuts keep working.
 export function useDesktopShortcuts({ enabled, mapOpen, onToggleMap, onNewIdea, onGoUp, onShowShortcuts, onSearch }: Options) {
@@ -83,10 +83,16 @@ export function useDesktopShortcuts({ enabled, mapOpen, onToggleMap, onNewIdea, 
         }
 
         function targetCard(): HTMLElement | null {
-            if (mode === 'mouse' && hoveredId !== null) {
-                const hovered = document.querySelector<HTMLElement>(`[data-idea-id="${hoveredId}"]`);
-                if (hovered) return hovered;
-                hoveredId = null;
+            if (mode === 'mouse') {
+                // The browser's own hover state follows the pointer even when a card
+                // moves under it (after a delete) without any mouse movement.
+                const live = document.querySelectorAll<HTMLElement>('[data-idea-id]:hover');
+                if (live.length > 0) return live[live.length - 1];
+                if (hoveredId !== null) {
+                    const hovered = document.querySelector<HTMLElement>(`[data-idea-id="${hoveredId}"]`);
+                    if (hovered) return hovered;
+                    hoveredId = null;
+                }
             }
             const active = document.activeElement as HTMLElement | null;
             return active?.closest<HTMLElement>('[data-idea-id]') ?? null;
@@ -170,19 +176,29 @@ export function useDesktopShortcuts({ enabled, mapOpen, onToggleMap, onNewIdea, 
                     }
                     return;
                 }
+                case 'r': case 'R':
+                    if (focusedId === null || e.shiftKey) return;
+                    e.preventDefault();
+                    act.renameIdea(focusedId);
+                    return;
                 case 'F2':
                     e.preventDefault();
                     act.renameIdea(focusedId ?? undefined);
                     return;
-                case 'Delete': {
-                    if (focusedId === null) return;
+                case 'd': case 'D': {
+                    if (focusedId === null || e.shiftKey) return;
                     e.preventDefault();
                     const cards = visibleCards();
                     const at = cards.indexOf(cardEl!);
                     const next = cards[at + 1] ?? cards[at - 1];
                     const rect = cardEl!.getBoundingClientRect();
                     act.requestDelete(focusedId, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-                    if (next) focusCard(Number(next.dataset.ideaId));
+                    // Hand focus to the neighbour only if the deleted card had it; deleting a
+                    // hovered card must not select (orange) an unrelated one.
+                    if (next && cardEl!.contains(active)) focusCard(Number(next.dataset.ideaId));
+                    // Deleting a hovered card while another one still holds focus (from an earlier
+                    // click): using the keyboard makes that one show its orange ring, so drop it.
+                    else if (active?.closest('[data-idea-id]') && !cardEl!.contains(active)) active.blur();
                     return;
                 }
                 case 'm': case 'M':

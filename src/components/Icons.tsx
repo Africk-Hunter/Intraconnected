@@ -43,6 +43,15 @@ export function LockIcon(props: IconProps) {
     );
 }
 
+export function UnlockIcon(props: IconProps) {
+    return (
+        <svg {...base(props)}>
+            <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />
+            <path d="M8 10.5V8a4 4 0 0 1 7.6-1.7" />
+        </svg>
+    );
+}
+
 export function MailIcon(props: IconProps) {
     return (
         <svg {...base(props)}>

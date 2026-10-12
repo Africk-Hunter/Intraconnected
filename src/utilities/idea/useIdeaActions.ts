@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { recursivelyDeleteChildren, restoreIdeas, updateIdeaParentId, updateIdeaPriority } from './ideaStore';
+import { recursivelyDeleteChildren, restoreIdeas, updateIdeaLocked, updateIdeaParentId, updateIdeaPriority } from './ideaStore';
 import { fetchFullIdeaList, getIdeaLink, getNameFromID, getParentID, isNoteMode, openIdeaLink } from './helpers';
 import { getIdeasByParentID } from './parsing';
 import { pushUndo, showNotice, undoLast } from './undoStack';
@@ -16,6 +16,22 @@ function shortName(id: number): string {
 
 function findIdea(id: number): IdeaType | undefined {
     return fetchFullIdeaList().find((idea) => idea.id === id);
+}
+
+const COPIED_MARK_MS = 1200;
+const copiedTimers = new WeakMap<HTMLElement, number>();
+
+// Shows "Copied" on the card itself (styled by [data-copied] in idea.scss), so a
+// Ctrl/Cmd+C on a hovered card confirms where it landed, not just in the toast.
+// An attribute rather than a class: React rewrites className on re-render.
+function markCopied(id: number) {
+    const card = document.querySelector<HTMLElement>(`[data-idea-id="${id}"]`);
+    if (!card) return;
+    window.clearTimeout(copiedTimers.get(card));
+    card.removeAttribute('data-copied');
+    void card.offsetWidth; // restart the animation on a repeat copy
+    card.setAttribute('data-copied', '');
+    copiedTimers.set(card, window.setTimeout(() => card.removeAttribute('data-copied'), COPIED_MARK_MS));
 }
 
 // The desktop screen's actions on an idea in one place, so the drag, the card
@@ -75,6 +91,11 @@ export function useIdeaActions() {
         refresh();
     }, [refresh]);
 
+    const setLocked = useCallback((id: number, locked: boolean) => {
+        updateIdeaLocked(id, locked);
+        refresh();
+    }, [refresh]);
+
     // What a click on the card does: go into it, open its link, or open the checklist.
     // Notes have no "open"; their body is edited in place.
     const openIdea = useCallback((id: number) => {
@@ -117,19 +138,47 @@ export function useIdeaActions() {
             ? [idea.content, ...idea.items.map((item) => `${item.checked ? '[x]' : '[ ]'} ${item.text}`)].join('\n')
             : link !== '' ? link : idea.content;
         navigator.clipboard.writeText(text)
-            .then(() => showNotice(link !== '' ? 'Copied link' : `Copied "${shortName(id)}"`))
+            .then(() => {
+                markCopied(id);
+                showNotice(link !== '' ? 'Copied link' : `Copied "${shortName(id)}"`);
+            })
             .catch(() => showNotice("Couldn't copy to the clipboard"));
     }, []);
 
-    const openMovePicker = useCallback((id: number) => setMoveIdeaId(id), [setMoveIdeaId]);
+    // Every idea directly inside this one, a line each (a link idea keeps its address after the text).
+    // Resolves true once the clipboard has it, so a button can confirm.
+    const copyChildren = useCallback((id: number): Promise<boolean> => {
+        const children = getIdeasByParentID(id);
+        if (children.length === 0) return Promise.resolve(false);
+        const text = children.map((child, i) => {
+            const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
+            const body = isNoteMode(child)
+                ? [oneLine((child as { noteTitle?: string }).noteTitle ?? ''), oneLine(child.content)].filter(Boolean).join(' - ')
+                : oneLine(child.content);
+            const link = getIdeaLink(child);
+            return `${i + 1}. ${link !== '' ? `${body} (${link})` : body}`;
+        }).join('\n');
+        return navigator.clipboard.writeText(text)
+            .then(() => {
+                markCopied(id);
+                showNotice(`Copied ${children.length} ${children.length === 1 ? 'idea' : 'ideas'} from "${shortName(id)}"`);
+                return true;
+            })
+            .catch(() => {
+                showNotice("Couldn't copy to the clipboard");
+                return false;
+            });
+    }, []);
+
+    const openMovePicker =useCallback((id: number) => setMoveIdeaId(id), [setMoveIdeaId]);
 
     const undo = useCallback(() => {
         if (undoLast()) refresh();
     }, [refresh]);
 
     return {
-        deleteIdea, requestDelete, moveIdea, setPriority, openIdea, renameIdea,
-        editIdeaLink, copyIdea, openMovePicker, undo,
+        deleteIdea, requestDelete, moveIdea, setPriority, setLocked, openIdea, renameIdea,
+        editIdeaLink, copyIdea, copyChildren, openMovePicker, undo,
     };
 }
 

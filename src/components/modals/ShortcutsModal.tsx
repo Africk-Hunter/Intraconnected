@@ -24,9 +24,9 @@ const GROUPS: { title: string; accent: string; rows: { keys: string; action: str
         accent: 'leaf',
         rows: [
             { keys: 'C', action: 'Create Shortcut' },
-            { keys: 'F2', action: 'Rename the card (or this idea)' },
+            { keys: 'F2 / R', action: 'Rename the card (or this idea)' },
             { keys: 'M', action: 'Move the card' },
-            { keys: 'Del', action: 'Delete the card' },
+            { keys: 'D', action: 'Delete the card' },
             { keys: `${MOD}+C`, action: 'Copy the card' },
             { keys: `${MOD}+Z`, action: 'Undo a delete or move' },
             { keys: 'Shift+F10', action: 'Open the card menu' },

@@ -13,6 +13,7 @@ export interface IdeaPatch {
     noteTitle?: string;
     parentID?: number;
     priority?: 1 | 2 | 3 | null;
+    locked?: true | null;
     items?: ChecklistItem[];
 }
 

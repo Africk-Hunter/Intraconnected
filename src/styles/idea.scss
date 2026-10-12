@@ -172,8 +172,8 @@ body.dnd-blocked * {
     justify-content: center;
     align-items: center;
     gap: 0.75rem;
-    width: 7rem;
-    height: 2.75rem;
+    width: var(--root-btn-w, 7rem);
+    height: var(--root-btn-h, 2.75rem);
     background: $back;
     font-size: 1.25rem;
     font-weight: 500;
@@ -181,6 +181,13 @@ body.dnd-blocked * {
     .backImg {
         width: 22px;
         height: auto;
+        transition: transform 0.2s var(--root-btn-ease, ease-out);
+    }
+
+    // The arrow leans the way you are about to go.
+    &:hover .backImg,
+    &:focus-visible .backImg {
+        transform: translateX(-3px);
     }
 
     @media (max-width: $mobile) {
@@ -188,13 +195,12 @@ body.dnd-blocked * {
     }
 
     @media (min-width: $large-desktop) {
-        width: 9rem;
-        height: 3.2rem;
         font-size: 1.55rem;
     }
 
     &.layerZero {
         opacity: 0;
+        scale: 0.92;
         pointer-events: none;
     }
 }
@@ -231,7 +237,8 @@ body.dnd-blocked * {
     font-size: calc(3.125rem * var(--root-scale));
     background: $roots;
     padding: .5rem 2rem;
-    transition: all 0.3s ease;
+    // Size changes are animated in RootTitle (needs the final size to measure).
+    transition: all 0.3s ease, font-size 0s, width 0s, height 0s;
     word-break: break-word;
 
     .ideaRoot-text {
@@ -340,6 +347,10 @@ body.dnd-blocked * {
 }
 
 .rootAdditionalButtons {
+    // One width for the stack so Back, Sort and Copy line up; tune here.
+    --root-btn-w: 9.5rem;
+    --root-btn-h: 2.75rem;
+    --root-btn-ease: cubic-bezier(0.22, 1, 0.36, 1);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -349,6 +360,29 @@ body.dnd-blocked * {
 
     @media (min-width: $large-desktop) {
         gap: 1rem;
+        --root-btn-w: 11.5rem;
+        --root-btn-h: 3.2rem;
+    }
+
+    // One transition list for the whole stack. It sits on the container so it
+    // outranks .neobrutal-button's own (which would otherwise replace it and make
+    // Back's fade and the others' slide snap when you reach the top level).
+    --root-btn-move: 0.45s;
+    > button {
+        transition:
+            opacity var(--root-btn-move) ease,
+            scale var(--root-btn-move) var(--root-btn-ease),
+            transform var(--root-btn-move) var(--root-btn-ease),
+            translate 0.3s ease,
+            box-shadow 0.3s ease,
+            background-color 0.25s ease,
+            color 0.25s ease;
+    }
+
+    // Keyboard focus, matching the rest of the desktop screen.
+    > button:focus-visible {
+        outline: 3px solid #000;
+        outline-offset: 3px;
     }
 
     @media (max-width: $mobile) {
@@ -935,16 +969,21 @@ body.dnd-blocked * {
     justify-content: center;
     align-items: center;
     gap: 0.5rem;
-    width: 7rem;
-    height: 2.75rem;
+    width: var(--root-btn-w, 7rem);
+    height: var(--root-btn-h, 2.75rem);
     background: $deep-yellow;
     font-size: 1.1rem;
     font-weight: 600;
-    transition: transform 0.3s ease-in-out;
 
     &-img {
         width: 1.1rem;
         height: 1.1rem;
+        transition: transform 0.3s var(--root-btn-ease, ease-out);
+    }
+
+    // Flips when the order flips, so the icon says which way it is sorted.
+    &--recent .sort-btn-img {
+        transform: scaleY(-1);
     }
 
     &--recent {
@@ -956,8 +995,6 @@ body.dnd-blocked * {
     }
 
     @media (min-width: $large-desktop) {
-        width: 9rem;
-        height: 3.2rem;
         font-size: 1.4rem;
 
         .sort-btn-img {
@@ -973,6 +1010,64 @@ body.dnd-blocked * {
     @media (max-width: $mobile) {
         display: none;
     }
+}
+
+// Same box as the sort button; the copy glyph swaps for a tick after a copy.
+.copy-all-btn {
+    background: $leaf;
+    gap: 0.5rem;
+
+    .copy-all-glyph {
+        position: relative;
+        width: 1.1rem;
+        height: 1.1rem;
+        flex-shrink: 0;
+
+        svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.18s ease, transform 0.25s var(--root-btn-ease, ease-out);
+        }
+
+        .glyph-done { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+    }
+
+    // Held for a moment after a copy: turns white, pops, and the tick replaces the glyph.
+    &--done {
+        background: #fff;
+        scale: 1.06;
+
+        .glyph-copy { opacity: 0; transform: scale(0.4); }
+        .glyph-done { opacity: 1; transform: none; }
+    }
+
+    // aria-disabled, not :disabled: the browser's own disabled styling snaps instantly.
+    &[aria-disabled='true'] {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    @media (min-width: $large-desktop) {
+        .copy-all-glyph { width: 1.4rem; height: 1.4rem; }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rootAdditionalButtons,
+    .rootAdditionalButtons > button,
+    .rootAdditionalButtons .backImg,
+    .rootAdditionalButtons .sort-btn-img,
+    .copy-all-btn .copy-all-glyph svg {
+        transition-duration: 0.01ms;
+        --root-btn-move: 0.01ms;
+    }
+
+    .copy-all-btn--done { scale: 1; }
+    .back:hover .backImg,
+    .back:focus-visible .backImg { transform: none; }
 }
 
 .copy {
@@ -1518,4 +1613,50 @@ body.dnd-blocked * {
 body.dnd-blocked [data-idea-id][data-dragging] {
     border-color: $danger;
     box-shadow: 0 0 0 3px $danger;
+}
+
+// "Copied" badge on a card just copied (Ctrl/Cmd+C or the card menu); the
+// attribute is set and cleared by markCopied() in useIdeaActions.ts.
+[data-idea-id][data-copied] {
+    &::after {
+        content: 'Copied ✓';
+        position: absolute;
+        left: 50%;
+        bottom: -0.9rem;
+        z-index: 5;
+        padding: 0.15rem 0.6rem;
+        background: white;
+        color: black;
+        border: 2px solid black;
+        border-radius: 6px;
+        box-shadow: $neo-detail-shadow;
+        font-size: 0.85rem;
+        font-weight: 700;
+        white-space: nowrap;
+        pointer-events: none;
+        transform: translateX(-50%);
+        animation: card-copied-badge 1.2s ease forwards;
+
+        @media (min-width: $large-desktop) {
+            font-size: 1.1rem;
+            bottom: -1.1rem;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: card-copied-fade 1.2s linear forwards;
+        }
+    }
+}
+
+@keyframes card-copied-badge {
+    0% { opacity: 0; transform: translate(-50%, 0.4rem) scale(0.9); }
+    15% { opacity: 1; transform: translate(-50%, 0) scale(1.05); }
+    25% { transform: translate(-50%, 0) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, 0); }
+}
+
+@keyframes card-copied-fade {
+    0%, 80% { opacity: 1; }
+    100% { opacity: 0; }
 }

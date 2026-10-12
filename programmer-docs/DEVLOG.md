@@ -4,6 +4,10 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Desktop Copy Badge — 2026-10-11
+Typecheck, lint and Sass pass; **not tried in a browser yet.**
+- Copying a card (Ctrl/Cmd+C on the hovered/focused card, or Copy / Copy all in the card menu) now shows a "Copied ✓" badge straddling the card's bottom edge for 1.2s, alongside the existing toast. `markCopied()` in `useIdeaActions.ts` sets a `data-copied` attribute (not a class, which React would overwrite on re-render); styles at the end of `idea.scss`. Reduced motion: fades only.
+
 ## Mobile Search — 2026-10-11
 Typecheck, lint (no new warnings), search tests and Sass pass; **not tried on a device yet.**
 - The bottom bar's Mind Map button is now Search (tap again to close). New `MobileSearchSheet`: a proper mobile sheet, not the desktop palette: grab handle + ✕ header (swipe down, scrim, Back all close it), Mind map button in its header (the only way to the map now), field with a clear button, results as white cards with a tab in the idea's own colour, matched words underlined, kind + path line, Recent/Newest when empty (8), empty and no-match states. Follows the keyboard like the other sheets; scrolling the results drops the keyboard; the keyboard's Search key opens the top result.

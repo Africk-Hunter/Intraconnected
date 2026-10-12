@@ -45,6 +45,7 @@ function SortableMobileChecklistItem({ item, nodeId, onToggle, onDelete, onEdit,
         el.style.height = 'auto';
         el.style.height = el.scrollHeight + 'px';
         el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
     }, [isEditing]);
 
     useLayoutEffect(() => {

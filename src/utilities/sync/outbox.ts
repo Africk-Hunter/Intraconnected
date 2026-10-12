@@ -352,13 +352,14 @@ async function encryptIdea(idea: IdeaType, dek: CryptoKey): Promise<Record<strin
     };
 }
 
-async function encryptPatch(patch: IdeaPatch, dek: CryptoKey): Promise<{ [field: string]: FieldValue | string | number | ChecklistItem[] }> {
-    const out: { [field: string]: FieldValue | string | number | ChecklistItem[] } = {};
+async function encryptPatch(patch: IdeaPatch, dek: CryptoKey): Promise<{ [field: string]: FieldValue | string | number | boolean | ChecklistItem[] }> {
+    const out: { [field: string]: FieldValue | string | number | boolean | ChecklistItem[] } = {};
     if (patch.content !== undefined) out.content = await encryptField(patch.content, dek);
     if (patch.link !== undefined) out.link = await encryptField(patch.link, dek);
     if (patch.noteTitle !== undefined) out.noteTitle = await encryptField(patch.noteTitle, dek);
     if (patch.parentID !== undefined) out.parentID = patch.parentID;
     if (patch.priority !== undefined) out.priority = patch.priority === null ? deleteField() : patch.priority;
+    if (patch.locked !== undefined) out.locked = patch.locked === null ? deleteField() : true;
     if (patch.items !== undefined) out.items = await encryptItems(patch.items, dek);
     return out;
 }

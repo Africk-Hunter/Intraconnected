@@ -458,6 +458,17 @@
     outline-offset: 6px;
 }
 
+// The idea a search just revealed.
+.mm-found {
+    outline: 4px solid #111;
+    outline-offset: 6px;
+    animation: mm-found-pulse 0.7s ease-in-out 3;
+}
+
+@keyframes mm-found-pulse {
+    50% { outline-offset: 12px; }
+}
+
 // The "not allowed" cursor everywhere while a drag hovers a refused node.
 .mm-wrap--denied,
 .mm-wrap--denied * {

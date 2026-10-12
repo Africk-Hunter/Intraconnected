@@ -18,11 +18,17 @@
     box-shadow: $neo-card-shadow;
     font-size: 1.25rem;
     font-weight: 600;
-    animation: undo-toast-in 0.2s ease-out;
+    animation: undo-toast-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 
     @media (max-width: $mobile) {
         display: none;
     }
+}
+
+// Fading out after dismissal; inert so it can't be clicked on the way out.
+.undo-toast--out {
+    pointer-events: none;
+    animation: undo-toast-out 0.18s ease-in forwards;
 }
 
 .undo-toast-text {
@@ -68,8 +74,29 @@
     }
 }
 
+@keyframes undo-toast-out {
+    from {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, 0.5rem);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .undo-toast {
         animation: none;
     }
+
+    // Opacity-only fade, no movement.
+    .undo-toast--out {
+        animation: undo-toast-fade 0.18s linear forwards;
+    }
+}
+
+@keyframes undo-toast-fade {
+    from { opacity: 1; }
+    to { opacity: 0; }
 }

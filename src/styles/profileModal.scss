@@ -601,9 +601,17 @@ $profile-scrollbar-end-gap: 6px;
             -webkit-mask-size: contain;
         }
 
-        &--active {
+        // Selected tab sits pressed in, like a held-down button.
+        &.profile-tab--active {
             background: $sky;
             color: #fff;
+            box-shadow: $neo-btn-press;
+            translate: $neo-btn-translate;
+
+            @media (min-width: $large-desktop) {
+                box-shadow: $neo-btn-press-lg;
+                translate: $neo-btn-translate-lg;
+            }
         }
 
         &--disabled {

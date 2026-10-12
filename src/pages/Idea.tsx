@@ -107,6 +107,9 @@ function Idea() {
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
+    const [mapReveal, setMapReveal] = useState<{ id: number; tick: number } | null>(null);
+    const [copiedAll, setCopiedAll] = useState(false);
+    const copiedAllTimer = useRef<number>(0);
     const [showShortcuts, setShowShortcuts] = useState(false);
     const [lastRootName, setLastRootName] = useState('');
     const [isNewPatchNotes, setIsNewPatchNotes] = useState(() =>
@@ -185,7 +188,7 @@ function Idea() {
     useBillingPlanSync(setBillingPlan);
     useNodeCountResync(billingPlan, serverSynced);
     const isMobileUI = useIsMobileUI();
-    const { requestDelete, moveIdea } = useIdeaActions();
+    const { requestDelete, moveIdea, copyChildren } = useIdeaActions();
 
     // Lifetime granted without a checkout (Developer Testing): celebrate once
     // per account (flag lives in Firestore, not this browser) the next time the
@@ -402,8 +405,12 @@ function Idea() {
 
     // Search result: go to the level the idea lives in and put the keyboard on its card.
     function pickSearchResult(result: SearchResult) {
-        setShowMindMap(false);
         recordVisit(result.id);
+        // With the map open, show the idea there instead of leaving it.
+        if (showMindMap) {
+            setMapReveal({ id: result.id, tick: Date.now() });
+            return;
+        }
         const focusIt = () => document.querySelector<HTMLElement>(`[data-idea-id="${result.id}"]`)?.focus();
         if (result.parentID === rootId) {
             setTimeout(focusIt, 50);
@@ -556,8 +563,17 @@ function Idea() {
                             <Breadcrumb onOpenMap={() => setShowMindMap(true)} />
                             <section className="rootHolder">
                                 <section className="rootAdditionalButtons">
-                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => navigateToId(getParentID(rootId))}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
+                                    <button className={`back neobrutal-button ${rootId === 1 ? 'layerZero' : ''}`} onClick={() => { if (rootId !== 1) navigateToId(getParentID(rootId)); }} tabIndex={rootId === 1 ? -1 : undefined} aria-hidden={rootId === 1 ? true : undefined}><img src="/images/ArrowBack.svg" alt="Go Back To Previous Idea" className="backImg" /> Back</button>
                                     <button className={`sort-btn neobrutal-button${sortMode === 'recent' ? ' sort-btn--recent' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={toggleSortMode} title={sortMode === 'priority' ? 'Sorted by priority. Click to sort oldest first.' : 'Sorted oldest first. Click to sort by priority.'}><img src="/images/sort.svg" alt="" className="sort-btn-img" />{sortMode === 'priority' ? 'Priority' : 'Oldest'}</button>
+                                    <button className={`sort-btn copy-all-btn neobrutal-button${copiedAll ? ' copy-all-btn--done' : ''}${rootId === 1 ? ' sort-btn--at-root' : ''}`} onClick={() => copyChildren(rootId).then((ok) => {
+                                        if (!ok) return;
+                                        window.clearTimeout(copiedAllTimer.current);
+                                        setCopiedAll(true);
+                                        copiedAllTimer.current = window.setTimeout(() => setCopiedAll(false), 1200);
+                                    })} aria-disabled={ideas.length === 0} title="Copy every idea in here as a numbered list"><span className="copy-all-glyph" aria-hidden="true">
+                                        <svg className="glyph-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h9" /></svg>
+                                        <svg className="glyph-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                                    </span>{copiedAll ? 'Copied' : 'Copy all'}</button>
                                 </section>
                                 <RootTitle name={rootName} renamable={rootId !== 1} onRename={() => setRenameModalOpen(true)} />
                                 <div className="rootSpacer">
@@ -597,7 +613,7 @@ function Idea() {
             {isMobileUI && <MobileMindMap />}
             <SyncStatusBanner />
             {!isMobileUI && <UndoToast />}
-            <MindMap onClose={() => setShowMindMap(false)} visible={showMindMap} />
+            <MindMap onClose={() => setShowMindMap(false)} visible={showMindMap} reveal={mapReveal} />
             <RenameModal />
             <MoveModal />
             {!isMobileUI && (

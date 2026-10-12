@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useIdeaContext } from '../context/IdeaContext';
 import ChecklistItemRow from './ChecklistItemRow';
+import { LockIcon, UnlockIcon } from './Icons';
 import { useEnteringIds } from '../utilities/idea/useEnteringIds';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -123,6 +124,12 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         if (typeof window === 'undefined') return false;
         return window.matchMedia('(max-width: 768px)').matches;
     });
+
+    const locked = idea.locked === true;
+    // Revealing is per card and per visit: locking, navigating or reloading veils it again.
+    const [revealed, setRevealed] = useState(false);
+    useEffect(() => { setRevealed(false); }, [id, locked]);
+    const veiled = locked && !revealed;
 
     const [priority, setPriority] = useState<1 | 2 | 3 | undefined>(idea.priority);
     const [isFadingIn, setIsFadingIn] = useState(false);
@@ -264,7 +271,8 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         if (e.target !== e.currentTarget) return;
         if (e.key === 'Enter') {
             e.preventDefault();
-            if (isChecklist) setChecklistModalId(id);
+            if (veiled) setRevealed(true);
+            else if (isChecklist) setChecklistModalId(id);
             else if (!noteMode) handleNodeClick(e);
         }
     }
@@ -540,6 +548,20 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         </button>
     );
 
+    // Sits beside ⋯ on a locked idea: tap to peek or to hide it again.
+    const lockButton = locked ? (
+        <button
+            className="card-lock"
+            type="button"
+            aria-label={veiled ? 'Locked idea, click to show' : 'Hide locked idea'}
+            title={veiled ? 'Locked. Click to show' : 'Click to hide again'}
+            onClick={e => { e.stopPropagation(); e.preventDefault(); setRevealed(v => !v); }}
+            onPointerDown={e => e.stopPropagation()}
+        >
+            {veiled ? <LockIcon size={18} /> : <UnlockIcon size={18} />}
+        </button>
+    ) : null;
+
     const checkedCount = localItems.filter(i => i.checked).length;
 
     function toggleItem(itemId: string) {
@@ -632,6 +654,31 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         updateChecklistItems(id, newItems);
     }
 
+    if (veiled) {
+        const typeClass = isChecklist ? 'checklist' : noteMode ? 'note' : 'leaf';
+        return (
+            <div
+                ref={setNodeRef}
+                style={combinedStyle}
+                className={`neobrutal-button ideaNode ${typeClass} ideaNode--locked${fadeInClass}${priorityClass}`}
+                onClick={() => setRevealed(true)}
+                onKeyDown={handleCardKeyDown}
+                onContextMenu={handleContextMenu}
+                data-idea-id={id} data-dragging={isDragging || undefined}
+                {...attributes}
+                {...listeners}
+            >
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {lockButton}
+                {moreButton}
+                <div className="ideaNode-content ideaNode-locked">
+                    <span className="ideaNode-locked-dots" aria-hidden="true">••••••••</span>
+                    <span className="ideaNode-locked-hint">Locked · click to open</span>
+                </div>
+            </div>
+        );
+    }
+
     if (isChecklist) {
         return (
             <div
@@ -645,6 +692,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {...listeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {lockButton}
                 {moreButton}
                 <div className="checklist-header" onClick={() => setChecklistModalId(id)}>
                     <span className="checklist-title-text">{title}</span>
@@ -731,6 +779,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {...listeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {lockButton}
                 {moreButton}
                 <div className="note-main">
                     <div className="note-header">
@@ -794,6 +843,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     return (
         <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} data-dragging={isDragging || undefined} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...listeners}>
             <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {lockButton}
                 {moreButton}
             <div className="ideaNode-content">
                 {isLeaf && link === '' ? (

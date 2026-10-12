@@ -3,6 +3,8 @@ import { dismissUndoToast, getUndoToast, subscribeUndo } from '../utilities/idea
 import { useIdeaActions } from '../utilities/idea/useIdeaActions';
 
 const TOAST_MS = 6000;
+const NOTICE_MS = 1500;
+const EXIT_MS = 180; // keep in step with undo-toast-out in undoToast.scss
 
 function isTypingTarget(target: EventTarget | null) {
     return target instanceof HTMLElement
@@ -19,10 +21,12 @@ function UndoToast() {
     const [paused, setPaused] = useState(false);
     const undoRef = useRef(undo);
     undoRef.current = undo;
+    const [exiting, setExiting] = useState<typeof toast>(null);
+    const lastRef = useRef<typeof toast>(null);
 
     useEffect(() => {
         if (!toast || paused) return;
-        const timer = setTimeout(dismissUndoToast, TOAST_MS);
+        const timer = setTimeout(dismissUndoToast, toast.canUndo ? TOAST_MS : NOTICE_MS);
         return () => clearTimeout(timer);
     }, [toast?.key, paused]);
 
@@ -40,32 +44,46 @@ function UndoToast() {
         return () => document.removeEventListener('keydown', onKeyDown);
     }, []);
 
-    if (!toast) return null;
+    // Keep the last toast on screen while it fades out, instead of unmounting it mid-frame.
+    useEffect(() => {
+        if (toast) {
+            lastRef.current = toast;
+            setExiting(null);
+            return;
+        }
+        if (!lastRef.current) return;
+        setExiting(lastRef.current);
+        const timer = setTimeout(() => { lastRef.current = null; setExiting(null); }, EXIT_MS);
+        return () => clearTimeout(timer);
+    }, [toast]);
+
+    const shown = toast ?? exiting;
+    if (!shown) return null;
 
     return (
         <div
-            className="undo-toast"
+            className={`undo-toast${toast ? '' : ' undo-toast--out'}`}
             role="status"
             aria-live="polite"
-            key={toast.key}
+            key={shown.key}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             onFocus={() => setPaused(true)}
             onBlur={() => setPaused(false)}
         >
-            <span className="undo-toast-text">{toast.message}</span>
-            {toast.canUndo && (
+            <span className="undo-toast-text">{shown.message}</span>
+            {shown.canUndo && (
                 <button className="undo-toast-undo neobrutal-button" type="button" onClick={undo} title="Undo (Ctrl+Z)">
                     Undo
                 </button>
             )}
-            {toast.action && (
+            {shown.action && (
                 <button
                     className="undo-toast-undo neobrutal-button"
                     type="button"
-                    onClick={() => { toast.action?.run(); dismissUndoToast(); }}
+                    onClick={() => { shown.action?.run(); dismissUndoToast(); }}
                 >
-                    {toast.action.label}
+                    {shown.action.label}
                 </button>
             )}
             <button className="undo-toast-close" type="button" onClick={dismissUndoToast} aria-label="Dismiss">✕</button>

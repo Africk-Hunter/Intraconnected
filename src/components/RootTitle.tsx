@@ -1,13 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 // Name length -> how much smaller the title is set, so most names fit whole.
+// Interpolated between these points so the size glides from idea to idea
+// (the CSS transition on font-size then animates each change).
 // Past CLAMP_AT it stays small and folds to a few lines with "Show more".
-const SCALE_STEPS: [maxLength: number, scale: number][] = [
-    [28, 1],
+const SCALE_POINTS: [length: number, scale: number][] = [
+    [16, 1],
     [56, 0.72],
-    [Infinity, 0.52],
+    [100, 0.52],
 ];
 const CLAMP_AT = 110;
+
+function scaleFor(length: number): number {
+    const first = SCALE_POINTS[0];
+    const last = SCALE_POINTS[SCALE_POINTS.length - 1];
+    if (length <= first[0]) return first[1];
+    if (length >= last[0]) return last[1];
+    for (let i = 1; i < SCALE_POINTS.length; i++) {
+        const [l0, s0] = SCALE_POINTS[i - 1];
+        const [l1, s1] = SCALE_POINTS[i];
+        if (length <= l1) return s0 + ((length - l0) / (l1 - l0)) * (s1 - s0);
+    }
+    return last[1];
+}
 
 interface RootTitleProps {
     name: string;
@@ -20,15 +35,38 @@ interface RootTitleProps {
 function RootTitle({ name, renamable, onRename }: RootTitleProps) {
     const [expanded, setExpanded] = useState(false);
     const length = name.trim().length;
-    const scale = SCALE_STEPS.find(([max]) => length <= max)![1];
+    const scale = Math.round(scaleFor(length) * 100) / 100;
     const long = length > CLAMP_AT;
 
     // A new idea starts folded.
     useEffect(() => setExpanded(false), [name]);
 
+    // Width, height and font-size can't be CSS-transitioned across a name swap
+    // (auto sizes), so glide from the old measurements to the new ones.
+    const cardRef = useRef<HTMLDivElement>(null);
+    const last = useRef<{ w: number; h: number; font: number; name: string } | null>(null);
+    useLayoutEffect(() => {
+        const el = cardRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const font = parseFloat(getComputedStyle(el).fontSize);
+        const prev = last.current;
+        last.current = { w: rect.width, h: rect.height, font, name };
+        if (!prev || prev.name === name || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (Math.abs(prev.w - rect.width) < 1 && Math.abs(prev.h - rect.height) < 1 && Math.abs(prev.font - font) < 0.5) return;
+        el.animate(
+            [
+                { boxSizing: 'border-box', width: `${prev.w}px`, height: `${prev.h}px`, fontSize: `${prev.font}px` },
+                { boxSizing: 'border-box', width: `${rect.width}px`, height: `${rect.height}px`, fontSize: `${font}px` },
+            ],
+            { duration: 380, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+        );
+    }, [name, scale]);
+
     return (
         <div className="rootTitle">
             <div
+                ref={cardRef}
                 className={`ideaRoot neobrutal-button${long && !expanded ? ' ideaRoot--clamped' : ''}${long && expanded ? ' ideaRoot--expanded' : ''}`}
                 style={{ '--root-scale': scale } as React.CSSProperties}
                 onClick={() => { if (renamable) onRename(); }}
