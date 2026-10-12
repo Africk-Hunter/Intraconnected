@@ -53,13 +53,26 @@ function RootTitle({ name, renamable, onRename }: RootTitleProps) {
         const prev = last.current;
         last.current = { w: rect.width, h: rect.height, font, name };
         if (!prev || prev.name === name || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        if (Math.abs(prev.w - rect.width) < 1 && Math.abs(prev.h - rect.height) < 1 && Math.abs(prev.font - font) < 0.5) return;
+        const ease = 'cubic-bezier(0.22, 1, 0.36, 1)';
+        // The text stays laid out at its final size and wrapping (fixed width,
+        // no font-size tween) so it never reflows mid-animation; it eases in
+        // while the card grows or shrinks around it, clipping any overhang.
+        const text = el.querySelector<HTMLElement>('.ideaRoot-text');
+        const textWidth = text ? `${text.getBoundingClientRect().width}px` : 'auto';
+        text?.animate(
+            [
+                { opacity: 0, transform: 'translateY(0.4em)', width: textWidth, flexShrink: 0 },
+                { opacity: 1, transform: 'translateY(0)', width: textWidth, flexShrink: 0 },
+            ],
+            { duration: 320, easing: ease },
+        );
+        if (Math.abs(prev.w - rect.width) < 1 && Math.abs(prev.h - rect.height) < 1) return;
         el.animate(
             [
-                { boxSizing: 'border-box', width: `${prev.w}px`, height: `${prev.h}px`, fontSize: `${prev.font}px` },
-                { boxSizing: 'border-box', width: `${rect.width}px`, height: `${rect.height}px`, fontSize: `${font}px` },
+                { boxSizing: 'border-box', overflow: 'hidden', width: `${prev.w}px`, height: `${prev.h}px` },
+                { boxSizing: 'border-box', overflow: 'hidden', width: `${rect.width}px`, height: `${rect.height}px` },
             ],
-            { duration: 380, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+            { duration: 380, easing: ease },
         );
     }, [name, scale]);
 
