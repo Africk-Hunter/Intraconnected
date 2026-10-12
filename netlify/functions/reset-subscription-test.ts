@@ -1,3 +1,4 @@
+import { testEndpointsEnabled } from "./lib/testOnly";
 import type { Context } from "@netlify/functions";
 import { verifyIdToken, firestore } from "./lib/firebaseAdmin";
 import { stripe } from "./lib/stripe";
@@ -23,7 +24,7 @@ import { preflightResponse, jsonResponse } from "./lib/cors";
 // to a route that doesn't exist on every deployed instance: production,
 // deploy previews, and branch deploys alike.
 export default async (req: Request, _context: Context) => {
-    if (process.env.ALLOW_TEST_RESET !== "true") {
+    if (!testEndpointsEnabled()) {
         return new Response(null, { status: 404 });
     }
 

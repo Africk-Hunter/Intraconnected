@@ -31,6 +31,17 @@ async function deleteCollection(db: Firestore, uid: string, subcollection: strin
     }
 }
 
+// Reports the account sent keep its uid and email (submit-bug-report.ts), so
+// they go with it. The GitHub issue made from one never contained either.
+async function deleteBugReports(db: Firestore, uid: string) {
+    const snap = await db.collection("bugReports").where("uid", "==", uid).get();
+    for (let i = 0; i < snap.docs.length; i += 500) {
+        const batch = db.batch();
+        snap.docs.slice(i, i + 500).forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+    }
+}
+
 // Terminal statuses that never charge again and that Stripe refuses to
 // cancel. incomplete_expired is what an abandoned Annual checkout becomes,
 // and the webhook still records its id on meta/billing.
@@ -88,6 +99,7 @@ export default authed(
         const db = firestore();
         await deleteCollection(db, uid, "ideas");
         await deleteCollection(db, uid, "meta");
+        await deleteBugReports(db, uid);
 
         await adminAuth().deleteUser(uid);
 

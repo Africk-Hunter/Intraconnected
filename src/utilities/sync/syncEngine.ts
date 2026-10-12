@@ -44,6 +44,11 @@ function getSeen(uid: string): DeviceCounters | null {
     }
 }
 
+// `locked` is the field's name before it was renamed to `censored`.
+function isCensored(data: DocumentData): boolean {
+    return data.censored === true || data.locked === true;
+}
+
 // Decrypts one idea doc. Throws on anything malformed so the caller can skip
 // just this doc — a single unreadable idea must never hide all the others.
 async function decodeIdea(data: DocumentData, dek: CryptoKey): Promise<IdeaType> {
@@ -64,7 +69,7 @@ async function decodeIdea(data: DocumentData, dek: CryptoKey): Promise<IdeaType>
                 })
             ),
             ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
-            ...(data.locked === true ? { locked: true } : {}),
+            ...(isCensored(data) ? { censored: true } : {}),
         };
     }
     return {
@@ -73,7 +78,7 @@ async function decodeIdea(data: DocumentData, dek: CryptoKey): Promise<IdeaType>
         parentID: data.parentID,
         link: await decryptField(data.link as string | null | undefined, dek),
         ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
-        ...(data.locked === true ? { locked: true } : {}),
+        ...(isCensored(data) ? { censored: true } : {}),
         ...(data.isNote !== undefined ? { isNote: data.isNote as boolean } : {}),
         ...(data.noteTitle !== undefined ? { noteTitle: await decryptField(data.noteTitle as string, dek) } : {}),
     };
@@ -93,7 +98,8 @@ async function pullFromServer(uid: string): Promise<boolean> {
         const decoded = await Promise.all(
             snapshot.docs.map(async (docSnap) => {
                 try {
-                    return { ok: true as const, idea: await decodeIdea(docSnap.data(), dek) };
+                    const data = docSnap.data();
+                    return { ok: true as const, idea: await decodeIdea(data, dek), legacyName: data.locked !== undefined };
                 } catch (error) {
                     console.error(`Sync: couldn't read idea ${docSnap.id}.`, error);
                     return { ok: false as const, docId: Number(docSnap.id) };
@@ -110,8 +116,12 @@ async function pullFromServer(uid: string): Promise<boolean> {
         // in between and be overwritten. ──
         const serverIdeas: IdeaType[] = [];
         const skippedIds: number[] = [];
+        const legacyCensor: IdeaType[] = [];
         for (const result of decoded) {
-            if (result.ok) serverIdeas.push(result.idea);
+            if (result.ok) {
+                serverIdeas.push(result.idea);
+                if (result.legacyName) legacyCensor.push(result.idea);
+            }
             else skippedIds.push(result.docId);
         }
 
@@ -136,6 +146,8 @@ async function pullFromServer(uid: string): Promise<boolean> {
         localStorage.setItem(seenKey(uid), JSON.stringify(othersOnly(devices, getDeviceId())));
         localStorage.setItem(OWNER_KEY, uid);
 
+        // Ideas saved with the old field name get the new one (and lose the old) once.
+        legacyCensor.forEach((idea) => enqueue({ kind: "update", id: idea.id, patch: { censored: idea.censored ? true : null } }));
         orphans.forEach((idea) => enqueue({ kind: "update", id: idea.id, patch: { parentID: 1 } }));
         if (orphans.length > 0) {
             addSyncNotice(

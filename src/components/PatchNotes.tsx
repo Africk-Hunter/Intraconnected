@@ -3,6 +3,7 @@ import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
 import { containsProfanity } from '../utilities/profanityFilter';
 import { submitFeatureRequest } from '../utilities/firebase/featureRequests';
+import { openReport } from '../utilities/reportProblem';
 
 interface PatchNotesProps {
     showPatchNotes: boolean;
@@ -53,9 +54,18 @@ const PatchNotes: React.FC<PatchNotesProps> = ({ showPatchNotes }) => {
             <div className="patchNotes-header">
                 <h2 className="header">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</h2>
                 {view === 'notes' && (
-                    <button className="patchNotes-recommend-btn neobrutal-button" onClick={() => setView('form')}>
-                        + Recommend a feature
-                    </button>
+                    <div className="patchNotes-header-btns">
+                        <button className="patchNotes-recommend-btn patchNotes-bug-btn neobrutal-button" onClick={() => openReport({ area: 'other' })} aria-label="Report a bug" title="Report a bug">
+                            <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M9 8a3 3 0 0 1 6 0" />
+                                <path d="M8 8h8v7a4 4 0 0 1-8 0z" />
+                                <path d="M12 11v8M4 10l4 1.5M20 10l-4 1.5M4 18l4-2M20 18l-4-2M9.5 4.5L8 3M14.5 4.5L16 3" />
+                            </svg>
+                        </button>
+                        <button className="patchNotes-recommend-btn neobrutal-button" onClick={() => setView('form')}>
+                            + Recommend a feature
+                        </button>
+                    </div>
                 )}
             </div>
 

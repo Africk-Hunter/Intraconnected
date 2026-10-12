@@ -125,11 +125,11 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         return window.matchMedia('(max-width: 768px)').matches;
     });
 
-    const locked = idea.locked === true;
+    const censored = idea.censored === true;
     // Revealing is per card and per visit: locking, navigating or reloading veils it again.
     const [revealed, setRevealed] = useState(false);
-    useEffect(() => { setRevealed(false); }, [id, locked]);
-    const veiled = locked && !revealed;
+    useEffect(() => { setRevealed(false); }, [id, censored]);
+    const veiled = censored && !revealed;
 
     const [priority, setPriority] = useState<1 | 2 | 3 | undefined>(idea.priority);
     const [isFadingIn, setIsFadingIn] = useState(false);
@@ -548,13 +548,13 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         </button>
     );
 
-    // Sits beside ⋯ on a locked idea: tap to peek or to hide it again.
-    const lockButton = locked ? (
+    // Sits beside ⋯ on a censored idea: tap to peek or to hide it again.
+    const censorButton = censored ? (
         <button
-            className="card-lock"
+            className="card-censor"
             type="button"
-            aria-label={veiled ? 'Locked idea, click to show' : 'Hide locked idea'}
-            title={veiled ? 'Locked. Click to show' : 'Click to hide again'}
+            aria-label={veiled ? 'Censored idea, click to show' : 'Hide censored idea'}
+            title={veiled ? 'Censored. Click to show' : 'Click to hide again'}
             onClick={e => { e.stopPropagation(); e.preventDefault(); setRevealed(v => !v); }}
             onPointerDown={e => e.stopPropagation()}
         >
@@ -660,7 +660,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
             <div
                 ref={setNodeRef}
                 style={combinedStyle}
-                className={`neobrutal-button ideaNode ${typeClass} ideaNode--locked${fadeInClass}${priorityClass}`}
+                className={`neobrutal-button ideaNode ${typeClass} ideaNode--censored${fadeInClass}${priorityClass}`}
                 onClick={() => setRevealed(true)}
                 onKeyDown={handleCardKeyDown}
                 onContextMenu={handleContextMenu}
@@ -669,11 +669,11 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {...listeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
-                {lockButton}
+                {censorButton}
                 {moreButton}
-                <div className="ideaNode-content ideaNode-locked">
-                    <span className="ideaNode-locked-dots" aria-hidden="true">••••••••</span>
-                    <span className="ideaNode-locked-hint">Locked · click to open</span>
+                <div className="ideaNode-content ideaNode-censored">
+                    <span className="ideaNode-censored-dots" aria-hidden="true">••••••••</span>
+                    <span className="ideaNode-censored-hint">Censored · click to open</span>
                 </div>
             </div>
         );
@@ -692,7 +692,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {...listeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
-                {lockButton}
+                {censorButton}
                 {moreButton}
                 <div className="checklist-header" onClick={() => setChecklistModalId(id)}>
                     <span className="checklist-title-text">{title}</span>
@@ -779,7 +779,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 {...listeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
-                {lockButton}
+                {censorButton}
                 {moreButton}
                 <div className="note-main">
                     <div className="note-header">
@@ -843,7 +843,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     return (
         <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} data-dragging={isDragging || undefined} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...listeners}>
             <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
-                {lockButton}
+                {censorButton}
                 {moreButton}
             <div className="ideaNode-content">
                 {isLeaf && link === '' ? (

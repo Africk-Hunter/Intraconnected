@@ -70,7 +70,7 @@ function plainResults(ideas: IdeaType[], picked: IdeaType[]): SearchResult[] {
 }
 
 // Ideas the user opened, most recent first (ids that no longer exist are skipped).
-export function recentIdeas(ideas: IdeaType[], visitedIds: number[], limit = 5): SearchResult[] {
+function recentIdeas(ideas: IdeaType[], visitedIds: number[], limit = 5): SearchResult[] {
     const byId = new Map(ideas.map((idea) => [idea.id, idea]));
     const picked = visitedIds
         .map((id) => byId.get(id))
@@ -80,7 +80,7 @@ export function recentIdeas(ideas: IdeaType[], visitedIds: number[], limit = 5):
 }
 
 // The newest ideas: what the empty search box shows before anything has been opened.
-export function newestIdeas(ideas: IdeaType[], limit = 5): SearchResult[] {
+function newestIdeas(ideas: IdeaType[], limit = 5): SearchResult[] {
     const picked = ideas.filter((idea) => idea.id !== 1).sort((a, b) => b.id - a.id).slice(0, limit);
     return plainResults(ideas, picked);
 }

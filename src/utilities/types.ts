@@ -14,7 +14,7 @@ export interface StandardIdea {
     priority?: 1 | 2 | 3;
     isNote?: boolean; // set at creation via the Note tab; immutable after that — ideas and notes can't convert into each other
     noteTitle?: string; // header label shown while isNote is true
-    locked?: boolean; // shown masked until clicked (a screen-privacy veil, not a password)
+    censored?: boolean; // shown masked until clicked (a screen-privacy veil, not a password)
 }
 
 export interface ChecklistIdea {
@@ -24,7 +24,7 @@ export interface ChecklistIdea {
     parentID: number;
     items: ChecklistItem[];
     priority?: 1 | 2 | 3;
-    locked?: boolean;
+    censored?: boolean;
 }
 
 export type IdeaType = StandardIdea | ChecklistIdea;

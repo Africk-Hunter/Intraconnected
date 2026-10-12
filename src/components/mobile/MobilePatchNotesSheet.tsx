@@ -3,6 +3,7 @@ import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../../utilities/parseChangelog';
 import { containsProfanity } from '../../utilities/profanityFilter';
 import { submitFeatureRequest } from '../../utilities/firebase/featureRequests';
+import { openReport } from '../../utilities/reportProblem';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 
 const entries = parseChangelog(changelog);
@@ -48,27 +49,35 @@ function MobilePatchNotesSheet({ onClose, style }: { onClose: () => void; style?
                 <div ref={swipe.sheetRef} className="mmobile-help-sheet mmobile-patchnotes-sheet" style={style} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="What's new">
                     <div className="mmobile-sheet-grab mmobile-sheet-grab--panel" aria-hidden="true" {...swipe.dragProps} />
                     <div className="mmobile-help-header" {...swipe.dragProps}>
-                        <span className="mmobile-help-pager">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</span>
-                        {view === 'notes' ? (
-                            <div className="mmobile-help-header-actions">
-                                <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>+ Recommend a feature</button>
-                                <button className="mmobile-help-close" onClick={onClose} aria-label="Close">✕</button>
-                            </div>
-                        ) : (
-                            <button className="mmobile-help-close" onClick={view === 'submitting' ? undefined : reset} aria-label="Back to notes">✕</button>
-                        )}
+                        <span className="mmobile-help-pager mmobile-patchnotes-heading">{view === 'notes' ? "What's New" : 'Recommend a Feature'}</span>
+                        <button className="mmobile-help-close" onClick={view === 'notes' ? onClose : view === 'submitting' ? undefined : reset} aria-label={view === 'notes' ? 'Close' : 'Back to notes'}>✕</button>
                     </div>
 
                     <div className="mmobile-help-content">
-                        {view === 'notes' && entries.map((entry, i) => (
-                            <div key={i} className="mmobile-patchnotes-entry">
-                                <div className="mmobile-patchnotes-tag-row">
-                                    <span className="mmobile-patchnotes-tag">{entry.tag}</span>
+                        {view === 'notes' && (
+                            <>
+                                {entries.map((entry, i) => (
+                                    <article key={i} className="mmobile-patchnotes-entry">
+                                        <div className="mmobile-patchnotes-head">
+                                            <span className="mmobile-patchnotes-tag">{entry.tag}</span>
+                                            <h3 className="mmobile-patchnotes-title">{entry.title}</h3>
+                                        </div>
+                                        <p className="mmobile-help-text mmobile-patchnotes-desc">{entry.description}</p>
+                                    </article>
+                                ))}
+                                <div className="mmobile-patchnotes-feedback">
+                                    <button className="mmobile-patchnotes-recommend-btn" onClick={() => setView('form')}>Recommend a feature</button>
+                                    <button className="mmobile-patchnotes-recommend-btn mmobile-patchnotes-bug-btn" onClick={() => openReport({ area: 'other' })}>
+                                        <svg viewBox="0 0 24 24" width="1.1em" height="1.1em" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <path d="M9 8a3 3 0 0 1 6 0" />
+                                            <path d="M8 8h8v7a4 4 0 0 1-8 0z" />
+                                            <path d="M12 11v8M4 10l4 1.5M20 10l-4 1.5M4 18l4-2M20 18l-4-2M9.5 4.5L8 3M14.5 4.5L16 3" />
+                                        </svg>
+                                        Report a bug
+                                    </button>
                                 </div>
-                                <h3 className="mmobile-patchnotes-title">{entry.title}</h3>
-                                <p className="mmobile-help-text">{entry.description}</p>
-                            </div>
-                        ))}
+                            </>
+                        )}
 
                         {(view === 'form' || view === 'submitting' || view === 'error') && (
                             <div className="mmobile-patchnotes-form">

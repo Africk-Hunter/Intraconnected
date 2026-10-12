@@ -159,7 +159,7 @@ function CardMenu() {
     if (hasChildren) items.push({ label: 'Copy all ideas', run: () => actions.copyChildren(id) });
     if (hasChildren) items.push({ label: 'Copy branch', run: () => actions.copyBranch(id) });
     if (!isCurrent) items.push({ label: 'Move to…', hint: 'M', run: () => actions.openMovePicker(id) });
-    items.push({ label: idea.locked ? 'Unlock idea' : 'Lock idea', run: () => actions.setLocked(id, !idea.locked) });
+    items.push({ label: idea.censored ? 'Uncensor idea' : 'Censor idea', run: () => actions.setCensored(id, !idea.censored) });
 
     const rect = document.querySelector<HTMLElement>(`[data-idea-id="${id}"]`)?.getBoundingClientRect();
     const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : undefined;

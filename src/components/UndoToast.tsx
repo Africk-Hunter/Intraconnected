@@ -1,15 +1,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { dismissUndoToast, getUndoToast, subscribeUndo } from '../utilities/idea/undoStack';
 import { useIdeaActions } from '../utilities/idea/useIdeaActions';
+import { isTypingTarget } from '../utilities/useDesktopShortcuts';
 
 const TOAST_MS = 6000;
 const NOTICE_MS = 1500;
 const EXIT_MS = 180; // keep in step with undo-toast-out in undoToast.scss
-
-function isTypingTarget(target: EventTarget | null) {
-    return target instanceof HTMLElement
-        && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
-}
 
 // One short-lived message at the bottom of the screen with an Undo for the
 // change that was just made, plus the Ctrl/Cmd+Z that does the same. The timer

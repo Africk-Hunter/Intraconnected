@@ -31,9 +31,11 @@ import handler from "../functions/delete-account";
 function mockDb({
     billingData,
     ideaCount = 0,
+    bugReportCount = 0,
 }: {
     billingData: Record<string, unknown> | null;
     ideaCount?: number;
+    bugReportCount?: number;
 }) {
     const billingRef = fakeDocRef(billingData);
     const batchDelete = vi.fn();
@@ -41,6 +43,9 @@ function mockDb({
 
     firestoreMock.mockReturnValue({
         collection: vi.fn((top: string) => {
+            if (top === "bugReports") {
+                return { where: vi.fn(() => ({ get: vi.fn(async () => ({ docs: Array.from({ length: bugReportCount }, (_, i) => ({ ref: { id: `report-${i}` } })) })) })) };
+            }
             if (top !== "users") throw new Error(`unexpected top-level collection: ${top}`);
             return {
                 doc: vi.fn(() => ({
@@ -115,6 +120,18 @@ describe("delete-account", () => {
         expect(batchDelete).toHaveBeenCalledTimes(3);
         expect(batchCommit).toHaveBeenCalled();
         expect(deleteUser).toHaveBeenCalledWith("uid-1");
+    });
+
+    it("also deletes the problem reports the account sent", async () => {
+        verifyIdTokenWithAuthTime.mockResolvedValue(freshCaller());
+        const { batchDelete } = mockDb({ billingData: null, bugReportCount: 2 });
+        deleteUser.mockResolvedValue(undefined);
+
+        const res = await handler(fakeRequest(), {} as never);
+
+        expect(res.status).toBe(200);
+        expect(batchDelete).toHaveBeenCalledWith({ id: "report-0" });
+        expect(batchDelete).toHaveBeenCalledWith({ id: "report-1" });
     });
 
     it("rejects a token whose sign-in is too old, without touching anything", async () => {

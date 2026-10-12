@@ -1,4 +1,9 @@
+// Password wraps written from now on carry PASSWORD_WRAP_V2 and use the higher
+// count; older wraps (no prefix) stay readable at the original count and are
+// upgraded the next time that account signs in. The email wrap is unchanged.
 const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_ITERATIONS_V2 = 600_000;
+const PASSWORD_WRAP_V2 = 'v2:';
 
 function uint8ToBase64(bytes: Uint8Array): string {
     let binary = '';
@@ -10,13 +15,13 @@ function base64ToUint8(b64: string): Uint8Array {
     return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
-async function deriveKEK(password: string, uid: string, suffix = ''): Promise<CryptoKey> {
+async function deriveKEK(password: string, uid: string, suffix = '', iterations = PBKDF2_ITERATIONS): Promise<CryptoKey> {
     const enc = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
         'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']
     );
     return crypto.subtle.deriveKey(
-        { name: 'PBKDF2', salt: enc.encode(uid + suffix), iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+        { name: 'PBKDF2', salt: enc.encode(uid + suffix), iterations, hash: 'SHA-256' },
         keyMaterial,
         { name: 'AES-GCM', length: 256 },
         false,
@@ -68,13 +73,14 @@ async function importKey(raw: Uint8Array): Promise<CryptoKey> {
 }
 
 export async function wrapDEK(dek: CryptoKey, password: string, uid: string): Promise<string> {
-    const kek = await deriveKEK(password, uid);
-    return aesEncrypt(await exportKey(dek), kek);
+    const kek = await deriveKEK(password, uid, '', PBKDF2_ITERATIONS_V2);
+    return PASSWORD_WRAP_V2 + await aesEncrypt(await exportKey(dek), kek);
 }
 
 export async function unwrapDEK(encryptedDEK: string, password: string, uid: string): Promise<CryptoKey> {
-    const kek = await deriveKEK(password, uid);
-    return importKey(await aesDecrypt(encryptedDEK, kek));
+    const v2 = encryptedDEK.startsWith(PASSWORD_WRAP_V2);
+    const kek = await deriveKEK(password, uid, '', v2 ? PBKDF2_ITERATIONS_V2 : PBKDF2_ITERATIONS);
+    return importKey(await aesDecrypt(v2 ? encryptedDEK.slice(PASSWORD_WRAP_V2.length) : encryptedDEK, kek));
 }
 
 export async function wrapDEKWithEmail(dek: CryptoKey, email: string, uid: string): Promise<string> {
@@ -87,3 +93,8 @@ export async function unwrapDEKWithEmail(encryptedDEK: string, email: string, ui
     return importKey(await aesDecrypt(encryptedDEK, kek));
 }
 
+
+// True for a password wrap written with the old, lower iteration count.
+export function isLegacyPasswordWrap(encryptedDEK: string): boolean {
+    return !encryptedDEK.startsWith(PASSWORD_WRAP_V2);
+}

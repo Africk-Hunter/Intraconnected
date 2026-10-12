@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
-import { recursivelyDeleteChildren, restoreIdeas, updateIdeaLocked, updateIdeaParentId, updateIdeaPriority } from './ideaStore';
+import { recursivelyDeleteChildren, restoreIdeas, updateIdeaCensored, updateIdeaParentId, updateIdeaPriority } from './ideaStore';
 import { fetchFullIdeaList, getIdeaLink, getNameFromID, getParentID, isNoteMode, openIdeaLink } from './helpers';
 import { getIdeasByParentID } from './parsing';
 import { pushUndo, showNotice, undoLast } from './undoStack';
@@ -110,8 +110,8 @@ export function useIdeaActions() {
         refresh();
     }, [refresh]);
 
-    const setLocked = useCallback((id: number, locked: boolean) => {
-        updateIdeaLocked(id, locked);
+    const setCensored = useCallback((id: number, censored: boolean) => {
+        updateIdeaCensored(id, censored);
         refresh();
     }, [refresh]);
 
@@ -232,7 +232,7 @@ export function useIdeaActions() {
     }, [refresh]);
 
     return {
-        deleteIdea, requestDelete, moveIdea, setPriority, setLocked, openIdea, renameIdea,
+        deleteIdea, requestDelete, moveIdea, setPriority, setCensored, openIdea, renameIdea,
         editIdeaLink, copyIdea, copyChildren, copyBranch, openMovePicker, undo,
     };
 }

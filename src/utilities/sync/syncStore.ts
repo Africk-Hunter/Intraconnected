@@ -50,13 +50,6 @@ export function addSyncNotice(text: string, options: { key?: string; onDismiss?:
     updateSyncStatus({ notices: [...others, { id: nextNoticeId++, text, ...options }] });
 }
 
-// Removes a keyed notice without running its onDismiss (the problem went away
-// on its own, the user didn't acknowledge it).
-export function clearSyncNotice(key: string): void {
-    if (!status.notices.some((notice) => notice.key === key)) return;
-    updateSyncStatus({ notices: status.notices.filter((notice) => notice.key !== key) });
-}
-
 export function dismissSyncNotice(id: number): void {
     status.notices.find((notice) => notice.id === id)?.onDismiss?.();
     updateSyncStatus({ notices: status.notices.filter((notice) => notice.id !== id) });

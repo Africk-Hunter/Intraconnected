@@ -58,8 +58,8 @@ export function updateIdeaPriority(id: number, priority: 1 | 2 | 3 | undefined):
     commit({ kind: "update", id, patch: { priority: priority ?? null } }, { debounceMs: DEBOUNCE_MS });
 }
 
-export function updateIdeaLocked(id: number, locked: boolean): void {
-    commit({ kind: "update", id, patch: { locked: locked ? true : null } });
+export function updateIdeaCensored(id: number, censored: boolean): void {
+    commit({ kind: "update", id, patch: { censored: censored ? true : null } });
 }
 
 export function updateChecklistItems(id: number, items: ChecklistItem[]): void {

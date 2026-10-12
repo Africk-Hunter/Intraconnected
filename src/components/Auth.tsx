@@ -6,10 +6,10 @@ import MessageBox from "./MessageBox";
 import ReportLink from "./ReportLink";
 import { LinkOutIcon } from "./Icons";
 import { useIdeaContext } from "../context/IdeaContext";
-import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
+import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail, isLegacyPasswordWrap } from "../utilities/crypto";
 import { setDEK, loadPersistedDEK } from "../utilities/dekStore";
 import { getMailProvider, resetMailUrl } from "../utilities/mailProvider";
-import { storeEncryptedDEK, fetchEncryptedDEK, storeEmailWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
+import { storeEncryptedDEK, fetchEncryptedDEK, storeEmailWrap, storePasswordWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
 import { syncBillingEmail } from "../utilities/firebase/authFirebase";
 import { isNative, hideSplash } from "../utilities/platform";
 
@@ -208,6 +208,11 @@ const Auth: React.FC = () => {
                             // receipts and renewal notices follow it.
                             if (encData.emailEncryptedDEK) syncBillingEmail().catch(() => { /* non-critical */ });
                         } catch { /* non-critical */ }
+                    }
+                    if (isLegacyPasswordWrap(encData.encryptedDEK)) {
+                        try {
+                            await storePasswordWrap(await wrapDEK(dek, capturedPassword, user.uid));
+                        } catch { /* non-critical: the old wrap still works */ }
                     }
                     isSigningIn.current = false;
                     window.location.replace('/main');

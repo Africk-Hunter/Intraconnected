@@ -90,6 +90,20 @@ const Privacy: React.FC = () => {
                 </section>
 
                 <section className="legalSection">
+                    <h2>Problem Reports</h2>
+                    <p>
+                        If you send a problem report, we store what you wrote, the technical details
+                        shown in the form (such as the page, your browser and any error text), and any
+                        contact address you chose to add. If you were signed in, the report is also
+                        linked to your account and email so we can follow up. Reports from verified
+                        accounts may also be opened as a GitHub issue that contains your description
+                        and those technical details, but not your account or contact details. Reports
+                        linked to your account are deleted with it. Never include idea content or
+                        passwords in a report.
+                    </p>
+                </section>
+
+                <section className="legalSection">
                     <h2>Feature Requests</h2>
                     <p>
                         If you submit a feature request through the app's "Recommend a feature" form,
@@ -124,7 +138,7 @@ const Privacy: React.FC = () => {
                         You can permanently delete your account and all associated data at any time,
                         yourself, from Profile → Delete Account in the app. No need to contact us.
                         Deleting your account permanently erases your ideas and every copy of your
-                        encryption key from our servers, so that data cannot be recovered afterward. If you'd rather
+                        encryption key from our servers, so that data cannot be recovered afterward, along with any problem reports you sent while signed in. Payment records held by our payment processor (Stripe), such as past charges and the email on them, are kept as the processor and tax rules require. If you'd rather
                         we do it for you, or you can't access the app, email us at the address below.
                     </p>
                 </section>

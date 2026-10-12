@@ -1,6 +1,7 @@
 import React from 'react';
 import { auth } from '../firebaseConfig';
 import { HELP_SCREENS as SCREENS, firstUnseenHelpScreen, markHelpScreenSeen } from './helpScreens';
+import { isTypingTarget } from '../utilities/useDesktopShortcuts';
 
 const LAST = SCREENS.length - 1;
 
@@ -12,11 +13,6 @@ interface HelpProps {
     onClose: () => void;
     // Called after a page is marked viewed, so the Help button's dot can update.
     onSeenChange: () => void;
-}
-
-function isTypingTarget(target: EventTarget | null) {
-    return target instanceof HTMLElement
-        && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 }
 
 const Help: React.FC<HelpProps> = ({ showHelp, onClose, onSeenChange }) => {

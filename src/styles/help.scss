@@ -1411,6 +1411,21 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     flex-shrink: 0;
 }
 
+.patchNotes-recommend-btn.patchNotes-bug-btn {
+    background: $danger;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.patchNotes-header-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
 .patchNotes-recommend-btn {
     flex-shrink: 0;
     padding: 0.35rem 0.75rem;

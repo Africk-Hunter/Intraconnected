@@ -7,7 +7,7 @@ vi.hoisted(() => {
 });
 
 const { firestoreMock } = vi.hoisted(() => ({ firestoreMock: vi.fn() }));
-vi.mock("../functions/lib/firebaseAdmin", () => ({ firestore: firestoreMock }));
+vi.mock("../functions/lib/firebaseAdmin", () => ({ firestore: firestoreMock, adminAuth: () => ({ getUser: vi.fn().mockResolvedValue({}) }) }));
 
 const { constructEvent, paymentIntentsRetrieve, subscriptionsCancel, subscriptionsCreate, subscriptionsList } = vi.hoisted(() => ({
     constructEvent: vi.fn(),

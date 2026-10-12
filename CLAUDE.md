@@ -44,7 +44,7 @@ Not launched. `programmer-docs/artifacts/launch-checklist.html` (published as an
 
 ### Sync layer (`src/utilities/sync/`)
 - `ops.ts` — pure core (unit-tested in `ops.test.ts`): `SyncOp` (`create`/`update`/`delete`), `rebase`, `coalesce`, `classifyError`, `findOrphans`, `othersChanged`.
-- `outbox.ts` — the **only** code that writes idea docs. Queue lives in `localStorage` `sync_outbox_<uid>` (per account — never sent under another account). One op = one `writeBatch`: idea write + free-plan `nodeCount` increment + `meta/sync` `devices.<deviceId>` increment. Updates use `update()` (fails `not-found` on an idea deleted elsewhere → op dropped + refresh) — never `setDoc(merge)`, which silently re-created partial docs. A refused write (`permission-denied` etc.) **pauses** the queue and shows `SyncStatusBanner` (Try again / Discard); nothing is auto-discarded. `flushOutbox()` runs at sign-out.
+- `outbox.ts` — the **only** code that writes idea docs. Several tabs share one stored queue: every change re-reads `localStorage` first, and a Web Lock makes one tab the sender. Queue lives in `localStorage` `sync_outbox_<uid>` (per account — never sent under another account). One op = one `writeBatch`: idea write + free-plan `nodeCount` increment + `meta/sync` `devices.<deviceId>` increment. Updates use `update()` (fails `not-found` on an idea deleted elsewhere → op dropped + refresh) — never `setDoc(merge)`, which silently re-created partial docs. A refused write (`permission-denied` etc.) **pauses** the queue and shows `SyncStatusBanner` (Try again / Discard); nothing is auto-discarded. `flushOutbox()` runs at sign-out.
 - `syncEngine.ts` — `pullFromServer` uses `getDocsFromServer` (plain `getDocs` answers from the empty cache offline = "no ideas"), decrypts per doc (one bad doc is skipped, not fatal), rebases this device's unsent ops on top, and only then replaces `localStorage`. Moves orphaned ideas (parent deleted) to the top level. `sync_owner` guards against showing another account's cached map.
 - **Change detection is per-device counters, not timestamps**: each device only bumps its own counter in `meta/sync.devices`, and stores the others' last-seen values in `sync_seen_<uid>`. Any other device's counter moving = something to pull. `meta/sync.lastModified` is still written only for tabs running a pre-sync build.
 - `onSyncRefreshed()` (`syncStore.ts`) fires after a pull — `Idea.tsx`/`MobileMindMap.tsx` use it to step out of an idea deleted on another device.
@@ -78,6 +78,7 @@ interface StandardIdea {
   priority?: 1 | 2 | 3;  // 1=High, 2=Medium, 3=Low
   isNote?: boolean;      // set at creation (Note tab); immutable — ideas and notes never convert
   noteTitle?: string;    // header label while isNote; `content` holds the note body
+  censored?: boolean;    // "Censor idea": card text hidden behind dots until clicked. A visual veil only, not encryption. Ideas saved before the rename carry `locked`: read as censored, and rewritten once on the next pull
 }
 
 interface ChecklistIdea {

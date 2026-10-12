@@ -3,7 +3,7 @@
 // browser Back step back through the levels you visited, and a copied link open
 // the same level.
 
-export const MAIN_PATH = '/main';
+const MAIN_PATH = '/main';
 
 // The idea id in a query string like "?idea=123", or null when absent or not a number.
 export function parseIdeaParam(search: string): number | null {

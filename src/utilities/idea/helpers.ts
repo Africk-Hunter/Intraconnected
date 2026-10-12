@@ -27,7 +27,14 @@ export function fetchFullIdeaList(): IdeaType[] {
         return [];
     }
 
-    return JSON.parse(ideas);
+    return (JSON.parse(ideas) as IdeaType[]).map(withCensoredField);
+}
+
+// Ideas saved before the rename carry `locked`; same meaning as `censored`.
+function withCensoredField(idea: IdeaType): IdeaType {
+    if (!('locked' in idea)) return idea;
+    const { locked, ...rest } = idea as IdeaType & { locked?: boolean };
+    return locked === true ? ({ ...rest, censored: true } as IdeaType) : (rest as IdeaType);
 }
 
 export function checkIfIdeaIsLeaf(ideaID: number): boolean {

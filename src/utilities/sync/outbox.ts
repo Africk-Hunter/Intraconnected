@@ -15,6 +15,12 @@ import { updateSyncStatus, type SyncFailure } from "./syncStore";
 //
 // Keyed by uid: one account's unsent changes are never sent under another
 // account that signs in on the same browser — they wait for their owner.
+//
+// Several tabs of the same account share that one stored queue. localStorage
+// is the source of truth: every change re-reads it first (syncFromStorage), so
+// one tab can't overwrite another's unsent changes, and a Web Lock makes
+// exactly one tab the sender (the others just record changes and are woken by
+// the `storage` event / take over if the sender's tab closes).
 
 const DEVICE_KEY = "sync_device_id";
 const outboxKey = (uid: string) => `sync_outbox_${uid}`;
@@ -45,6 +51,9 @@ let failed: FailedOp | null = null;
 let nextSeq = 1;
 let inFlightSeq: number | null = null;
 let pumping = false;
+// True while this tab is the one allowed to send (see acquireSenderLock).
+let isSender = true;
+let releaseSenderLock: (() => void) | null = null;
 let wakeTimer: ReturnType<typeof setTimeout> | null = null;
 let backoffMs = 0;
 let acked: { op: SyncOp; ackedAt: number }[] = [];
@@ -78,6 +87,46 @@ function load(uid: string): PersistedOutbox {
         console.error("Sync: the saved outbox was unreadable and has been reset.");
     }
     return { queue: [], failed: null, nextSeq: 1 };
+}
+
+// Reads the stored queue back into memory, so changes made by another tab are
+// seen before this tab adds to or removes from it. Leaves memory alone if the
+// stored copy is missing or unreadable.
+function syncFromStorage(): void {
+    if (!boundUid) return;
+    try {
+        const raw = localStorage.getItem(outboxKey(boundUid));
+        if (!raw) return;
+        const saved = JSON.parse(raw) as PersistedOutbox;
+        if (!Array.isArray(saved.queue)) return;
+        queue = saved.queue;
+        failed = saved.failed ?? null;
+        nextSeq = Math.max(nextSeq, saved.nextSeq ?? 1);
+    } catch {
+        // keep what is in memory
+    }
+}
+
+// Only one tab per account sends. Without Web Locks (very old browsers) every
+// tab is a sender, as before.
+function acquireSenderLock(uid: string, gen: number): void {
+    releaseSenderLock?.();
+    releaseSenderLock = null;
+    if (typeof navigator === "undefined" || !navigator.locks) {
+        isSender = true;
+        return;
+    }
+    isSender = false;
+    void navigator.locks.request(`intraconnected-outbox-${uid}`, () => {
+        if (gen !== generation) return;
+        return new Promise<void>((resolve) => {
+            releaseSenderLock = resolve;
+            isSender = true;
+            syncFromStorage();
+            publish();
+            pump();
+        });
+    });
 }
 
 function persist(): void {
@@ -115,6 +164,7 @@ export function bindOutbox(uid: string): void {
     queue = saved.queue;
     failed = saved.failed;
     nextSeq = saved.nextSeq;
+    acquireSenderLock(uid, generation);
     publish();
     pump();
 }
@@ -129,6 +179,7 @@ export function enqueue(op: SyncOp, options: { debounceMs?: number } = {}): void
         return;
     }
     bindOutbox(uid);
+    syncFromStorage();
     const now = Date.now();
     const entry: QueuedOp = { seq: nextSeq++, op, notBefore: options.debounceMs ? now + options.debounceMs : 0, queuedAt: now };
     queue = options.debounceMs ? coalesce(queue, entry, inFlightSeq) : [...queue, entry];
@@ -147,6 +198,7 @@ export function enqueueMany(ops: SyncOp[]): void {
     }
     if (ops.length === 0) return;
     bindOutbox(uid);
+    syncFromStorage();
     const now = Date.now();
     queue = [...queue, ...ops.map((op) => ({ seq: nextSeq++, op, notBefore: 0, queuedAt: now }))];
     persist();
@@ -163,7 +215,7 @@ function scheduleWake(ms: number): void {
 }
 
 function pump(): void {
-    if (pumping || !boundUid || failed) return;
+    if (pumping || !boundUid || failed || !isSender) return;
     if (wakeTimer) {
         clearTimeout(wakeTimer);
         wakeTimer = null;
@@ -201,6 +253,7 @@ async function drain(gen: number, uid: string): Promise<void> {
             inFlightSeq = null;
 
             if (!error) {
+                syncFromStorage();
                 removeEntry(head.seq);
                 acked.push({ op: head.op, ackedAt: Date.now() });
                 const cutoff = Date.now() - ACKED_RETENTION_MS;
@@ -213,6 +266,7 @@ async function drain(gen: number, uid: string): Promise<void> {
 
             const code = (error as { code?: string }).code;
             const kind = classifyError(code);
+            syncFromStorage();
             if (kind === "gone") {
                 // The idea was deleted (most likely on another device) —
                 // nothing left to apply this to. Drop it and let the refresh
@@ -257,6 +311,7 @@ function describeFailure(code: string | undefined): string {
 
 // Puts the refused change back at the front of the queue and tries again.
 export function retryFailed(): void {
+    syncFromStorage();
     if (!failed) return;
     queue = [{ ...failed.entry, notBefore: 0 }, ...queue];
     failed = null;
@@ -268,6 +323,7 @@ export function retryFailed(): void {
 // Drops the refused change (and later changes that depend on it), then
 // rebuilds the local view from the server so it disappears there too.
 export function discardFailed(): void {
+    syncFromStorage();
     if (!failed) return;
     const ids = opIds(failed.entry.op);
     failed = null;
@@ -282,6 +338,7 @@ export function discardFailed(): void {
 // once nothing is left or false if `timeoutMs` passes first. Unsent changes
 // are kept either way and go out the next time this account signs in here.
 export function flushOutbox(timeoutMs: number): Promise<boolean> {
+    syncFromStorage();
     if (queue.length === 0 && !failed) return Promise.resolve(true);
     // Paused on a refused change — nothing will send until the user deals
     // with it, so there's nothing to wait for.
@@ -307,6 +364,7 @@ export function flushOutbox(timeoutMs: number): Promise<boolean> {
 // changes accepted since `since` (a refresh's server read may predate them),
 // the refused one the user hasn't dealt with, then everything still queued.
 export function unsyncedOpsSince(since: number): SyncOp[] {
+    syncFromStorage();
     return [
         ...acked.filter((entry) => entry.ackedAt >= since).map((entry) => entry.op),
         ...(failed ? [failed.entry.op] : []),
@@ -318,6 +376,15 @@ if (typeof window !== "undefined") {
     window.addEventListener("online", () => {
         backoffMs = 0;
         pump();
+    });
+    // Another tab of this account changed the stored queue: pick it up, send
+    // it if this tab is the sender, and release anyone waiting on a flush.
+    window.addEventListener("storage", (event) => {
+        if (!boundUid || event.key !== outboxKey(boundUid)) return;
+        syncFromStorage();
+        publish();
+        pump();
+        if (queue.length === 0 || failed) notifyDrainWaiters();
     });
 }
 
@@ -359,7 +426,11 @@ async function encryptPatch(patch: IdeaPatch, dek: CryptoKey): Promise<{ [field:
     if (patch.noteTitle !== undefined) out.noteTitle = await encryptField(patch.noteTitle, dek);
     if (patch.parentID !== undefined) out.parentID = patch.parentID;
     if (patch.priority !== undefined) out.priority = patch.priority === null ? deleteField() : patch.priority;
-    if (patch.locked !== undefined) out.locked = patch.locked === null ? deleteField() : true;
+    if (patch.censored !== undefined) {
+        out.censored = patch.censored === null ? deleteField() : true;
+        // Drops the field's old name from ideas saved before the rename.
+        out.locked = deleteField();
+    }
     if (patch.items !== undefined) out.items = await encryptItems(patch.items, dek);
     return out;
 }

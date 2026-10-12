@@ -1,3 +1,4 @@
+import { testEndpointsEnabled } from "./lib/testOnly";
 import type { Context } from "@netlify/functions";
 import { verifyIdToken, firestore, adminAuth } from "./lib/firebaseAdmin";
 import { preflightResponse, jsonResponse } from "./lib/cors";
@@ -8,7 +9,7 @@ import { preflightResponse, jsonResponse } from "./lib/cors";
 // only, never Netlify site env vars), so it 404s on every deployed instance.
 // Writes no Stripe objects; "Reset to Free" only resets the caller's own doc.
 export default async (req: Request, _context: Context) => {
-    if (process.env.ALLOW_TEST_RESET !== "true") {
+    if (!testEndpointsEnabled()) {
         return new Response(null, { status: 404 });
     }
 

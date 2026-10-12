@@ -219,7 +219,12 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
 
     function handleCreateChecklist() {
         if (!checklistTitle.trim()) return;
-        handleChecklistCreation(checklistTitle.trim(), rootId, checklistItems, priority);
+        // Text still sitting in the add field counts as one more item.
+        const pending = itemDraft.trim();
+        const items = pending
+            ? [...checklistItems, { id: `${Date.now()}-${checklistItems.length}`, text: pending, checked: false }]
+            : checklistItems;
+        handleChecklistCreation(checklistTitle.trim(), rootId, items, priority);
         setCreationModalOpen(false);
         setNewIdeaSwitch(prev => !prev);
         reset();
@@ -244,6 +249,18 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         setIsPressingActive(true);
         if (pressFallbackTimeoutRef.current) clearTimeout(pressFallbackTimeoutRef.current);
         pressFallbackTimeoutRef.current = setTimeout(() => setIsPressingActive(false), ITEM_PRESS_MS);
+    }
+
+    function editItem(itemId: string, text: string) {
+        setChecklistItems(prev => prev.map(i => i.id === itemId ? { ...i, text } : i));
+    }
+
+    // An item left blank after editing is dropped, same as removing it.
+    function commitItemEdit(itemId: string) {
+        const item = checklistItems.find(i => i.id === itemId);
+        if (!item) return;
+        if (!item.text.trim()) removeItem(itemId);
+        else if (item.text !== item.text.trim()) editItem(itemId, item.text.trim());
     }
 
     function removeItem(itemId: string) {
@@ -351,7 +368,16 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                         placeholder="Checklist title"
                                         maxLength={CHECKLIST_TITLE_MAX_LENGTH}
                                         value={checklistTitle}
-                                        onChange={e => setChecklistTitle(e.target.value)}
+                                        onChange={e => {
+                                            const next = e.target.value;
+                                            const master = masterContentRef.current;
+                                            // Keep the shared text in step with title edits; if the title
+                                            // was a truncated view of the master, keep the cut-off tail.
+                                            masterContentRef.current = next && master.startsWith(checklistTitle)
+                                                ? next + master.slice(checklistTitle.length)
+                                                : next;
+                                            setChecklistTitle(next);
+                                        }}
                                         onKeyDown={e => e.key === 'Enter' && itemInputRef.current?.focus()}
                                     />
                                     <ul className="checklist-creation-items" ref={checklistItemsRef}>
@@ -362,7 +388,15 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                             >
                                                 <div className="checklist-creation-item">
                                                     <span className="checklist-creation-box" aria-hidden="true" />
-                                                    <span className="checklist-creation-text">{item.text}</span>
+                                                    <input
+                                                        className="checklist-creation-text"
+                                                        aria-label="Edit item"
+                                                        value={item.text}
+                                                        maxLength={200}
+                                                        onChange={e => editItem(item.id, e.target.value)}
+                                                        onBlur={() => commitItemEdit(item.id)}
+                                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); itemInputRef.current?.focus(); } }}
+                                                    />
                                                     <button
                                                         type="button"
                                                         className="checklist-creation-remove"

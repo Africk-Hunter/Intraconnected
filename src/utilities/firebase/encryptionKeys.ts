@@ -29,6 +29,13 @@ export async function storeEncryptedDEK(encryptedDEK: string, emailEncryptedDEK:
 
 // Replaces the email wrap (and records which email it is for), leaving the
 // password wrap alone, and clears any pending wrap since it's now stale.
+// Replaces only the password wrap (a stronger re-wrap of the same key).
+export async function storePasswordWrap(encryptedDEK: string): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    await setDoc(doc(db, "users", user.uid, "meta", "encryption"), { encryptedDEK }, { merge: true });
+}
+
 export async function storeEmailWrap(emailEncryptedDEK: string, email: string): Promise<void> {
     const user = authCheck();
     if (!user) return;

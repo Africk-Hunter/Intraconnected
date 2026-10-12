@@ -213,7 +213,7 @@ function MobileMindMap() {
             setShowSearch(false);
             setProfileModalOpen(false);
         }
-    }, [sheet]);
+    }, [sheet, setProfileModalOpen]);
 
     useEffect(() => {
         if (showHelp) {
@@ -223,7 +223,7 @@ function MobileMindMap() {
             setShowSearch(false);
             setProfileModalOpen(false);
         }
-    }, [showHelp]);
+    }, [showHelp, setProfileModalOpen]);
 
     useEffect(() => {
         if (showPatchNotes) {
@@ -233,7 +233,7 @@ function MobileMindMap() {
             setShowSearch(false);
             setProfileModalOpen(false);
         }
-    }, [showPatchNotes]);
+    }, [showPatchNotes, setProfileModalOpen]);
 
     useEffect(() => {
         if (showMindMap) {
@@ -243,7 +243,7 @@ function MobileMindMap() {
             setShowSearch(false);
             setProfileModalOpen(false);
         }
-    }, [showMindMap]);
+    }, [showMindMap, setProfileModalOpen]);
 
     useEffect(() => {
         if (showSearch) {
@@ -253,7 +253,7 @@ function MobileMindMap() {
             setShowMindMap(false);
             setProfileModalOpen(false);
         }
-    }, [showSearch]);
+    }, [showSearch, setProfileModalOpen]);
 
     useEffect(() => {
         if (profileModalOpen) {

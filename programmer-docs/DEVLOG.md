@@ -4,6 +4,16 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Audit Fixes — 2026-10-12
+Typecheck, lint (0 errors, same 18 warnings) and 314 tests pass; **not tried in a browser, and the two-tab outbox is untested by hand.**
+- Bug reports (`submit-bug-report.ts`): diagnostics and the issue title are flattened to one line with `@` defused, so a reporter can't inject markdown or mention anyone. A GitHub issue is only opened for a signed-in, verified account; signed-out reports are stored in Firestore only.
+- Account deletion: `delete-account.ts` also deletes `bugReports` with the account's uid; `stripe-webhook.ts` skips the billing write when the Auth user is gone. Privacy page: new Problem Reports section, and the deletion paragraph now says Stripe keeps payment records. The Stripe Customer is deliberately not deleted (refund/tax records), owner's call.
+- Outbox, two tabs: `outbox.ts` re-reads `sync_outbox_<uid>` before every change (`syncFromStorage`), one tab sends (Web Lock `intraconnected-outbox-<uid>`), the others record and are woken by the `storage` event.
+- Password wrap: new wraps are `v2:` + 600k PBKDF2 iterations; old ones still unwrap at 100k and are upgraded silently at the next sign-in (`Auth.tsx`). Email wrap unchanged.
+- `*-test.ts` endpoints: `lib/testOnly.ts` also refuses when `CONTEXT` is production / deploy-preview / branch-deploy.
+- UI text "Lock idea" is now "Censor idea" (menu, aria labels, card hint). The stored field is now `censored` (was `locked`); old ideas are read as censored and migrated one write each on the next pull (`syncEngine.ts`, `helpers.ts`). It is only a visual veil, not encryption.
+- Removed/unexported dead exports flagged by knip.
+
 ## Desktop Copy Badge — 2026-10-11
 Typecheck, lint and Sass pass; **not tried in a browser yet.**
 - Copying a card (Ctrl/Cmd+C on the hovered/focused card, or Copy / Copy all in the card menu) now shows a "Copied ✓" badge straddling the card's bottom edge for 1.2s, alongside the existing toast. `markCopied()` in `useIdeaActions.ts` sets a `data-copied` attribute (not a class, which React would overwrite on re-render); styles at the end of `idea.scss`. Reduced motion: fades only.

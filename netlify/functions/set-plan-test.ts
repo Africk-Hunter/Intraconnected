@@ -1,3 +1,4 @@
+import { testEndpointsEnabled } from "./lib/testOnly";
 import type { Context } from "@netlify/functions";
 import { verifyIdToken, firestore } from "./lib/firebaseAdmin";
 import { preflightResponse, jsonResponse } from "./lib/cors";
@@ -9,7 +10,7 @@ import { preflightResponse, jsonResponse } from "./lib/cors";
 // It writes no Stripe objects, so Stripe-side state (Customer, subscriptions)
 // is untouched; use "Reset to Free" afterwards to return to a clean state.
 export default async (req: Request, _context: Context) => {
-    if (process.env.ALLOW_TEST_RESET !== "true") {
+    if (!testEndpointsEnabled()) {
         return new Response(null, { status: 404 });
     }
 

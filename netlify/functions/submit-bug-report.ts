@@ -23,11 +23,17 @@ function clean(value: unknown, max: number): string {
     return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").trim().slice(0, max);
 }
 
+// Diagnostics are printed one per line outside the fence, so line breaks are
+// flattened: a value can never start a new markdown block or @-mention anyone.
+function oneLine(value: string): string {
+    return value.replace(/s+/g, " ").replace(/@/g, "@200b").trim();
+}
+
 function cleanDiagnostics(raw: unknown): ReportDiagnostics {
     const d = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
     const out: ReportDiagnostics = {};
     for (const key of ["error", "route", "platform", "userAgent", "plan", "syncFailure"] as const) {
-        const value = clean(d[key], REPORT_FIELD_MAX);
+        const value = oneLine(clean(d[key], REPORT_FIELD_MAX));
         if (value) out[key] = value;
     }
     if (typeof d.pendingChanges === "number" && Number.isFinite(d.pendingChanges)) out.pendingChanges = Math.max(0, Math.floor(d.pendingChanges));
@@ -100,7 +106,9 @@ export default async (req: Request, context: Context) => {
         return jsonError(500, "Couldn't send your report. Try again later.");
     }
 
-    if (GITHUB_TOKEN) {
+    // Signed-out reports stay in Firestore only: opening issues with the server's
+    // token is reserved for verified accounts, so it can't be used as a spam relay.
+    if (GITHUB_TOKEN && user?.emailVerified) {
         try {
             const diagLines = Object.entries(diagnostics).map(([k, v]) => `- ${k}: ${String(v)}`);
             const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/issues`, {
@@ -111,7 +119,7 @@ export default async (req: Request, context: Context) => {
                     Accept: "application/vnd.github+json",
                 },
                 body: JSON.stringify({
-                    title: `[Bug Report] ${area}: ${message.split("\n")[0]!.slice(0, 80)}`,
+                    title: `[Bug Report] ${area}: ${oneLine(message.split("\n")[0]!).slice(0, 80)}`,
                     body: [
                         fenced(message),
                         "",

@@ -765,9 +765,18 @@
 
 // Long items wrap instead of stretching the row past the modal.
 .checklist-creation-text {
+    all: unset;
+    box-sizing: border-box;
     flex: 1;
     min-width: 0;
-    overflow-wrap: anywhere;
+    font: inherit;
+    color: inherit;
+    text-overflow: ellipsis;
+
+    &:focus {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
 }
 
 .checklist-creation-remove {

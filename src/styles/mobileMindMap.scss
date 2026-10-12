@@ -609,21 +609,54 @@
 }
 
 .mmobile-patchnotes-entry {
-    margin-bottom: 1.25rem;
+    padding: 14px 0;
+    border-top: 2px dashed rgba(17, 17, 17, 0.25);
 
-    &:last-child {
-        margin-bottom: 0;
+    &:first-child {
+        padding-top: 0;
+        border-top: none;
     }
 }
 
-.mmobile-patchnotes-tag-row {
+.mmobile-help-pager.mmobile-patchnotes-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mmobile-patchnotes-head {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+}
+
+.mmobile-patchnotes-desc {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    opacity: 0.8;
+}
+
+.mmobile-patchnotes-feedback {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 14px;
+    border-top: 2px solid #111;
+
+    .mmobile-patchnotes-recommend-btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 44px;
+    }
 }
 
 .mmobile-patchnotes-tag {
-    display: inline-block;
+    flex-shrink: 0;
     padding: 2px 8px;
     background: $sky;
     border: 2px solid #111;
@@ -649,9 +682,10 @@
 }
 
 .mmobile-patchnotes-title {
-    margin: 6px 0 4px;
+    margin: 0;
     font-size: 1.05rem;
-    font-weight: 600;
+    font-weight: 700;
+    line-height: 1.25;
 }
 
 .mmobile-patchnotes-recommend-btn {
@@ -672,6 +706,14 @@
         box-shadow: 0 0 0 1px #111;
         translate: 2px 2px;
     }
+}
+
+.mmobile-patchnotes-recommend-btn.mmobile-patchnotes-bug-btn {
+    background: $danger;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .mmobile-patchnotes-form {

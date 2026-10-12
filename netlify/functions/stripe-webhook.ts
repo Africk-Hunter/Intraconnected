@@ -1,6 +1,6 @@
 import type { Context } from "@netlify/functions";
 import type Stripe from "stripe";
-import { firestore } from "./lib/firebaseAdmin";
+import { firestore, adminAuth } from "./lib/firebaseAdmin";
 import { stripe } from "./lib/stripe";
 import { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent, type BillingEventResult } from "./lib/billingEvents";
 import { getBillingDoc } from "./lib/lifetimePricing";
@@ -79,6 +79,16 @@ async function resumeAnnualSubscription(uid: string, refundResult: BillingEventR
     } catch (err) {
         console.error("stripe-webhook: failed to restore Annual subscription on refund", uid, err);
         return toFree;
+    }
+}
+
+async function accountExists(uid: string): Promise<boolean> {
+    try {
+        await adminAuth().getUser(uid);
+        return true;
+    } catch (err) {
+        if ((err as { code?: string }).code === "auth/user-not-found") return false;
+        throw err;
     }
 }
 
@@ -192,6 +202,13 @@ export default async (req: Request, _context: Context) => {
             const uid = extractUidFromEvent(event);
             const currentBilling = uid ? await getBillingDoc(uid) : null;
             result = deriveBillingUpdate(event, currentBilling);
+        }
+
+        if (result && !(await accountExists(result.uid))) {
+            // Late event for an account that has since been deleted (delete-account
+            // cancels the subscription, which fires one): writing would leave a
+            // stray billing doc with no owner.
+            result = null;
         }
 
         if (result) {

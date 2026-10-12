@@ -708,8 +708,8 @@
     opacity: 0.6;
 }
 
-// Lock marker beside ⋯ on a locked idea.
-.card-lock {
+// Censor marker beside ⋯ on a censored idea.
+.card-censor {
     all: unset;
     box-sizing: border-box;
     position: absolute;
@@ -741,22 +741,22 @@
     }
 }
 
-.ideaNode--locked {
+.ideaNode--censored {
     cursor: pointer;
 
-    .ideaNode-locked {
+    .ideaNode-censored {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 0.4rem;
     }
 
-    .ideaNode-locked-dots {
+    .ideaNode-censored-dots {
         font-size: 1.8rem;
         letter-spacing: 0.15em;
     }
 
-    .ideaNode-locked-hint {
+    .ideaNode-censored-hint {
         font-size: 1.1rem;
         opacity: 0.6;
     }
