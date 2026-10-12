@@ -282,7 +282,17 @@ function Idea() {
             setIsLoadingIdeas(false);
         }
 
-        const unsubscribe = auth.onAuthStateChanged(() => {
+        // Firebase reports "no user" once it has finished restoring the saved
+        // session. Nobody signed in on arrival means /main has nothing to show
+        // (the cached ideas belong to whoever used this browser last). A user
+        // who vanishes mid-session is SessionEndedModal's case, not this one.
+        let hadUser = false;
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) hadUser = true;
+            else if (!hadUser) {
+                window.location.replace('/login');
+                return;
+            }
             init();
         });
         return () => unsubscribe();
