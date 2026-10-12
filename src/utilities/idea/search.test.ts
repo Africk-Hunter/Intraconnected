@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { IdeaType } from "../types";
-import { searchIdeas } from "./search";
+import { searchIdeas, suggestedIdeas } from "./search";
 
 const ideas: IdeaType[] = [
     { id: 1, content: "Ideas", parentID: 0, link: "" },
@@ -71,5 +71,19 @@ describe("searchIdeas", () => {
             { id: 3, content: "B", parentID: 2, link: "" },
         ];
         expect(() => searchIdeas(looped, "a")).not.toThrow();
+    });
+});
+
+describe("suggestedIdeas", () => {
+    it("offers recently opened ideas first, skipping ones that are gone", () => {
+        const { title, results } = suggestedIdeas(ideas, [12, 999, 20]);
+        expect(title).toBe("Recent");
+        expect(results.map((r) => r.id)).toEqual([12, 20]);
+    });
+
+    it("falls back to the newest ideas when nothing was opened", () => {
+        const { title, results } = suggestedIdeas(ideas, [], 2);
+        expect(title).toBe("Newest");
+        expect(results.map((r) => r.id)).toEqual([20, 14]);
     });
 });

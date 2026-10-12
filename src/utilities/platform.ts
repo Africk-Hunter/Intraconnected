@@ -73,6 +73,32 @@ export function haptic(kind: HapticKind): void {
         .catch(() => { /* device has no haptics */ });
 }
 
+// Reports the software keyboard's height in CSS pixels as it opens, and 0 as
+// it closes. Inside the app the WebView is not resized for the keyboard
+// (edge-to-edge on Android, `resize: 'none'` on iOS), so visualViewport alone
+// can miss it. Does nothing on the web. Returns a function that stops listening.
+export function onKeyboardHeight(callback: (height: number) => void): () => void {
+    if (!isNative()) return () => {};
+    let cancelled = false;
+    let remove: (() => void) | null = null;
+    import('@capacitor/keyboard')
+        .then(({ Keyboard }) => Promise.all([
+            Keyboard.addListener('keyboardWillShow', info => callback(info.keyboardHeight)),
+            Keyboard.addListener('keyboardDidShow', info => callback(info.keyboardHeight)),
+            Keyboard.addListener('keyboardWillHide', () => callback(0)),
+        ]))
+        .then(handles => {
+            const removeAll = () => handles.forEach(h => void h.remove());
+            if (cancelled) removeAll();
+            else remove = removeAll;
+        })
+        .catch(() => { /* no keyboard plugin */ });
+    return () => {
+        cancelled = true;
+        remove?.();
+    };
+}
+
 // Runs `callback` each time the app comes back to the foreground (the
 // WebView's own visibilitychange is not reliable for this on every device).
 // Does nothing on the web, where tabs have visibilitychange. Returns a

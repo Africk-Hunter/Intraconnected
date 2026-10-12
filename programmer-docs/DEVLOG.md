@@ -4,6 +4,12 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Mobile Search — 2026-10-11
+Typecheck, lint (no new warnings), search tests and Sass pass; **not tried on a device yet.**
+- The bottom bar's Mind Map button is now Search (tap again to close). New `MobileSearchSheet`: a proper mobile sheet, not the desktop palette: grab handle + ✕ header (swipe down, scrim, Back all close it), Mind map button in its header (the only way to the map now), field with a clear button, results as white cards with a tab in the idea's own colour, matched words underlined, kind + path line, Recent/Newest when empty (8), empty and no-match states. Follows the keyboard like the other sheets; scrolling the results drops the keyboard; the keyboard's Search key opens the top result.
+- Picking a result goes to its level, scrolls its card to the middle and rings it.
+- `suggestedIdeas()` and `KIND_LABEL` moved into `idea/search.ts`, shared with the desktop palette. Help page 5 copy updated.
+
 ## Desktop Checklist Makeover — 2026-10-11
 Typecheck, lint (no new warnings), 298 tests and build pass; **not clicked through in a browser yet.**
 - One shared row: `ChecklistItemRow` replaces `SortableNodeItem` (card) and `SortableChecklistItem` (modal); one stylesheet, `checklistItem.scss` (`cl-*`, `--card` / `--modal`), replaces ~300 lines of duplicated SCSS in `idea.scss` and `ideaCreationModal.scss`. Timings are `$cl-fast`/`$cl-base`/`$cl-ease` at its top.

@@ -1,0 +1,368 @@
+@use 'sass:color';
+@use "./variables" as *;
+
+// ── Mobile Search Sheet ─────────────────────────────────────────
+// Same frame as the mind map sheet: from the top of the screen down to just
+// above the bottom bar, which stays usable (its Search button closes it).
+// While the keyboard is up, MobileMindMap moves `bottom` to just above it.
+
+$search-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+$search-row-in: 0.2s;
+$search-row-stagger: 25ms;
+
+.mmobile-search-sheet {
+    position: fixed;
+    top: max(8px, env(safe-area-inset-top, 8px));
+    left: 8px;
+    right: 8px;
+    bottom: calc(max(10px, env(safe-area-inset-bottom, 10px)) + 102px);
+    z-index: 31;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 3px solid #111;
+    border-radius: 20px;
+    background: $neutral;
+    transform-origin: 50% 100%;
+    animation: mmMindMapIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); // mobileMindMapSheet.scss
+}
+
+// Grab handle + title row: drag down here to close (useSheetSwipeDown).
+// Three columns so the title stays centred whatever sits either side.
+.mmobile-search-header {
+    position: relative;
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 14px 12px 6px;
+    touch-action: none;
+
+    .mmobile-sheet-grab--panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        translate: -50% 0;
+        margin: 0;
+    }
+}
+
+.mmobile-search-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111;
+}
+
+// A raised pink button (the colour the bottom bar's map button had), so it
+// reads as something to press, not a label beside the title.
+.mmobile-search-map {
+    justify-self: start;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    margin-bottom: 3px; // room for the shadow
+    padding: 0 12px 0 8px;
+    background: $neo-pink;
+    border: 2px solid #111;
+    border-radius: 10px;
+    box-shadow: 0 3px 0 #111;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #111;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+    img { width: 22px; height: 22px; }
+
+    &:active {
+        transform: translateY(3px);
+        box-shadow: 0 0 0 #111;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #111;
+        outline-offset: 2px;
+    }
+}
+
+// Matches .mmobile-sheet-close: the ✕ every mobile sheet has in this corner.
+.mmobile-search-close {
+    justify-self: end;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #111;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.12s ease;
+
+    &:active { background: rgba(0, 0, 0, 0.1); }
+}
+
+// ── Field ───────────────────────────────────────────────────────
+
+.mmobile-search-field {
+    position: relative;
+    flex-shrink: 0;
+    margin: 4px 12px 10px;
+
+    > svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        translate: 0 -50%;
+        width: 20px;
+        height: 20px;
+        color: #111;
+        pointer-events: none;
+    }
+}
+
+.mmobile-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 3px solid #111;
+    border-radius: 12px;
+    box-shadow: 0 3px 0 #111;
+    background: #fff;
+    font-family: inherit;
+    font-size: 1.1rem; // ≥16px, or iOS zooms on focus
+    padding: 13px 48px 13px 44px;
+    color: #111;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: background-color 0.15s ease;
+
+    &::placeholder { color: #777; }
+    &:focus { background: color.adjust($sky, $lightness: 45%); }
+    // We draw our own clear button
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration { -webkit-appearance: none; }
+}
+
+.mmobile-search-clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    translate: 0 -50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.12);
+    color: #111;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    animation: mmSearchPopIn 0.16s $search-ease-out;
+
+    &:active { background: rgba(0, 0, 0, 0.22); }
+}
+
+// ── Results ─────────────────────────────────────────────────────
+
+.mmobile-search-results {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px 12px 16px;
+    border-top: 2px solid rgba(0, 0, 0, 0.12);
+}
+
+.mmobile-search-heading {
+    margin: 10px 4px 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #444;
+}
+
+.mmobile-search-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    > li {
+        animation: mmSearchRowIn $search-row-in $search-ease-out both;
+        animation-delay: calc(var(--i, 0) * #{$search-row-stagger});
+    }
+}
+
+// A white card with a tab in the colour the idea's own card has in the list.
+.mmobile-search-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 10px 12px 10px 22px;
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    background: #fff;
+    border: 3px solid #111;
+    border-radius: 11px;
+    box-shadow: 3px 3px 0 #111;
+    font-family: inherit;
+    color: #111;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 10px;
+        border-right: 2px solid #111;
+        background: var(--kind-color);
+    }
+
+    &--leaf      { --kind-color: #{$leaf}; }
+    &--parent    { --kind-color: #{$sky}; }
+    &--link      { --kind-color: #{$link}; }
+    &--note      { --kind-color: #{$neo-green}; }
+    &--checklist { --kind-color: #{$indigo}; }
+
+    &:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 #111;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #111;
+        outline-offset: 3px;
+    }
+
+    mark {
+        background: none;
+        color: inherit;
+        font-weight: 800;
+        text-decoration: underline;
+        text-decoration-thickness: 3px;
+        text-decoration-color: color.adjust($sky, $alpha: -0.35);
+        text-underline-offset: 2px;
+    }
+}
+
+.mmobile-search-row-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.mmobile-search-row-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mmobile-search-row-snippet {
+    font-size: 0.9rem;
+    line-height: 1.35;
+    color: #333;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mmobile-search-row-meta {
+    font-size: 0.8rem;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mmobile-search-row-go {
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #111;
+    opacity: 0.55;
+}
+
+.mmobile-search-empty {
+    margin: 28px 8px;
+    text-align: center;
+    animation: mmSearchRowIn $search-row-in $search-ease-out both;
+}
+
+.mmobile-search-empty-title {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.mmobile-search-empty-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+@keyframes mmSearchRowIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes mmSearchPopIn {
+    from { opacity: 0; scale: 0.6; }
+    to   { opacity: 1; scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mmobile-search-sheet { animation: mmScrimIn 0.15s ease; } // mobileMindMap.scss: a plain fade
+    .mmobile-search-list > li,
+    .mmobile-search-empty,
+    .mmobile-search-clear { animation: none; }
+    .mmobile-search-row,
+    .mmobile-search-map { transition: none; }
+}
+
+// ── Tablet scaling (640px – 1023px) ─────────────────────────────
+@media (min-width: 640px) {
+    .mmobile-search-sheet {
+        bottom: calc(max(14px, env(safe-area-inset-bottom, 14px)) + 132px);
+    }
+
+    .mmobile-search-header { padding: 18px 18px 8px; }
+    .mmobile-search-title { font-size: 1.45rem; }
+    .mmobile-search-map { min-height: 48px; font-size: 1.05rem; border-width: 3px; img { width: 26px; height: 26px; } }
+    .mmobile-search-field { margin: 6px 18px 14px; }
+    .mmobile-search-input { font-size: 1.3rem; padding: 16px 54px 16px 50px; }
+    .mmobile-search-results { padding: 6px 18px 20px; }
+    .mmobile-search-row { min-height: 68px; padding: 14px 16px 14px 28px; }
+    .mmobile-search-row-label { font-size: 1.2rem; }
+    .mmobile-search-row-snippet { font-size: 1rem; }
+    .mmobile-search-row-meta { font-size: 0.9rem; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../../utilities';
 
 interface Props {
@@ -83,18 +83,24 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                     : hasKids ? 'mmobile-move-btn--parent'
                     : 'mmobile-move-btn--leaf';
                 return [
-                    <div key={child.id} className="mmobile-move-row" style={{ paddingLeft: `${depth * 16}px` }}>
+                    <div key={child.id} className="mmobile-move-row" style={{ '--depth': depth } as CSSProperties}>
                         <button
                             ref={isCurrentParent ? (el) => { moveParentBtnRef.current = el; } : undefined}
                             className={`mmobile-move-btn ${colorClass}${isDisabled ? ' mmobile-move-btn--disabled' : ''}`}
                             disabled={isDisabled}
                             onClick={isDisabled ? undefined : () => onMove(nodeId, child.id)}
                         >
-                            {resolveIdeaLabel(child).split('\n')[0]}
+                            <span className="mmobile-move-label">{resolveIdeaLabel(child).split('\n')[0]}</span>
+                            {isCurrentParent && <span className="mmobile-move-badge">Current</span>}
                         </button>
                         {visibleKids.length > 0 && (
-                            <button className="mmobile-move-toggle" onClick={() => toggleExpanded(child.id)}>
-                                {isExpanded ? '▾' : '▸'}
+                            <button
+                                className={`mmobile-move-toggle${isExpanded ? ' mmobile-move-toggle--open' : ''}`}
+                                aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                                aria-expanded={isExpanded}
+                                onClick={() => toggleExpanded(child.id)}
+                            >
+                                <span aria-hidden="true">›</span>
                             </button>
                         )}
                     </div>,
@@ -104,6 +110,8 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
     }
 
     return (
+        <>
+        <p className="mmobile-move-hint">Tap an idea to move it there.</p>
         <div className="mmobile-move-list" ref={moveListRef}>
             {root && (
                 <div className="mmobile-move-row">
@@ -113,15 +121,22 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
                         disabled={rootDisabled}
                         onClick={rootDisabled ? undefined : () => onMove(nodeId, 1)}
                     >
-                        {resolveIdeaLabel(root).split('\n')[0]}
+                        <span className="mmobile-move-label">{resolveIdeaLabel(root).split('\n')[0]}</span>
+                        {movingNode?.parentID === 1 && <span className="mmobile-move-badge">Current</span>}
                     </button>
-                    <button className="mmobile-move-toggle" onClick={() => toggleExpanded(1)}>
-                        {rootExpanded ? '▾' : '▸'}
+                    <button
+                        className={`mmobile-move-toggle${rootExpanded ? ' mmobile-move-toggle--open' : ''}`}
+                        aria-label={rootExpanded ? 'Collapse' : 'Expand'}
+                        aria-expanded={rootExpanded}
+                        onClick={() => toggleExpanded(1)}
+                    >
+                        <span aria-hidden="true">›</span>
                     </button>
                 </div>
             )}
             {rootExpanded && renderMoveTree(1, 1)}
         </div>
+        </>
     );
 }
 

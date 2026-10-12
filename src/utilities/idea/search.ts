@@ -3,6 +3,8 @@ import { getIdeaLink, isNoteMode, resolveIdeaLabel } from './helpers';
 
 export type IdeaKind = 'idea' | 'link' | 'checklist' | 'note';
 
+export const KIND_LABEL: Record<IdeaKind, string> = { idea: 'Idea', link: 'Link', checklist: 'Checklist', note: 'Note' };
+
 export interface SearchResult {
     id: number;
     // The level the idea sits in: where to go to see its card.
@@ -81,6 +83,13 @@ export function recentIdeas(ideas: IdeaType[], visitedIds: number[], limit = 5):
 export function newestIdeas(ideas: IdeaType[], limit = 5): SearchResult[] {
     const picked = ideas.filter((idea) => idea.id !== 1).sort((a, b) => b.id - a.id).slice(0, limit);
     return plainResults(ideas, picked);
+}
+
+// What an empty search box offers: the ideas the user opened lately, or the
+// newest ones if they haven't opened any yet.
+export function suggestedIdeas(ideas: IdeaType[], visitedIds: number[], limit = 5): { title: 'Recent' | 'Newest'; results: SearchResult[] } {
+    const recent = recentIdeas(ideas, visitedIds, limit);
+    return recent.length > 0 ? { title: 'Recent', results: recent } : { title: 'Newest', results: newestIdeas(ideas, limit) };
 }
 
 export function searchIdeas(ideas: IdeaType[], query: string, limit = 50): SearchResult[] {

@@ -109,7 +109,7 @@
 .vtree-root-btn {
     flex: 1;
     text-align: left;
-    border: 3px solid #111;
+    border: 2px solid #111;
     border-radius: 12px;
     background: $roots;
     color: white;
@@ -118,8 +118,14 @@
     font-weight: 700;
     padding: 14px 16px;
     cursor: pointer;
-    box-shadow: 4px 4px 0 #111;
+    box-shadow: 3px 3px 0 #111;
     word-break: break-word;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+    &:active:not(.vtree-root-btn--current) {
+        transform: translate(3px, 3px);
+        box-shadow: 0 0 0 #111;
+    }
 
     &--current {
         cursor: default;
@@ -191,15 +197,22 @@
     flex: 1;
     min-width: 0;
     text-align: left;
+    min-height: 44px;
     border: 2px solid #111;
-    border-radius: 10px;
+    border-radius: 11px;
     font-family: inherit;
     font-size: 0.95rem;
     font-weight: 600;
     padding: 10px 12px;
     cursor: pointer;
     word-break: break-word;
-    box-shadow: 3px 3px 0 #111;
+    box-shadow: 2px 2px 0 #111;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+    &:active:not(.vtree-node--current):not(.vtree-node--checklist) {
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 #111;
+    }
 
     &--current   { background: $roots; color: white; cursor: default; }
     &--parent    { background: $sky; }
@@ -211,17 +224,48 @@
 
 .vtree-toggle {
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border: 2px solid #111;
-    border-radius: 9px;
-    background: $neutral;
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 2px 2px 0 #111;
+    color: #111;
     font-family: inherit;
-    font-size: 1.1rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+    span {
+        display: block;
+        transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    // An expanded branch stays pressed in until collapsed
+    &--open {
+        background: $neutral;
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 #111;
+
+        span { transform: rotate(90deg); }
+    }
+
+    &:active {
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 #111;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vtree-root-btn,
+    .vtree-node,
+    .vtree-toggle,
+    .vtree-toggle span { transition: none; }
 }
 
 @keyframes mmMindMapIn {
@@ -245,20 +289,21 @@
         font-size: 1.35rem;
         padding: 20px 22px;
         border-radius: 16px;
-        box-shadow: 5px 5px 0 #111;
+        box-shadow: 4px 4px 0 #111;
     }
 
     .vtree-node {
         font-size: 1.15rem;
         padding: 14px 18px;
         border-radius: 13px;
-        box-shadow: 4px 4px 0 #111;
+        box-shadow: 3px 3px 0 #111;
     }
 
     .vtree-toggle {
-        width: 48px;
-        height: 48px;
-        font-size: 1.35rem;
+        width: 54px;
+        height: 54px;
+        font-size: 1.6rem;
+        box-shadow: 3px 3px 0 #111;
         border-radius: 13px;
     }
 

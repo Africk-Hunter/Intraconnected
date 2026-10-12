@@ -348,9 +348,11 @@
 
 
 .mmobile-node {
+    // read by the "none" ribbon to give its whole slot back to the title
+    --mmobile-row-gap: 12px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--mmobile-row-gap);
     border: 3px solid #111;
     border-radius: 11px;
     box-shadow: 4px 4px 0 #111;
@@ -379,22 +381,25 @@
 // margins cancel the extra width so it doesn't shift row layout); the visible
 // ribbon is a ::after swatch pinned at the original size inside it.
 .mmobile-node-priority-ribbon {
+    // pull it above the card's top border (padding 14px + border 3px + ~2px overhang)
+    --ribbon-mt: -1.65rem;
+    --ribbon-ml: -0.4rem;
+    --ribbon-w: 1.9rem;
     all: unset;
     position: relative;
     flex-shrink: 0;
     align-self: flex-start;
-    // pull it above the card's top border (padding 14px + border 3px + ~2px overhang)
-    margin-top: -1.65rem;
+    margin-top: var(--ribbon-mt);
     margin-bottom: -0.35rem;
-    margin-left: -0.4rem;
+    margin-left: var(--ribbon-ml);
     // positive, not negative: the swatch's drop shadow pokes ~2px past the
     // button on the right, so this keeps a clear gap before the title
     margin-right: 2px;
-    width: 1.9rem;
+    width: var(--ribbon-w);
     cursor: pointer;
     display: block;
     transform-origin: top center;
-    transition: filter 0.15s ease;
+    transition: filter 0.15s ease, margin-right 0.22s ease;
 
     &::after {
         content: '';
@@ -423,12 +428,18 @@
         height: max(100%, 44px);
     }
 
+    // Not extended: the stub sits in the card's top padding, so it takes no
+    // room in the row and the title starts at the left edge. Its tap area
+    // stops at the title's top so a tap on the text still opens the idea.
     &--none {
         height: 1.35rem;
+        margin-right: calc(-1 * (var(--ribbon-w) + var(--ribbon-ml) + var(--mmobile-row-gap)));
         opacity: 0.5;
-        transition: opacity 0.15s ease, filter 0.15s ease;
+        transition: opacity 0.15s ease, filter 0.15s ease, margin-right 0.22s ease;
         &:hover { opacity: 0.85; filter: none; }
         &:active { opacity: 1; }
+
+        &::before { height: calc(-1 * var(--ribbon-mt)); }
 
         &::after {
             height: 0.65rem;
@@ -709,7 +720,7 @@
     font-size: 1.9rem;
     line-height: 1;
 
-    img { width: 32px; height: 32px; }
+    img, svg { width: 32px; height: 32px; }
 
     &--active {
         background: $sky;
@@ -1304,11 +1315,19 @@
     line-height: 1.5;
 }
 
+.mmobile-move-hint {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: rgba(20, 12, 2, 0.6);
+}
+
 .mmobile-move-list {
     max-height: 320px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    // room for the cards' hard shadow, which the scroll area would clip
+    padding: 2px 6px 6px 2px;
     scrollbar-width: none;
 
     &::-webkit-scrollbar {
@@ -1316,46 +1335,118 @@
     }
 }
 
+// Rows are the same cards as the map: thick border, hard shadow. Each level
+// indents by --depth (the root row sets none).
 .mmobile-move-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    margin-left: calc(var(--depth, 0) * 14px);
 }
 
 .mmobile-move-btn {
     flex: 1;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     text-align: left;
     border: 2px solid #111;
-    border-radius: 10px;
+    border-radius: 11px;
     background: $neutral;
+    box-shadow: 2px 2px 0 #111;
+    color: #111;
     font-family: inherit;
     font-size: 0.95rem;
-    padding: 11px 14px;
+    font-weight: 600;
+    padding: 10px 14px;
     cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
 
     &--parent     { background: $sky; }
     &--leaf       { background: $leaf; }
     &--link       { background: $link; }
     &--note       { background: $neo-green; color: white; }
     &--checklist  { background: $indigo; color: white; }
-    &--disabled   { opacity: 0.4; cursor: default; }
-    &--current    { outline: 3px solid #111; outline-offset: 2px; opacity: 0.6; cursor: default; }
+
+    &:active:not(:disabled) {
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 #111;
+    }
+
+    // Can't be a target (current parent, link, note, checklist): flat, no shadow
+    &--disabled {
+        opacity: 0.45;
+        cursor: default;
+        box-shadow: none;
+    }
+}
+
+.mmobile-move-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mmobile-move-badge {
+    flex-shrink: 0;
+    padding: 1px 8px;
+    border: 2px solid #111;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    color: #111;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .mmobile-move-toggle {
     flex-shrink: 0;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     border: 2px solid #111;
-    border-radius: 9px;
-    background: $neutral;
+    border-radius: 11px;
+    background: #fff;
+    box-shadow: 2px 2px 0 #111;
+    color: #111;
     font-family: inherit;
-    font-size: 1.1rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+    span {
+        display: block;
+        transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    &--open {
+        background: $neutral;
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 #111;
+
+        span { transform: rotate(90deg); }
+    }
+
+    &:active {
+        transform: translate(2px, 2px);
+        box-shadow: 0 0 0 #111;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mmobile-move-btn,
+    .mmobile-move-toggle,
+    .mmobile-move-toggle span { transition: none; }
 }
 
 // Mobile checklist node — inline accordion
@@ -1373,9 +1464,10 @@
 }
 
 .mmobile-node-header-row {
+    --mmobile-row-gap: 10px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--mmobile-row-gap);
     width: 100%;
     cursor: pointer;
 }
@@ -1746,18 +1838,17 @@
         padding: 20px 22px;
         margin-bottom: 0;
         border-radius: 15px;
-        gap: 16px;
+        --mmobile-row-gap: 16px;
         border-width: 4px;
         box-shadow: 5px 5px 0 #111;
     }
 
     .mmobile-node-priority-ribbon {
         // padding 20px + border 4px + ~2px overhang = 26px ≈ 1.63rem
-        margin-top: -2.13rem;
+        --ribbon-mt: -2.13rem;
+        --ribbon-ml: -0.45rem;
+        --ribbon-w: 2.2rem;
         margin-bottom: -0.4rem;
-        margin-left: -0.45rem;
-        margin-right: 2px;
-        width: 2.2rem;
 
         &::after {
             top: 0.4rem;
@@ -1809,7 +1900,7 @@
         border-width: 4px;
         box-shadow: 0 6px 0 #111;
 
-        img {
+        img, svg {
             width: 38px;
             height: 38px;
         }
@@ -1891,21 +1982,25 @@
         max-height: 480px;
     }
 
+    .mmobile-move-hint {
+        font-size: 1rem;
+    }
+
     .mmobile-move-row {
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         gap: 10px;
     }
 
     .mmobile-move-btn {
         font-size: 1.15rem;
-        padding: 16px 20px;
+        padding: 14px 20px;
         border-radius: 13px;
     }
 
     .mmobile-move-toggle {
-        width: 50px;
-        height: 50px;
-        font-size: 1.35rem;
+        width: 54px;
+        height: 54px;
+        font-size: 1.6rem;
         border-radius: 13px;
     }
 

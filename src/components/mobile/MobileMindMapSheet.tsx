@@ -122,8 +122,13 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
                         {resolveIdeaLabel(child).split('\n')[0]}
                     </button>
                     {hasKids && (
-                        <button className="vtree-toggle" onClick={() => toggleExpanded(id)}>
-                            {isExpanded ? '▾' : '▸'}
+                        <button
+                            className={`vtree-toggle${isExpanded ? ' vtree-toggle--open' : ''}`}
+                            aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                            aria-expanded={isExpanded}
+                            onClick={() => toggleExpanded(id)}
+                        >
+                            <span aria-hidden="true">›</span>
                         </button>
                     )}
                 </div>
@@ -162,8 +167,13 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
                                 {resolveIdeaLabel(root).split('\n')[0]}
                             </button>
                             {rootHasKids && (
-                                <button className="vtree-toggle" onClick={() => toggleExpanded(1)}>
-                                    {rootExpanded ? '▾' : '▸'}
+                                <button
+                                    className={`vtree-toggle${rootExpanded ? ' vtree-toggle--open' : ''}`}
+                                    aria-label={rootExpanded ? 'Collapse' : 'Expand'}
+                                    aria-expanded={rootExpanded}
+                                    onClick={() => toggleExpanded(1)}
+                                >
+                                    <span aria-hidden="true">›</span>
                                 </button>
                             )}
                         </div>

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { SheetState, SWIPE_REVEAL_W, SWIPE_THRESHOLD } from './mobileTypes';
 import MobileChecklistItemSheet from './MobileChecklistItemSheet';
-import { haptic } from '../../utilities/platform';
+import { haptic, onKeyboardHeight } from '../../utilities/platform';
 import {
     IdeaType,
     ChecklistItem,
@@ -29,6 +29,9 @@ import {
 import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileMindMapSheet from './MobileMindMapSheet';
+import MobileSearchSheet from './MobileSearchSheet';
+import { recordVisit } from '../../utilities/idea/recentVisits';
+import type { SearchResult } from '../../utilities/idea/search';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
 import MobileUndoToast, { type UndoToastState } from './MobileUndoToast';
 import MobilePriorityPicker from './MobilePriorityPicker';
@@ -55,6 +58,11 @@ if (typeof window !== 'undefined') {
         lastPointer.x = e.clientX;
         lastPointer.y = e.clientY;
     }, { passive: true });
+}
+
+// Where the last tap was, relative to the screen's centre: full-screen panels grow out of it.
+function pointerOrigin() {
+    return { dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 };
 }
 
 
@@ -85,6 +93,7 @@ function MobileMindMap() {
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
+    const [showSearch, setShowSearch] = useState(false);
     const [showPath, setShowPath] = useState(false);
     const [animatingRibbonId, setAnimatingRibbonId] = useState<number | null>(null);
     const frozenOrderRef = useRef<number[] | null>(null);
@@ -111,8 +120,15 @@ function MobileMindMap() {
     const [sheetOrigin, setSheetOrigin] = useState({ dx: 0, dy: 0 });
     const [helpOrigin, setHelpOrigin] = useState({ dx: 0, dy: 0 });
     const [mindMapOrigin, setMindMapOrigin] = useState({ dx: 0, dy: 0 });
+    const [searchOrigin, setSearchOrigin] = useState({ dx: 0, dy: 0 });
+    // The idea a search just picked: its card is scrolled to and ringed once the level shows.
+    // A fresh object per pick, so picking the same idea twice still runs it.
+    const [found, setFound] = useState<{ id: number } | null>(null);
     const [keyboardInset, setKeyboardInset] = useState(0);
     const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+    const [keyboardOpen, setKeyboardOpen] = useState(false);
+    // Visible height with no keyboard, for telling when one is up (see below).
+    const tallestViewport = useRef({ width: window.visualViewport?.width ?? 0, height: window.visualViewport?.height ?? 0 });
     const [confirmDiscard, setConfirmDiscard] = useState(false);
     // Bumped each time Create is tried with the required name empty; the
     // field re-keys on it so the red flash replays on every attempt.
@@ -175,13 +191,14 @@ function MobileMindMap() {
         sheetNodeIdRef.current = sheet?.type === 'checklist' ? sheet.nodeId : null;
     }, [sheet]);
 
-    // Mobile overlays (sheet, help, patch notes, mind map, profile) are mutually exclusive —
+    // Mobile overlays (sheet, help, patch notes, mind map, search, profile) are mutually exclusive —
     // opening one closes any others already open.
     useEffect(() => {
         if (sheet !== null) {
             setShowHelp(false);
             setShowPatchNotes(false);
             setShowMindMap(false);
+            setShowSearch(false);
             setProfileModalOpen(false);
         }
     }, [sheet]);
@@ -191,6 +208,7 @@ function MobileMindMap() {
             setSheet(null);
             setShowPatchNotes(false);
             setShowMindMap(false);
+            setShowSearch(false);
             setProfileModalOpen(false);
         }
     }, [showHelp]);
@@ -200,6 +218,7 @@ function MobileMindMap() {
             setSheet(null);
             setShowHelp(false);
             setShowMindMap(false);
+            setShowSearch(false);
             setProfileModalOpen(false);
         }
     }, [showPatchNotes]);
@@ -209,9 +228,20 @@ function MobileMindMap() {
             setSheet(null);
             setShowHelp(false);
             setShowPatchNotes(false);
+            setShowSearch(false);
             setProfileModalOpen(false);
         }
     }, [showMindMap]);
+
+    useEffect(() => {
+        if (showSearch) {
+            setSheet(null);
+            setShowHelp(false);
+            setShowPatchNotes(false);
+            setShowMindMap(false);
+            setProfileModalOpen(false);
+        }
+    }, [showSearch]);
 
     useEffect(() => {
         if (profileModalOpen) {
@@ -219,26 +249,70 @@ function MobileMindMap() {
             setShowHelp(false);
             setShowPatchNotes(false);
             setShowMindMap(false);
+            setShowSearch(false);
         }
     }, [profileModalOpen]);
 
     useEffect(() => {
+        if (!sheet && !showSearch) { setKeyboardInset(0); return; }
         const vv = window.visualViewport;
-        if (!vv || !sheet) { setKeyboardInset(0); return; }
+        // In the app the keyboard can cover the WebView without shrinking any
+        // viewport, so the plugin's height counts too, minus whatever the
+        // layout did shrink by (or the lift would be applied twice).
+        let nativeKeyboard = 0;
+        let fullHeight = window.innerHeight;
         function update() {
-            setKeyboardInset(Math.max(0, window.innerHeight - vv!.height - vv!.offsetTop));
-            setViewportHeight(vv!.height);
+            if (nativeKeyboard === 0) fullHeight = window.innerHeight;
+            const visible = vv?.height ?? window.innerHeight;
+            const fromViewport = vv ? window.innerHeight - vv.height - vv.offsetTop : 0;
+            const fromNative = nativeKeyboard - (fullHeight - window.innerHeight);
+            const inset = Math.max(0, fromViewport, fromNative);
+            // iOS Safari can shrink the layout viewport along with the visual
+            // one, leaving `inset` at 0 while the keyboard takes half the
+            // screen. So "open" is judged by how far the visible height fell
+            // below the tallest seen at this width (the URL bar alone moves
+            // it by less than 150px).
+            if (vv && vv.width !== tallestViewport.current.width) tallestViewport.current = { width: vv.width, height: 0 };
+            tallestViewport.current.height = Math.max(tallestViewport.current.height, visible);
+            setKeyboardOpen(inset > 0 || tallestViewport.current.height - visible > 150);
+            setKeyboardInset(inset);
+            setViewportHeight(Math.min(visible, window.innerHeight - inset));
         }
         update();
-        vv.addEventListener('resize', update);
+        const stopNative = onKeyboardHeight(height => { nativeKeyboard = height; update(); });
+        window.addEventListener('resize', update);
+        vv?.addEventListener('resize', update);
         // iOS also pans the visual viewport when the keyboard opens
-        vv.addEventListener('scroll', update);
+        vv?.addEventListener('scroll', update);
         return () => {
-            vv.removeEventListener('resize', update);
-            vv.removeEventListener('scroll', update);
+            stopNative();
+            window.removeEventListener('resize', update);
+            vv?.removeEventListener('resize', update);
+            vv?.removeEventListener('scroll', update);
             setKeyboardInset(0);
+            setKeyboardOpen(false);
         };
-    }, [sheet]);
+    }, [sheet, showSearch]);
+
+    // Once the sheet has moved above the keyboard, bring the field being typed
+    // in back into view (the sheet scrolls inside when it is short on room).
+    // Done by hand: scrollIntoView ignores the sticky title row (so the field
+    // could land under it) and on iOS also scrolls the page itself.
+    useEffect(() => {
+        if (!keyboardOpen) return;
+        const frame = requestAnimationFrame(() => {
+            const field = document.activeElement;
+            const sheetEl = field instanceof HTMLElement ? field.closest<HTMLElement>('.mmobile-sheet') : null;
+            if (!sheetEl || !(field instanceof HTMLElement)) return;
+            const sheetRect = sheetEl.getBoundingClientRect();
+            const top = (sheetEl.querySelector('.mmobile-sheet-top')?.getBoundingClientRect().bottom ?? sheetRect.top) + 8;
+            const bottom = sheetRect.bottom - 8;
+            const rect = field.getBoundingClientRect();
+            if (rect.top < top) sheetEl.scrollTop -= top - rect.top;
+            else if (rect.bottom > bottom) sheetEl.scrollTop += Math.min(rect.bottom - bottom, rect.top - top);
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [keyboardOpen, keyboardInset, viewportHeight]);
 
     useEffect(() => {
         const idea = fetchFullIdeaList().find(i => i.id === currentId);
@@ -727,6 +801,33 @@ function MobileMindMap() {
     useBackHandler(showHelp, () => setShowHelp(false), 1);
     useBackHandler(showPatchNotes, () => setShowPatchNotes(false), 1);
     useBackHandler(showMindMap, () => setShowMindMap(false), 1);
+    useBackHandler(showSearch, () => setShowSearch(false), 1);
+
+    function pickSearchResult(result: SearchResult) {
+        recordVisit(result.id);
+        setShowSearch(false);
+        setSheet(null);
+        setCurrentId(result.parentID);
+        setFound({ id: result.id });
+    }
+
+    // Arriving from search, the picked card may be anywhere in a long level:
+    // bring it to the middle and ring it briefly so the eye lands on it.
+    useEffect(() => {
+        if (found === null) return;
+        const frame = requestAnimationFrame(() => {
+            const el = nodeElRefs.current[found.id];
+            if (!el) return;
+            const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            el.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
+            const ring = (alpha: number, offset: number) => ({ outline: `3px solid rgba(17, 17, 17, ${alpha})`, outlineOffset: `${still ? 3 : offset}px` });
+            el.animate(
+                [ring(0, 12), { ...ring(1, 3), offset: 0.2 }, { ...ring(1, 3), offset: 0.75 }, ring(0, 3)],
+                { duration: 1600, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+            );
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [found]);
     useBackHandler(showPath, () => setShowPath(false), 1);
     useBackHandler(profileModalOpen, () => setProfileModalOpen(false), 1);
 
@@ -1155,6 +1256,22 @@ function MobileMindMap() {
 
             {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} onOpenPatchNotes={openPatchNotes} hasNewPatchNotes={isNewPatchNotes} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
             {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
+            {showSearch && (
+                <MobileSearchSheet
+                    allIdeas={allIdeas}
+                    onPick={pickSearchResult}
+                    onOpenMindMap={() => {
+                        setMindMapOrigin(pointerOrigin());
+                        setShowMindMap(true);
+                    }}
+                    onClose={() => setShowSearch(false)}
+                    style={{
+                        '--origin-dx': `${searchOrigin.dx}px`,
+                        '--origin-dy': `${searchOrigin.dy}px`,
+                        ...(keyboardOpen ? { bottom: `${keyboardInset + 8}px` } : {}),
+                    } as React.CSSProperties}
+                />
+            )}
             {showMindMap && (
                 <MobileMindMapSheet
                     key={currentId}
@@ -1469,13 +1586,15 @@ function MobileMindMap() {
                     aria-disabled={currentId === 1}
                 ><img src="/images/Home.svg" alt="Home" /></button>
                 <button
-                    className={`mmobile-navigate-btn${showMindMap ? ' mmobile-navigate-btn--active' : ''}`}
+                    className={`mmobile-navigate-btn${showSearch ? ' mmobile-navigate-btn--active' : ''}`}
                     onClick={() => {
-                        if (!showMindMap) setMindMapOrigin({ dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 });
-                        setShowMindMap(m => !m);
+                        if (!showSearch) setSearchOrigin(pointerOrigin());
+                        setShowSearch(s => !s);
                     }}
+                    aria-label={showSearch ? 'Close search' : 'Search ideas'}
+                    aria-pressed={showSearch}
                 >
-                    <img src="/images/MindMapBlack.svg" alt="Mind map" />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21" /></svg>
                 </button>
                 <button
                     className={`mmobile-fab${sheet?.type === 'create' ? ' mmobile-fab--active' : ''}`}
@@ -1520,7 +1639,8 @@ function MobileMindMap() {
                             // With the keyboard up, sit just above it and fit
                             // what's left of the screen (dvh doesn't shrink for
                             // the keyboard on iOS), scrolling inside if needed.
-                            ...(keyboardInset > 0 ? { bottom: `${keyboardInset + 8}px`, maxHeight: `${Math.max(160, viewportHeight - 16)}px` } : {}),
+                            // In the app the status bar overlays the page, so stay below it.
+                            ...(keyboardOpen ? { bottom: `${keyboardInset + 8}px`, maxHeight: `max(160px, calc(${viewportHeight - 16}px - env(safe-area-inset-top, 0px)))` } : {}),
                         } as React.CSSProperties}
                     >
                         <div className="mmobile-sheet-top" {...sheetSwipe.dragProps}>

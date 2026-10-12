@@ -96,7 +96,7 @@ const SCREENS: React.FC[] = [
             </div>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--nav"><img src="/images/MindMapBlack.svg" className="mmobile-help-badge-icon" alt="Navigate" /></span>
-                <p className="mmobile-help-text">The <strong>Mind Map</strong> button shows all your ideas as a tree. Tap one to jump to it, or tap ▸ / ▾ to open and close branches.</p>
+                <p className="mmobile-help-text">Tap <strong>Search</strong> at the bottom to find any idea by what it says. Its <strong>Mind map</strong> button shows all your ideas as a tree: tap one to jump to it, or tap ▸ / ▾ to open and close branches.</p>
             </div>
         </>
     ),

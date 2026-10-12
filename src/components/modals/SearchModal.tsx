@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchFullIdeaList } from '../../utilities';
 import { readRecentVisits } from '../../utilities/idea/recentVisits';
-import { newestIdeas, recentIdeas, searchIdeas, type IdeaKind, type SearchResult } from '../../utilities/idea/search';
+import { KIND_LABEL, searchIdeas, suggestedIdeas, type SearchResult } from '../../utilities/idea/search';
 import AnimatedOverlay from '../AnimatedOverlay';
 
 export interface SearchCommand {
@@ -18,8 +18,6 @@ interface Props {
     commands: SearchCommand[];
 }
 
-const KIND_LABEL: Record<IdeaKind, string> = { idea: 'Idea', link: 'Link', checklist: 'Checklist', note: 'Note' };
-
 type Row =
     | { type: 'command'; command: SearchCommand }
     | { type: 'idea'; result: SearchResult };
@@ -35,17 +33,20 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
         if (open) { setQuery(''); setActive(0); }
     }, [open]);
 
-    const rows = useMemo<Row[]>(() => {
-        if (!open) return [];
+    const { rows, suggestedTitle } = useMemo(() => {
+        if (!open) return { rows: [] as Row[], suggestedTitle: '' };
         const q = query.trim().toLowerCase();
         const matchingCommands = commands.filter((c) => q === '' || c.label.toLowerCase().includes(q));
         const all = fetchFullIdeaList();
-        const visited = recentIdeas(all, readRecentVisits());
-        const results = q !== '' ? searchIdeas(all, query) : visited.length > 0 ? visited : newestIdeas(all);
-        return [
-            ...results.map((result): Row => ({ type: 'idea', result })),
-            ...matchingCommands.map((command): Row => ({ type: 'command', command })),
-        ];
+        const suggested = suggestedIdeas(all, readRecentVisits());
+        const results = q !== '' ? searchIdeas(all, query) : suggested.results;
+        return {
+            rows: [
+                ...results.map((result): Row => ({ type: 'idea', result })),
+                ...matchingCommands.map((command): Row => ({ type: 'command', command })),
+            ],
+            suggestedTitle: suggested.title,
+        };
     }, [open, query, commands]);
 
     useEffect(() => { setActive(0); }, [query]);
@@ -69,9 +70,8 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
 
     const hasQuery = query.trim() !== '';
     const ideaCount = rows.filter((r) => r.type === 'idea').length;
-    const hasVisits = useMemo(() => open && recentIdeas(fetchFullIdeaList(), readRecentVisits()).length > 0, [open]);
-    const groupTitle =(type: Row['type']) =>
-        type === 'command' ? 'Actions' : hasQuery ? `${ideaCount} ${ideaCount === 1 ? 'match' : 'matches'}` : hasVisits ? 'Recent' : 'Newest';
+    const groupTitle = (type: Row['type']) =>
+        type === 'command' ? 'Actions' : hasQuery ? `${ideaCount} ${ideaCount === 1 ? 'match' : 'matches'}` : suggestedTitle;
 
     return (
         <AnimatedOverlay open={open} onClick={onClose} onEscape={onClose}>
