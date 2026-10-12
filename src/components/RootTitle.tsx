@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 // Name length -> how much smaller the title is set, so most names fit whole.
 // Interpolated between these points so the size glides from idea to idea
@@ -34,13 +34,12 @@ interface RootTitleProps {
 // The big title card of the idea you are inside. Click or Enter renames it
 // (except at the top level, where there is nothing to rename).
 function RootTitle({ name, renamable, onRename, onContextMenu }: RootTitleProps) {
-    const [expanded, setExpanded] = useState(false);
+    // Keyed by name so a new idea starts folded in the same render.
+    const [expandedName, setExpandedName] = useState<string | null>(null);
+    const expanded = expandedName === name;
     const length = name.trim().length;
     const scale = Math.round(scaleFor(length) * 100) / 100;
     const long = length > CLAMP_AT;
-
-    // A new idea starts folded.
-    useEffect(() => setExpanded(false), [name]);
 
     // Width, height and font-size can't be CSS-transitioned across a name swap
     // (auto sizes), so glide from the old measurements to the new ones.
@@ -77,6 +76,31 @@ function RootTitle({ name, renamable, onRename, onContextMenu }: RootTitleProps)
         );
     }, [name, scale]);
 
+    // Show more / Show less: line-clamp can't be transitioned, so glide the
+    // card's height from the old measurement to the new one.
+    // Skipped when the name changed too (the rename animation owns that case,
+    // and measuring mid-animation would start a second, conflicting one).
+    const expandSeenName = useRef<string | null>(null);
+    useLayoutEffect(() => {
+        const sameName = expandSeenName.current === name;
+        expandSeenName.current = name;
+        if (!sameName) return;
+        const el = cardRef.current;
+        const prev = last.current;
+        if (!el || !prev) return;
+        const h = el.getBoundingClientRect().height;
+        const from = prev.h;
+        prev.h = h;
+        if (Math.abs(from - h) < 1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        el.animate(
+            [
+                { boxSizing: 'border-box', overflow: 'hidden', height: `${from}px` },
+                { boxSizing: 'border-box', overflow: 'hidden', height: `${h}px` },
+            ],
+            { duration: 300, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+        );
+    }, [expanded, name]);
+
     return (
         <div className="rootTitle">
             <div
@@ -93,7 +117,7 @@ function RootTitle({ name, renamable, onRename, onContextMenu }: RootTitleProps)
                 <span className="ideaRoot-text">{name}</span>
             </div>
             {long && (
-                <button type="button" className="rootTitle-toggle" aria-expanded={expanded} onClick={() => setExpanded(v => !v)}>
+                <button type="button" className="rootTitle-toggle" aria-expanded={expanded} onClick={() => setExpandedName(expanded ? null : name)}>
                     {expanded ? 'Show less ▴' : 'Show more ▾'}
                 </button>
             )}

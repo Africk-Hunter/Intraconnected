@@ -39,7 +39,7 @@ function DeleteConfirmModal() {
 
     return (
         <AnimatedOverlay open={deleteConfirmModalOpen} origin={deleteModalOrigin ?? undefined} onEscape={handleCancel}>
-            <div className="modal neobrutal confirmModal deleteModal" role="alertdialog" aria-labelledby="deleteModalTitle" aria-describedby="deleteModalDetail" onKeyDown={handleKeyDown}>
+            <div className="modal neobrutal confirmModal deleteModal" role="alertdialog" aria-labelledby="deleteModalTitle" aria-describedby={others > 0 ? "deleteModalDetail" : undefined} onKeyDown={handleKeyDown}>
                 <span className="deleteModalIcon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M3 6h18" />
@@ -52,14 +52,13 @@ function DeleteConfirmModal() {
                 <div className="deleteModalName">
                     <span className="deleteModalNameText">{ideaName}</span>
                 </div>
-                <p className="deleteModalDetail" id="deleteModalDetail">
-                    {others > 0 && (
+                {others > 0 && (
+                    <p className="deleteModalDetail" id="deleteModalDetail">
                         <span className="deleteModalCount">
                             + {others} {others === 1 ? 'idea' : 'ideas'} inside it
                         </span>
-                    )}
-                    You can undo this right after.
-                </p>
+                    </p>
+                )}
                 <section className="modalButtons">
                     <button className="modalButton cancel neobrutal-button" onClick={handleCancel} autoFocus>Cancel</button>
                     <button className="modalButton delete neobrutal-button" onClick={handleConfirm}>

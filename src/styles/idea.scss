@@ -238,7 +238,7 @@ body.dnd-blocked * {
     background: $roots;
     padding: .5rem 2rem;
     // Size changes are animated in RootTitle (needs the final size to measure).
-    transition: all 0.3s ease, font-size 0s, width 0s, height 0s;
+    transition: box-shadow 0.3s ease, translate 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
     word-break: break-word;
 
     .ideaRoot-text {
