@@ -21,11 +21,13 @@ const PRIORITIES: { value: 1 | 2 | 3 | undefined; label: string; key: string }[]
 // priority ribbon, or the keyboard (see useCardShortcuts) all open it. The same
 // actions are what drag, F2 and D call, so nothing is reachable only here.
 function CardMenu() {
-    const { cardMenu, setCardMenu } = useIdeaContext();
+    const { cardMenu, setCardMenu, rootId } = useIdeaContext();
     const actions = useIdeaActions();
     const menuRef = useRef<HTMLDivElement>(null);
     const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
+    // The top level (id 1) is not a stored idea: it only offers the copy actions.
+    const isTopLevel = cardMenu?.id === 1;
     const idea = cardMenu ? fetchFullIdeaList().find((i) => i.id === cardMenu.id) : undefined;
 
     function close(returnFocus: boolean) {
@@ -97,32 +99,66 @@ function CardMenu() {
 
     // The idea can disappear while the menu is open (deleted on another device).
     useEffect(() => {
-        if (cardMenu && !idea) setCardMenu(null);
-    }, [cardMenu, idea, setCardMenu]);
+        if (cardMenu && !idea && !isTopLevel) setCardMenu(null);
+    }, [cardMenu, idea, isTopLevel, setCardMenu]);
 
-    if (!cardMenu || !idea) return null;
-
-    const id = idea.id;
-    const link = getIdeaLink(idea);
-    const isChecklist = idea.type === 'checklist';
-    const isNote = isNoteMode(idea);
-    const hasChildren = fetchFullIdeaList().some((i) => i.parentID === id);
-    const canEditLink = !isChecklist && !isNote && (!hasChildren || link !== '');
+    if (!cardMenu) return null;
 
     function run(fn: () => void) {
         setCardMenu(null);
         fn();
     }
 
+    if (isTopLevel) {
+        const topItems: MenuItem[] = [];
+        if (fetchFullIdeaList().some((i) => i.parentID === 1)) {
+            topItems.push({ label: 'Copy all ideas', run: () => actions.copyChildren(1) });
+            topItems.push({ label: 'Copy branch', run: () => actions.copyBranch(1) });
+        }
+        if (topItems.length === 0) { setTimeout(() => setCardMenu(null)); return null; }
+        return (
+            <>
+                <div className="card-menu-backdrop" onMouseDown={() => close(false)} onContextMenu={(e) => { e.preventDefault(); close(false); }} />
+                <div
+                    ref={menuRef}
+                    className="card-menu neobrutal"
+                    role="menu"
+                    aria-label="Idea actions"
+                    style={{ left: pos?.left ?? cardMenu.x, top: pos?.top ?? cardMenu.y, visibility: pos ? 'visible' : 'hidden' }}
+                >
+                    {topItems.map((item) => (
+                        <button key={item.label} className="card-menu-item" role="menuitem" type="button" onClick={() => run(item.run)}>
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </div>
+            </>
+        );
+    }
+
+    if (!idea) return null;
+
+    const id = idea.id;
+    const isCurrent = id === rootId;
+    const link = getIdeaLink(idea);
+    const isChecklist = idea.type === 'checklist';
+    const isNote = isNoteMode(idea);
+    const hasChildren = fetchFullIdeaList().some((i) => i.parentID === id);
+    const canEditLink = !isChecklist && !isNote && (!hasChildren || link !== '');
+
     const items: MenuItem[] = [];
-    if (isChecklist) items.push({ label: 'Open checklist', hint: 'Enter', run: () => actions.openIdea(id) });
-    else if (link !== '') items.push({ label: 'Open link', hint: 'Enter', run: () => actions.openIdea(id) });
-    else if (!isNote) items.push({ label: 'Open', hint: 'Enter', run: () => actions.openIdea(id) });
-    items.push({ label: isNote ? 'Rename note' : isChecklist ? 'Rename checklist' : hasChildren ? 'Rename' : 'Rewrite', hint: 'R', run: () => actions.renameIdea(id) });
+    if (!isCurrent) {
+        if (isChecklist) items.push({ label: 'Open checklist', hint: 'Enter', run: () => actions.openIdea(id) });
+        else if (link !== '') items.push({ label: 'Open link', hint: 'Enter', run: () => actions.openIdea(id) });
+        else if (!isNote) items.push({ label: 'Open', hint: 'Enter', run: () => actions.openIdea(id) });
+    }
+    // The idea you are inside renames through the root flow (id -1).
+    items.push({ label: isNote ? 'Rename note' : isChecklist ? 'Rename checklist' : hasChildren ? 'Rename' : 'Rewrite', hint: 'R', run: () => (isCurrent ? actions.renameIdea() : actions.renameIdea(id)) });
     if (canEditLink) items.push({ label: link !== '' ? 'Change link' : 'Add link', run: () => actions.editIdeaLink(id) });
     items.push({ label: link !== '' ? 'Copy link' : isChecklist ? 'Copy checklist' : isNote ? 'Copy note' : 'Copy text', run: () => actions.copyIdea(id) });
     if (hasChildren) items.push({ label: 'Copy all ideas', run: () => actions.copyChildren(id) });
-    items.push({ label: 'Move to…', hint: 'M', run: () => actions.openMovePicker(id) });
+    if (hasChildren) items.push({ label: 'Copy branch', run: () => actions.copyBranch(id) });
+    if (!isCurrent) items.push({ label: 'Move to…', hint: 'M', run: () => actions.openMovePicker(id) });
     items.push({ label: idea.locked ? 'Unlock idea' : 'Lock idea', run: () => actions.setLocked(id, !idea.locked) });
 
     const rect = document.querySelector<HTMLElement>(`[data-idea-id="${id}"]`)?.getBoundingClientRect();
@@ -161,10 +197,12 @@ function CardMenu() {
                         ))}
                     </div>
                 </div>
-                <button className="card-menu-item card-menu-item--danger" role="menuitem" type="button" onClick={() => run(() => actions.requestDelete(id, origin))}>
-                    <span>Delete</span>
-                    <kbd>D</kbd>
-                </button>
+                {!isCurrent && (
+                    <button className="card-menu-item card-menu-item--danger" role="menuitem" type="button" onClick={() => run(() => actions.requestDelete(id, origin))}>
+                        <span>Delete</span>
+                        <kbd>D</kbd>
+                    </button>
+                )}
             </div>
         </>
     );

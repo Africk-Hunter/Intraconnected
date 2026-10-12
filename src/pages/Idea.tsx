@@ -183,7 +183,7 @@ function Idea() {
         setShowHelp(prev => !prev);
     }
 
-    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan, setNewIdeaSwitch, checklistModalId, setChecklistModalId, setCreationModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
+    const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setCardMenu, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan, setNewIdeaSwitch, checklistModalId, setChecklistModalId, setCreationModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     useBillingPlanSync(setBillingPlan);
     useNodeCountResync(billingPlan, serverSynced);
@@ -435,6 +435,16 @@ function Idea() {
         setIdeas(loadedIdeas);
     }
 
+    // Cards come in one by one when a level opens (first load or navigation), not on
+    // create/delete/move, which have their own animations.
+    const [staggerIn, setStaggerIn] = useState(false);
+    useLayoutEffect(() => {
+        if (isLoadingIdeas) return;
+        setStaggerIn(true);
+        const t = setTimeout(() => setStaggerIn(false), 1200);
+        return () => clearTimeout(t);
+    }, [rootId, isLoadingIdeas]);
+
     function toggleSortMode() {
         const next = sortMode === 'priority' ? 'recent' : 'priority';
         setSortMode(next);
@@ -450,7 +460,9 @@ function Idea() {
         nodes.forEach(el => {
             const flipId = Number(el.dataset.flipId);
             const rect = el.getBoundingClientRect();
-            snap.set(flipId, { top: rect.top, left: rect.left });
+            // Page coordinates: viewport ones go stale as soon as the page scrolls, and
+            // the difference would be animated as if every card had moved.
+            snap.set(flipId, { top: rect.top + window.scrollY, left: rect.left + window.scrollX });
         });
         flipSnapshot.current = snap;
         prevFlipIds.current = Array.from(snap.keys());
@@ -482,7 +494,7 @@ function Idea() {
         nodes.forEach(el => {
             const flipId = Number(el.dataset.flipId);
             const rect = el.getBoundingClientRect();
-            nextSnap.set(flipId, { top: rect.top, left: rect.left });
+            nextSnap.set(flipId, { top: rect.top + window.scrollY, left: rect.left + window.scrollX });
             nextIds.push(flipId);
         });
 
@@ -569,13 +581,14 @@ function Idea() {
                                         if (!ok) return;
                                         window.clearTimeout(copiedAllTimer.current);
                                         setCopiedAll(true);
-                                        copiedAllTimer.current = window.setTimeout(() => setCopiedAll(false), 1200);
+                                        copiedAllTimer.current = window.setTimeout(() => setCopiedAll(false), 1800);
                                     })} aria-disabled={ideas.length === 0} title="Copy every idea in here as a numbered list"><span className="copy-all-glyph" aria-hidden="true">
-                                        <svg className="glyph-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h9" /></svg>
-                                        <svg className="glyph-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                                        {copiedAll
+                                            ? <svg className="glyph-done" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                                            : <svg className="glyph-copy" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h9" /></svg>}
                                     </span>{copiedAll ? 'Copied' : 'Copy all'}</button>
                                 </section>
-                                <RootTitle name={rootName} renamable={rootId !== 1} onRename={() => setRenameModalOpen(true)} />
+                                <RootTitle name={rootName} renamable={rootId !== 1} onRename={() => setRenameModalOpen(true)} onContextMenu={(x, y) => setCardMenu({ id: rootId, x, y })} />
                                 <div className="rootSpacer">
                                     {(rootId !== 1) && <LastIdea lastRootName={lastRootName} />}
                                 </div>
@@ -591,8 +604,13 @@ function Idea() {
                                             <span className="ideaNode-loading-dot" />
                                             <span className="ideaNode-loading-dot" />
                                         </div>
-                                    ) : displayedIdeas?.map((idea: IdeaType) => (
-                                        <div key={idea.id} data-flip-id={idea.id} className={isNoteWide(idea) ? 'ideaNodes-wide-item' : undefined}>
+                                    ) : displayedIdeas?.map((idea: IdeaType, index: number) => (
+                                        <div
+                                            key={idea.id}
+                                            data-flip-id={idea.id}
+                                            className={`${isNoteWide(idea) ? 'ideaNodes-wide-item' : ''}${staggerIn ? ' ideaNodes-stagger' : ''}`.trim() || undefined}
+                                            style={staggerIn ? { animationDelay: `${Math.min(index, 20) * 35}ms` } : undefined}
+                                        >
                                             <IdeaNode
                                                 idea={idea}
                                                 isLeaf={checkIfIdeaIsLeaf(idea.id)}

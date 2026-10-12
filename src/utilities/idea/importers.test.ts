@@ -8,6 +8,7 @@ import {
     parseFreeMind,
     parseImportFiles,
     parseIndentedText,
+    parseTaskCsv,
     parseMarkdown,
     parseOpml,
     parseXmindJson,
@@ -269,6 +270,60 @@ describe("importToIdeas", () => {
         ] }] });
         expect(list).toMatchObject({ type: "checklist", content: "Groceries", priority: 2 });
         expect((list as ChecklistIdea).items.map((i) => [i.text, i.checked, i.link])).toEqual([["Milk", true, undefined], ["Recipe", false, "https://r.io"]]);
+    });
+
+    it("gathers tasks mixed in with other children into a 'Tasks' checklist", () => {
+        const ideas = place({ title: "T", nodes: [{ text: "Day 1", children: [
+            { text: "Hotel", task: { checked: true }, children: [] },
+            { text: "Landing time", children: [] },
+            { text: "Tram", task: { checked: false }, children: [] },
+        ] }] });
+        const day = ideas[1];
+        const kids = ideas.filter((i) => i.parentID === day.id);
+        expect(kids.map((i) => [i.type ?? "standard", i.content])).toEqual([["checklist", "Tasks"], ["standard", "Landing time"]]);
+        expect((kids[0] as ChecklistIdea).items.map((i) => [i.text, i.checked])).toEqual([["Hotel", true], ["Tram", false]]);
+    });
+
+    it("reads Logseq TODO/DONE markers as tasks", () => {
+        const [a, b, c] = parseMarkdown("- DONE Renew passport\n- TODO Book flights\n- Todo list ideas\n").nodes;
+        expect(a).toMatchObject({ text: "Renew passport", task: { checked: true } });
+        expect(b).toMatchObject({ text: "Book flights", task: { checked: false } });
+        expect(c.task).toBeUndefined();
+    });
+
+    it("reads OPML _complete and treats the bare siblings as open tasks", () => {
+        const { nodes } = parseOpml(`<opml><body><outline text="Pack"><outline text="Passport" _complete="true"/><outline text="Sunscreen"/></outline></body></opml>`);
+        // The lone "Pack" root becomes the title, so its children are the nodes.
+        expect(nodes.map((c) => [c.text, c.task])).toEqual([["Passport", { checked: true }], ["Sunscreen", { checked: false }]]);
+    });
+
+    it("reads a Todoist CSV: sections hold tasks, indent nests, notes attach", () => {
+        const csv = [
+            "TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR",
+            'section,Home,,,,',
+            'task,"Buy milk, eggs","2 litres",1,1,me',
+            "note,Remember the card,,,,",
+            "task,Check dairy aisle,,4,2,me",
+            "task,Call plumber,,4,1,me",
+        ].join("\n");
+        const { nodes } = parseTaskCsv(csv);
+        expect(nodes).toHaveLength(1);
+        const [milk, plumber] = nodes[0].children;
+        expect(milk).toMatchObject({ text: "Buy milk, eggs", priority: 1, note: "2 litres\n\nRemember the card" });
+        expect(milk.children[0]).toMatchObject({ text: "Check dairy aisle", task: { checked: false } });
+        expect(plumber.text).toBe("Call plumber");
+    });
+
+    it("reads a TickTick CSV, grouping by list and keeping done state", () => {
+        const csv = [
+            '"Date: 2026-10-12"',
+            '"Folder Name","List Name","Title","Content","Status","Priority"',
+            '"","Errands","Post letter","","0","5"',
+            '"","Errands","Pay rent","","2","0"',
+        ].join("\n");
+        const { nodes } = parseTaskCsv(csv);
+        expect(nodes[0].text).toBe("Errands");
+        expect(nodes[0].children.map((c) => [c.text, c.task?.checked, c.priority])).toEqual([["Post letter", false, 1], ["Pay rent", true, undefined]]);
     });
 
     it("makes a note idea from a noted leaf, and a 'Note' child for a noted parent", () => {

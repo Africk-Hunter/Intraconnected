@@ -46,7 +46,7 @@ export interface ParsedImport extends ImportDoc {
 
 export class ImportError extends Error {}
 
-export const SUPPORTED_IMPORT_EXTENSIONS = ['.opml', '.md', '.markdown', '.txt', '.mm', '.xmind', '.zip', '.json', '.xml'];
+export const SUPPORTED_IMPORT_EXTENSIONS = ['.opml', '.md', '.markdown', '.txt', '.mm', '.xmind', '.zip', '.json', '.xml', '.csv'];
 
 // ── Shared text helpers ─────────────────────────────────────────────────────
 
@@ -116,8 +116,22 @@ function outlineToNode(el: XmlElement): ImportNode {
     if (priority) out.priority = priority;
     if (isWebLink(link)) out.link = link.trim();
     if (note?.trim()) out.note = normalizeNewlines(note).trim();
+    // Workflowy/Dynalist (_complete) and the OPML task convention (_status).
+    if (!out.task && (isTrue(el.attrs._complete) || el.attrs._status === 'checked')) out.task = { checked: true };
     out.children = childElements(el, 'outline').map(outlineToNode);
+    markSiblingTasks(out.children);
     return out;
+}
+
+function isTrue(value: string | undefined): boolean {
+    return value?.toLowerCase() === 'true';
+}
+
+// Outliners that only record "done" (no unchecked marker) leave the open items
+// bare. When a list has a completed leaf, its other leaves are the open tasks.
+function markSiblingTasks(siblings: ImportNode[]): void {
+    if (!siblings.some((c) => c.task?.checked && c.children.length === 0)) return;
+    for (const c of siblings) if (!c.task && c.children.length === 0) c.task = { checked: false };
 }
 
 // A document whose body is a single plain topic (a mind map's central topic,
@@ -177,6 +191,9 @@ function freeMindToNode(el: XmlElement): ImportNode {
     for (const icon of childElements(el, 'icon')) {
         const level = /^full-([123])$/.exec(icon.attrs.BUILTIN ?? '');
         if (level && !out.priority) out.priority = Number(level[1]) as 1 | 2 | 3;
+        const builtin = icon.attrs.BUILTIN ?? '';
+        if (builtin === 'checked' || builtin === 'button_ok') out.task = { checked: true };
+        else if (builtin === 'unchecked') out.task = { checked: false };
     }
     if (isWebLink(el.attrs.LINK)) out.link = el.attrs.LINK.trim();
     const note = notes.filter(Boolean).join('\n\n');
@@ -201,6 +218,13 @@ function xmindPriority(markerIds: string[]): 1 | 2 | 3 | undefined {
     return undefined;
 }
 
+// XMind task markers: task-done is finished, any other task-* is still open.
+function xmindTask(markerIds: string[]): { checked: boolean } | undefined {
+    const ids = markerIds.filter((id) => id.startsWith('task-'));
+    if (ids.length === 0) return undefined;
+    return { checked: ids.includes('task-done') };
+}
+
 interface XmindJsonTopic {
     title?: string;
     href?: string;
@@ -214,8 +238,11 @@ function xmindJsonToNode(topic: XmindJsonTopic): ImportNode {
     if (isWebLink(topic.href)) out.link = topic.href.trim();
     const note = topic.notes?.plain?.content?.trim();
     if (note) out.note = normalizeNewlines(note);
-    const priority = xmindPriority((topic.markers ?? []).map((m) => m.markerId ?? ''));
+    const markerIds = (topic.markers ?? []).map((m) => m.markerId ?? '');
+    const priority = xmindPriority(markerIds);
     if (priority) out.priority = priority;
+    const task = xmindTask(markerIds);
+    if (task) out.task = task;
     out.children = [...(topic.children?.attached ?? []), ...(topic.children?.detached ?? [])].map(xmindJsonToNode);
     return out;
 }
@@ -241,8 +268,11 @@ function xmindXmlToNode(topic: XmlElement): ImportNode {
     const plain = notes && firstChild(notes, 'plain');
     if (plain && textContent(plain).trim()) out.note = normalizeNewlines(textContent(plain)).trim();
     const markers = firstChild(topic, 'marker-refs');
-    const priority = markers && xmindPriority(childElements(markers, 'marker-ref').map((m) => m.attrs['marker-id'] ?? ''));
+    const markerIds = markers ? childElements(markers, 'marker-ref').map((m) => m.attrs['marker-id'] ?? '') : [];
+    const priority = xmindPriority(markerIds);
     if (priority) out.priority = priority;
+    const task = xmindTask(markerIds);
+    if (task) out.task = task;
     const children = firstChild(topic, 'children');
     out.children = children
         ? childElements(children, 'topics').flatMap((group) => childElements(group, 'topic').map(xmindXmlToNode))
@@ -382,8 +412,12 @@ export function parseMarkdown(markdown: string): ImportDoc {
             let body = item[2] ?? '';
             const task = /^\[([ xX])\](?:\s+|$)(.*)$/.exec(body);
             if (task) body = task[2];
+            // Logseq/Org-style markers: DONE is checked, the rest are open.
+            const marker = task ? null : /^(TODO|DOING|NOW|LATER|WAIT|WAITING|IN-PROGRESS|DONE)\s+(.*)$/.exec(body);
+            if (marker) body = marker[2];
             const li = markdownNode(body);
             if (task) li.task = { checked: task[1] !== ' ' };
+            else if (marker) li.task = { checked: marker[1] === 'DONE' };
             while (list.length && list[list.length - 1].indent >= indent) list.pop();
             (list.length ? list[list.length - 1].node.children : container()).push(li);
             list.push({ indent, node: li });
@@ -491,6 +525,95 @@ export function parseIntraconnectedJson(json: string): ImportDoc {
     return { title: tree.hasStoredRoot ? tree.title : undefined, nodes: tree.topLevel.map(toNode) };
 }
 
+// ── Task apps (CSV) ─────────────────────────────────────────────────────────
+
+function parseCsv(text: string): string[][] {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let field = '';
+    let quoted = false;
+    const src = normalizeNewlines(text);
+    for (let k = 0; k < src.length; k++) {
+        const ch = src[k];
+        if (quoted) {
+            if (ch === '"' && src[k + 1] === '"') { field += '"'; k++; }
+            else if (ch === '"') quoted = false;
+            else field += ch;
+        } else if (ch === '"') quoted = true;
+        else if (ch === ',') { row.push(field); field = ''; }
+        else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+        else field += ch;
+    }
+    if (field || row.length) { row.push(field); rows.push(row); }
+    return rows.filter((r) => r.some((c) => c.trim()));
+}
+
+// Todoist's CSV export (TYPE, CONTENT, DESCRIPTION, PRIORITY, INDENT, ...) and
+// TickTick's backup CSV (a few info lines, then a header with "List Name",
+// "Title", "Status"...). Tasks become tasks; sections and lists become ideas
+// that hold them, so a list of tasks lands as a checklist.
+export function parseTaskCsv(text: string): ImportDoc {
+    const rows = parseCsv(text);
+    const headerAt = rows.findIndex((r) => r.includes('CONTENT') || r.includes('Title'));
+    if (headerAt === -1) throw new ImportError('This CSV isn’t a Todoist or TickTick export.');
+    const header = rows[headerAt];
+    const col = (row: string[], name: string) => (row[header.indexOf(name)] ?? '').trim();
+    const body = rows.slice(headerAt + 1);
+
+    if (header.includes('CONTENT')) {
+        const top: ImportNode[] = [];
+        const stack: ImportNode[] = [];
+        let section: ImportNode | null = null;
+        let lastTask: ImportNode | null = null;
+        for (const row of body) {
+            const type = col(row, 'TYPE').toLowerCase();
+            const content = col(row, 'CONTENT');
+            if (type === 'section') {
+                section = node(content);
+                top.push(section);
+                stack.length = 0;
+                lastTask = null;
+            } else if (type === 'note') {
+                if (lastTask && content) lastTask.note = lastTask.note ? `${lastTask.note}\n\n${content}` : content;
+            } else if (type === 'task') {
+                const { text: title, link } = cleanInline(content);
+                const task = node(title, { task: { checked: false } });
+                if (isWebLink(link)) task.link = link;
+                const desc = col(row, 'DESCRIPTION');
+                if (desc) task.note = desc;
+                // Todoist: 1 = highest ... 4 = none.
+                const p = Number(col(row, 'PRIORITY'));
+                if (p >= 1 && p <= 3) task.priority = p as 1 | 2 | 3;
+                const depth = Math.max(Number(col(row, 'INDENT')) || 1, 1) - 1;
+                stack.length = Math.min(stack.length, depth);
+                (stack.length ? stack[stack.length - 1].children : section ? section.children : top).push(task);
+                stack.push(task);
+                lastTask = task;
+            }
+        }
+        return { nodes: top };
+    }
+
+    // TickTick: group by list; Status 0 = open, 1/2 = done.
+    const lists = new Map<string, ImportNode>();
+    for (const row of body) {
+        const title = col(row, 'Title');
+        if (!title) continue;
+        const listName = col(row, 'List Name') || 'Tasks';
+        let list = lists.get(listName);
+        if (!list) lists.set(listName, (list = node(listName)));
+        const task = node(title, { task: { checked: col(row, 'Status') !== '0' && col(row, 'Status') !== '' } });
+        const content = col(row, 'Content');
+        if (content) task.note = content;
+        const p = Number(col(row, 'Priority'));
+        if (p === 5) task.priority = 1;
+        else if (p === 3) task.priority = 2;
+        else if (p === 1) task.priority = 3;
+        list.children.push(task);
+    }
+    return { nodes: [...lists.values()] };
+}
+
 // ── Files → document ────────────────────────────────────────────────────────
 
 function extensionOf(name: string): string {
@@ -532,6 +655,7 @@ function parseTextDocument(name: string, text: string): { doc: ImportDoc; format
         if (/"rootTopic"/.test(text.slice(0, 5000))) return { doc: parseXmindJson(text), format: 'XMind' };
         return { doc: parseIntraconnectedJson(text), format: 'Intraconnected JSON' };
     }
+    if (ext === '.csv') return { doc: parseTaskCsv(text), format: 'Todoist/TickTick CSV' };
     if (ext === '.txt' && !looksLikeMarkdown(text)) return { doc: parseIndentedText(text), format: 'plain text' };
     if (ext === '.md' || ext === '.markdown' || ext === '.txt' || ext === '') return { doc: parseMarkdown(text), format: 'Markdown' };
     throw new ImportError(`“${name}” isn’t a supported file type.`);
@@ -720,11 +844,27 @@ export function importToIdeas(doc: ImportDoc & { title: string }, options: Impor
         push({ id, content: text || n.link || UNTITLED, parentID, link: keepLink ? n.link! : '', ...priority });
         if (n.note) push({ id: ideas.length, content: n.note, parentID: id, link: '', isNote: true, noteTitle: 'Note' });
         if (n.link && !keepLink) push({ id: ideas.length, content: text || n.link, parentID: id, link: n.link });
-        n.children.forEach((c) => place(c, id));
+        placeAll(n.children, id);
+    };
+
+    // Plain leaf tasks mixed in with other siblings are gathered into one
+    // checklist (a checklist idea can't hold ideas, and a lone task has no
+    // idea form); the other siblings follow as ordinary ideas.
+    const placeAll = (nodes: ImportNode[], parentID: number) => {
+        const tasks = nodes.filter((c) => c.task && c.children.length === 0);
+        const mixed = tasks.length > 0 && tasks.length < nodes.length;
+        if (mixed) {
+            const id = ideas.length;
+            const source = tasks.map((c) => ({ text: c.text, checked: c.task!.checked, link: c.link }));
+            push({ type: 'checklist', id, content: 'Tasks', parentID, items: itemsFrom(source, id) });
+        }
+        nodes.forEach((c) => {
+            if (!mixed || !tasks.includes(c)) place(c, parentID);
+        });
     };
 
     push({ id: 0, content: doc.title.trim() || 'Imported ideas', parentID: options.parentID ?? 1, link: '' });
-    doc.nodes.forEach((n) => place(n, 0));
+    placeAll(doc.nodes, 0);
 
     // Swap the placeholder indexes for real ids.
     const ids: number[] = [];

@@ -37,6 +37,23 @@ function markCopied(id: number) {
 // The desktop screen's actions on an idea in one place, so the drag, the card
 // menu, the keyboard and Undo all do exactly the same thing: change the data
 // through ideaStore, remember how to reverse it, and refresh what is on screen.
+// Deleting a bottom-row card shortens the page, and the browser clamps the scroll position
+// upwards. Keep the page at its current height until the user scrolls on their own.
+function holdPageHeight() {
+    const root = document.documentElement;
+    if (window.scrollY <= 0) return;
+    root.style.minHeight = `${root.scrollHeight}px`;
+    const release = () => {
+        root.style.minHeight = '';
+        window.removeEventListener('wheel', release);
+        window.removeEventListener('touchmove', release);
+        window.removeEventListener('keydown', release);
+    };
+    window.addEventListener('wheel', release, { once: true, passive: true });
+    window.addEventListener('touchmove', release, { once: true, passive: true });
+    window.addEventListener('keydown', release, { once: true });
+}
+
 export function useIdeaActions() {
     const {
         rootId, setIdeas, setNewIdeaSwitch, navigateToId, setChecklistModalId,
@@ -59,6 +76,7 @@ export function useIdeaActions() {
             ? `Deleted "${name}" and ${removed.length - 1} more`
             : `Deleted "${name}"`;
         pushUndo({ label, undo: () => restoreIdeas(removed) });
+        holdPageHeight();
         refresh();
     }, [refresh]);
 
@@ -83,6 +101,7 @@ export function useIdeaActions() {
             undo: () => updateIdeaParentId(id, oldParentId),
             action: { label: 'Take me there', run: () => navigateToId(newParentId) },
         });
+        holdPageHeight();
         refresh();
     }, [refresh, navigateToId]);
 
@@ -150,18 +169,54 @@ export function useIdeaActions() {
     const copyChildren = useCallback((id: number): Promise<boolean> => {
         const children = getIdeasByParentID(id);
         if (children.length === 0) return Promise.resolve(false);
-        const text = children.map((child, i) => {
-            const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
+        const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
+        const list = children.map((child, i) => {
             const body = isNoteMode(child)
                 ? [oneLine((child as { noteTitle?: string }).noteTitle ?? ''), oneLine(child.content)].filter(Boolean).join(' - ')
                 : oneLine(child.content);
             const link = getIdeaLink(child);
             return `${i + 1}. ${link !== '' ? `${body} (${link})` : body}`;
         }).join('\n');
+        const text = `${oneLine(getNameFromID(id)) || 'Untitled'}\n-----------\n${list}\n########`;
         return navigator.clipboard.writeText(text)
             .then(() => {
                 markCopied(id);
                 showNotice(`Copied ${children.length} ${children.length === 1 ? 'idea' : 'ideas'} from "${shortName(id)}"`);
+                return true;
+            })
+            .catch(() => {
+                showNotice("Couldn't copy to the clipboard");
+                return false;
+            });
+    }, []);
+
+    // The whole branch under this idea, nested ideas indented with 1.1-style numbers.
+    const copyBranch = useCallback((id: number): Promise<boolean> => {
+        if (getIdeasByParentID(id).length === 0) return Promise.resolve(false);
+        const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
+        const seen = new Set<number>([id]);
+        let total = 0;
+        const lines: string[] = [];
+        const walk = (parentId: number, prefix: string, depth: number) => {
+            getIdeasByParentID(parentId).forEach((child, i) => {
+                if (seen.has(child.id)) return;
+                seen.add(child.id);
+                total++;
+                const body = isNoteMode(child)
+                    ? [oneLine((child as { noteTitle?: string }).noteTitle ?? ''), oneLine(child.content)].filter(Boolean).join(' - ')
+                    : oneLine(child.content);
+                const link = getIdeaLink(child);
+                const num = `${prefix}${i + 1}`;
+                lines.push(`${'   '.repeat(depth)}${num}. ${link !== '' ? `${body} (${link})` : body}`);
+                walk(child.id, `${num}.`, depth + 1);
+            });
+        };
+        walk(id, '', 0);
+        const text = `${oneLine(getNameFromID(id)) || 'Untitled'}\n-----------\n${lines.join('\n')}\n########`;
+        return navigator.clipboard.writeText(text)
+            .then(() => {
+                markCopied(id);
+                showNotice(`Copied ${total} ${total === 1 ? 'idea' : 'ideas'} from "${shortName(id)}" and below`);
                 return true;
             })
             .catch(() => {
@@ -178,7 +233,7 @@ export function useIdeaActions() {
 
     return {
         deleteIdea, requestDelete, moveIdea, setPriority, setLocked, openIdea, renameIdea,
-        editIdeaLink, copyIdea, copyChildren, openMovePicker, undo,
+        editIdeaLink, copyIdea, copyChildren, copyBranch, openMovePicker, undo,
     };
 }
 

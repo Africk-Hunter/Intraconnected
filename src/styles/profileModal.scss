@@ -407,6 +407,37 @@ $profile-scrollbar-end-gap: 6px;
     color: $danger;
 }
 
+.profile-import-success {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin: 0 0 0.9rem 0;
+    padding: 0.8rem 1rem;
+    background: lighten($leaf, 38%);
+    border: 3px solid #111;
+    box-shadow: 4px 4px 0 #111;
+    color: #111;
+
+    .profile-import-success-icon {
+        flex: none;
+        width: 1.8rem;
+        height: 1.8rem;
+        color: $leaf;
+    }
+
+    .profile-import-success-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    .profile-import-success-text {
+        margin: 0.15rem 0 0 0;
+        font-size: 0.95rem;
+        overflow-wrap: anywhere;
+    }
+}
+
 // "Send reset link" + "Open <mail provider>"; wraps (and stacks on mobile,
 // where buttons are full width) with room between the two.
 .profile-reset-actions {

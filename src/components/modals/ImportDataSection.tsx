@@ -145,9 +145,18 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
     } else if (state.step === 'done') {
         body = (
             <>
-                <p className="profile-import-status" role="status">
-                    Imported {state.count} {state.count === 1 ? 'idea' : 'ideas'} into “{state.title}” on your home screen.
-                </p>
+                <div className="profile-import-success" role="status">
+                    <svg className="profile-import-success-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" fill="currentColor" />
+                        <path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div>
+                        <p className="profile-import-success-title">Import complete</p>
+                        <p className="profile-import-success-text">
+                            Added {state.count} {state.count === 1 ? 'idea' : 'ideas'} under “{state.title}” on your home screen.
+                        </p>
+                    </div>
+                </div>
                 <div className="profile-export-buttons">{chooseButton('Import another file')}</div>
             </>
         );
@@ -164,8 +173,8 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
         <section className="profile-section profile-section--import">
             <h3 className="profile-section-title">Import Data</h3>
             <p className="profile-section-desc">
-                Bring your ideas over from Workflowy, XMind, MindNode, MindMeister, Obsidian, Notion and more. Accepts OPML,
-                Markdown, Notion’s .zip export, plain text, FreeMind (.mm), XMind (.xmind) and Intraconnected JSON.
+                Bring your ideas over from Workflowy, XMind, MindNode, MindMeister, Obsidian, Notion, Todoist and more. Accepts OPML,
+                Markdown, Notion’s .zip export, plain text, FreeMind (.mm), XMind (.xmind), Todoist/TickTick CSV and Intraconnected JSON.
             </p>
             <input
                 ref={inputRef}

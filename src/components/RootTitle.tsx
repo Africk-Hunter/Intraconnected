@@ -28,11 +28,12 @@ interface RootTitleProps {
     name: string;
     renamable: boolean;
     onRename: () => void;
+    onContextMenu: (x: number, y: number) => void;
 }
 
 // The big title card of the idea you are inside. Click or Enter renames it
 // (except at the top level, where there is nothing to rename).
-function RootTitle({ name, renamable, onRename }: RootTitleProps) {
+function RootTitle({ name, renamable, onRename, onContextMenu }: RootTitleProps) {
     const [expanded, setExpanded] = useState(false);
     const length = name.trim().length;
     const scale = Math.round(scaleFor(length) * 100) / 100;
@@ -83,6 +84,7 @@ function RootTitle({ name, renamable, onRename }: RootTitleProps) {
                 className={`ideaRoot neobrutal-button${long && !expanded ? ' ideaRoot--clamped' : ''}${long && expanded ? ' ideaRoot--expanded' : ''}`}
                 style={{ '--root-scale': scale } as React.CSSProperties}
                 onClick={() => { if (renamable) onRename(); }}
+                onContextMenu={e => { e.preventDefault(); onContextMenu(e.clientX, e.clientY); }}
                 title={renamable ? 'Rename (F2)' : undefined}
                 role={renamable ? 'button' : undefined}
                 tabIndex={renamable ? 0 : undefined}
