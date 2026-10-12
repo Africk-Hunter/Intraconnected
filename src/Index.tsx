@@ -9,6 +9,7 @@ import { lazy, Suspense } from 'react';
 import { IdeaProvider } from './context/IdeaContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
+import ReportModal from './components/modals/ReportModal';
 import { isNative } from './utilities/platform';
 
 // One chunk per route, so the marketing pages (the first thing a new
@@ -31,6 +32,7 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
+  <>
   <ErrorBoundary>
     <IdeaProvider>
       <BrowserRouter>
@@ -51,4 +53,6 @@ root.render(
       </BrowserRouter>
     </IdeaProvider>
   </ErrorBoundary>
+  <ReportModal />
+  </>
 );

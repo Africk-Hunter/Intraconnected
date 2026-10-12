@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { describeError, failedReloads, recordReload, RELOADS_BEFORE_DETAILS } from '../utilities/errorDetails';
+import { openReport } from '../utilities/reportProblem';
+import { describeError,failedReloads, recordReload, RELOADS_BEFORE_DETAILS } from '../utilities/errorDetails';
 
 interface Props {
     children: ReactNode;
@@ -68,6 +69,12 @@ class ErrorBoundary extends Component<Props, State> {
                             </p>
                             <button className="error-boundary-submit neobrutal-button continue" autoFocus onClick={this.reload}>
                                 Reload
+                            </button>
+                            <button
+                                className="error-boundary-toggle neobrutal-button"
+                                onClick={() => openReport({ area: 'crash', error: this.state.error })}
+                            >
+                                Send a report
                             </button>
                             {failedReloads() >= RELOADS_BEFORE_DETAILS && (
                                 <div className="error-boundary-details">

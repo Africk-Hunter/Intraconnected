@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { dismissSyncNotice, getSyncStatus, subscribeSyncStatus } from '../utilities/sync/syncStore';
 import { discardFailed, retryFailed } from '../utilities/sync/outbox';
+import ReportLink from './ReportLink';
 
 // Changes normally reach the server in well under a second; only call the
 // queue out once one has been waiting noticeably longer than that.
@@ -81,6 +82,11 @@ function SyncStatusBanner() {
                         >
                             Discard change
                         </button>
+                        <ReportLink
+                            area="sync"
+                            error={status.failure.message}
+                            className="syncBanner__button neobrutal-button"
+                        />
                     </div>
                 </div>
             )}

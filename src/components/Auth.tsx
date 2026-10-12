@@ -3,6 +3,7 @@ import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail, sendEmailVerification } from "firebase/auth";
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
+import ReportLink from "./ReportLink";
 import { LinkOutIcon } from "./Icons";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail } from "../utilities/crypto";
@@ -31,6 +32,7 @@ const Auth: React.FC = () => {
     const pendingEncDataRef = useRef<EncryptionDoc | null>(null);
 
     const { setMessageBoxMessage, setMessageType } = useIdeaContext();
+    const [reportableFailure, setReportableFailure] = useState<string | null>(null);
 
     useEffect(() => { hideSplash(); }, []);
 
@@ -62,7 +64,11 @@ const Auth: React.FC = () => {
         };
     }, [showConfirmPassword, email, password, confirmPassword]);
 
-    function displayMessage(message: string, type: string) {
+    // `reportable` marks a failure of ours (not a wrong password or a bad
+    // field): the toast vanishes after 3s, so the "Send a report" link below
+    // the form stays until the next attempt.
+    function displayMessage(message: string, type: string, reportable = false) {
+        setReportableFailure(reportable ? message : null);
         setMessageBoxMessage(message);
         setMessageType(type);
         setTimeout(() => {
@@ -147,7 +153,7 @@ const Auth: React.FC = () => {
                 if (error.code === 'auth/email-already-in-use') {
                     displayMessage('An account with that email already exists.', 'bad');
                 } else {
-                    displayMessage('Could not create account. Please try again.', 'bad');
+                    displayMessage('Could not create account. Please try again.', 'bad', true);
                 }
             });
     }
@@ -162,7 +168,7 @@ const Auth: React.FC = () => {
             displayMessage('Password reset email sent!', 'good');
             setResetSentTo(email.trim());
         } catch {
-            displayMessage('Could not send reset email. Check your address.', 'bad');
+            displayMessage('Could not send reset email. Check your address.', 'bad', true);
         }
     }
 
@@ -227,7 +233,7 @@ const Auth: React.FC = () => {
         } catch (error) {
             isSigningIn.current = false;
             console.error('Encryption setup error:', error);
-            displayMessage('Login error, please try again.', 'bad');
+            displayMessage('Login error, please try again.', 'bad', true);
         }
     }
 
@@ -238,7 +244,7 @@ const Auth: React.FC = () => {
         const userEmail = auth.currentUser?.email;
 
         if (!encData?.emailEncryptedDEK || !userEmail) {
-            displayMessage('Email recovery is not set up for this account. Please contact support.', 'bad');
+            displayMessage('Email recovery is not set up for this account. Please contact support.', 'bad', true);
             return;
         }
 
@@ -254,7 +260,7 @@ const Auth: React.FC = () => {
                 dek = await unwrapDEKWithEmail(encData.pendingEmailEncryptedDEK, userEmail, uid);
             }
         } catch {
-            displayMessage('Email recovery failed. Your email may have changed since setup.', 'bad');
+            displayMessage('Email recovery failed. Your email may have changed since setup.', 'bad', true);
             return;
         }
 
@@ -269,7 +275,7 @@ const Auth: React.FC = () => {
 
             window.location.replace('/main');
         } catch {
-            displayMessage('Could not save your new keys. Please try again.', 'bad');
+            displayMessage('Could not save your new keys. Please try again.', 'bad', true);
         }
     }
 
@@ -278,6 +284,9 @@ const Auth: React.FC = () => {
     return (
         <div className="auth">
             <MessageBox />
+            {reportableFailure && (
+                <p className="authReport">Not a mistake on your side? <ReportLink area="sign-in" error={reportableFailure} /></p>
+            )}
             <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
             <section className="authForm">
                 <section className="authInputs">

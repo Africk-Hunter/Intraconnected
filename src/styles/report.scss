@@ -1,0 +1,196 @@
+@use './variables' as *;
+
+// Above the crash screen (.overlay), which it opens on top of.
+.overlay.report-overlay {
+    z-index: 10000;
+}
+
+$report-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+@keyframes reportSentIn {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes reportFadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.neobrutal.modal.report-modal {
+    display: block;
+    width: min(32rem, 92vw);
+    min-height: auto;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    text-align: left;
+
+    @media (max-width: $mobile) {
+        width: 92%;
+        min-height: auto;
+        padding: 1.25rem 1rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        width: min(36rem, 92vw);
+        min-height: auto;
+    }
+
+    // The shared button row has a fixed width meant for wider modals.
+    .modalButtons {
+        width: 100%;
+        gap: 1rem;
+        margin-top: 0.25rem;
+
+        .modalButton {
+            flex: 1;
+        }
+    }
+}
+
+.report-form,
+.report-sent {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.report-sent {
+    align-items: center;
+    text-align: center;
+    animation: reportFadeUp 0.25s $report-ease both;
+
+    .report-text {
+        max-width: 24rem;
+    }
+}
+
+.report-sent-icon {
+    color: $leaf;
+    animation: reportSentIn 0.35s $report-ease both;
+}
+
+.report-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.report-text {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.4;
+}
+
+.report-field {
+    position: relative;
+    display: flex;
+}
+
+.report-textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 8rem;
+    padding: 0.6rem 0.75rem;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 1rem; // 16px+ so iOS doesn't zoom on focus
+    line-height: 1.4;
+}
+
+.report-count {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 0.45rem;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+
+    &--shown {
+        opacity: 0.65;
+    }
+}
+
+.report-contact {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.report-textarea:disabled,
+.report-contact:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.report-attached {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    opacity: 0.75;
+}
+
+// Opens by grid rows so the buttons glide down instead of jumping.
+.report-error-slot {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.2s $report-ease;
+
+    &[data-open='true'] {
+        grid-template-rows: 1fr;
+    }
+
+    .report-error {
+        min-height: 0;
+        overflow: hidden;
+    }
+}
+
+.report-error {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $danger;
+}
+
+.report-modal .modalButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    translate: none;
+    box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .report-sent,
+    .report-sent-icon {
+        animation: none;
+    }
+
+    .report-error-slot,
+    .report-count {
+        transition: none;
+    }
+}
+
+// Inline in a message: reads as a link, not a button.
+.report-link {
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    color: inherit;
+    text-decoration: underline;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+// Below the sign-in form: stays after the 3s toast has gone.
+.authReport {
+    margin: 0.5rem 0 0;
+    font-size: 0.95rem;
+    text-align: center;
+}

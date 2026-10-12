@@ -4,6 +4,7 @@ import type { CheckoutIntent, CheckoutPlan } from "../../utilities/billing/billi
 import { formatMoney } from "../../utilities/billing/billing";
 import { getCardElementStyle } from "../../utilities/billing/stripeAppearance";
 import NodeLoader from "./NodeLoader";
+import ReportLink from "../ReportLink";
 import { LockIcon } from "../Icons";
 
 const PLAN_LABEL: Record<CheckoutPlan, { label: string; suffix: string }> = {
@@ -58,7 +59,7 @@ function CheckoutForm({ plan, intent, onDone }: Props) {
                     <CardElement options={{ style: getCardElementStyle() }} />
                 </div>
             </div>
-            {error && <p className="checkoutModalError">{error}</p>}
+            {error && <p className="checkoutModalError">{error} <ReportLink area="checkout" error={error} /></p>}
             {plan === "annual" && (
                 <p className="checkoutFormRenewal">
                     Your subscription renews automatically every year at {formatMoney(intent.amount, intent.currency)} until you cancel.

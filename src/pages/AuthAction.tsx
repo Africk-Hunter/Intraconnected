@@ -1,3 +1,4 @@
+import ReportLink from "../components/ReportLink";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth } from "../firebaseConfig";
@@ -192,6 +193,15 @@ const AuthAction: React.FC = () => {
                         <button className="authActionBtn neobrutal-button neutral" onClick={() => navigate("/login")}>
                             Back to sign in
                         </button>
+                        <div className="authActionHelp">
+                            <p className="authActionHelpText">Still stuck? Tell us what happened.</p>
+                            <ReportLink
+                                area="email-link"
+                                error={errorMessage}
+                                className="authActionReport"
+                                label="Send a report"
+                            />
+                        </div>
                     </>
                 )}
             </div>

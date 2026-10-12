@@ -424,6 +424,65 @@ div.largeLogo:not(.brandLogo){
     margin-top: 0.5rem;
 }
 
+// Secondary help below the primary action: divided off, quieter than the button above.
+.authActionHelp {
+    width: 100%;
+    margin-top: 0.25rem;
+    padding-top: 1rem;
+    border-top: 2px dashed rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    animation: reportFadeUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+}
+
+.authActionHelpText {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.authActionReport {
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    color: black;
+    background: transparent;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    padding: 0.5rem 1.25rem;
+    min-height: 2.5rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, translate 0.12s ease;
+
+    &:hover {
+        background: $neutral;
+    }
+
+    &:active {
+        translate: 0 1px;
+    }
+
+    &:focus-visible {
+        outline: 3px solid black;
+        outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: background-color 0.15s ease;
+
+        &:active {
+            translate: none;
+        }
+    }
+}
+
 .authActionBack {
     font-family: inherit;
     font-size: 1rem;

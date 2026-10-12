@@ -10,6 +10,7 @@ import { SUPPORT_EMAIL } from "../../utilities/support";
 import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
 import CheckoutForm from "./CheckoutForm";
 import NodeLoader from "./NodeLoader";
+import ReportLink from "../ReportLink";
 
 // How long to wait for the stripe-webhook Netlify Function to land the
 // Firestore plan flip before giving up on the "confirming" UI and just
@@ -129,7 +130,8 @@ function CheckoutModal() {
                             <>
                                 Your payment went through, but your plan is taking unusually long to update, sorry about that.
                                 You won't be charged again. If it hasn't updated in a few minutes, email{' '}
-                                <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and we'll sort it out. Safe to close this.
+                                <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and we'll sort it out. Safe to close this.{' '}
+                                <ReportLink area="checkout" error="Plan did not update after payment" />
                             </>
                         ) : confirmSlow ? (
                             "Still finalizing, your payment went through, this is just taking longer than usual. Safe to close; it'll catch up shortly."
@@ -140,7 +142,7 @@ function CheckoutModal() {
                 ) : needsVerification ? (
                     <CheckoutVerifyEmail onVerified={() => setAttempt(a => a + 1)} />
                 ) : error ? (
-                    <p className="checkoutModalError">{error}</p>
+                    <p className="checkoutModalError">{error} <ReportLink area="checkout" error={error} /></p>
                 ) : !checkoutPlan || !intent ? (
                     <p className="checkoutModalLoading"><NodeLoader />Loading checkout…</p>
                 ) : (

@@ -5,6 +5,7 @@ import { isNative } from "../utilities/platform";
 import { ANNUAL_PRICE_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../utilities/billing/pricingDisplay";
 
 const Terms: React.FC = () => {
+
     const navigate = useNavigate();
 
     return (

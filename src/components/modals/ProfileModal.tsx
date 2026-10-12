@@ -1,3 +1,4 @@
+import ReportLink from '../ReportLink';
 import { useEffect, useState, type ReactNode } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
 import { useIdeaContext } from '../../context/IdeaContext';
@@ -431,7 +432,7 @@ function ProfileModal() {
                                 Cancel subscription
                             </button>
                         )}
-                        {cancelError && <p className="profile-error">{cancelError}</p>}
+                        {cancelError && <p className="profile-error">{cancelError} <ReportLink area="account" error={cancelError} /></p>}
                     </div>
                 )}
                 {billingPlan === 'lifetime' && billingStatus.lifetimePaymentIntentId && (
@@ -475,7 +476,7 @@ function ProfileModal() {
                                 Request a refund
                             </button>
                         )}
-                        {refundError && <p className="profile-error">{refundError}</p>}
+                        {refundError && <p className="profile-error">{refundError} <ReportLink area="account" error={refundError} /></p>}
                     </div>
                 )}
             </section>
@@ -514,7 +515,7 @@ function ProfileModal() {
                             </a>
                         )}
                     </div>
-                    {verifyError && <p className="profile-error">{verifyError}</p>}
+                    {verifyError && <p className="profile-error">{verifyError} <ReportLink area="account" error={verifyError} /></p>}
                 </section>
             )}
 
@@ -613,7 +614,7 @@ function ProfileModal() {
                         </a>
                     )}
                 </div>
-                {resetError && <p className="profile-error">{resetError}</p>}
+                {resetError && <p className="profile-error">{resetError} <ReportLink area="account" error={resetError} /></p>}
             </section>
 
             {/* Log Out */}

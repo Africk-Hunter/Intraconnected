@@ -1,3 +1,4 @@
+import ReportLink from '../ReportLink';
 import { useEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { ImportError, parseImportFiles, SUPPORTED_IMPORT_EXTENSIONS } from '../../utilities/idea/importers';
@@ -153,7 +154,7 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
     } else {
         body = (
             <>
-                {state.step === 'error' && <p className="profile-import-error" role="alert">{state.message}</p>}
+                {state.step === 'error' && <p className="profile-import-error" role="alert">{state.message} <ReportLink area="import" error={state.message} /></p>}
                 <div className="profile-export-buttons">{chooseButton('Choose file…')}</div>
             </>
         );

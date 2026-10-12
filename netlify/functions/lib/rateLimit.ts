@@ -17,6 +17,30 @@ interface RateLimitOptions {
 // Admin SDK only (called from Netlify Functions, never the client), so this
 // never needs a Firestore rules entry — rules don't apply to Admin SDK
 // calls at all.
+// For endpoints open to signed-out visitors (a sign-in error is exactly when
+// someone has no account to attribute a report to). Keyed by a hash of the
+// caller's IP in its own top-level collection, so no fake `users/{uid}` docs
+// appear. Same Admin-SDK-only note as above: clients are denied by default.
+export async function checkIpRateLimit({ ip, key, limit, windowMs }: { ip: string; key: string; limit: number; windowMs: number }): Promise<boolean> {
+    const { createHash } = await import("node:crypto");
+    const db = firestore();
+    const id = `${key}_${createHash("sha256").update(ip).digest("hex").slice(0, 32)}`;
+    const ref = db.collection("rateLimits").doc(id);
+
+    return db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const existing: number[] = snap.exists ? (snap.data()?.hits ?? []) : [];
+
+        const since = Date.now() - windowMs;
+        const recent = existing.filter((ts) => ts >= since);
+        if (recent.length >= limit) return false;
+
+        recent.push(Date.now());
+        tx.set(ref, { hits: recent });
+        return true;
+    });
+}
+
 export async function checkRateLimit({ uid, key, limit, windowMs }: RateLimitOptions): Promise<boolean> {
     const db = firestore();
     const ref = db.collection("users").doc(uid).collection("meta").doc(`rateLimit_${key}`);
