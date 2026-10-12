@@ -1369,9 +1369,11 @@ function MobileMindMap() {
                 ) : (
                     <div className="mmobile-header-title-row">
                         <h1 className="mmobile-header-title mmobile-header-title--static">{headerDraft.trim() || 'Untitled'}</h1>
-                        <button className="mmobile-header-edit" onClick={() => setEditingTitle(true)} aria-label="Rename">
-                            <img src="/images/Pen.svg" alt="" />
-                        </button>
+                        {currentId !== 1 && (
+                            <button className="mmobile-header-edit" onClick={() => setEditingTitle(true)} aria-label="Rename">
+                                <img src="/images/Pen.svg" alt="" />
+                            </button>
+                        )}
                     </div>
                 )}
                 <div className="mmobile-header-count">
