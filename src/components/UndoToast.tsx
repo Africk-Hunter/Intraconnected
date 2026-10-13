@@ -20,6 +20,11 @@ function UndoToast() {
     const [exiting, setExiting] = useState<typeof toast>(null);
     const lastRef = useRef<typeof toast>(null);
 
+    // A new toast is a new element: if the old one went away while hovered or
+    // focused, its mouseleave/blur never fired, and the pause would stick and
+    // keep every later toast on screen.
+    useEffect(() => { setPaused(false); }, [toast?.key]);
+
     useEffect(() => {
         if (!toast || paused) return;
         const timer = setTimeout(dismissUndoToast, toast.canUndo ? TOAST_MS : NOTICE_MS);

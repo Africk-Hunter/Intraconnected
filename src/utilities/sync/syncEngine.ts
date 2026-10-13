@@ -360,6 +360,15 @@ setOutboxRefreshHandler(() => {
     void requestRefresh({ full: true });
 });
 
+// A different account's map is on this device: drop it. (A missing owner is a
+// device from before this existed — its data is the current user's as far as
+// anyone can tell, so it's kept.) Also called at sign-in, so /main never
+// paints the previous account's map while the first pull is still running.
+export function discardForeignIdeas(uid: string): void {
+    const owner = localStorage.getItem(OWNER_KEY);
+    if (owner !== null && owner !== uid) localStorage.removeItem(IDEAS_KEY);
+}
+
 // Called once when the app opens for a signed-in user. Resolves with
 // serverOk = false when the server couldn't be reached — the local list
 // (whatever this device last had) is left in place, never emptied.
@@ -367,10 +376,7 @@ export async function syncOnLoad(uid: string): Promise<{ serverOk: boolean }> {
     localStorage.removeItem(LEGACY_SYNC_KEY);
 
     const owner = localStorage.getItem(OWNER_KEY);
-    // A different account's map is on this device. (A missing owner is a
-    // device from before this existed — its data is the current user's as
-    // far as anyone can tell, so it's kept.)
-    if (owner !== null && owner !== uid) localStorage.removeItem(IDEAS_KEY);
+    discardForeignIdeas(uid);
 
     // Sends anything this account left unsent on this device last time.
     bindOutbox(uid);

@@ -395,6 +395,32 @@ function MobileMindMap() {
     const longPressActive = useRef(false);
     const touchMoved = useRef(false);
     const lastLongPressTime = useRef(0);
+    // The hold opened the actions sheet under the finger. Lifting that finger
+    // can be reported as a click on whatever button is now beneath it (Delete,
+    // say), so the click that follows the lift is swallowed, wherever it lands.
+    const holdLiftPending = useRef(false);
+    const swallowClickUntil = useRef(0);
+    useEffect(() => {
+        function onLift() {
+            if (!holdLiftPending.current) return;
+            holdLiftPending.current = false;
+            swallowClickUntil.current = Date.now() + 500;
+        }
+        function onClick(e: MouseEvent) {
+            if (Date.now() >= swallowClickUntil.current) return;
+            swallowClickUntil.current = 0;
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        document.addEventListener('touchend', onLift, true);
+        document.addEventListener('touchcancel', onLift, true);
+        document.addEventListener('click', onClick, true);
+        return () => {
+            document.removeEventListener('touchend', onLift, true);
+            document.removeEventListener('touchcancel', onLift, true);
+            document.removeEventListener('click', onClick, true);
+        };
+    }, []);
     // A touch that lands while the list is still coasting only stops it (as
     // in native lists); it must not also open the row under the finger.
     const lastScrollTimeRef = useRef(0);
@@ -534,6 +560,7 @@ function MobileMindMap() {
             if (Date.now() - mountTimeRef.current < 1000) return;
             longPressActive.current = true;
             lastLongPressTime.current = Date.now();
+            holdLiftPending.current = true;
             holdPointRef.current = { ...lastTouchRef.current };
             // Block scrolling from here on, so a move after the hold is still
             // ours to turn into a drag (touchmove is only cancelable before

@@ -545,6 +545,14 @@
     resize: none;
 }
 
+// Idea tab only (the note's textarea is nested deeper): the Add Link row adds
+// 0.5rem of its own above the button, so 0.5rem here makes the gap under the
+// text match the 1rem above it.
+.creation-panel > .contentHolder > .ideaContent {
+    padding-top: 1rem;
+    padding-bottom: 0.5rem;
+}
+
 // Note's textarea sits in a nested contentHolder (below its title input), so
 // that contentHolder fills the leftover space instead of the full 100%.
 .note-creation > .contentHolder {

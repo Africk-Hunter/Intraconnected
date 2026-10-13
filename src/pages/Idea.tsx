@@ -74,6 +74,7 @@ import ShortcutsModal from '../components/modals/ShortcutsModal';
 import { useDesktopShortcuts } from '../utilities/useDesktopShortcuts';
 import type { SearchResult } from '../utilities/idea/search';
 import { useIdeaActions } from '../utilities/idea/useIdeaActions';
+import { DRAG_PREVIEW_MAX_PX } from '../utilities/idea/dragPreview';
 
 const _changelogEntries = parseChangelog(changelog);
 
@@ -319,7 +320,18 @@ function Idea() {
         const { droppableContainers, droppableRects, pointerCoordinates } = args;
 
         const specialContainers = droppableContainers.filter(c => c.id === 'trash' || c.id === 'last-idea');
-        const specialHits = rectIntersection({ ...args, droppableContainers: specialContainers });
+        // The card shrinks to a small preview around the pointer (IdeaNode), so
+        // the trash is hit by that preview, not by the card's full original box.
+        let collisionRect = args.collisionRect;
+        if (pointerCoordinates) {
+            const half = DRAG_PREVIEW_MAX_PX / 2;
+            const w = Math.min(collisionRect.width, DRAG_PREVIEW_MAX_PX);
+            const h = Math.min(collisionRect.height, DRAG_PREVIEW_MAX_PX);
+            const left = pointerCoordinates.x - Math.min(half, w / 2);
+            const top = pointerCoordinates.y - Math.min(half, h / 2);
+            collisionRect = { ...collisionRect, left, top, width: w, height: h, right: left + w, bottom: top + h };
+        }
+        const specialHits = rectIntersection({ ...args, collisionRect, droppableContainers: specialContainers });
         if (specialHits.length > 0) return specialHits;
 
         if (!pointerCoordinates) return [];

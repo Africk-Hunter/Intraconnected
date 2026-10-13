@@ -8,6 +8,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDra
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { dragPreviewScale } from '../utilities/idea/dragPreview';
 import { pushItemDeleteUndo } from '../utilities/idea/checklistUndo';
 import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, openIdeaLink, isNoteMode, isNoteWide, updateIdeaName } from '../utilities';
 
@@ -232,15 +233,64 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     // Checklists, notes and links can't hold children: they stay in collision detection
     // (handleDragEnd refuses the drop) so they can tint red instead of lighting up.
     const canAcceptDrop = !(isChecklist || noteMode || link !== '');
+    const nodeElRef = useRef<HTMLElement | null>(null);
+    const dragXRef = useRef(0);
+    dragXRef.current = transform?.x ?? 0;
     const setNodeRef = (node: HTMLElement | null) => {
+        nodeElRef.current = node;
         setDraggableRef(node);
         setDroppableRef(node);
     };
     const isHoveredByDrag = isOver && active?.id !== `idea-${id}`;
     const isBeingDraggedOver = isHoveredByDrag && canAcceptDrop;
     const isBlockedDragOver = isHoveredByDrag && !canAcceptDrop;
+    // Where on the card, and at what size, it was grabbed: the picked-up card
+    // shrinks around that point so it stays under the pointer.
+    const grabRef = useRef({ x: 0, y: 0, scale: 1 });
+    const dragListeners = {
+        ...listeners,
+        onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            grabRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top, scale: dragPreviewScale(rect.width, rect.height) };
+            listeners?.onPointerDown?.(e);
+        },
+    };
+    // The shrink is part of `transform`, after the translate: the standalone
+    // `scale` property is applied outside `transform`, which would scale the
+    // drag offset too and make the card lag behind the pointer.
+    const shrink = isDragging && grabRef.current.scale < 1 ? grabRef.current.scale : 1;
+    // Swing: the shrunken card hangs from the spot it was grabbed. Horizontal
+    // pointer speed pushes a damped spring, so it trails the cursor, overshoots
+    // and settles. Written straight to a CSS variable each frame (no re-renders).
+    const swinging = isDragging && grabRef.current.scale < 1;
+    useEffect(() => {
+        const el = nodeElRef.current;
+        if (!swinging || !el) return;
+        const REST = -3, STIFFNESS = 120, DAMPING = 14, SPEED_TO_DEG = 0.008, MAX_DEG = 22;
+        let angle = REST, vel = 0, lastX = dragXRef.current, lastT = performance.now(), smoothVx = 0, raf = 0;
+        const tick = (now: number) => {
+            const dt = Math.min((now - lastT) / 1000, 0.032) || 0.016;
+            lastT = now;
+            const x = dragXRef.current;
+            smoothVx += ((x - lastX) / dt - smoothVx) * 0.12;
+            lastX = x;
+            const target = Math.max(-MAX_DEG, Math.min(MAX_DEG, REST + smoothVx * SPEED_TO_DEG));
+            vel += (STIFFNESS * (target - angle) - DAMPING * vel) * dt;
+            angle += vel * dt;
+            el.style.setProperty('--swing', `${angle}deg`);
+            raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => {
+            cancelAnimationFrame(raf);
+            el.style.removeProperty('--swing');
+        };
+    }, [swinging]);
     const draggableStyle = {
-        transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+        transform: transform || shrink < 1
+            ? `translate3d(${transform?.x ?? 0}px, ${transform?.y ?? 0}px, 0)${shrink < 1 ? ` scale(${shrink}) rotate(var(--swing, -3deg))` : ''}`
+            : undefined,
+        ...(shrink < 1 ? { transformOrigin: `${grabRef.current.x}px ${grabRef.current.y}px` } : {}),
         transition: 'none',
         // Lift above sibling cards' priority ribbons (z-index 4) while dragging.
         zIndex: isDragging ? 10 : undefined,
@@ -249,7 +299,9 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const dropStyle = {
         border: isBeingDraggedOver ? '3px dashed #000' : undefined,
         transition: isBeingDraggedOver ? 'scale 0.2s ease-in-out, border 0.2s ease-in-out' : undefined,
-        scale: isBeingDraggedOver ? '1.15' : undefined,
+        // Only set when hovered: an explicit `scale: undefined` here would
+        // overwrite the drag-preview shrink from draggableStyle in the spread.
+        ...(isBeingDraggedOver ? { scale: '1.15' } : {}),
         boxShadow: isBlockedDragOver ? 'inset 0 0 0 100vmax rgba(220, 38, 38, 0.3)' : undefined,
     };
     const pendingStyle = isHidden ? { opacity: 0, pointerEvents: 'none' as const } : {};
@@ -666,7 +718,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 onContextMenu={handleContextMenu}
                 data-idea-id={id} data-dragging={isDragging || undefined}
                 {...attributes}
-                {...listeners}
+                {...dragListeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
                 {censorButton}
@@ -689,7 +741,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 onContextMenu={handleContextMenu}
                 data-idea-id={id} data-dragging={isDragging || undefined}
                 {...attributes}
-                {...listeners}
+                {...dragListeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
                 {censorButton}
@@ -776,7 +828,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
                 onContextMenu={handleContextMenu}
                 data-idea-id={id} data-dragging={isDragging || undefined}
                 {...attributes}
-                {...listeners}
+                {...dragListeners}
             >
                 <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
                 {censorButton}
@@ -841,7 +893,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }
 
     return (
-        <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} data-dragging={isDragging || undefined} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...listeners}>
+        <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} data-dragging={isDragging || undefined} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...dragListeners}>
             <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
                 {censorButton}
                 {moreButton}

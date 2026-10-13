@@ -12,6 +12,7 @@ import { getMailProvider, resetMailUrl } from "../utilities/mailProvider";
 import { storeEncryptedDEK, fetchEncryptedDEK, storeEmailWrap, storePasswordWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
 import { syncBillingEmail } from "../utilities/firebase/authFirebase";
 import { isNative, hideSplash } from "../utilities/platform";
+import { discardForeignIdeas } from "../utilities/sync/syncEngine";
 
 const Auth: React.FC = () => {
 
@@ -38,6 +39,7 @@ const Auth: React.FC = () => {
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) discardForeignIdeas(user.uid);
             if (user && !isSigningIn.current) {
                 const dekLoaded = await loadPersistedDEK();
                 if (dekLoaded) window.location.replace('/main');

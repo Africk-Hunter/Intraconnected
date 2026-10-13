@@ -102,7 +102,8 @@ Ideas are encrypted on the device before they are saved to our servers. The app 
 
 - Content rating questionnaire: no violence, no mature content; the app stores user text privately (not shared).
 - Target audience: 13+ (a general-audience productivity app; do not select children).
-- **Closed-testing requirement (check current rules):** new personal developer accounts have needed a closed test with a minimum number of testers for about two weeks before production access. Confirm the numbers in the Play Console before planning dates.
+- **Closed-testing requirement (confirmed from Google's help page, Oct 13):** a personal account created after Nov 13, 2023 must run a closed test with at least 12 testers opted in continuously for 14 days before it can apply for production access. Google reviews the application, usually within 7 days. Verifying the account needs a real Android device (the Play Console app).
+- **Graphics:** `assets/play-store/app-icon-512.png` (512x512 app icon) and `assets/play-store/feature-graphic-1024x500.png` (feature graphic, required for the listing).
 - The upload key is created once with `keytool` (see `android/keystore.properties.example`). Keep the keystore and its passwords in a password manager. Play App Signing holds the real signing key.
 
 ## Screenshots
@@ -110,3 +111,27 @@ Ideas are encrypted on the device before they are saved to our servers. The app 
 - **iOS:** the 6.9-inch iPhone size (1320 x 2868). Take them from a TestFlight build with the demo account.
 - **Google Play:** at least two phone screenshots; the emulator's 1080 x 2400 is fine.
 - Show: the map with a few ideas, a zoomed-in level, the Create sheet, a checklist, and the Move sheet. Do not show the Profile plan section or anything about upgrading.
+
+## Demo account (both review forms, and the closed-test application)
+
+1. In a browser, sign up at https://intraconnected.app/login with a throwaway email you control (an alias works) and a strong password. Verify the email.
+2. Build a small tree: 3 top-level ideas, one with 3 children, one of those with 2 grandchildren; add one checklist (3 items, one ticked), one note, one link idea (https://intraconnected.app), and set a priority on two ideas.
+3. Keep it under 50 ideas (free plan cap). Do not put real data in it.
+4. Store its email and password in App Store Connect and the Play Console reviewer-credentials form only, never in this repo.
+
+## Tester recruiting post (Google Play closed test)
+
+Needs 12 testers, ideally about 20, each opted in for 14 continuous days. Collect Gmail addresses, or add a Google Group as the tester list. Suggested channels: r/AndroidClosedTesting, tester-swap Discords, r/mindmapping, r/PKMS, r/productivity, local Facebook groups. Do not use paid tester services.
+
+```
+Android testers wanted: free mind-mapping app (about 5 minutes, 14 days)
+
+I'm launching Intraconnected, a mind map you zoom into: start with one idea, branch it, tap any idea to step inside it, and drag ideas around to reorganize. It has checklists, notes, priorities, import from Markdown/OPML/Notion and syncs with a web version.
+
+Google requires 12 testers to stay opted in for 14 days before I can publish, so I'm looking for Android users. All you need to do:
+1. Send me the Gmail address you use on Google Play.
+2. Open the invite link I send back and tap "Become a tester", then install the app.
+3. Stay opted in for 14 days. Open it a couple of times and tell me anything that feels broken or confusing (private feedback in Play is fine).
+
+Happy to test your app in return. Reply or message me if you're in.
+```
