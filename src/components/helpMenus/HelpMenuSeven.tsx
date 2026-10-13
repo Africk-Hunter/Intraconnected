@@ -12,7 +12,7 @@ const SHORTCUTS: { keys: string; action: string }[] = [
     { keys: 'D', action: 'Delete the selected card' },
     { keys: `${MOD}+Z`, action: 'Undo a delete or move' },
     { keys: 'Backspace', action: 'Go up one level' },
-    { keys: `${MOD}+F`, action: 'Search every idea' },
+    { keys: `${MOD}+K`, action: 'Search every idea (or ' + MOD + '+F)' },
     { keys: '/ or ?', action: 'Show the full shortcut list' },
 ];
 
@@ -22,7 +22,7 @@ const HelpMenuSeven: React.FC = () => {
             <h1 className="header">Keyboard &amp; Search</h1>
             <p className="subHeader">Get around without the mouse</p>
             <p className="details">
-                Press <strong>{MOD}+F</strong>, or click the magnifying glass on the left, to search every idea at every level. Pick a result and you land on its card.
+                Press <strong>{MOD}+K</strong> (or {MOD}+F), or click the magnifying glass on the left, to search every idea at every level. Pick a result and you land on its card.
             </p>
             <dl className="help-shortcuts">
                 {SHORTCUTS.map((row) => (

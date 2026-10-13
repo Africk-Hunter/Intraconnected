@@ -15,7 +15,7 @@ const Terms: React.FC = () => {
                     ← Back
                 </button>
                 <h1 className="legalTitle">Terms of Service</h1>
-                <p className="legalMeta">Intraconnected | Last updated September 29, 2026</p>
+                <p className="legalMeta">Intraconnected | Last updated October 12, 2026</p>
 
                 <section className="legalSection">
                     <h2>1. Who We Are</h2>
@@ -93,9 +93,15 @@ const Terms: React.FC = () => {
                         <li>Use the Service for anything illegal, or to store or transmit content you don't have the right to.</li>
                         <li>Attempt to access another user's account or data, or to bypass or interfere with the Service's security, encryption, or infrastructure.</li>
                         <li>Abuse, overload, or attempt to scrape or automate interactions with the Service in a way that degrades it for other users.</li>
+                        <li>
+                            Use a paid plan for far more than normal personal use, such as storing or bulk-importing hundreds of
+                            thousands of ideas, or creating ideas by automated means. Paid plans have no fixed idea limit, but
+                            the Service has real running costs for every idea you store.
+                        </li>
                     </ul>
                     <p>
-                        We may suspend or terminate accounts that violate this section.
+                        We may suspend or terminate accounts that violate this section. For heavy but good-faith use, we will
+                        usually contact you first, and may limit imports or ask you to reduce your usage.
                     </p>
                 </section>
 

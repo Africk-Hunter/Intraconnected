@@ -1,9 +1,10 @@
 import { db, auth } from "../../firebaseConfig";
-import { collection, deleteField, doc, increment, writeBatch, type FieldValue } from "firebase/firestore";
+import { collection, deleteField, doc, increment, serverTimestamp, setDoc, writeBatch, type FieldValue } from "firebase/firestore";
 import { encryptField } from "../crypto";
 import { getDEK } from "../dekStore";
 import { getCachedBillingStatus } from "../billing/billingCache";
 import type { ChecklistItem, IdeaType } from "../types";
+import { bumpNeeded, bumpSent, setCatchUpNeeded } from "./devicePresence";
 import { classifyError, coalesce, opIds, withoutDependents, type IdeaPatch, type QueuedOp, type SyncOp } from "./ops";
 import { updateSyncStatus, type SyncFailure } from "./syncStore";
 
@@ -372,6 +373,14 @@ export function unsyncedOpsSince(since: number): SyncOp[] {
     ];
 }
 
+// Only the changes the server has NOT accepted: the refused one, then the
+// queue. (unsyncedOpsSince also returns accepted ones, which the server
+// already reflects.)
+export function pendingOps(): SyncOp[] {
+    syncFromStorage();
+    return [...(failed ? [failed.entry.op] : []), ...queue.map((entry) => entry.op)];
+}
+
 if (typeof window !== "undefined") {
     window.addEventListener("online", () => {
         backoffMs = 0;
@@ -450,13 +459,20 @@ async function sendOp(op: SyncOp, uid: string): Promise<void> {
 
     switch (op.kind) {
         case "create":
-            batch.set(doc(ideas, String(op.idea.id)), await encryptIdea(op.idea, dek));
+            batch.set(doc(ideas, String(op.idea.id)), { ...(await encryptIdea(op.idea, dek)), updatedAt: serverTimestamp() });
             countDelta = 1;
+            break;
+        case "createMany":
+            if (op.ideas.length === 0) return;
+            for (const idea of op.ideas) {
+                batch.set(doc(ideas, String(idea.id)), { ...(await encryptIdea(idea, dek)), updatedAt: serverTimestamp() });
+            }
+            countDelta = op.ideas.length;
             break;
         case "update": {
             const fields = await encryptPatch(op.patch, dek);
             if (Object.keys(fields).length === 0) return;
-            batch.update(doc(ideas, String(op.id)), fields);
+            batch.update(doc(ideas, String(op.id)), { ...fields, updatedAt: serverTimestamp() });
             break;
         }
         case "delete":
@@ -471,12 +487,50 @@ async function sendOp(op: SyncOp, uid: string): Promise<void> {
     if (countDelta !== 0 && getCachedBillingStatus().plan === "free") {
         batch.set(doc(db, "users", uid, "meta", "nodeCount"), { count: increment(countDelta) }, { merge: true });
     }
-    // lastModified is no longer read by this version of the app; kept so a
-    // tab still running the previous build during a deploy keeps syncing.
-    batch.set(
-        doc(db, "users", uid, "meta", "sync"),
-        { devices: { [getDeviceId()]: increment(1) }, lastModified: Date.now() },
-        { merge: true }
-    );
+    // Tells the other devices to pull. A device that is provably alone skips
+    // it (see devicePresence.ts): nobody is listening, so it would be a write
+    // plus a read back to itself for nothing.
+    const bump = bumpNeeded();
+    if (bump) {
+        // lastModified is no longer read by this version of the app; kept so a
+        // tab still running the previous build during a deploy keeps syncing.
+        batch.set(
+            doc(db, "users", uid, "meta", "sync"),
+            { devices: { [getDeviceId()]: increment(1) }, lastModified: Date.now() },
+            { merge: true }
+        );
+    }
     await batch.commit();
+    if (bump) bumpSent();
+}
+
+// Adds this device to meta/sync's device list (counter unchanged), once, so
+// other devices learn it exists. Other devices only pull when a counter moves,
+// so this alone never causes a pull.
+export async function registerDevice(uid: string): Promise<void> {
+    try {
+        await setDoc(doc(db, "users", uid, "meta", "sync"), { devices: { [getDeviceId()]: increment(0) } }, { merge: true });
+    } catch (error) {
+        console.warn("Sync: couldn't register this device.", error);
+    }
+}
+
+// A standalone bump for when this device learns of another device: anything it
+// changed while it believed it was alone is announced now, and the other
+// device pulls it. Retries on failure, and keeps every write bumping until it lands.
+export async function announceChanges(uid: string): Promise<void> {
+    setCatchUpNeeded(true);
+    try {
+        await setDoc(
+            doc(db, "users", uid, "meta", "sync"),
+            { devices: { [getDeviceId()]: increment(1) }, lastModified: Date.now() },
+            { merge: true }
+        );
+        bumpSent();
+    } catch (error) {
+        console.warn("Sync: couldn't announce changes yet, will retry.", error);
+        setTimeout(() => {
+            if (auth.currentUser?.uid === uid) void announceChanges(uid);
+        }, 15_000);
+    }
 }

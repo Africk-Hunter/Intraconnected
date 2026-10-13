@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchFullIdeaList } from '../../utilities';
 import { readRecentVisits } from '../../utilities/idea/recentVisits';
-import { KIND_LABEL, searchIdeas, suggestedIdeas, type SearchResult } from '../../utilities/idea/search';
+import { KIND_LABEL, searchIdeas, suggestedIdeas, visibleResults, type SearchResult } from '../../utilities/idea/search';
+import Highlighted from '../Highlighted';
 import AnimatedOverlay from '../AnimatedOverlay';
 
 export interface SearchCommand {
@@ -27,10 +28,11 @@ type Row =
 function SearchModal({ open, onClose, onPick, commands }: Props) {
     const [query, setQuery] = useState('');
     const [active, setActive] = useState(0);
+    const [expanded, setExpanded] = useState<Set<number>>(new Set());
     const listRef = useRef<HTMLUListElement>(null);
 
     useEffect(() => {
-        if (open) { setQuery(''); setActive(0); }
+        if (open) { setQuery(''); setActive(0); setExpanded(new Set()); }
     }, [open]);
 
     const { rows, suggestedTitle } = useMemo(() => {
@@ -42,14 +44,18 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
         const results = q !== '' ? searchIdeas(all, query) : suggested.results;
         return {
             rows: [
-                ...results.map((result): Row => ({ type: 'idea', result })),
+                ...visibleResults(results, expanded).map((result): Row => ({ type: 'idea', result })),
                 ...matchingCommands.map((command): Row => ({ type: 'command', command })),
             ],
             suggestedTitle: suggested.title,
         };
-    }, [open, query, commands]);
+    }, [open, query, commands, expanded]);
 
-    useEffect(() => { setActive(0); }, [query]);
+    useEffect(() => { setActive(0); setExpanded(new Set()); }, [query]);
+
+    function toggle(id: number) {
+        setExpanded((prev) => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next; });
+    }
 
     useEffect(() => {
         listRef.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
@@ -69,7 +75,10 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
     }
 
     const hasQuery = query.trim() !== '';
-    const ideaCount = rows.filter((r) => r.type === 'idea').length;
+    const words = useMemo(() => query.trim().toLowerCase().split(/s+/).filter(Boolean), [query]);
+    const ideaCount = rows.filter((r) => r.type === 'idea' && r.result.isMatch).length;
+    const isOpen = (r: SearchResult) => expanded.has(r.id);
+    const colorOf = (r: SearchResult) => (r.kind !== 'idea' ? r.kind : r.hasChildren ? 'parent' : 'leaf');
     const groupTitle = (type: Row['type']) =>
         type === 'command' ? 'Actions' : hasQuery ? `${ideaCount} ${ideaCount === 1 ? 'match' : 'matches'}` : suggestedTitle;
 
@@ -98,25 +107,42 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
                         {(i === 0 || rows[i - 1].type !== row.type) && (
                             <li className="search-modal-group" role="presentation">{groupTitle(row.type)}</li>
                         )}
-                        <li role="presentation">
-                            <button
-                                type="button"
+                        <li
+                            role="presentation"
+                            className={row.type === 'idea' && row.result.depth > 0 ? 'search-modal-item--nested' : undefined}
+                            style={row.type === 'idea' && row.result.depth > 0 ? ({ '--depth': row.result.depth, '--i': i % 6 } as React.CSSProperties) : undefined}
+                        >
+                            <div
                                 role="option"
                                 aria-selected={i === active}
                                 data-active={i === active}
                                 tabIndex={-1}
-                                className={`search-modal-row${i === active ? ' search-modal-row--active' : ''}`}
+                                className={`search-modal-row${row.type === 'idea' ? ` search-modal-row--idea search-modal-row--${colorOf(row.result)}` : ''}${row.type === 'idea' && !row.result.isMatch ? ' search-modal-row--context' : ''}${i === active ? ' search-modal-row--active' : ''}`}
                                 onMouseEnter={() => setActive(i)}
                                 onClick={() => choose(row)}
                             >
                                 {row.type === 'idea' ? (
                                     <>
                                         <span className="search-modal-main">
-                                            <span className="search-modal-label">{row.result.label}</span>
-                                            {row.result.snippet && <span className="search-modal-snippet">{row.result.snippet}</span>}
-                                            <span className="search-modal-path">{['Ideas', ...row.result.path].join(' › ')}</span>
+                                            <span className="search-modal-label"><Highlighted text={row.result.label} words={words} /></span>
+                                            {row.result.snippet && <span className="search-modal-snippet"><Highlighted text={row.result.snippet} words={words} /></span>}
+                                            {row.result.depth === 0 && <span className="search-modal-path">{['Ideas', ...row.result.path].join(' › ')}</span>}
                                         </span>
-                                        <span className={`search-modal-kind search-modal-kind--${row.result.kind}`}>{KIND_LABEL[row.result.kind]}</span>
+                                        <span className="search-modal-side">
+                                            <span className={`search-modal-kind search-modal-kind--${row.result.kind}`}>{KIND_LABEL[row.result.kind]}</span>
+                                            {row.result.descendants > 0 && (
+                                                <button
+                                                    type="button"
+                                                    tabIndex={-1}
+                                                    className={`search-modal-expand${isOpen(row.result) ? ' search-modal-expand--open' : ''}`}
+                                                    aria-expanded={isOpen(row.result)}
+                                                    onClick={(e) => { e.stopPropagation(); toggle(row.result.id); }}
+                                                >
+                                                    {isOpen(row.result) ? 'Hide' : `${row.result.descendants} inside`}
+                                                    <span className="search-modal-expand-chevron" aria-hidden="true">▾</span>
+                                                </button>
+                                            )}
+                                        </span>
                                     </>
                                 ) : (
                                     <>
@@ -124,7 +150,7 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
                                         {row.command.hint && <kbd>{row.command.hint}</kbd>}
                                     </>
                                 )}
-                            </button>
+                            </div>
                         </li>
                         </Fragment>
                     ))}

@@ -1,0 +1,361 @@
+<!-- Artifact: https://claude.ai/artifact/Swdp6bWu5EckW6vMrANBJt | Generated: 2026-10-12 -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0">
+<div style="padding:.5rem 1rem;background:#E8E879;color:#101410;font:700 14px system-ui;border-bottom:3px solid #000"><a href="https://claude.ai/artifact/Swdp6bWu5EckW6vMrANBJt" target="_blank" rel="noopener noreferrer" style="color:inherit">Open live artifact &rarr;</a></div>
+<title>Firestore Cost Savings</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* Layout: sticky legend sidebar + one reading column, in the app's neobrutal style (black borders, hard offset shadows). */
+:root {
+  --bg: #E9F9E5; --surface: #FFFFFF; --surface-2: #D3DED1;
+  --ink: #101410; --ink-soft: #35432F; --line: #000000; --shadow: #000000;
+  --on-accent: #101410;
+  --leaf: #41BC28; --sky: #00A9D8; --link: #E8E879; --orange: #EC8A13; --danger: #C80000;
+  --reads: #00A9D8; --writes: #EC8A13; --skip: #B9C6B7;
+  --font-body: "DM Sans", system-ui, sans-serif; --font-mono: "Courier Prime", "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F160F; --surface: #182218; --surface-2: #2A3A2A; --ink: #F1FBEE; --ink-soft: #B8CCB4;
+    --line: #E9F9E5; --shadow: #000000; --leaf: #5BD33F; --sky: #3CC4EE; --link: #E8E879; --orange: #F5A340;
+    --danger: #FF7A7A; --reads: #3CC4EE; --writes: #F5A340; --skip: #3A4A3A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F160F; --surface: #182218; --surface-2: #2A3A2A; --ink: #F1FBEE; --ink-soft: #B8CCB4;
+  --line: #E9F9E5; --shadow: #000000; --leaf: #5BD33F; --sky: #3CC4EE; --link: #E8E879; --orange: #F5A340;
+  --danger: #FF7A7A; --reads: #3CC4EE; --writes: #F5A340; --skip: #3A4A3A; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+code { font-family: var(--font-mono); font-size: 0.92em; color: var(--ink); background: var(--surface-2); padding: 0.05em 0.35em; border: 1px solid var(--line); }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); } h2 { font-size: 1.6rem; } h3 { font-size: 1.1rem; }
+p { margin: 0; max-width: 68ch; }
+.shell { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 2rem; max-width: 72rem; margin: 0 auto; padding: 1.5rem 1rem; }
+.legend { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1rem); align-self: start; display: flex; flex-direction: column; gap: 0.75rem;
+  background: var(--surface); border: 3px solid var(--line); box-shadow: 5px 5px 0 2px var(--shadow); padding: 1rem; }
+.legend h2 { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.legend input { width: 100%; font: inherit; font-size: 16px; padding: 0.45rem 0.6rem; border: 2px solid var(--line); background: var(--bg); color: var(--ink); }
+.legend ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.legend a { display: block; padding: 0.35rem 0.6rem; text-decoration: none; border: 2px solid transparent; font-size: 0.95rem; }
+.legend a:hover { border-color: var(--line); }
+.legend a[aria-current="true"] { background: var(--link); color: var(--on-accent); border-color: var(--line); font-weight: 700; }
+.btn { font: inherit; font-size: 0.85rem; font-weight: 700; padding: 0.4rem 0.75rem; background: var(--leaf); color: var(--on-accent); border: 3px solid var(--line); box-shadow: 3px 3px 0 1px var(--shadow); cursor: pointer; }
+.btn:active { transform: translate(3px, 3px); box-shadow: none; }
+.menu-btn { display: none; }
+main { display: flex; flex-direction: column; gap: 3rem; min-width: 0; }
+section { scroll-margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.85rem; }
+.meta span { border: 2px solid var(--line); background: var(--surface); padding: 0.1rem 0.5rem; }
+.lede { font-size: 1.15rem; }
+.card { background: var(--surface); color: var(--ink); border: 3px solid var(--line); box-shadow: 5px 5px 0 2px var(--shadow); padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.card.accent { background: var(--leaf); color: var(--on-accent); }
+.card.accent code { background: #FFFFFF; color: #101410; border-color: #101410; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.25rem; }
+ul.tight { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; max-width: 68ch; }
+.fig { background: var(--surface); border: 3px solid var(--line); box-shadow: 5px 5px 0 2px var(--shadow); padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+.fig figcaption { font-size: 0.9rem; color: var(--ink-soft); }
+figure { margin: 0; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-family: var(--font-body); fill: var(--ink); font-size: 15px; }
+svg .mono { font-family: var(--font-mono); font-weight: 700; }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 3; }
+svg .w { fill: var(--writes); stroke: var(--line); stroke-width: 3; }
+svg .r { fill: var(--reads); stroke: var(--line); stroke-width: 3; }
+svg .skip { fill: var(--skip); stroke: var(--line); stroke-width: 2; stroke-dasharray: 5 4; }
+svg text.onacc { fill: var(--on-accent); }
+svg .arrow { stroke: var(--line); stroke-width: 3; fill: none; }
+svg .head { fill: var(--line); }
+svg text.big { font-size: 22px; font-weight: 700; }
+svg .dot { fill: var(--skip); stroke: var(--line); stroke-width: 1; }
+svg .dot.hit { fill: var(--leaf); }
+svg .dot.all { fill: var(--sky); }
+.scroll { overflow-x: auto; border: 3px solid var(--line); background: var(--surface); box-shadow: 5px 5px 0 2px var(--shadow); }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; min-width: 34rem; color: var(--ink); }
+th, td { text-align: left; vertical-align: top; padding: 0.55rem 0.75rem; border-bottom: 2px solid var(--line); }
+th { background: var(--surface-2); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+tr:last-child td { border-bottom: 0; }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; padding: 0.05rem 0.5rem; border: 2px solid var(--line); background: var(--link); color: var(--on-accent); }
+.pill.s { background: var(--leaf); } .pill.l { background: var(--orange); }
+.bars { display: flex; flex-direction: column; gap: 0.9rem; }
+.bar-row { display: grid; grid-template-columns: 9rem minmax(0, 1fr) 3.5rem; gap: 0.75rem; align-items: center; }
+.bar-row .lbl { font-weight: 700; font-size: 0.95rem; }
+.bar-row .tot { font-family: var(--font-mono); font-weight: 700; text-align: right; }
+.track { display: flex; height: 2.2rem; border: 3px solid var(--line); background: var(--surface); }
+.seg { height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 0.78rem; font-weight: 700; color: var(--on-accent); overflow: hidden; }
+.seg.r { background: var(--reads); } .seg.w { background: var(--writes); } .seg.g { background: var(--leaf); }
+.key { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.85rem; }
+.key i { display: inline-block; width: 0.9rem; height: 0.9rem; border: 2px solid var(--line); margin-right: 0.35rem; vertical-align: -0.1rem; }
+.note { font-size: 0.9rem; color: var(--ink-soft); }
+.top-btn { position: fixed; right: 1rem; bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem); }
+.refs { padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .menu-btn { display: inline-block; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; justify-self: start; }
+  .legend { display: none; position: static; }
+  .legend.open { display: flex; }
+  .bar-row { grid-template-columns: minmax(0, 1fr) 3.5rem; }
+  .bar-row .lbl { grid-column: 1 / -1; }
+}
+@media print { .legend, .menu-btn, .top-btn { display: none !important; } .shell { display: block; } .card, .fig, .scroll { box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+
+<div class="shell">
+  <button class="btn menu-btn" id="menuBtn" aria-expanded="false" aria-controls="legend">Sections</button>
+
+  <nav class="legend" id="legend" aria-label="Sections">
+    <h2>Key</h2>
+    <input id="legendFilter" type="search" placeholder="Filter sections" aria-label="Filter sections">
+    <ul id="legendList">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#billing">How Firestore bills</a></li>
+      <li><a href="#today">Cost of one edit</a></li>
+      <li><a href="#pulls">Cost of a pull</a></li>
+      <li><a href="#savings">What was built</a></li>
+      <li><a href="#safety">What keeps it safe</a></li>
+      <li><a href="#estimate">Estimated improvement</a></li>
+      <li><a href="#next">Still to do</a></li>
+      <li><a href="#references">References</a></li>
+    </ul>
+    <button class="btn" id="themeBtn" type="button">Theme</button>
+  </nav>
+
+  <main>
+    <header id="overview" style="display:flex;flex-direction:column;gap:0.9rem">
+      <div class="meta"><span>Intraconnected</span><span>2026-10-12</span><span>main @ ca38a55</span></div>
+      <h1>Firestore cost savings</h1>
+      <p class="lede">Two things drove this app's Firestore bill: every edit also wrote and re-read a sync counter, and every change from another device re-read every idea. Both are now fixed in code, each with a fallback and a kill switch. A one-device user drops by about two thirds, a two-device user by about four fifths.</p>
+      <div class="grid">
+        <div class="card accent"><h3>One device</h3><p>A device that is provably alone skips the <code>meta/sync</code> write. Halves writes and removes the echo reads.</p></div>
+        <div class="card"><h3>Two devices</h3><p>A pull reads only ideas changed since the last one, not all of them.</p></div>
+        <div class="card"><h3>Not tried yet</h3><p>Typecheck and 345 tests pass. The two-browser test run is still to do.</p></div>
+      </div>
+      <p class="note">Numbers are modelled from the code, not measured. Check them against the Firebase Console Usage tab after release.</p>
+    </header>
+
+    <section id="billing">
+      <h2>How Firestore bills</h2>
+      <ul class="tight">
+        <li>Billing is per document: one read per document returned, one write per document created, updated or deleted.</li>
+        <li>A listener bills one read for its first result, then one read for every document change it receives, <b>including changes this same device made</b>.</li>
+        <li>Security-rule lookups (<code>get()</code>, <code>exists()</code>) and <code>count()</code> aggregations (1 read per 1000 entries) are billed as reads.</li>
+        <li>The free quota is 50k reads and 20k writes a day for the whole project.</li>
+        <li>Companies cut costs by fetching less (limits, <code>count()</code>), caching, replacing polling with listeners, using a small change-marker document, and merging writes. This app already does the last two.</li>
+      </ul>
+    </section>
+
+    <section id="today">
+      <h2>Cost of one edit</h2>
+      <figure class="fig">
+        <svg viewBox="0 0 480 330" role="img" aria-label="Before, one edit cost three billed operations: an idea write, a meta/sync write, and a read when the device's own listener received that change. With solo-skip on a one-device account, one edit costs one write.">
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="head"/></marker></defs>
+          <text x="115" y="24" text-anchor="middle" class="big">Before</text>
+          <text x="365" y="24" text-anchor="middle" class="big">With solo-skip</text>
+
+          <rect class="box" x="30" y="40" width="170" height="44"/><text x="115" y="68" text-anchor="middle">One edit</text>
+          <path class="arrow" d="M115 84V108" marker-end="url(#ah)"/>
+          <rect class="w" x="30" y="112" width="170" height="44"/><text x="115" y="140" text-anchor="middle" class="onacc">write: the idea</text>
+          <path class="arrow" d="M115 156V180" marker-end="url(#ah)"/>
+          <rect class="w" x="30" y="184" width="170" height="44"/><text x="115" y="212" text-anchor="middle" class="onacc">write: meta/sync</text>
+          <path class="arrow" d="M115 228V252" marker-end="url(#ah)"/>
+          <rect class="r" x="30" y="256" width="170" height="44"/><text x="115" y="284" text-anchor="middle" class="onacc">read: own echo</text>
+          <text x="115" y="322" text-anchor="middle" class="mono">3 operations</text>
+
+          <rect class="box" x="280" y="40" width="170" height="44"/><text x="365" y="68" text-anchor="middle">One edit</text>
+          <path class="arrow" d="M365 84V108" marker-end="url(#ah)"/>
+          <rect class="w" x="280" y="112" width="170" height="44"/><text x="365" y="140" text-anchor="middle" class="onacc">write: the idea</text>
+          <rect class="skip" x="280" y="184" width="170" height="44"/><text x="365" y="212" text-anchor="middle">skipped: no 2nd device</text>
+          <rect class="skip" x="280" y="256" width="170" height="44"/><text x="365" y="284" text-anchor="middle">skipped: no echo</text>
+          <text x="365" y="322" text-anchor="middle" class="mono">1 operation</text>
+        </svg>
+        <figcaption>Free-plan creates and deletes also write <code>meta/nodeCount</code>. That is capped by the 50-idea limit and left out here.</figcaption>
+      </figure>
+    </section>
+
+    <section id="pulls">
+      <h2>Cost of a pull</h2>
+      <p>When another device changes something, this device re-reads every idea document.</p>
+      <figure class="fig">
+        <svg viewBox="0 0 480 290" role="img" aria-label="With 200 ideas, a pull today reads all 200 documents. An incremental pull reads about 5 changed ideas plus 2 more reads.">
+          <text x="115" y="24" text-anchor="middle" class="big">Before</text>
+          <text x="365" y="24" text-anchor="middle" class="big">Incremental</text>
+          <g id="dotsToday" transform="translate(15 40)"></g>
+          <g id="dotsAfter" transform="translate(265 40)"></g>
+          <text x="115" y="282" text-anchor="middle" class="mono">200 reads</text>
+          <text x="365" y="282" text-anchor="middle" class="mono">about 7 reads</text>
+        </svg>
+        <figcaption>Each square is one idea document. Blue squares are read on every pull before. Now only the green ones (ideas changed since the last pull) plus a count check and the sync document are read. This device's own recent edits are read back once too.</figcaption>
+      </figure>
+    </section>
+
+    <section id="savings">
+      <h2>What was built</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Change</th><th>Where</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td>Every idea write carries <code>updatedAt</code> (server time)</td><td><code>sendOp</code> in <code>outbox.ts</code></td><td>Lets a device ask for "what changed since". No extra writes.</td></tr>
+            <tr><td>Incremental pull</td><td><code>pullIncremental</code> in <code>syncEngine.ts</code></td><td>Reads changed ideas plus one <code>count()</code>, instead of every idea.</td></tr>
+            <tr><td>Solo-skip</td><td><code>devicePresence.ts</code>, <code>sendOp</code></td><td>A device that is alone skips the <code>meta/sync</code> write and the echo read it causes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Not built: per-device counter documents (would remove the echo reads for two-device users) and a plan claim in the create rule (saves about one read per create). Dropped after checking the code: preference reads, which onboarding and patch notes already cache locally.</p>
+    </section>
+
+    <section id="safety">
+      <h2>What keeps it safe</h2>
+      <p>Both changes only ever take a shortcut when they are certain. Anything else does exactly what the app did before.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Situation</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>First pull on a device, new account, or no watermark yet</td><td>Full pull, as before.</td></tr>
+            <tr><td>An idea was deleted on another device</td><td>The server's idea count no longer matches. Full pull.</td></tr>
+            <tr><td>Any changed idea fails to decrypt</td><td>Full pull.</td></tr>
+            <tr><td>Delete or Discard from the sync banner, or a change hit a deleted idea</td><td>Full pull.</td></tr>
+            <tr><td>More than 7 days since the last full pull</td><td>Full pull. Also catches edits from a tab still on the old build.</td></tr>
+            <tr><td>Unsent edits on this device during a pull</td><td>Re-applied on top of the result, exactly as in a full pull.</td></tr>
+            <tr><td>Offline, cached view, or the live listener stopped</td><td>Every write bumps the counter, as before.</td></tr>
+            <tr><td>A second device appears</td><td>It registers; this device sends one catch-up bump, so the new device pulls everything changed meanwhile.</td></tr>
+            <tr><td>Something looks wrong in production</td><td>Flip <code>INCREMENTAL_PULL</code> or <code>SOLO_SKIP</code> to false and deploy. Or set <code>sync_force_full</code> / <code>sync_always_bump</code> to "1" in one browser's localStorage.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">No Firestore rules change and nothing to migrate. Existing ideas are not rewritten.</p>
+    </section>
+
+    <section id="estimate">
+      <h2>Estimated improvement</h2>
+
+      <figure class="fig">
+        <h3>One device: billed operations per day</h3>
+        <div class="bars" role="img" aria-label="Before 93 operations a day. With solo-skip, 33.">
+          <div class="bar-row"><span class="lbl">Before</span>
+            <div class="track"><span class="seg r" style="width:35.5%">33</span><span class="seg w" style="width:64.5%">60</span></div><span class="tot">93</span></div>
+          <div class="bar-row"><span class="lbl">With solo-skip</span>
+            <div class="track" style="width:35.5%"><span class="seg r" style="width:9.1%"></span><span class="seg w" style="width:90.9%">30</span></div><span class="tot">33</span></div>
+        </div>
+        <div class="key"><span><i style="background:var(--reads)"></i>Reads</span><span><i style="background:var(--writes)"></i>Writes</span></div>
+        <figcaption>65% fewer. Writes halve; reads fall from 33 to 3.</figcaption>
+      </figure>
+
+      <figure class="fig">
+        <h3>Two devices: billed operations per day</h3>
+        <div class="bars" role="img" aria-label="Before about 696 operations a day. With incremental pulls, about 129.">
+          <div class="bar-row"><span class="lbl">Before</span>
+            <div class="track"><span class="seg r" style="width:91.4%">636</span><span class="seg w" style="width:8.6%"></span></div><span class="tot">696</span></div>
+          <div class="bar-row"><span class="lbl">Incremental pull</span>
+            <div class="track" style="width:18.5%"><span class="seg r" style="width:53.5%"></span><span class="seg w" style="width:46.5%"></span></div><span class="tot">129</span></div>
+        </div>
+        <div class="key"><span><i style="background:var(--reads)"></i>Reads</span><span><i style="background:var(--writes)"></i>Writes</span></div>
+        <figcaption>81% fewer, all from incremental pulls: reads 636 to 69, writes unchanged at 60. Solo-skip does not apply once a second device exists.</figcaption>
+      </figure>
+
+      <div class="grid">
+        <figure class="fig">
+          <h3>Writes: daily users before the free limit</h3>
+          <div class="bars" role="img" aria-label="Writes allow about 330 daily users before, 670 with solo-skip.">
+            <div class="bar-row"><span class="lbl">Before</span><div class="track"><span class="seg w" style="width:50%"></span></div><span class="tot">330</span></div>
+            <div class="bar-row"><span class="lbl">With solo-skip</span><div class="track"><span class="seg g" style="width:100%"></span></div><span class="tot">670</span></div>
+          </div>
+          <figcaption>Higher is better. Writes run out first.</figcaption>
+        </figure>
+        <figure class="fig">
+          <h3>Reads: daily users before the free limit</h3>
+          <div class="bars" role="img" aria-label="Reads allow about 1,500 daily users before, 16,700 with solo-skip.">
+            <div class="bar-row"><span class="lbl">Before</span><div class="track"><span class="seg r" style="width:9%"></span></div><span class="tot">1.5k</span></div>
+            <div class="bar-row"><span class="lbl">With solo-skip</span><div class="track"><span class="seg g" style="width:100%"></span></div><span class="tot">16.7k</span></div>
+          </div>
+          <figcaption>Higher is better. Each chart has its own scale.</figcaption>
+        </figure>
+      </div>
+
+      <p class="note">Assumed: one session a day, 30 edits (about 15 distinct ideas), 200 ideas, and for two devices 3 pulls a day with about 5 ideas changed on the other device each time. Quotas are project-wide: 50k reads and 20k writes a day. The echo read per edit follows Google's listener billing rules and should be confirmed in the Usage tab.</p>
+    </section>
+
+    <section id="next">
+      <h2>Still to do</h2>
+      <ol class="tight">
+        <li>Run the two-browser test list: edit, create, delete, create then delete, offline edits then reconnect, delete a parent while the other device adds a child, undo a delete, a large import, and a clock set a few minutes off.</li>
+        <li>After release, watch the Firebase Console Usage tab for a day and compare with the numbers above.</li>
+        <li>If two-device users are common, consider per-device counter documents to remove their remaining echo reads.</li>
+      </ol>
+    </section>
+
+    <section id="references">
+      <h2>References</h2>
+      <ol class="refs">
+        <li><a href="https://cloud.google.com/firestore/pricing" target="_blank" rel="noopener noreferrer">Firestore pricing</a></li>
+        <li><a href="https://docs.cloud.google.com/firestore/docs/best-practices" target="_blank" rel="noopener noreferrer">Firestore best practices</a></li>
+        <li><a href="https://firebase.google.com/docs/firestore/solutions/shard-timestamp" target="_blank" rel="noopener noreferrer">Sharded timestamps</a></li>
+        <li><a href="https://firebase.google.com/docs/firestore/billing-example" target="_blank" rel="noopener noreferrer">Firestore billing example</a></li>
+        <li><a href="https://firebase.blog/posts/2019/08/why-is-my-cloud-firestore-query-slow" target="_blank" rel="noopener noreferrer">Why is my Cloud Firestore query slow?</a></li>
+        <li><a href="https://blog.ensembleui.com/cloud-optimization-at-scale-how-we-cut-massive-costs/" target="_blank" rel="noopener noreferrer">Ensemble: Cloud Optimization at Scale</a></li>
+        <li><a href="https://community.openai.com/t/case-study-reducing-firestore-reads-from-151k-week-to-8-in-an-ai-executive-assistant/1376253" target="_blank" rel="noopener noreferrer">Case study: 151k reads a week to 8</a></li>
+      </ol>
+    </section>
+  </main>
+</div>
+<button class="btn top-btn" id="topBtn" type="button" aria-label="Back to top" hidden>Top</button>
+
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  function dots(id, hitCount, allClass) {
+    var g = document.getElementById(id);
+    for (var i = 0; i < 200; i++) {
+      var r = document.createElementNS(NS, 'rect');
+      r.setAttribute('x', (i % 20) * 10); r.setAttribute('y', Math.floor(i / 20) * 18);
+      r.setAttribute('width', 8); r.setAttribute('height', 14);
+      r.setAttribute('class', 'dot' + (allClass ? ' all' : i < hitCount ? ' hit' : ''));
+      g.appendChild(r);
+    }
+  }
+  dots('dotsToday', 0, true);
+  dots('dotsAfter', 5, false);
+
+  var legend = document.getElementById('legend');
+  var menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', function () {
+    var open = legend.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  var links = Array.prototype.slice.call(document.querySelectorAll('#legendList a'));
+  links.forEach(function (a) {
+    a.addEventListener('click', function () { legend.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); });
+  });
+  document.getElementById('legendFilter').addEventListener('input', function (e) {
+    var q = e.target.value.toLowerCase();
+    links.forEach(function (a) { a.parentNode.hidden = a.textContent.toLowerCase().indexOf(q) === -1; });
+  });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        links.forEach(function (a) { a.removeAttribute('aria-current'); });
+        var a = document.querySelector('#legendList a[href="#' + en.target.id + '"]');
+        if (a) a.setAttribute('aria-current', 'true');
+      });
+    }, { rootMargin: '-10% 0px -80% 0px' });
+    links.forEach(function (a) { var s = document.querySelector(a.getAttribute('href')); if (s) io.observe(s); });
+  }
+  var topBtn = document.getElementById('topBtn');
+  topBtn.addEventListener('click', function () { window.scrollTo({ top: 0 }); });
+  window.addEventListener('scroll', function () { topBtn.hidden = window.scrollY < 600; }, { passive: true });
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('fcs-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('fcs-theme', next); } catch (e) {}
+  });
+})();
+</script>
+</body></html>

@@ -1,7 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react';
 import type { IdeaType } from '../../utilities/types';
 import { readRecentVisits } from '../../utilities/idea/recentVisits';
-import { KIND_LABEL, searchIdeas, suggestedIdeas, type SearchResult } from '../../utilities/idea/search';
+import { KIND_LABEL, searchIdeas, suggestedIdeas, visibleResults, type SearchResult } from '../../utilities/idea/search';
+import Highlighted from '../Highlighted';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 
 interface Props {
@@ -18,17 +19,6 @@ const SUGGESTED_LIMIT = 8;
 // Rows past this one enter together, so a long list doesn't trickle in.
 const STAGGER_CAP = 8;
 
-function escapeRegExp(text: string): string {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// Marks each searched word where it appears, so the eye finds why a row matched.
-function Highlighted({ text, words }: { text: string; words: string[] }) {
-    if (words.length === 0) return <>{text}</>;
-    const parts = text.split(new RegExp(`(${words.map(escapeRegExp).join('|')})`, 'gi'));
-    return <>{parts.map((part, i) => (i % 2 === 1 ? <mark key={i}>{part}</mark> : part))}</>;
-}
-
 function SearchIcon() {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
@@ -43,17 +33,22 @@ function MobileSearchSheet({ allIdeas, onPick, onOpenMindMap, onClose, style }: 
     const swipe = useSheetSwipeDown(onClose);
 
     const suggested = useMemo(() => suggestedIdeas(allIdeas, readRecentVisits(), SUGGESTED_LIMIT), [allIdeas]);
-    const parentIds = useMemo(() => new Set(allIdeas.map((idea) => idea.parentID)), [allIdeas]);
-    const words = useMemo(() => query.trim().toLowerCase().split(/\s+/).filter(Boolean), [query]);
+        const words = useMemo(() => query.trim().toLowerCase().split(/\s+/).filter(Boolean), [query]);
     const hasQuery = words.length > 0;
     const results = useMemo(() => (hasQuery ? searchIdeas(allIdeas, query) : suggested.results), [hasQuery, allIdeas, query, suggested]);
 
-    const heading = hasQuery ? `${results.length} ${results.length === 1 ? 'match' : 'matches'}` : suggested.title;
+    const [expanded, setExpanded] = useState<Set<number>>(new Set());
+    const shown = useMemo(() => visibleResults(results, expanded), [results, expanded]);
+    function toggle(id: number) {
+        setExpanded((prev) => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next; });
+    }
+    const matchCount = results.filter((r) => r.isMatch).length;
+    const heading = hasQuery ? `${matchCount} ${matchCount === 1 ? 'match' : 'matches'}` : suggested.title;
 
     // Same colours as the cards in the list, so a result is recognisable on arrival.
     function colorOf(result: SearchResult): string {
         if (result.kind !== 'idea') return result.kind;
-        return parentIds.has(result.id) ? 'parent' : 'leaf';
+        return result.hasChildren ? 'parent' : 'leaf';
     }
 
     function clear() {
@@ -97,7 +92,7 @@ function MobileSearchSheet({ allIdeas, onPick, onOpenMindMap, onClose, style }: 
                         aria-label="Search ideas"
                         value={query}
                         autoFocus
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e) => { setQuery(e.target.value); setExpanded(new Set()); }}
                         onKeyDown={(e) => {
                             if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
                             e.preventDefault();
@@ -129,18 +124,29 @@ function MobileSearchSheet({ allIdeas, onPick, onOpenMindMap, onClose, style }: 
                         </div>
                     )}
                     <ul className="mmobile-search-list">
-                        {results.map((result, i) => (
-                            <li key={result.id} style={{ '--i': Math.min(i, STAGGER_CAP) } as React.CSSProperties}>
-                                <button type="button" className={`mmobile-search-row mmobile-search-row--${colorOf(result)}`} onClick={() => onPick(result)}>
+                        {shown.map((result, i) => (
+                            <li key={result.id} style={{ '--i': Math.min(i, STAGGER_CAP), '--depth': Math.min(result.depth, 5) } as React.CSSProperties}>
+                                <button type="button" className={`mmobile-search-row mmobile-search-row--${colorOf(result)}${result.isMatch ? '' : ' mmobile-search-row--context'}`} onClick={() => onPick(result)}>
                                     <span className="mmobile-search-row-main">
                                         <span className="mmobile-search-row-label"><Highlighted text={result.label} words={words} /></span>
                                         {result.snippet && <span className="mmobile-search-row-snippet"><Highlighted text={result.snippet} words={words} /></span>}
                                         <span className="mmobile-search-row-meta">
-                                            {KIND_LABEL[result.kind]} · {result.path.length > 0 ? `in ${result.path.join(' › ')}` : 'top level'}
+                                            {KIND_LABEL[result.kind]}{result.depth === 0 && <> · {result.path.length > 0 ? `in ${result.path.join(' › ')}` : 'top level'}</>}
                                         </span>
                                     </span>
                                     <span className="mmobile-search-row-go" aria-hidden="true">›</span>
                                 </button>
+                                {result.descendants > 0 && (
+                                    <button
+                                        type="button"
+                                        className={`mmobile-search-expand${expanded.has(result.id) ? ' mmobile-search-expand--open' : ''}`}
+                                        onClick={() => toggle(result.id)}
+                                        aria-expanded={expanded.has(result.id)}
+                                    >
+                                        {expanded.has(result.id) ? 'Hide' : `${result.descendants} inside`}
+                                        <span className="mmobile-search-expand-chevron" aria-hidden="true">▾</span>
+                                    </button>
+                                )}
                             </li>
                         ))}
                     </ul>

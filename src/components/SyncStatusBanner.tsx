@@ -47,7 +47,15 @@ function SyncStatusBanner() {
     // Re-enable the buttons whenever the failure itself changes.
     useEffect(() => setBusy(false), [status.failure]);
 
-    const showWaiting = !status.failure && status.pendingCount > 0 && (!online || slow);
+    // Closing the waiting toast hides it until the queue empties or the
+    // connection state flips, so a later wait shows it again.
+    const [waitingDismissed, setWaitingDismissed] = useState(false);
+    useEffect(() => {
+        if (status.pendingCount === 0) setWaitingDismissed(false);
+    }, [status.pendingCount]);
+    useEffect(() => setWaitingDismissed(false), [online]);
+
+    const showWaiting = !status.failure && status.pendingCount > 0 && (!online || slow) && !waitingDismissed;
     if (!status.failure && !showWaiting && status.notices.length === 0) return null;
 
     const changes = status.pendingCount === 1 ? '1 change is' : `${status.pendingCount} changes are`;
@@ -98,6 +106,14 @@ function SyncStatusBanner() {
                             ? `Saving… ${changes} waiting to reach the server.`
                             : `You're offline. ${changes} saved on this device and will sync when you reconnect.`}
                     </p>
+                    <button
+                        type="button"
+                        className="syncBanner__dismiss"
+                        aria-label="Dismiss"
+                        onClick={() => setWaitingDismissed(true)}
+                    >
+                        ×
+                    </button>
                 </div>
             )}
 

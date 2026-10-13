@@ -560,10 +560,10 @@
     justify-content: flex-start;
     align-items: stretch;
     gap: 0.9rem;
-    width: min(40rem, 92vw);
+    width: min(56rem, 92vw);
     min-height: 0;
-    max-height: min(34rem, 85vh);
-    max-height: min(34rem, 85dvh);
+    max-height: min(46rem, 88vh);
+    max-height: min(46rem, 88dvh);
     padding: 1.5rem 1.25rem 1rem;
     overflow: hidden;
 }
@@ -580,7 +580,7 @@
 .search-modal-list {
     list-style: none;
     margin: 0;
-    padding: 0 0 0.3rem;
+    padding: 0 0 0.6rem;
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
@@ -597,7 +597,7 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    padding: 0.55rem 0.9rem 0.3rem;
+    padding: 0.55rem 0.9rem 0.45rem;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -636,7 +636,44 @@
         box-shadow: 1px 1px 0 #111;
     }
 
-    &--active {
+    // An idea result is a small copy of the idea's own card: same colour,
+    // heavy border and hard shadow, pressing in on hover / keyboard selection.
+    &--leaf, &--parent, &--link, &--note, &--checklist {
+        margin: 0;
+        padding: 0.55rem 0.9rem;
+        background: var(--kind-color);
+        border: 3px solid #111;
+        border-radius: 8px;
+        box-shadow: 3px 3px 0 #111;
+        color: #111;
+        transition: translate 0.12s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.12s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    &--leaf      { --kind-color: #{$leaf}; }
+    &--parent    { --kind-color: #{$sky}; }
+    &--link      { --kind-color: #{$link}; }
+    &--note      { --kind-color: #{$neo-green}; color: #fff; }
+    &--checklist { --kind-color: #{$indigo}; color: #fff; }
+
+    // Shown because it sits under a match: a smaller card.
+    &--context {
+        padding: 0.35rem 0.8rem;
+        box-shadow: 2px 2px 0 #111;
+    }
+    &--context .search-modal-label {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    &--leaf.search-modal-row--active,
+    &--parent.search-modal-row--active,
+    &--link.search-modal-row--active,
+    &--note.search-modal-row--active,
+    &--checklist.search-modal-row--active {
+        translate: 2px 2px;
+        box-shadow: 1px 1px 0 #111, inset 0 0 0 3px rgba(255, 255, 255, 0.75);
+    }
+
+    &--active:not(.search-modal-row--idea) {
         background: $neutral;
     }
 
@@ -686,12 +723,76 @@
     padding: 0.1rem 0.55rem;
     border: 2px solid #111;
     border-radius: 999px;
-    background: $leaf;
+    background: #fff;
     color: #111;
+}
 
-    &--link { background: $link; }
-    &--checklist { background: $indigo; color: #fff; }
-    &--note { background: $neo-green; color: #fff; }
+// "26 inside ▾": sits in the card, under the kind badge, so it belongs to the idea it opens.
+.search-modal-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.search-modal-expand {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.12rem 0.65rem;
+    border: 2px solid #111;
+    border-radius: 999px;
+    background: $neo-pink;
+    color: #fff;
+    box-shadow: 2px 2px 0 #111;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: translate 0.1s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.1s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &:hover, &:active { translate: 1px 1px; box-shadow: 1px 1px 0 #111; }
+    &:focus-visible { outline: 3px solid #fff; outline-offset: 1px; }
+
+    &-chevron {
+        display: inline-block;
+        font-size: 0.7rem;
+        transform: rotate(-90deg);
+        transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    &--open &-chevron { transform: none; }
+}
+
+// Under a match: pushed in with a guide line down its left edge, so it reads as
+// part of the branch above rather than a stray row.
+.search-modal-list > li:not(.search-modal-group):not(.search-modal-empty) {
+    padding: 0.15rem 0.7rem 0.5rem;
+}
+
+.search-modal-item--nested {
+    position: relative;
+    padding-left: calc(0.7rem + var(--depth, 1) * 1.1rem) !important;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: calc(0.7rem + var(--depth, 1) * 1.1rem - 0.55rem);
+        border-left: 2px solid rgba(17, 17, 17, 0.25);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        animation: searchNestedIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation-delay: calc(var(--i, 0) * 25ms);
+    }
+}
+
+@keyframes searchNestedIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
 }
 
 .search-modal-empty {

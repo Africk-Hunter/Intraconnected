@@ -16,7 +16,7 @@ const GROUPS: { title: string; accent: string; rows: { keys: string; action: str
             { keys: '← → ↑ ↓', action: 'Move between cards' },
             { keys: 'Enter', action: 'Open the selected card' },
             { keys: 'Backspace', action: 'Go up one level' },
-            { keys: `${MOD}+F`, action: 'Search all ideas' },
+            { keys: `${MOD}+K`, action: `Search all ideas (or ${MOD}+F)` },
         ],
     },
     {

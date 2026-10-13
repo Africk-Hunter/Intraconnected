@@ -102,8 +102,10 @@ export function useDesktopShortcuts({ enabled, mapOpen, onToggleMap, onNewIdea, 
             if (e.defaultPrevented || e.isComposing) return;
             const { actions: act, mapOpen: map, onToggleMap: toggleMap, onNewIdea: newIdea, onGoUp: goUp, onShowShortcuts: showKeys, onSearch: search } = latest.current;
 
-            // Ctrl/Cmd+F opens search from anywhere that isn't already a modal (replaces the browser's find).
-            if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
+            // Ctrl/Cmd+K or +F opens search from anywhere that isn't already a modal. F replaces the
+            // browser's find on the main view only; over a modal it is left alone so long text stays findable.
+            const searchKey = e.key.toLowerCase();
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (searchKey === 'k' || searchKey === 'f')) {
                 if (document.querySelector('.overlay, .card-menu')) return;
                 e.preventDefault();
                 search();

@@ -204,6 +204,8 @@ $search-row-stagger: 25ms;
     gap: 10px;
 
     > li {
+        position: relative;
+        margin-left: calc(var(--depth, 0) * 18px);
         animation: mmSearchRowIn $search-row-in $search-ease-out both;
         animation-delay: calc(var(--i, 0) * #{$search-row-stagger});
     }
@@ -243,6 +245,13 @@ $search-row-stagger: 25ms;
     &--link      { --kind-color: #{$link}; }
     &--note      { --kind-color: #{$neo-green}; }
     &--checklist { --kind-color: #{$indigo}; }
+
+    // Under a match, not a match itself.
+    &--context {
+        min-height: 46px;
+        box-shadow: 2px 2px 0 #111;
+        background: #fafafa;
+    }
 
     &:active {
         transform: translate(2px, 2px);
@@ -301,6 +310,32 @@ $search-row-stagger: 25ms;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+// "3 inside ▾" under the row, in the thumb's reach, and says what it reveals.
+.mmobile-search-expand {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    margin: 2px 0 0 auto;
+    padding: 0 14px;
+    border: 2px solid #111;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &-chevron {
+        font-size: 0.75rem;
+        transform: rotate(-90deg);
+        transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    &--open &-chevron { transform: none; }
+    &:active { background: #eee; }
 }
 
 .mmobile-search-row-go {

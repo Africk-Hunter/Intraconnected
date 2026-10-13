@@ -61,6 +61,24 @@ describe("searchIdeas", () => {
         expect(seeds.snippet).toBe("");
     });
 
+    it("finds a misspelled or half-remembered name", () => {
+        expect(searchIdeas(ideas, "gardin")[0].id).toBe(10);
+        expect(searchIdeas(ideas, "tomatto seeds").map((r) => r.id)).toEqual([11]);
+        expect(searchIdeas(ideas, "grdnpln")[0].id).toBe(10);
+    });
+
+    it("lists the ideas under a match, indented, and marks them as context", () => {
+        const found = searchIdeas(ideas, "garden");
+        expect(found.map((r) => [r.id, r.depth, r.isMatch])).toEqual([
+            [10, 0, true], [11, 1, false], [12, 1, false], [13, 1, false], [14, 1, false],
+        ]);
+        expect(found[0].hasChildren).toBe(true);
+    });
+
+    it("matches a word through the names above the idea", () => {
+        expect(searchIdeas(ideas, "garden prune").map((r) => r.id)).toEqual([13]);
+    });
+
     it("respects the limit", () => {
         expect(searchIdeas(ideas, "tomato", 2)).toHaveLength(2);
     });

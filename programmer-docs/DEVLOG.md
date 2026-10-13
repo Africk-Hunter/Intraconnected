@@ -4,6 +4,13 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Firestore Cost, Phases 2-4 — 2026-10-12
+Cuts billed reads and writes (`~/.claude/plans/okay-create-a-plan-hashed-boole.md`). Typecheck and 345 tests pass; lint has 2 errors in `SearchModal.tsx`, which is other uncommitted work. **Not tried in a browser; the two-browser test matrix in the plan is still to run.** No `firestore.rules` change.
+- `updatedAt`: `sendOp` (`outbox.ts`) stamps `serverTimestamp()` on every create, createMany and update, at send time only (idea model, `IdeaPatch`, stored outbox and `decodeIdea` untouched). Existing docs aren't backfilled.
+- Incremental pull (`syncEngine.ts`, `pull`/`pullIncremental`): reads only ideas with `updatedAt` newer than a per-account watermark (`sync_wm_<uid>`, 5s overlap), then a server `count()` is compared with the ids this device expects the server to hold (`estimateServerIds`, `pendingOps()`); any mismatch, decode failure or doubt falls back to the old full pull (`pullFromServer`). Full pull is also forced with no watermark, a new device/account, after 7 days (`FULL_PULL_MAX_AGE_MS`), and when the outbox asks for a refresh (not-found, Discard). Kill switches: `INCREMENTAL_PULL` constant, or `localStorage sync_force_full = "1"`. An idea this device itself wrote is read back once by its next pull (it is newer than the watermark); harmless.
+- Solo-skip (`devicePresence.ts`): a device that is provably alone (server-confirmed `meta/sync` snapshot, live listener, no other device in `devices`) skips the `meta/sync` bump on writes. It registers itself once (`registerDevice`, counter unchanged, so no pulls). When the listener first sees a new device it sends one `announceChanges` bump so that device pulls everything changed in the meantime; until that lands every write bumps. Any doubt (cached snapshot, listener error, offline) bumps as before. Kill switches: `SOLO_SKIP` constant, or `localStorage sync_always_bump = "1"`.
+- Dropped from the first analysis: preferences reads (onboarding and patch-notes flags are already cached in localStorage) and burst-skip.
+
 ## Audit Fixes — 2026-10-12
 Typecheck, lint (0 errors, same 18 warnings) and 314 tests pass; **not tried in a browser, and the two-tab outbox is untested by hand.**
 - Bug reports (`submit-bug-report.ts`): diagnostics and the issue title are flattened to one line with `@` defused, so a reporter can't inject markdown or mention anyone. A GitHub issue is only opened for a signed-in, verified account; signed-out reports are stored in Firestore only.

@@ -2,7 +2,8 @@ import ReportLink from '../ReportLink';
 import { useEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { ImportError, parseImportFiles, SUPPORTED_IMPORT_EXTENSIONS } from '../../utilities/idea/importers';
-import { applyImport, ImportPlan, MAX_IMPORT_IDEAS, planImport } from '../../utilities/idea/importIdeas';
+import { applyImport, DAILY_IMPORT_LIMIT, ImportPlan, planImport } from '../../utilities/idea/importIdeas';
+import { SUPPORT_EMAIL } from '../../utilities/support';
 import { usePurchaseMode } from '../../utilities/billing/purchaseMode';
 
 // The File System Access picker (Chrome/Edge). Not in TypeScript's DOM lib yet.
@@ -20,16 +21,42 @@ const PICKER_TYPES = [{
 
 // Handed to an AI along with the user's notes; the answer is a Markdown outline
 // that the Markdown importer in importers.ts reads directly.
-const AI_PROMPT = `Turn the notes I give you into a nested Markdown bullet list for import into a mind-mapping app.
+const AI_PROMPT = `Turn the notes I give you into a nested Markdown outline for import into Intraconnected, a mind-mapping app. The app stores four kinds of item. Decide which kind each piece of my notes is, and write it in the matching form.
+
+The four kinds:
+
+1. IDEA. A short thought: a phrase or one sentence. It can have child ideas, and that is how the map gets its structure. Use it for topics, goals, questions, categories and anything that other things hang under.
+   - Parent idea
+     - Child idea
+
+2. CHECKLIST. A set of to-do items that get ticked off. A checklist cannot contain ideas, only items, so use it only when every child is a task (shopping lists, steps, packing lists). Write the checklist's title as a bullet, then every item under it as "- [ ]" (open) or "- [x]" (already done). Do not make a checklist out of things that are not tasks.
+   - Packing list
+     - [ ] Passport
+     - [x] Book flights
+
+3. NOTE. A longer piece of text that is read, not ticked or expanded: a paragraph, a quote, meeting minutes, a description. A note cannot have children. Write a short title as a bullet, then a blank line, then the body indented under it by 4 spaces. Use it when the text is more than a sentence or two.
+   - Meeting recap
+
+       We agreed to ship the beta in March. Pricing still needs a decision.
+
+4. LINK. An idea that points to a web page. Clicking it opens the address. A link cannot have children, so if the thing has sub-ideas, make it an ordinary idea and put the link as a child. Write it as [text](https://example.com) with a full http(s) address.
+   - [Design reference](https://example.com)
+
+Make full use of all four kinds. A map made only of ideas is a poor result. Go through my notes item by item and ask:
+- Is it a list of things to do, buy, pack, check or finish? Make it a CHECKLIST, with items I have already done marked [x]. Never spread a to-do list across separate ideas.
+- Is it a paragraph, a description, a quote, a rationale, meeting notes, or any text longer than about one sentence? Make it a NOTE. Never squeeze long text into an idea or split it into fragments.
+- Does it mention a URL, a website, a document, a tool or a resource with an address? Make it a LINK (or a link child under its idea).
+- Is it a short topic, goal, question or category that other things belong under? Make it an IDEA.
+Most real notes mix all four, so expect a mix: ideas for the structure, with checklists, notes and links as the leaves under them. Keep structure shallow, 3 levels at most, and avoid parents that hold only one child.
+
+Priority: add (P1) for high, (P2) for medium or (P3) for low at the end of an idea, checklist, note or link. Use it for anything my notes call urgent, important, blocking or time-sensitive, or that is clearly more or less important than its siblings. Leave it off the rest.
 
 Rules:
-- Output only the list, in one code block, with no commentary.
-- One idea per line, starting with "- ".
-- Indent a child idea by 2 spaces under its parent. Group related ideas under a short parent idea.
-- Keep each idea short, a phrase or one sentence, and keep my wording where you can.
-- If an idea has a web link, write it as [text](https://example.com).
-- No headings, tables, bold, italics or emojis.
-- Do not invent ideas that are not in my notes.
+- If you can create files, give me the outline as a downloadable file named intraconnected-import.md (plain Markdown text). If you can't, output it in one code block instead. Either way, add no commentary.
+- Every line starts with "- ". Indent children by 2 spaces under their parent. No headings, tables, bold, italics or emojis.
+- Group related items under a short parent idea so the map has a clear shape.
+- Keep idea titles short and keep my wording where you can. Note bodies and checklist items can be as long as the content needs.
+- Do not invent anything that is not in my notes, but do use every detail in them: nothing should be dropped just because it doesn't fit as an idea.
 
 My notes:
 `;
@@ -52,10 +79,16 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
     const [state, setState] = useState<ImportState>({ step: 'idle' });
     const [promptCopied, setPromptCopied] = useState(false);
     const [dragOver, setDragOver] = useState(false);
+    const [showPaste, setShowPaste] = useState(false);
+    const [pasteText, setPasteText] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (!profileModalOpen) setState({ step: 'idle' });
+        if (!profileModalOpen) {
+            setState({ step: 'idle' });
+            setShowPaste(false);
+            setPasteText('');
+        }
     }, [profileModalOpen]);
 
     // Chrome and Edge build the Windows dialog's filter from an <input accept>
@@ -83,11 +116,20 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
     async function handleFiles(files: File[]) {
         if (inputRef.current) inputRef.current.value = '';
         if (files.length === 0) return;
+        await readImport(() => Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) }))));
+    }
+
+    // Pasted text is read as a Markdown file, which also covers plain outlines.
+    async function handlePaste() {
+        const text = pasteText.trim();
+        if (!text) return;
+        await readImport(async () => [{ name: 'pasted.md', bytes: new TextEncoder().encode(text) }]);
+    }
+
+    async function readImport(load: () => Promise<{ name: string; bytes: Uint8Array }[]>) {
         setState({ step: 'reading' });
         try {
-            const parsed = await parseImportFiles(
-                await Promise.all(files.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) }))),
-            );
+            const parsed = await parseImportFiles(await load());
             const plan = planImport(parsed);
             if (plan.ideas.length <= 1) throw new ImportError('No ideas were found in that file.');
             setState({ step: 'preview', plan, title: parsed.title, format: parsed.format, skipped: parsed.skipped.length });
@@ -97,11 +139,13 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
         }
     }
 
-    function handleConfirm() {
+    function handleConfirm(useException = false) {
         if (state.step !== 'preview') return;
         try {
-            applyImport(state.plan);
+            applyImport(state.plan, { useException });
             setNewIdeaSwitch((prev: boolean) => !prev);
+            setPasteText('');
+            setShowPaste(false);
             setState({ step: 'done', count: state.plan.ideas.length, title: state.title });
         } catch (error) {
             setState({ step: 'error', message: error instanceof ImportError ? error.message : 'The import couldn’t be saved.' });
@@ -149,9 +193,32 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                     <span className="profile-dropzone-pointer">{pointerLabel}</span>
                     <span className="profile-dropzone-touch">{touchLabel}</span>
                 </span>
-                <span className="profile-dropzone-hint">Up to {MAX_IMPORT_IDEAS.toLocaleString()} ideas per import</span>
+                <span className="profile-dropzone-hint">Up to {DAILY_IMPORT_LIMIT.toLocaleString()} ideas per 24 hours</span>
             </span>
         </button>
+    );
+
+    const pasteArea = showPaste ? (
+        <div className="profile-import-paste">
+            <textarea
+                className="profile-import-paste-input"
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Paste an outline here, such as the AI's answer"
+                aria-label="Pasted outline"
+                rows={6}
+            />
+            <div className="profile-export-buttons">
+                <button className="profile-action-btn neobrutal-button" onClick={handlePaste} disabled={!pasteText.trim()}>Read text</button>
+                <button className="profile-action-btn neutral neobrutal-button" onClick={() => { setShowPaste(false); setPasteText(''); }}>Cancel</button>
+            </div>
+        </div>
+    ) : (
+        <p className="profile-import-ai">
+            Or{' '}
+            <button type="button" className="profile-link-btn" onClick={() => setShowPaste(true)}>paste text</button>
+            {' '}instead of using a file.
+        </p>
     );
 
     let body: React.ReactNode;
@@ -167,14 +234,28 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                 {state.skipped > 0 && ` ${state.skipped} other ${state.skipped === 1 ? 'file' : 'files'} (images, tables, etc.) will be skipped.`}
             </p>
         );
-        if (count > MAX_IMPORT_IDEAS) {
+        if (count > state.plan.dailyRoom) {
+            const { dailyRoom, exceptionsLeft } = state.plan;
+            const roomText = dailyRoom > 0
+                ? `You can import ${dailyRoom} more ${dailyRoom === 1 ? 'idea' : 'ideas'} in the next 24 hours.`
+                : `You’ve reached the limit of ${DAILY_IMPORT_LIMIT.toLocaleString()} imported ideas per 24 hours.`;
             body = (
                 <>
                     {summary}
                     <p className="profile-import-error">
-                        That’s more than the {MAX_IMPORT_IDEAS} ideas one import can hold. Try exporting a smaller part of your map.
+                        {roomText}{' '}
+                        {exceptionsLeft > 0
+                            ? `You can make an exception ${exceptionsLeft === 1 ? 'one more time' : `${exceptionsLeft} more times`} on this account, or try a smaller file.`
+                            : <>You’ve used all your exceptions. To import more, contact <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</>}
                     </p>
-                    <div className="profile-export-buttons">{chooseButton('Choose another file')}</div>
+                    <div className="profile-export-buttons">
+                        {exceptionsLeft > 0 && (
+                            <button className="profile-action-btn neobrutal-button" onClick={() => handleConfirm(true)}>
+                                Import anyway ({exceptionsLeft} left)
+                            </button>
+                        )}
+                        {chooseButton('Choose another file')}
+                    </div>
                 </>
             );
         } else if (room !== null && count > room) {
@@ -196,7 +277,7 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                 <>
                     {summary}
                     <div className="profile-export-buttons">
-                        <button className="profile-action-btn neobrutal-button" onClick={handleConfirm}>Import {count} {count === 1 ? 'idea' : 'ideas'}</button>
+                        <button className="profile-action-btn neobrutal-button" onClick={() => handleConfirm()}>Import {count} {count === 1 ? 'idea' : 'ideas'}</button>
                         <button className="profile-action-btn neutral neobrutal-button" onClick={() => setState({ step: 'idle' })}>Cancel</button>
                     </div>
                 </>
@@ -218,6 +299,7 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                     </div>
                 </div>
                 {dropzone('Drop another file or click to choose', 'Import another file')}
+                {pasteArea}
             </>
         );
     } else {
@@ -225,6 +307,7 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
             <>
                 {state.step === 'error' && <p className="profile-import-error" role="alert">{state.message} <ReportLink area="import" error={state.message} /></p>}
                 {dropzone('Drop files here or click to choose', 'Choose files')}
+                {pasteArea}
             </>
         );
     }
@@ -244,7 +327,7 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                 <button type="button" className="profile-link-btn" onClick={copyPrompt}>
                     {promptCopied ? 'Copied' : 'Copy an AI prompt'}
                 </button>
-                {' '}to turn them into an outline, save its answer as a .md file and import it above.
+                {' '}to turn them into an outline, then paste its answer or save it as a .md file and import it.
             </p>
             <input
                 ref={inputRef}
