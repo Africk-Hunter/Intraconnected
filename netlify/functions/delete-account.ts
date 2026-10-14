@@ -42,15 +42,17 @@ async function deleteBugReports(db: Firestore, uid: string) {
     }
 }
 
-// Daily usage flags (usage-watch.ts) hold the account's email, so they go too.
-// The GitHub issue made from one only names the uid and stays as it is.
-async function deleteUsageFlags(db: Firestore, uid: string) {
+// Daily usage flags (usage-watch.ts) hold the account's email, so they go too,
+// along with the last idea count it recorded. The GitHub issue made from a
+// flag holds only counts and the flag id, and stays as it is.
+async function deleteUsageRecords(db: Firestore, uid: string) {
     const snap = await db.collection("usageFlags").where("uid", "==", uid).get();
     for (let i = 0; i < snap.docs.length; i += 500) {
         const batch = db.batch();
         snap.docs.slice(i, i + 500).forEach(doc => batch.delete(doc.ref));
         await batch.commit();
     }
+    await db.collection("usageWatch").doc(uid).delete();
 }
 
 // Terminal statuses that never charge again and that Stripe refuses to
@@ -111,7 +113,7 @@ export default authed(
         await deleteCollection(db, uid, "ideas");
         await deleteCollection(db, uid, "meta");
         await deleteBugReports(db, uid);
-        await deleteUsageFlags(db, uid);
+        await deleteUsageRecords(db, uid);
 
         await adminAuth().deleteUser(uid);
 

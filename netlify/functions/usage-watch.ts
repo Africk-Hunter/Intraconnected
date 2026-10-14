@@ -8,9 +8,10 @@ import { evaluateUsage, type UsageFlagReason } from "./lib/usageWatch";
 // account; a flag is for a person to look at. Admin SDK only, so no
 // firestore.rules entry is needed (clients are denied by default).
 //
-// Each flag is stored in `usageFlags` (with the account's email, which stays
-// out of GitHub) and, when GITHUB_TOKEN is set, opened as an issue holding
-// only the uid, so GitHub's notification email is the alert.
+// Each flag is stored in `usageFlags` (with the account's uid and email) and,
+// when GITHUB_TOKEN is set, opened as an issue holding only the counts and the
+// flag id, so GitHub's notification email is the alert. The repository is
+// public, so the uid stays out of the issue too.
 
 const GITHUB_REPO = process.env.GITHUB_REPO ?? "Africk-Hunter/Intraconnected";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -24,7 +25,7 @@ interface WatchDoc {
     lastFlaggedCount: number | null;
 }
 
-async function openIssue(uid: string, reason: UsageFlagReason, count: number, previousCount: number | null, flagId: string): Promise<void> {
+async function openIssue(reason: UsageFlagReason, count: number, previousCount: number | null, flagId: string): Promise<void> {
     if (!GITHUB_TOKEN) return;
     const what = reason === "growth" ? `grew by ${count - (previousCount ?? 0)} ideas in a day` : `has ${count} ideas`;
     try {
@@ -33,7 +34,7 @@ async function openIssue(uid: string, reason: UsageFlagReason, count: number, pr
             headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, "Content-Type": "application/json", Accept: "application/vnd.github+json" },
             body: JSON.stringify({
                 title: `[Usage] A paid account ${what}`,
-                body: [`Reason: ${reason}`, `Ideas: ${count}`, `Previous check: ${previousCount ?? "none"}`, `Account: ${uid}`, `Flag ID: ${flagId} (usageFlags collection, has the email)`].join("\n"),
+                body: [`Reason: ${reason}`, `Ideas: ${count}`, `Previous check: ${previousCount ?? "none"}`, `Flag ID: ${flagId} (usageFlags collection, names the account)`].join("\n"),
                 labels: ["usage"],
             }),
         });
@@ -76,7 +77,7 @@ export default async (): Promise<Response> => {
             if (reason) {
                 const flagRef = db.collection("usageFlags").doc();
                 await flagRef.set({ uid: user.uid, email: user.email ?? null, reason, count, previousCount: before?.count ?? null, flaggedAt: now });
-                await openIssue(user.uid, reason, count, before?.count ?? null, flagRef.id);
+                await openIssue(reason, count, before?.count ?? null, flagRef.id);
                 if (reason === "size") lastFlaggedCount = count;
                 flagged++;
             }

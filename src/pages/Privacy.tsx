@@ -38,19 +38,29 @@ const Privacy: React.FC = () => {
                         <strong>Your ideas.</strong> The text of each idea (its name, notes, links, and
                         checklist items) is encrypted on your device before being stored. We do not read
                         it. The structure of your map is stored as plain data so that sync and the app
-                        can work: which ideas sit under which, their priorities, whether a checklist item
-                        is ticked, and when each idea was last changed.
+                        can work: which ideas sit under which, whether each is an idea, note or
+                        checklist, their priorities, whether an idea is censored, whether a checklist
+                        item is ticked, and when each idea was created and last changed.
+                    </p>
+                    <p>
+                        <strong>Sync and app settings.</strong> A random identifier for each device you
+                        sign in on, so your devices know when to sync with each other, and a few
+                        settings such as whether you've seen the welcome tips and which patch notes
+                        you've read.
                     </p>
                     <p>
                         <strong>Usage counts, paid accounts only.</strong> Once a day we count the ideas
-                        in each paid account, without reading them. If an account's count is unusually
-                        high or grows suddenly, we record a flag with the account's email so we can look
-                        at it. Nothing is blocked or changed as a result.
+                        in each paid account, without reading them, and keep the latest count. If an
+                        account's count is unusually high or grows suddenly, we record a flag with the
+                        account's email so we can look at it, and post a notice containing only the
+                        counts (no account details) to our public issue tracker on GitHub. Nothing is
+                        blocked or changed as a result.
                     </p>
                     <p>
                         <strong>Network address, when signed out.</strong> To limit abuse of our
-                        sign-in-error and problem-report forms, we store a one-way hash of your IP
-                        address for a short time. We cannot reverse it to an address.
+                        problem-report form, which also opens from sign-in errors, we store a keyed
+                        one-way hash of your IP address. We cannot reverse it to an address, and it is
+                        deleted automatically a few days after your last report.
                     </p>
                     <p>
                         <strong>Payment information, if you upgrade.</strong> If you choose a paid
@@ -114,6 +124,15 @@ const Privacy: React.FC = () => {
                         of its own for fraud prevention while checkout is open; that's Stripe's
                         processing, not ours, and is covered by their policy above.
                     </p>
+                    <p>
+                        The website and app load their fonts from <strong>Google Fonts</strong>, so your
+                        device requests them from Google's servers, which receive your IP address and browser
+                        details as part of that request. Google Fonts is subject to{" "}
+                        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
+                            Google's Privacy Policy
+                        </a>
+                        .
+                    </p>
                 </section>
 
                 <section className="legalSection">
@@ -123,10 +142,12 @@ const Privacy: React.FC = () => {
                         shown in the form (such as the page, your browser and any error text), and any
                         contact address you chose to add. If you were signed in, the report is also
                         linked to your account and email so we can follow up. Reports from verified
-                        accounts may also be opened as a GitHub issue that contains your description
-                        and those technical details, but not your account or contact details. Reports
-                        linked to your account are deleted with it. Never include idea content or
-                        passwords in a report.
+                        accounts may also be posted as a <strong>public</strong> issue on our GitHub
+                        project, containing your description and those technical details, but not your
+                        account or contact details. Reports linked to your account are deleted with it;
+                        public GitHub issues are not (you can ask us to remove one by email). A report
+                        sent while signed out isn't linked to any account, so to have it deleted, email
+                        us. Never include idea content, passwords or anything else private in a report.
                     </p>
                 </section>
 
@@ -168,16 +189,16 @@ const Privacy: React.FC = () => {
                 <section className="legalSection">
                     <h2>Your Rights</h2>
                     <p>
-                        You can download a copy of your data at any time from Profile → Export Your
-                        Data, on any plan. You can choose Markdown or OPML (your decrypted ideas,
+                        You can download a copy of your data at any time from Profile → Data → Export
+                        Your Data, on any plan. You can choose Markdown or OPML (your decrypted ideas,
                         for use in other notes, outliner or mind-map apps) or JSON (your decrypted
                         ideas plus basic account information, as a full backup).
                     </p>
                     <p>
                         You can permanently delete your account and all associated data at any time,
-                        yourself, from Profile → Delete Account in the app. No need to contact us.
+                        yourself, from Profile → Danger Zone → Delete Account in the app. No need to contact us.
                         Deleting your account permanently erases your ideas and every copy of your
-                        encryption key from our servers, so that data cannot be recovered afterward, along with any problem reports you sent while signed in. Payment records held by our payment processor (Stripe), such as past charges and the email on them, are kept as the processor and tax rules require. Public GitHub issues are not removed (see Feature Requests). If you'd rather
+                        encryption key from our servers, so that data cannot be recovered afterward, along with any problem reports you sent while signed in and any usage counts and flags. Payment records held by our payment processor (Stripe), such as past charges and the email on them, are kept as the processor and tax rules require. Public GitHub issues are not removed (see Problem Reports and Feature Requests). If you'd rather
                         we do it for you, or you can't access the app, email us at the address below.
                     </p>
                 </section>

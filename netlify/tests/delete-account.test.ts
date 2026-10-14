@@ -32,19 +32,28 @@ function mockDb({
     billingData,
     ideaCount = 0,
     bugReportCount = 0,
+    usageFlagCount = 0,
 }: {
     billingData: Record<string, unknown> | null;
     ideaCount?: number;
     bugReportCount?: number;
+    usageFlagCount?: number;
 }) {
     const billingRef = fakeDocRef(billingData);
     const batchDelete = vi.fn();
     const batchCommit = vi.fn(async () => {});
+    const usageWatchDelete = vi.fn(async () => {});
 
     firestoreMock.mockReturnValue({
         collection: vi.fn((top: string) => {
             if (top === "bugReports") {
                 return { where: vi.fn(() => ({ get: vi.fn(async () => ({ docs: Array.from({ length: bugReportCount }, (_, i) => ({ ref: { id: `report-${i}` } })) })) })) };
+            }
+            if (top === "usageFlags") {
+                return { where: vi.fn(() => ({ get: vi.fn(async () => ({ docs: Array.from({ length: usageFlagCount }, (_, i) => ({ ref: { id: `flag-${i}` } })) })) })) };
+            }
+            if (top === "usageWatch") {
+                return { doc: vi.fn(() => ({ delete: usageWatchDelete })) };
             }
             if (top !== "users") throw new Error(`unexpected top-level collection: ${top}`);
             return {
@@ -74,7 +83,7 @@ function mockDb({
         batch: vi.fn(() => ({ delete: batchDelete, commit: batchCommit })),
     });
 
-    return { batchDelete, batchCommit };
+    return { batchDelete, batchCommit, usageWatchDelete };
 }
 
 describe("delete-account", () => {
@@ -132,6 +141,18 @@ describe("delete-account", () => {
         expect(res.status).toBe(200);
         expect(batchDelete).toHaveBeenCalledWith({ id: "report-0" });
         expect(batchDelete).toHaveBeenCalledWith({ id: "report-1" });
+    });
+
+    it("also deletes the account's usage flags and recorded idea count", async () => {
+        verifyIdTokenWithAuthTime.mockResolvedValue(freshCaller());
+        const { batchDelete, usageWatchDelete } = mockDb({ billingData: null, usageFlagCount: 1 });
+        deleteUser.mockResolvedValue(undefined);
+
+        const res = await handler(fakeRequest(), {} as never);
+
+        expect(res.status).toBe(200);
+        expect(batchDelete).toHaveBeenCalledWith({ id: "flag-0" });
+        expect(usageWatchDelete).toHaveBeenCalled();
     });
 
     it("rejects a token whose sign-in is too old, without touching anything", async () => {
