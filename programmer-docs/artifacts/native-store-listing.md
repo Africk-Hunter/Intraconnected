@@ -23,23 +23,23 @@ Draft text and answers for the App Store (iOS) and Google Play (Android) listing
 
 ## Text
 
-**Subtitle (iOS, 30 characters max):** `Mind maps that go deep`
+**Subtitle (iOS, 30 characters max):** `Catch the idea. Grow the plan.`
 
 **Keywords (iOS, 100 characters max, comma separated):**
 `mind map,mindmap,ideas,notes,brainstorm,outline,checklist,planner,thinking,tree,organize,nodes`
 
 **Promotional text (iOS, 170 max):**
-`Map your mind. Start with one idea, branch it, and zoom into any branch. Drag ideas to reorganize and keep everything in sync across your devices.`
+`Catch the idea, then grow the plan. A bright, playful mind map where ideas, notes and checklists live in one tree, work offline and sync across your devices.`
 
 **Short description (Google Play, 80 max):**
-`A mind map you can zoom into. Branch ideas, reorganize, and sync everywhere.`
+`A colorful mind map for ideas, notes and checklists. Works offline.`
 
 **Full description (both stores):**
 
 ```
-Intraconnected is a mind map built around zooming in.
+Intraconnected is a bright, playful place to catch an idea and grow it into a plan.
 
-Start with a single idea and branch it into more. Tap any idea to step inside it and see only what belongs there, then step back out when you're ready. Big maps stay readable because you only ever look at one level at a time.
+Start with a single idea and branch it into more. Tap any idea to step inside it and see only what belongs there, then step back out when you're ready. Ideas, notes and checklists all live in one tree, and big maps stay readable because you only ever look at one level at a time.
 
 • Branch ideas as deep as you like
 • Drag an idea onto another to move it, or drag it to the trash to delete it
@@ -110,7 +110,7 @@ Ideas are encrypted on the device before they are saved to our servers. The app 
 
 - **iOS:** the 6.9-inch iPhone size (1320 x 2868). Take them from a TestFlight build with the demo account.
 - **Google Play:** at least two phone screenshots; the emulator's 1080 x 2400 is fine.
-- Show: the map with a few ideas, a zoomed-in level, the Create sheet, a checklist, and the Move sheet. Do not show the Profile plan section or anything about upgrading.
+- Show: the map with a few ideas, a level you have stepped into, the Create sheet, a checklist, and the Move sheet. Do not show the Profile plan section or anything about upgrading.
 
 ## Demo account (both review forms, and the closed-test application)
 
@@ -126,7 +126,7 @@ Needs 12 testers, ideally about 20, each opted in for 14 continuous days. Collec
 ```
 Android testers wanted: free mind-mapping app (about 5 minutes, 14 days)
 
-I'm launching Intraconnected, a mind map you zoom into: start with one idea, branch it, tap any idea to step inside it, and drag ideas around to reorganize. It has checklists, notes, priorities, import from Markdown/OPML/Notion and syncs with a web version.
+I'm launching Intraconnected, a bright, colorful mind map: start with one idea, branch it, tap any idea to step inside it, and drag ideas around to reorganize. It has checklists, notes, priorities, import from Markdown/OPML/Notion and syncs with a web version.
 
 Google requires 12 testers to stay opted in for 14 days before I can publish, so I'm looking for Android users. All you need to do:
 1. Send me the Gmail address you use on Google Play.
