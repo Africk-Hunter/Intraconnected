@@ -19,7 +19,7 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.intraconnected.app
+        bundle_identifier: Com.Intraconnected.app
       vars:
         APP_STORE_APPLE_ID: 6822808580
       node: 22
