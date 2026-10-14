@@ -111,6 +111,19 @@ describe("refund-lifetime", () => {
         expect(refundsCreate).toHaveBeenCalledWith({ payment_intent: "pi_123" });
     });
 
+    it("counts the window from lifetimePurchasedAt, not from later billing writes", async () => {
+        verifyIdToken.mockResolvedValue("uid-1");
+        mockBilling({
+            plan: "lifetime",
+            updatedAt: Date.now(),
+            lifetimePurchasedAt: Date.now() - 15 * DAY_MS,
+            lifetimePaymentIntentId: "pi_123",
+        });
+        const res = await handler(fakeRequest(), {} as never);
+        expect(res.status).toBe(400);
+        expect(refundsCreate).not.toHaveBeenCalled();
+    });
+
     it("allows a refund right at the edge of the window", async () => {
         verifyIdToken.mockResolvedValue("uid-1");
         mockBilling({

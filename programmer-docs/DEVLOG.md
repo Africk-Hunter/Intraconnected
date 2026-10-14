@@ -4,6 +4,15 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Later Fixes (checklist section 19) — 2026-10-13
+Typecheck, lint (0 warnings from `exhaustive-deps`) and 347 tests pass; **not deployed, not tried in a browser.**
+- E2: the Lifetime refund window counts from new `BillingDoc.lifetimePurchasedAt` (set on the purchase, kept on redelivery, cleared with the other Lifetime fields), falling back to `updatedAt` for older docs. Server (`refund-lifetime.ts`) and the Profile button agree.
+- Checkout orphans: Annual checkout (`create-payment-intent.ts`) reuses the customer's open `incomplete` subscription for the same price instead of creating a new one per click.
+- E9: the 12 `exhaustive-deps` warnings were reviewed; each effect is meant to run only on its listed deps, so each now carries a justified `eslint-disable-next-line`. Removed one unused directive in `MindMap.tsx`.
+- E1 was already closed by `lastSubscriptionEventAt` (see CLAUDE.md). E5 and E7 left on purpose.
+- E3: "Remember me" keeps the key as a non-extractable `CryptoKey` in IndexedDB instead of raw base64 in `localStorage` (`dekStore.ts`); old raw copies migrate on next load; no IndexedDB = this tab session only. Re-wrapping for an email change / `SessionEndedModal` now unwraps a fresh key with the password (`unlockDEKForRewrap`), since the loaded key can't be exported.
+- E4: idle sign-out (`idleSignOut.ts`): 30 min without activity (any tab), 30 days for Remember me; checked every 30s, on tab focus and on page load. Web only. Typecheck and 353 tests pass; **not tried in a browser** (check: Remember me survives a reload and a browser restart; a normal login signs out after 30 min; email change still works).
+
 ## Firestore Cost, Phases 2-4 — 2026-10-12
 Cuts billed reads and writes (`~/.claude/plans/okay-create-a-plan-hashed-boole.md`). Typecheck and 345 tests pass; lint has 2 errors in `SearchModal.tsx`, which is other uncommitted work. **Not tried in a browser; the two-browser test matrix in the plan is still to run.** No `firestore.rules` change.
 - `updatedAt`: `sendOp` (`outbox.ts`) stamps `serverTimestamp()` on every create, createMany and update, at send time only (idea model, `IdeaPatch`, stored outbox and `decodeIdea` untouched). Existing docs aren't backfilled.

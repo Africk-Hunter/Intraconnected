@@ -46,6 +46,7 @@ export default function AnimatedOverlay({ open, scrollable, onClick, onEscape, c
             }, 150);
             return () => clearTimeout(t);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, [open]);
 
     if (!show) return null;

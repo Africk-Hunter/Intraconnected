@@ -130,6 +130,30 @@ describe("create-payment-intent", () => {
         expect(res.status).toBe(200);
     });
 
+    it("reuses an abandoned Annual checkout instead of creating another incomplete subscription", async () => {
+        verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
+        getBillingDoc.mockResolvedValue({ plan: "free", stripeCustomerId: "cus_1", subscriptionStatus: null });
+        subscriptionsList.mockResolvedValue({
+            data: [
+                {
+                    status: "incomplete",
+                    metadata: { firebaseUid: "uid-1" },
+                    items: { data: [{ price: { id: "price_annual_test" } }] },
+                    latest_invoice: {
+                        status: "open",
+                        confirmation_secret: { client_secret: "secret_old" },
+                        amount_due: 1499,
+                        currency: "usd",
+                    },
+                },
+            ],
+        });
+        const res = await handler(fakeRequest({ plan: "annual" }), {} as never);
+        expect(res.status).toBe(200);
+        expect(((await res.json()) as { clientSecret: string }).clientSecret).toBe("secret_old");
+        expect(subscriptionsCreate).not.toHaveBeenCalled();
+    });
+
     it("rejects Lifetime when Stripe already has a paid Lifetime that meta/billing doesn't show yet", async () => {
         verifyIdTokenDetailed.mockResolvedValue({ uid: "uid-1", emailVerified: true, email: "user@example.com" });
         getBillingDoc.mockResolvedValue({ plan: "free", stripeCustomerId: "cus_1" });

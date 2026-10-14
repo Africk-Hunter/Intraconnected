@@ -208,6 +208,22 @@ export default async (req: Request, _context: Context) => {
             return jsonError(409, "You already have an active Annual subscription.");
         }
 
+        // Reopening checkout reuses the unpaid subscription an earlier attempt
+        // left behind instead of stacking another incomplete one per click.
+        const pending = await stripe().subscriptions.list({
+            customer,
+            status: "incomplete",
+            limit: 10,
+            expand: ["data.latest_invoice.confirmation_secret"],
+        });
+        for (const sub of pending.data) {
+            const invoice = sub.latest_invoice as Stripe.Invoice | null;
+            const secret = invoice?.confirmation_secret?.client_secret;
+            if (sub.metadata?.firebaseUid === uid && sub.items.data[0]?.price.id === priceId && invoice?.status === "open" && secret) {
+                return jsonResponse(req, { clientSecret: secret, amount: invoice.amount_due, currency: invoice.currency });
+            }
+        }
+
         const subscription = await stripe().subscriptions.create({
             customer,
             items: [{ price: priceId }],

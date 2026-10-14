@@ -72,6 +72,7 @@ import MoveModal from '../components/modals/MoveModal';
 import SearchModal from '../components/modals/SearchModal';
 import ShortcutsModal from '../components/modals/ShortcutsModal';
 import { useDesktopShortcuts } from '../utilities/useDesktopShortcuts';
+import { useIdleSignOut } from '../utilities/idleSignOut';
 import type { SearchResult } from '../utilities/idea/search';
 import { useIdeaActions } from '../utilities/idea/useIdeaActions';
 import { DRAG_PREVIEW_MAX_PX } from '../utilities/idea/dragPreview';
@@ -168,6 +169,7 @@ function Idea() {
             if (pendingPlan) setCheckoutPlan(pendingPlan);
         });
         return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, []);
 
     function handleTogglePatchNotes() {
@@ -187,6 +189,7 @@ function Idea() {
     const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setCardMenu, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan, setNewIdeaSwitch, checklistModalId, setChecklistModalId, setCreationModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     useBillingPlanSync(setBillingPlan);
+    useIdleSignOut();
     useNodeCountResync(billingPlan, serverSynced);
     const isMobileUI = useIsMobileUI();
     const { requestDelete, moveIdea, copyChildren } = useIdeaActions();
@@ -300,6 +303,7 @@ function Idea() {
             init();
         });
         return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, []);
 
     useEffect(() => {
@@ -314,6 +318,7 @@ function Idea() {
 
         loadIdeas();
         setLastRootName(getNameFromID(getParentID(rootId)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, [rootId, newIdeaSwitch]);
 
     const nodePointerCollision: CollisionDetection = (args) => {

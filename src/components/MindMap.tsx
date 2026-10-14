@@ -371,7 +371,6 @@ function MindMap({ onClose, visible, reveal }: MindMapProps) {
         if (lens === 'off' && was === 'off') return;
         const raf = requestAnimationFrame(() => (lens === 'off' ? centerOnCurrent() : fitToView()));
         return () => cancelAnimationFrame(raf);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lens, tones, visible, allIdeas]);
 
     // A search result while the map is open: drop any lens (it hides unmatched branches),

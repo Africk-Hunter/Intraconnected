@@ -32,7 +32,8 @@ export default authed({ signInMessage: "You must be signed in to request a refun
         // nothing to look the charge up by without it.
         return fail(400, `Couldn't find your purchase on file — email ${SUPPORT_EMAIL} and we'll take care of it.`);
     }
-    if (Date.now() - billing.updatedAt > REFUND_WINDOW_MS) {
+    // Counted from the purchase itself; `updatedAt` moves with every later webhook write.
+    if (Date.now() - (billing.lifetimePurchasedAt ?? billing.updatedAt) > REFUND_WINDOW_MS) {
         return fail(400, `Self-serve refunds are only available within 14 days of purchase. Email ${SUPPORT_EMAIL} and we'll help.`);
     }
 

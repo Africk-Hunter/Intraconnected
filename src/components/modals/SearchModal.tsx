@@ -30,6 +30,7 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
     const [active, setActive] = useState(0);
     const [expanded, setExpanded] = useState<Set<number>>(new Set());
     const listRef = useRef<HTMLUListElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (open) { setQuery(''); setActive(0); setExpanded(new Set()); }
@@ -85,19 +86,33 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
     return (
         <AnimatedOverlay open={open} onClick={onClose} onEscape={onClose}>
             <div className="modal neobrutal search-modal" role="dialog" aria-label="Search ideas" onClick={(e) => e.stopPropagation()}>
-                <input
-                    className="search-modal-input neobrutal-input"
-                    type="text"
-                    placeholder="Search ideas, notes and checklists…"
-                    value={query}
-                    autoFocus
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={onKeyDown}
-                    aria-label="Search ideas"
-                    role="combobox"
-                    aria-expanded="true"
-                    aria-controls="search-modal-list"
-                />
+                <div className="search-modal-field">
+                    <input
+                        ref={inputRef}
+                        className="search-modal-input neobrutal-input"
+                        type="text"
+                        placeholder="Search ideas, notes and checklists…"
+                        value={query}
+                        autoFocus
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={onKeyDown}
+                        aria-label="Search ideas"
+                        role="combobox"
+                        aria-expanded="true"
+                        aria-controls="search-modal-list"
+                    />
+                    {query !== '' && (
+                        <button
+                            type="button"
+                            className="search-modal-clear"
+                            tabIndex={-1}
+                            // mousedown is cancelled so the field keeps focus.
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { setQuery(''); inputRef.current?.focus(); }}
+                            aria-label="Clear search"
+                        ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" /></svg></button>
+                    )}
+                </div>
                 <ul className="search-modal-list" id="search-modal-list" ref={listRef} role="listbox" aria-label="Results">
                     {hasQuery && ideaCount === 0 && (
                         <li className="search-modal-empty" role="presentation">No idea says "{query.trim()}".</li>

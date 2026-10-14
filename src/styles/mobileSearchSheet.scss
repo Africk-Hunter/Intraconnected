@@ -35,7 +35,8 @@ $search-row-stagger: 25ms;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    padding: 14px 12px 6px;
+    column-gap: 8px;
+    padding: 16px 12px 6px;
     touch-action: none;
 
     .mmobile-sheet-grab--panel {
@@ -48,7 +49,7 @@ $search-row-stagger: 25ms;
 }
 
 .mmobile-search-title {
-    margin: 0;
+    margin: 0 0 3px; // same offset as the buttons' shadow room, so it centres on them
     font-size: 1.1rem;
     font-weight: 700;
     color: #111;
@@ -89,25 +90,40 @@ $search-row-stagger: 25ms;
     }
 }
 
-// Matches .mmobile-sheet-close: the ✕ every mobile sheet has in this corner.
+// Raised button in the Back button's colour; same height
+// and shadow room as the map button so the two sit level either side of the title.
 .mmobile-search-close {
     justify-self: end;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 3px; // room for the shadow
     display: flex;
     align-items: center;
     justify-content: center;
-    background: none;
-    border: none;
-    border-radius: 10px;
-    font-size: 1.1rem;
-    line-height: 1;
-    color: #111;
-    cursor: pointer;
     padding: 0;
-    transition: background-color 0.12s ease;
+    background: $back;
+    border: 2px solid #111;
+    border-radius: 10px;
+    box-shadow: 0 3px 0 #111;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
 
-    &:active { background: rgba(0, 0, 0, 0.1); }
+    > svg {
+        width: 18px;
+        height: 18px;
+        pointer-events: none;
+    }
+
+    &:active {
+        transform: translateY(3px);
+        box-shadow: 0 0 0 #111;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #111;
+        outline-offset: 2px;
+    }
 }
 
 // ── Field ───────────────────────────────────────────────────────
@@ -157,22 +173,31 @@ $search-row-stagger: 25ms;
     right: 6px;
     top: 50%;
     translate: 0 -50%;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.12);
-    color: #111;
-    font-size: 0.8rem;
-    font-weight: 700;
+    border: 2px solid #111;
+    border-radius: 8px;
+    box-shadow: 0 2px 0 #111;
+    background: $back;
+    color: #fff;
     cursor: pointer;
     animation: mmSearchPopIn 0.16s $search-ease-out;
+    transition: box-shadow 0.08s ease, background-color 0.08s ease;
 
-    &:active { background: rgba(0, 0, 0, 0.22); }
+    > svg {
+        width: 16px;
+        height: 16px;
+        pointer-events: none;
+    }
+
+    &:active {
+        box-shadow: 0 0 0 #111;
+        margin-top: 2px;
+    }
 }
 
 // ── Results ─────────────────────────────────────────────────────
@@ -182,104 +207,117 @@ $search-row-stagger: 25ms;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 4px 12px 16px;
-    border-top: 2px solid rgba(0, 0, 0, 0.12);
+    margin: 0 12px 12px;
+    padding: 0 0 8px;
+    border: 3px solid #111;
+    border-radius: 12px;
+    background: #fff;
 }
 
+// Sticks to the top of the list like the desktop group heading.
 .mmobile-search-heading {
-    margin: 10px 4px 8px;
-    font-size: 0.8rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0;
+    padding: 10px 14px 8px;
+    background: #fff;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #444;
+    color: rgba(17, 17, 17, 0.55);
 }
 
 .mmobile-search-list {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
 
     > li {
         position: relative;
-        margin-left: calc(var(--depth, 0) * 18px);
+        padding: 3px 10px 8px;
         animation: mmSearchRowIn $search-row-in $search-ease-out both;
         animation-delay: calc(var(--i, 0) * #{$search-row-stagger});
     }
 }
 
-// A white card with a tab in the colour the idea's own card has in the list.
-.mmobile-search-row {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 56px;
-    padding: 10px 12px 10px 22px;
-    position: relative;
-    overflow: hidden;
-    text-align: left;
-    background: #fff;
-    border: 3px solid #111;
-    border-radius: 11px;
-    box-shadow: 3px 3px 0 #111;
-    font-family: inherit;
-    color: #111;
-    cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
+// Under a match: indented, with a guide line down its left edge.
+.mmobile-search-item--nested {
+    padding-left: calc(10px + var(--depth, 1) * 16px) !important;
 
     &::before {
         content: '';
         position: absolute;
-        inset: 0 auto 0 0;
-        width: 10px;
-        border-right: 2px solid #111;
-        background: var(--kind-color);
+        top: 0;
+        bottom: 0;
+        left: calc(10px + var(--depth, 1) * 16px - 9px);
+        border-left: 2px solid rgba(17, 17, 17, 0.25);
     }
+}
+
+// A small copy of the idea's own card, as on desktop: full kind colour,
+// heavy border, hard shadow.
+.mmobile-search-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 9px 12px;
+    background: var(--kind-color);
+    border: 3px solid #111;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0 #111;
+    color: #111;
+    transition: translate 0.1s ease, box-shadow 0.1s ease;
 
     &--leaf      { --kind-color: #{$leaf}; }
     &--parent    { --kind-color: #{$sky}; }
     &--link      { --kind-color: #{$link}; }
-    &--note      { --kind-color: #{$neo-green}; }
-    &--checklist { --kind-color: #{$indigo}; }
+    &--note      { --kind-color: #{$neo-green}; color: #fff; }
+    &--checklist { --kind-color: #{$indigo}; color: #fff; }
 
     // Under a match, not a match itself.
     &--context {
         min-height: 46px;
+        padding: 6px 12px;
         box-shadow: 2px 2px 0 #111;
-        background: #fafafa;
     }
 
-    &:active {
-        transform: translate(2px, 2px);
-        box-shadow: 1px 1px 0 #111;
-    }
-
-    &:focus-visible {
-        outline: 3px solid #111;
-        outline-offset: 3px;
+    &:has(.mmobile-search-row-main:active) {
+        translate: 2px 2px;
+        box-shadow: 1px 1px 0 #111, inset 0 0 0 3px rgba(255, 255, 255, 0.75);
     }
 
     mark {
-        background: none;
-        color: inherit;
+        background: #fff176;
+        color: #111;
         font-weight: 800;
-        text-decoration: underline;
-        text-decoration-thickness: 3px;
-        text-decoration-color: color.adjust($sky, $alpha: -0.35);
-        text-underline-offset: 2px;
+        padding: 0 2px;
+        margin: 0 -2px;
+        border-radius: 3px;
+        text-decoration: none;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
     }
 }
 
 .mmobile-search-row-main {
+    all: unset;
+    box-sizing: border-box;
     flex: 1;
     min-width: 0;
+    align-self: stretch;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+    }
 }
 
 .mmobile-search-row-label {
@@ -293,10 +331,15 @@ $search-row-stagger: 25ms;
     overflow: hidden;
 }
 
+.mmobile-search-row--context .mmobile-search-row-label {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
 .mmobile-search-row-snippet {
     font-size: 0.9rem;
     line-height: 1.35;
-    color: #333;
+    opacity: 0.85;
     overflow-wrap: anywhere;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -306,44 +349,57 @@ $search-row-stagger: 25ms;
 
 .mmobile-search-row-meta {
     font-size: 0.8rem;
-    color: #555;
+    opacity: 0.6;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-// "3 inside ▾" under the row, in the thumb's reach, and says what it reveals.
-.mmobile-search-expand {
+// Kind badge over the "N inside" pill, both belonging to the card.
+.mmobile-search-row-side {
+    flex-shrink: 0;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-end;
     gap: 6px;
-    min-height: 40px;
-    margin: 2px 0 0 auto;
-    padding: 0 14px;
+}
+
+.mmobile-search-kind {
+    padding: 1px 9px;
     border: 2px solid #111;
     border-radius: 999px;
     background: #fff;
     color: #111;
-    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.mmobile-search-expand {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 2px solid #111;
+    border-radius: 999px;
+    background: $neo-pink;
+    color: #fff;
+    box-shadow: 2px 2px 0 #111;
     font-size: 0.85rem;
     font-weight: 700;
     cursor: pointer;
 
+    &:active { translate: 1px 1px; box-shadow: 1px 1px 0 #111; }
+    &:focus-visible { outline: 3px solid #fff; outline-offset: 1px; }
+
     &-chevron {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         transform: rotate(-90deg);
         transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
     }
     &--open &-chevron { transform: none; }
-    &:active { background: #eee; }
-}
-
-.mmobile-search-row-go {
-    flex-shrink: 0;
-    font-size: 1.5rem;
-    line-height: 1;
-    color: #111;
-    opacity: 0.55;
 }
 
 .mmobile-search-empty {
@@ -395,8 +451,8 @@ $search-row-stagger: 25ms;
     .mmobile-search-map { min-height: 48px; font-size: 1.05rem; border-width: 3px; img { width: 26px; height: 26px; } }
     .mmobile-search-field { margin: 6px 18px 14px; }
     .mmobile-search-input { font-size: 1.3rem; padding: 16px 54px 16px 50px; }
-    .mmobile-search-results { padding: 6px 18px 20px; }
-    .mmobile-search-row { min-height: 68px; padding: 14px 16px 14px 28px; }
+    .mmobile-search-results { margin: 0 18px 18px; }
+    .mmobile-search-row { min-height: 68px; padding: 12px 16px; }
     .mmobile-search-row-label { font-size: 1.2rem; }
     .mmobile-search-row-snippet { font-size: 1rem; }
     .mmobile-search-row-meta { font-size: 0.9rem; }

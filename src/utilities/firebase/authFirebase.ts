@@ -1,8 +1,8 @@
 import { auth } from "../../firebaseConfig";
 import { apiUrl } from "../platform";
-import { clearDEK, getDEK } from "../dekStore";
-import { wrapDEKWithEmail } from "../crypto";
-import { storePendingEmailWrap } from "./encryptionKeys";
+import { clearDEK } from "../dekStore";
+import { wrapDEKWithEmail, unwrapDEK } from "../crypto";
+import { storePendingEmailWrap, fetchEncryptedDEK } from "./encryptionKeys";
 import { flushOutbox } from "../sync/outbox";
 import {
     verifyBeforeUpdateEmail,
@@ -91,6 +91,15 @@ async function isEmailAvailable(email: string): Promise<boolean> {
 // a typo can't lock anyone out. Needs the password (fresh sign-in), and the
 // unlocked key: the recovery wrap is derived from the email, so a copy for the
 // new address is stored now — the click may happen with no key available.
+// The key held in memory after a page load may be non-extractable (see
+// dekStore.ts), and re-wrapping it for an email address needs the raw bytes.
+// A password the caller just confirmed unwraps a fresh, extractable copy.
+export async function unlockDEKForRewrap(password: string, uid: string): Promise<CryptoKey> {
+    const encData = await fetchEncryptedDEK();
+    if (!encData?.encryptedDEK) throw Object.assign(new Error("No encryption key on file"), { code: "app/no-encryption-key" });
+    return unwrapDEK(encData.encryptedDEK, password, uid);
+}
+
 export async function requestEmailChange(password: string, newEmail: string): Promise<void> {
     const user = auth.currentUser;
     if (!user) throw Object.assign(new Error("Not signed in"), { code: "app/not-signed-in" });
@@ -109,7 +118,7 @@ export async function requestEmailChange(password: string, newEmail: string): Pr
         throw Object.assign(new Error("Email already in use"), { code: "auth/email-already-in-use" });
     }
 
-    const wrap = await wrapDEKWithEmail(getDEK(), normalized, user.uid);
+    const wrap = await wrapDEKWithEmail(await unlockDEKForRewrap(password, user.uid), normalized, user.uid);
     await storePendingEmailWrap(normalized, wrap);
     await verifyBeforeUpdateEmail(user, normalized);
 }

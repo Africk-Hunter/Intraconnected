@@ -31,6 +31,37 @@ function memoryStorage() {
     };
 }
 
+// Just enough of IndexedDB for dekStore: one store, put/get/delete.
+function fakeIndexedDB(data = new Map<string, unknown>()) {
+    const request = <T,>(value: () => T, tx: { oncomplete?: () => void }) => {
+        const req = { result: undefined as T };
+        queueMicrotask(() => { req.result = value(); queueMicrotask(() => tx.oncomplete?.()); });
+        return req;
+    };
+    const db = {
+        createObjectStore: () => {},
+        close: () => {},
+        transaction: () => {
+            const tx: { oncomplete?: () => void } = {};
+            return Object.assign(tx, {
+                objectStore: () => ({
+                    put: (v: unknown, k: string) => request(() => (data.set(k, v), k), tx),
+                    get: (k: string) => request(() => data.get(k), tx),
+                    delete: (k: string) => request(() => (data.delete(k), undefined), tx),
+                }),
+            });
+        },
+    };
+    return {
+        data,
+        open: () => {
+            const req: { result: typeof db; onsuccess?: () => void; onupgradeneeded?: () => void } = { result: db };
+            queueMicrotask(() => { req.onupgradeneeded?.(); req.onsuccess?.(); });
+            return req;
+        },
+    };
+}
+
 async function newKey(): Promise<CryptoKey> {
     return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
 }
@@ -45,6 +76,7 @@ describe('dekStore', () => {
         secure.remove.mockReset().mockImplementation(async (k: string) => void secure.store.delete(k));
         vi.stubGlobal('sessionStorage', memoryStorage());
         vi.stubGlobal('localStorage', memoryStorage());
+        vi.stubGlobal('indexedDB', fakeIndexedDB());
     });
 
     describe('on the web', () => {
@@ -56,10 +88,19 @@ describe('dekStore', () => {
             expect(secure.set).not.toHaveBeenCalled();
         });
 
-        it('also keeps it in localStorage with Remember me, and a fresh load recovers it', async () => {
+        it('with Remember me keeps a non-extractable key in IndexedDB, not a raw copy in web storage', async () => {
+            const { setDEK } = await import('./dekStore');
+            await setDEK(await newKey(), true);
+            const stored = (indexedDB as unknown as ReturnType<typeof fakeIndexedDB>).data.get('dek') as CryptoKey;
+            expect(stored.extractable).toBe(false);
+            expect(localStorage.getItem('dek_local')).toBeNull();
+            expect(sessionStorage.getItem('dek_session')).toBeNull();
+            expect(localStorage.getItem('session_remembered')).toBe('1');
+        });
+
+        it('a fresh load recovers a remembered key', async () => {
             const first = await import('./dekStore');
             await first.setDEK(await newKey(), true);
-            expect(localStorage.getItem('dek_local')).not.toBeNull();
 
             vi.resetModules();
             const reloaded = await import('./dekStore');
@@ -68,13 +109,37 @@ describe('dekStore', () => {
             expect(() => reloaded.getDEK()).not.toThrow();
         });
 
-        it('clearDEK wipes memory and both stores', async () => {
-            const { setDEK, clearDEK, getDEK } = await import('./dekStore');
+        it('falls back to this tab session when IndexedDB is unavailable', async () => {
+            vi.stubGlobal('indexedDB', undefined);
+            const { setDEK } = await import('./dekStore');
             await setDEK(await newKey(), true);
+            expect(sessionStorage.getItem('dek_session')).not.toBeNull();
+            expect(localStorage.getItem('dek_local')).toBeNull();
+        });
+
+        it('moves a raw key left by an older build into IndexedDB', async () => {
+            const { setDEK } = await import('./dekStore');
+            await setDEK(await newKey(), false);
+            localStorage.setItem('dek_local', sessionStorage.getItem('dek_session')!);
+            sessionStorage.removeItem('dek_session');
+
+            vi.resetModules();
+            const reloaded = await import('./dekStore');
+            expect(await reloaded.loadPersistedDEK()).toBe(true);
+            expect(localStorage.getItem('dek_local')).toBeNull();
+            expect((indexedDB as unknown as ReturnType<typeof fakeIndexedDB>).data.has('dek')).toBe(true);
+        });
+
+        it('clearDEK wipes memory and every store', async () => {
+            const { setDEK, clearDEK, getDEK, loadPersistedDEK } = await import('./dekStore');
+            await setDEK(await newKey(), true);
+            localStorage.setItem('last_activity', '1');
             await clearDEK();
             expect(() => getDEK()).toThrow();
             expect(sessionStorage.getItem('dek_session')).toBeNull();
             expect(localStorage.getItem('dek_local')).toBeNull();
+            expect(localStorage.getItem('last_activity')).toBeNull();
+            expect(await loadPersistedDEK()).toBe(false);
         });
     });
 

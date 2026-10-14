@@ -38,6 +38,9 @@ import MobilePatchNotesSheet from './MobilePatchNotesSheet';
 import MobileUndoToast, { type UndoToastState } from './MobileUndoToast';
 import MobilePriorityPicker from './MobilePriorityPicker';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
+import { playSheetExit } from './sheetExit';
+import ExitPresence from './ExitPresence';
+import { useTypedSwap } from './useTypedSwap';
 import MoreDotsIcon from './MoreDotsIcon';
 import { LinkOutIcon } from '../Icons';
 import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
@@ -69,6 +72,24 @@ function isTypingSheet(sheet: SheetState | null): boolean {
     return sheet?.type === 'create' || sheet?.type === 'edit';
 }
 
+// How many characters of a line-clamped title are on screen (all of them if not clamped).
+function visibleChars(el: HTMLElement | null): number {
+    const node = el?.firstChild;
+    if (!el || !node || node.nodeType !== Node.TEXT_NODE) return Infinity;
+    if (el.scrollHeight <= el.clientHeight + 1) return Infinity;
+    const limit = el.getBoundingClientRect().bottom + 0.5;
+    const range = document.createRange();
+    let lo = 0;
+    let hi = (node as Text).length;
+    while (lo < hi) {
+        const mid = Math.ceil((lo + hi) / 2);
+        range.setStart(node, mid - 1);
+        range.setEnd(node, mid);
+        if (range.getBoundingClientRect().bottom <= limit) lo = mid; else hi = mid - 1;
+    }
+    return lo;
+}
+
 function pointerOrigin() {
     return { dx: lastPointer.x - window.innerWidth / 2, dy: lastPointer.y - window.innerHeight / 2 };
 }
@@ -78,6 +99,13 @@ function MobileMindMap() {
     const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
+    // Rows pop in one by one when a level opens, not on create/delete/move.
+    const [staggerIn, setStaggerIn] = useState(true);
+    useLayoutEffect(() => {
+        setStaggerIn(true);
+        const t = setTimeout(() => setStaggerIn(false), 1200);
+        return () => clearTimeout(t);
+    }, [currentId]);
 
     // Another device's changes were just pulled in (Idea.tsx already
     // re-renders via newIdeaSwitch) — if the idea being viewed was deleted
@@ -854,6 +882,19 @@ function MobileMindMap() {
 
     const sheetSwipe = useSheetSwipeDown(requestCloseSheet);
 
+    // Closing a sheet plays a short exit on a copy of it (see sheetExit.ts).
+    const lastSheetEl = useRef<HTMLElement | null>(null);
+    const sheetWasOpen = useRef(false);
+    useLayoutEffect(() => {
+        if (sheet) {
+            lastSheetEl.current = sheetSwipe.sheetRef.current;
+        } else if (sheetWasOpen.current && lastSheetEl.current) {
+            playSheetExit(lastSheetEl.current);
+            lastSheetEl.current = null;
+        }
+        sheetWasOpen.current = sheet !== null;
+    });
+
     // The phone's Back button / back gesture: close whatever is open first,
     // otherwise go up one level (see utilities/backStack.ts).
     useBackHandler(canGoBack, goBack);
@@ -1274,6 +1315,23 @@ function MobileMindMap() {
         closeSheet();
     }
 
+    const headerText = headerDraft.trim() || 'Untitled';
+    const headerTitleRef = useRef<HTMLHeadingElement>(null);
+    const typedHeader = useTypedSwap(headerText, !editingTitle, () => visibleChars(headerTitleRef.current));
+    // Keyed by name so a new idea starts folded, same as the desktop RootTitle.
+    const [expandedHeaderText, setExpandedHeaderText] = useState<string | null>(null);
+    const headerExpanded = expandedHeaderText === headerText;
+    // Follows the text on screen, so a clamped title stays clamped while it is deleted.
+    // Also clamped from the start when the title being typed in is long: four lines
+    // fill up before 110 characters, so waiting for the typed text to pass 110 let it
+    // grow past the clamp and then snap back.
+    const longHeader = typedHeader.length > 110 || headerText.length > 110;
+    // An expanded title being backspaced away stays unclamped until it is gone: clamping
+    // mid-erase hid the tail at once, and dropping under 110 characters showed it again.
+    const erasingExpanded = expandedHeaderText !== null && expandedHeaderText !== headerText
+        && typedHeader !== headerText && expandedHeaderText.startsWith(typedHeader);
+    const headerClamped = longHeader && !headerExpanded && !erasingExpanded;
+
     const sheetNode = sheet ? allIdeas.find(i => i.id === sheet.nodeId) : null;
     const sheetNodeLink = getIdeaLink(sheetNode ?? undefined);
     const sheetTitle =
@@ -1311,7 +1369,7 @@ function MobileMindMap() {
                             <span className="mmobile-path-name">{resolveIdeaLabel(parentCrumb).split('\n')[0]}</span>
                             <span className="mmobile-path-caret" aria-hidden="true">▾</span>
                         </button>
-                        {showPath && (
+                        <ExitPresence show={showPath} variant="fade">
                             <>
                                 <div className="mmobile-path-scrim" onClick={() => setShowPath(false)} />
                                 <ol className="mmobile-path-menu">
@@ -1331,7 +1389,7 @@ function MobileMindMap() {
                                     })}
                                 </ol>
                             </>
-                        )}
+                        </ExitPresence>
                     </div>
                 )}
                 <button className="mmobile-logout" onClick={() => setProfileModalOpen(true)}>
@@ -1339,9 +1397,9 @@ function MobileMindMap() {
                 </button>
             </div>
 
-            {showHelp && <MobileHelpSheet onClose={() => setShowHelp(false)} onOpenPatchNotes={openPatchNotes} hasNewPatchNotes={isNewPatchNotes} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
-            {showPatchNotes && <MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} />}
-            {showSearch && (
+            <ExitPresence show={showHelp}><MobileHelpSheet onClose={() => setShowHelp(false)} onOpenPatchNotes={openPatchNotes} hasNewPatchNotes={isNewPatchNotes} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} /></ExitPresence>
+            <ExitPresence show={showPatchNotes}><MobilePatchNotesSheet onClose={() => setShowPatchNotes(false)} style={{ '--origin-dx': `${helpOrigin.dx}px`, '--origin-dy': `${helpOrigin.dy}px` } as React.CSSProperties} /></ExitPresence>
+            <ExitPresence show={showSearch}>
                 <MobileSearchSheet
                     allIdeas={allIdeas}
                     onPick={pickSearchResult}
@@ -1356,8 +1414,8 @@ function MobileMindMap() {
                         ...(keyboardOpen ? { bottom: `${keyboardInset + 8}px` } : {}),
                     } as React.CSSProperties}
                 />
-            )}
-            {showMindMap && (
+            </ExitPresence>
+            <ExitPresence show={showMindMap}>
                 <MobileMindMapSheet
                     key={currentId}
                     currentId={currentId}
@@ -1366,7 +1424,7 @@ function MobileMindMap() {
                     onClose={() => setShowMindMap(false)}
                     style={{ '--origin-dx': `${mindMapOrigin.dx}px`, '--origin-dy': `${mindMapOrigin.dy}px` } as React.CSSProperties}
                 />
-            )}
+            </ExitPresence>
 
             <div ref={headerDivRef} className="mmobile-header">
                 {editingTitle ? (
@@ -1395,13 +1453,23 @@ function MobileMindMap() {
                     />
                 ) : (
                     <div className="mmobile-header-title-row">
-                        <h1 className="mmobile-header-title mmobile-header-title--static">{headerDraft.trim() || 'Untitled'}</h1>
+                        <h1 ref={headerTitleRef} className={`mmobile-header-title mmobile-header-title--static${headerClamped ? ' mmobile-header-title--clamped' : ''}`} aria-label={headerText}>{typedHeader || '​'}</h1>
                         {currentId !== 1 && (
                             <button className="mmobile-header-edit" onClick={() => setEditingTitle(true)} aria-label="Rename">
                                 <img src="/images/Pen.svg" alt="" />
                             </button>
                         )}
                     </div>
+                )}
+                {!editingTitle && headerText.length > 110 && (
+                    <button
+                        type="button"
+                        className="mmobile-header-toggle"
+                        aria-expanded={headerExpanded}
+                        onClick={() => setExpandedHeaderText(headerExpanded ? null : headerText)}
+                    >
+                        {headerExpanded ? 'Show less ▴' : 'Show more ▾'}
+                    </button>
                 )}
                 <div className="mmobile-header-count">
                     <span>{children.length} {children.length === 1 ? 'idea' : 'ideas'}</span>
@@ -1439,7 +1507,11 @@ function MobileMindMap() {
             >
                 {children.length === 0 ? (
                     <div className="mmobile-empty">No ideas here yet.<br />Tap + to create one.</div>
-                ) : children.map(child => {
+                ) : children.map((child, index) => {
+                    const staggerProps = {
+                        className: `mmobile-node-wrap${staggerIn ? ' mmobile-node-wrap--stagger' : ''}`,
+                        style: staggerIn ? { animationDelay: `${Math.min(index, 20) * 35}ms` } : undefined,
+                    };
                     const kidCount = allIdeas.reduce((n, i) => (i.parentID === child.id ? n + 1 : n), 0);
                     const hasKids = kidCount > 0;
                     const isRevealed = swipeRevealedId === child.id;
@@ -1451,7 +1523,7 @@ function MobileMindMap() {
                         const items = child.items;
                         const checkedCount = items.filter(i => i.checked).length;
                         return (
-                            <div key={child.id} data-flip-id={child.id} className="mmobile-node-wrap">
+                            <div key={child.id} data-flip-id={child.id} {...staggerProps}>
                                 <div className="mmobile-node-swipe-actions" ref={el => { swipeActionsElRefs.current[child.id] = el; }} aria-hidden={!isRevealed}>
                                     <button
                                         className="mmobile-node-swipe-btn mmobile-node-swipe-btn--rename"
@@ -1587,7 +1659,7 @@ function MobileMindMap() {
                         ? 'mmobile-node--parent'
                         : 'mmobile-node--leaf';
                     return (
-                        <div key={child.id} data-flip-id={child.id} className="mmobile-node-wrap">
+                        <div key={child.id} data-flip-id={child.id} {...staggerProps}>
                             <div className="mmobile-node-swipe-actions" ref={el => { swipeActionsElRefs.current[child.id] = el; }} aria-hidden={!isRevealed}>
                                 <button
                                     className="mmobile-node-swipe-btn mmobile-node-swipe-btn--rename"
@@ -1689,7 +1761,7 @@ function MobileMindMap() {
                 ><img src="/images/SkinnyPlus.svg" alt="Create" /></button>
             </div>
 
-            {toast && <MobileUndoToast toast={toast} aboveSheet={sheet !== null} onDismiss={() => setToast(null)} />}
+            <ExitPresence show={!!toast} variant="toast">{toast && <MobileUndoToast toast={toast} aboveSheet={sheet !== null} onDismiss={() => setToast(null)} />}</ExitPresence>
 
             {isDragging && dragNodeId !== null && (() => {
                 const dragNode = allIdeas.find(i => i.id === dragNodeId);

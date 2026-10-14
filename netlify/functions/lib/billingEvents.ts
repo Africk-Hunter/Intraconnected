@@ -26,6 +26,11 @@ export interface BillingDoc {
     // Lifetime purchase). Cleared once consumed by a refund, same lifecycle
     // as previousPlan; `null` on docs written before this field existed.
     lifetimePaymentIntentId: string | null;
+    // When the Lifetime purchase happened (ms). The refund window counts from
+    // here, not from `updatedAt`, which any later webhook write bumps.
+    // Absent on docs written before this field existed — readers fall back to
+    // `updatedAt`.
+    lifetimePurchasedAt?: number | null;
     // Stripe `created` (seconds) of the newest customer.subscription.updated /
     // .deleted event applied. stripe-webhook.ts skips an older one that
     // arrives late, which would otherwise overwrite newer state. Optional:
@@ -144,6 +149,11 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
                     updatedAt: Date.now(),
                     previousPlan,
                     lifetimePaymentIntentId: paymentIntent.id,
+                    // A redelivery of the same purchase keeps the original time.
+                    lifetimePurchasedAt:
+                        currentBilling?.plan === "lifetime"
+                            ? (currentBilling.lifetimePurchasedAt ?? currentBilling.updatedAt)
+                            : Date.now(),
                 },
                 // An Annual subscriber upgrading to Lifetime already paid for
                 // this purchase (see the flat, non-prorated credit in
@@ -195,6 +205,7 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
                     // has no reason to touch it either way.
                     previousPlan: currentBilling?.previousPlan ?? null,
                     lifetimePaymentIntentId: currentBilling?.lifetimePaymentIntentId ?? null,
+                    lifetimePurchasedAt: currentBilling?.lifetimePurchasedAt ?? null,
                 },
             };
         }
@@ -234,6 +245,7 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
                         // triggered this needs the snapshot intact.
                         previousPlan: currentBilling.previousPlan ?? null,
                         lifetimePaymentIntentId: currentBilling.lifetimePaymentIntentId ?? null,
+                        lifetimePurchasedAt: currentBilling.lifetimePurchasedAt ?? null,
                     },
                 };
             }
@@ -250,6 +262,7 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
                     // Not on Lifetime, so nothing for either field to mean.
                     previousPlan: null,
                     lifetimePaymentIntentId: null,
+                    lifetimePurchasedAt: null,
                 },
             };
         }
@@ -304,6 +317,7 @@ export function deriveLifetimeRefundUpdate(uid: string, currentBilling: BillingD
             // Consumed — no longer meaningful once reverted off Lifetime.
             previousPlan: null,
             lifetimePaymentIntentId: null,
+            lifetimePurchasedAt: null,
         },
     };
 }

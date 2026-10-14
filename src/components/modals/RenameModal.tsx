@@ -27,6 +27,7 @@ function RenameModal() {
                 setEditRootOrNot(false);
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, [renameModalOpen, rootName, setModalContent]);
 
 

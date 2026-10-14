@@ -264,6 +264,24 @@
     cursor: default;
 }
 
+.mmobile-header-title--clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mmobile-header-toggle {
+    all: unset;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1a1208;
+    padding: 6px 0 2px;
+    -webkit-tap-highlight-color: transparent;
+}
+
 .mmobile-header-edit {
     all: unset;
     flex-shrink: 0;
@@ -792,9 +810,29 @@
 
 // ── Swipe-to-reveal wrap ─────────────────────────────────────────
 
+@keyframes mmobileNodeStaggerIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .mmobile-node-wrap {
     position: relative;
     margin-bottom: 12px;
+
+    &--stagger {
+        animation: mmobileNodeStaggerIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
 
     @media (min-width: 640px) {
         margin-bottom: 16px;
@@ -1500,6 +1538,12 @@
     .mmobile-move-btn,
     .mmobile-move-toggle,
     .mmobile-move-toggle span { transition: none; }
+
+    // Sheets, toast and drop zone keep a gentle fade; the movement goes.
+    .mmobile-sheet,
+    .mmobile-toast,
+    .mmobile-parent-drop-zone { animation: mmScrimIn 0.15s ease; }
+    .mmobile-drag-ghost { animation: none; }
 }
 
 // Mobile checklist node — inline accordion
@@ -1844,6 +1888,52 @@
 @keyframes mmScrimIn {
     from { opacity: 0; }
     to   { opacity: 1; }
+}
+
+// Exit copy of a closed sheet (sheetExit.ts); same 150ms pop-out as desktop modals.
+@keyframes mmSheetPopOut {
+    from {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(calc(var(--origin-dx, 0px) * 0.3), calc(var(--origin-dy, 0px) * 0.3)) scale(0.05);
+        opacity: 0;
+    }
+}
+
+.mmobile-exit-ghost {
+    pointer-events: none;
+
+    .mmobile-scrim--out { animation: mmScrimIn 0.15s ease reverse forwards; }
+    .mmobile-sheet--out { animation: mmSheetPopOut 0.15s ease forwards; }
+}
+
+// ExitPresence copies (help, patch notes, search, mind map, path menu, toast).
+// The ghost is display: contents so the copies keep their own positioning.
+.mmobile-exit-ghost--pop,
+.mmobile-exit-ghost--fade,
+.mmobile-exit-ghost--toast {
+    display: contents;
+    pointer-events: none;
+
+    * { pointer-events: none; }
+}
+
+.mmobile-exit-ghost--pop {
+    > .mmobile-scrim,
+    > .mmobile-path-scrim { animation: mmScrimIn 0.15s ease reverse forwards; }
+    > :not(.mmobile-scrim):not(.mmobile-path-scrim) { animation: mmSheetPopOut 0.15s ease forwards; }
+    // Sheets nested in a scrim (help, patch notes) shrink while the scrim fades.
+    > .mmobile-scrim > * { animation: mmSheetPopOut 0.15s ease forwards; }
+}
+
+.mmobile-exit-ghost--fade > * { animation: mmScrimIn 0.12s ease reverse forwards; }
+.mmobile-exit-ghost--toast > * { animation: mmToastOut 0.15s ease forwards; }
+
+@keyframes mmToastOut {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(12px) scale(0.96); }
 }
 
 // ── Tablet scaling (640px – 1023px) ─────────────────────────────

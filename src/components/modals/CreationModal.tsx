@@ -162,6 +162,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                 items.removeEventListener('animationend', recomputePanelHeight);
             };
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, [recomputePanelHeight, checklistItems, removingItemIds, modalContent, isLinkBoxShown, link, noteTitle, noteBody]);
 
     // Fires when AnimatedOverlay actually mounts this modal's DOM (fresh

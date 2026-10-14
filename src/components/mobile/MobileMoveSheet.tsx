@@ -33,6 +33,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
             }
         }, 250);
         return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, []);
 
     const descendants = (() => {

@@ -21,6 +21,8 @@ export interface BillingStatus {
     updatedAt: number;
     // Set only by a real Lifetime purchase; absent for a dev-granted plan, which has nothing to refund.
     lifetimePaymentIntentId?: string | null;
+    // When the Lifetime purchase happened; the refund window counts from here. Absent on older docs.
+    lifetimePurchasedAt?: number | null;
 }
 
 const FREE_BILLING_STATUS: BillingStatus = {

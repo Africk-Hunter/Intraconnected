@@ -290,6 +290,10 @@ async function pullIncremental(uid: string): Promise<boolean | "fallback"> {
         if (expected.size !== countSnap.data().count) return "fallback";
 
         const merged = rebase(applyChanged(local, changed), unsyncedOpsSince(startedAt));
+        // This pull only saw part of the data, so an idea that looks parentless
+        // may just have a parent it hasn't seen. Never move anything on that
+        // evidence: the full pull sees everything and decides.
+        if (findOrphans(merged).length > 0) return "fallback";
         const stamp = newestStamp(
             changedSnap.docs.map((docSnap) => docSnap.data()),
             watermark

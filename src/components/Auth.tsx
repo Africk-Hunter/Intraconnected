@@ -64,6 +64,7 @@ const Auth: React.FC = () => {
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, [showConfirmPassword, email, password, confirmPassword]);
 
     // `reportable` marks a failure of ours (not a wrong password or a bad

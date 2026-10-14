@@ -132,8 +132,8 @@ export { formatMoney } from './pricingDisplay';
 // the refund button at all; the server call above is the actual authority.
 const REFUND_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
 
-export function isLifetimeRefundEligible(updatedAt: number): boolean {
-    return Date.now() - updatedAt <= REFUND_WINDOW_MS;
+export function isLifetimeRefundEligible(purchasedAt: number): boolean {
+    return Date.now() - purchasedAt <= REFUND_WINDOW_MS;
 }
 
 export async function requestLifetimeRefund(): Promise<void> {

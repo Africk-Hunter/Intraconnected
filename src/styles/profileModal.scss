@@ -809,6 +809,13 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     justify-content: center;
     cursor: pointer;
     padding: 0;
+    // Margin (not translate, which the button's hover owns) of about the
+    // shadow's reach, so button + shadow sit centred in the corner.
+    margin: 0 4px 4px 0;
+}
+
+.profile-mobile-header .profile-close {
+    margin: 0;
 }
 
 // Mobile header's Back (sizing/shadow shared with close, see
@@ -884,8 +891,14 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
         display: flex;
         align-items: center;
         gap: 0.65rem;
-        margin: 0 1rem;
+        // The button's shadow reaches 5px (6px on large) past its right
+        // edge, so the right margin adds it to keep button + shadow centred.
+        margin: 0 calc(1rem + 5px) 0 1rem;
         padding: 0.7rem 0.9rem;
+
+        @media (min-width: $large-desktop) {
+            margin-right: calc(1rem + 6px);
+        }
         font-family: inherit;
         font-size: 1rem;
         font-weight: 700;

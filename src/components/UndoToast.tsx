@@ -29,6 +29,7 @@ function UndoToast() {
         if (!toast || paused) return;
         const timer = setTimeout(dismissUndoToast, toast.canUndo ? TOAST_MS : NOTICE_MS);
         return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
     }, [toast?.key, paused]);
 
     useEffect(() => {

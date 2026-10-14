@@ -441,7 +441,7 @@ function ProfileModal() {
                             <p className="profile-section-desc">
                                 Refund submitted, your plan will update automatically once Stripe confirms it.
                             </p>
-                        ) : !isLifetimeRefundEligible(billingStatus.updatedAt) ? (
+                        ) : !isLifetimeRefundEligible(billingStatus.lifetimePurchasedAt ?? billingStatus.updatedAt) ? (
                             <p className="profile-section-desc">
                                 The 14-day self-serve refund window has passed. Need help? Email{' '}
                                 <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.

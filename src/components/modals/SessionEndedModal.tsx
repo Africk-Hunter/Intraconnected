@@ -4,7 +4,7 @@ import { auth } from '../../firebaseConfig';
 import { getDEK } from '../../utilities/dekStore';
 import { wrapDEKWithEmail } from '../../utilities/crypto';
 import { fetchEncryptedDEK, storeEmailWrap } from '../../utilities/firebase/encryptionKeys';
-import { syncBillingEmail } from '../../utilities/firebase/authFirebase';
+import { syncBillingEmail, unlockDEKForRewrap } from '../../utilities/firebase/authFirebase';
 import AnimatedOverlay from '../AnimatedOverlay';
 import '../../styles/sessionEndedModal.scss';
 
@@ -59,7 +59,7 @@ function SessionEndedModal() {
             try {
                 const encData = await fetchEncryptedDEK();
                 if (encData && user.email && (!encData.emailEncryptedDEK || encData.emailWrapFor !== user.email)) {
-                    await storeEmailWrap(await wrapDEKWithEmail(getDEK(), user.email, user.uid), user.email);
+                    await storeEmailWrap(await wrapDEKWithEmail(await unlockDEKForRewrap(password, user.uid), user.email, user.uid), user.email);
                     if (encData.emailEncryptedDEK) syncBillingEmail().catch(() => { /* non-critical */ });
                 }
             } catch { /* non-critical — Auth.tsx repeats this on the next sign-in */ }

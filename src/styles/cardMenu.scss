@@ -568,13 +568,57 @@
     overflow: hidden;
 }
 
+.search-modal-field {
+    position: relative;
+    flex-shrink: 0;
+}
+
 .search-modal-input {
     width: 100%;
     box-sizing: border-box;
     flex-shrink: 0;
     font: inherit;
     font-size: 1.3rem;
-    padding: 0.7rem 0.9rem;
+    padding: 0.7rem 3.4rem 0.7rem 0.9rem; // right room for the clear button
+}
+
+// Raised button in the Back button's colour, same as the mobile search clear button.
+.search-modal-clear {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    translate: 0 -50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: $back;
+    border: 2px solid #111;
+    border-radius: 8px;
+    box-shadow: 0 2px 0 #111;
+    color: #fff;
+    cursor: pointer;
+    transition: box-shadow 0.08s ease, margin-top 0.08s ease;
+
+    > svg {
+        width: 1rem;
+        height: 1rem;
+        pointer-events: none;
+    }
+
+    &:hover { filter: brightness(1.1); }
+
+    &:active {
+        box-shadow: 0 0 0 #111;
+        margin-top: 2px;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #111;
+        outline-offset: 2px;
+    }
 }
 
 .search-modal-list {
