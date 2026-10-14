@@ -42,6 +42,17 @@ async function deleteBugReports(db: Firestore, uid: string) {
     }
 }
 
+// Daily usage flags (usage-watch.ts) hold the account's email, so they go too.
+// The GitHub issue made from one only names the uid and stays as it is.
+async function deleteUsageFlags(db: Firestore, uid: string) {
+    const snap = await db.collection("usageFlags").where("uid", "==", uid).get();
+    for (let i = 0; i < snap.docs.length; i += 500) {
+        const batch = db.batch();
+        snap.docs.slice(i, i + 500).forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+    }
+}
+
 // Terminal statuses that never charge again and that Stripe refuses to
 // cancel. incomplete_expired is what an abandoned Annual checkout becomes,
 // and the webhook still records its id on meta/billing.
@@ -100,6 +111,7 @@ export default authed(
         await deleteCollection(db, uid, "ideas");
         await deleteCollection(db, uid, "meta");
         await deleteBugReports(db, uid);
+        await deleteUsageFlags(db, uid);
 
         await adminAuth().deleteUser(uid);
 
