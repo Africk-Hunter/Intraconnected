@@ -25,9 +25,9 @@ interface RateLimitOptions {
 //
 // The hash is keyed with a server secret: a plain SHA-256 of an IPv4 address
 // can be reversed by hashing all 4 billion of them. The privacy policy relies
-// on this ("we cannot reverse it") and on `expireAt`, which a Firestore TTL
-// policy on the `rateLimits` collection uses to delete the doc once the window
-// has passed.
+// on this ("we cannot reverse it") and on `expireAt`, which the daily
+// cleanup-rate-limits function uses to delete the doc once the window has
+// passed.
 export async function checkIpRateLimit({ ip, key, limit, windowMs }: { ip: string; key: string; limit: number; windowMs: number }): Promise<boolean> {
     const { createHmac } = await import("node:crypto");
     const secret = process.env.IP_HASH_SECRET || process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;

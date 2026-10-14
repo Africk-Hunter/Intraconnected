@@ -43,6 +43,7 @@ import { playSheetExit } from './sheetExit';
 import ExitPresence from './ExitPresence';
 import { useTypedSwap } from './useTypedSwap';
 import MoreDotsIcon from './MoreDotsIcon';
+import LeafTitle from './LeafTitle';
 import { LinkOutIcon } from '../Icons';
 import changelog from '../../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../../utilities/parseChangelog';
@@ -1736,6 +1737,8 @@ function MobileMindMap() {
                                         <span className="mmobile-node-note-header">{resolveIdeaLabel(child)}</span>
                                         <span className="mmobile-node-note-body">{child.content}</span>
                                     </span>
+                                ) : colorClass === 'mmobile-node--leaf' ? (
+                                    <LeafTitle text={child.content} />
                                 ) : (
                                     <span className="mmobile-node-title">{child.content}</span>
                                 )}

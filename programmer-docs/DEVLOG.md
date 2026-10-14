@@ -4,6 +4,14 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Privacy Policy Accuracy — 2026-10-14
+Typecheck and the function tests (147) pass; **not deployed.**
+- `checkIpRateLimit` (`lib/rateLimit.ts`): the signed-out IP hash is now an HMAC keyed by `IP_HASH_SECRET` (optional env var, falls back to `FIREBASE_SERVICE_ACCOUNT_BASE64`); a bare SHA-256 of an IPv4 address could be reversed by brute force. Docs carry `expireAt` (last hit + window). Existing buckets reset once (new ids); any old `rateLimits` docs (no `expireAt`) must be deleted by hand once.
+- New scheduled `cleanup-rate-limits.ts` (daily) deletes `rateLimits` docs past `expireAt` (the policy promises the IP hash is deleted automatically). A Firestore TTL policy was the first plan, but creating one returned 403 on this project.
+- `delete-account`: also deletes `usageWatch/{uid}` (the stored idea count). Its test mock now covers `usageFlags`/`usageWatch` (it threw on `usageFlags` since the previous commit).
+- `usage-watch`: the GitHub issue no longer includes the uid (the repo is public); the flag id still links it to the account.
+- `Privacy.tsx`: problem-report issues are public; usage flags post a counts-only public notice; Google Fonts listed as a third party; the structure list adds type, censored flag and creation time; new "Sync and app settings" (device id, preference flags); signed-out reports deleted on request by email; Profile paths corrected (Data / Danger Zone).
+
 ## Mobile Copy — 2026-10-14
 Typecheck, lint and 353 tests pass; **not tried on a phone.**
 - The mobile actions sheet (row ⋯ / long-press) gets a Copy row like the desktop card menu: Text/Link/Checklist/Note, plus Ideas inside and Branch when the idea has children. Confirms with the mobile toast.
