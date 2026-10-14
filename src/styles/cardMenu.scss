@@ -562,6 +562,10 @@
     gap: 0.9rem;
     width: min(56rem, 92vw);
     min-height: 0;
+    // Fixed height: the box used to grow and shrink with the number of rows, which made
+    // the field jump while typing. The list scrolls inside it instead.
+    height: min(40rem, 80vh);
+    height: min(40rem, 80dvh);
     max-height: min(46rem, 88vh);
     max-height: min(46rem, 88dvh);
     padding: 1.5rem 1.25rem 1rem;

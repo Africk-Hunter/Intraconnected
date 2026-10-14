@@ -16,7 +16,8 @@ import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } fr
 // Custom Libraries
 import { auth } from '../firebaseConfig';
 import { firstUnseenHelpScreen } from '../components/helpScreens';
-import { fetchLifetimeCelebrated, markLifetimeCelebrated } from '../utilities/firebase/preferences';
+import { fetchPlanCelebrated, markPlanCelebrated } from '../utilities/firebase/preferences';
+import { primeCelebrationSoundOnFirstGesture } from '../utilities/celebrationSound';
 import { useIdeaContext } from '../context/IdeaContext';
 import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
@@ -194,24 +195,33 @@ function Idea() {
     const isMobileUI = useIsMobileUI();
     const { requestDelete, moveIdea, copyChildren } = useIdeaActions();
 
-    // Lifetime granted without a checkout (Developer Testing): celebrate once
-    // per account (flag lives in Firestore, not this browser) the next time the
-    // app sees the plan. A real purchase shows the same modal via
-    // CheckoutModal, so this flag is set for those too.
-    const lifetimeCheckedRef = useRef(false);
+    // Unlock the celebration sound on the first tap so it can play on its own later.
+    useEffect(() => primeCelebrationSoundOnFirstGesture(), []);
+
+    // Annual or Lifetime granted without a checkout (Developer Testing):
+    // celebrate once per plan per account (flag lives in Firestore, not this
+    // browser) the next time the app sees the plan. A real purchase shows the
+    // same modal via CheckoutModal, so the flag is set for those too.
+    const celebrationCheckedRef = useRef(new Set<'annual' | 'lifetime'>());
     useEffect(() => {
-        if (lifetimeCheckedRef.current) return;
-        if (billingPlan !== 'lifetime' && celebrationPlan !== 'lifetime') return;
-        lifetimeCheckedRef.current = true;
-        const alreadyShowing = celebrationPlan === 'lifetime';
-        fetchLifetimeCelebrated()
+        if (billingPlan === 'free') {
+            // Back on free (e.g. Reset to Free): the next upgrade is a fresh check.
+            celebrationCheckedRef.current.clear();
+            return;
+        }
+        const plan = celebrationPlan ?? billingPlan;
+        if (plan !== 'annual' && plan !== 'lifetime') return;
+        if (celebrationCheckedRef.current.has(plan)) return;
+        celebrationCheckedRef.current.add(plan);
+        const alreadyShowing = celebrationPlan === plan;
+        fetchPlanCelebrated(plan)
             .then(seen => {
                 if (seen) return;
-                if (!alreadyShowing) setCelebrationPlan('lifetime');
-                return markLifetimeCelebrated();
+                if (!alreadyShowing) setCelebrationPlan(plan);
+                return markPlanCelebrated(plan);
             })
             .catch(() => {
-                lifetimeCheckedRef.current = false;
+                celebrationCheckedRef.current.delete(plan);
             });
     }, [billingPlan, celebrationPlan, setCelebrationPlan]);
 

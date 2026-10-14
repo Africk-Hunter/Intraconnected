@@ -98,6 +98,13 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
 .copy-line { font-family: var(--font-mono); background: var(--code-bg); border: 2px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; max-width: 68ch; position: relative; padding-right: 76px; }
 .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; font-weight: 700; padding: 3px 8px; border: 2px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
 #top-btn { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); font: inherit; font-weight: 700; padding: 8px 12px; border: 3px solid var(--line); border-radius: 10px; background: var(--sky); color: var(--on-accent); box-shadow: 3px 3px 0 var(--shadow); cursor: pointer; }
+.fields { display: flex; flex-direction: column; gap: 12px; }
+.field { border: 3px solid var(--line); border-radius: 12px; background: var(--surface); padding: 12px 16px; min-width: 0; }
+.field-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.field-head h3 { margin: 0; font-size: 1rem; }
+.field p { margin: 8px 0 0; font-size: 14.5px; }
+.field .copy-line { margin-top: 8px; }
+.copy-line.multi { white-space: pre-wrap; }
 .refs li { margin-bottom: 8px; }
 
 @media (max-width: 860px) {
@@ -122,6 +129,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
     <div class="collapsible" id="key-body">
       <input id="filter" type="search" placeholder="Filter sections" aria-label="Filter sections">
       <nav id="legend" aria-label="Sections">
+        <a href="#fields">App Store fields</a>
         <a href="#overview">Overview</a>
         <a href="#standing">Where the product stands</a>
         <a href="#statement">Positioning statement</a>
@@ -148,16 +156,162 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
       <div class="meta"><span>Intraconnected</span><span>2026-10-11</span><span>branch main</span><span>commit 8cb0a6d</span></div>
     </header>
 
+    <section id="fields">
+      <h2 class="sec">App Store Connect: fields to fill</h2>
+      <p>Every field on the iOS version 1.0 page, in the order it appears, with the text to paste. The copy follows the position below: small ideas, room to grow, creators. Counts are in characters.</p>
+      <div class="callout"><p><strong>Rules for all copy:</strong> never say end-to-end, "only you can decrypt" or "we cannot read your ideas". The app sells nothing and shows no prices. No emojis. Avoid the word "zoom".</p></div>
+
+      <h3 style="margin-top:32px">Product page</h3>
+      <div class="fields">
+        <div class="field">
+          <div class="field-head"><h3>Header (asset)</h3><span class="pill mid">Optional</span><span class="cost">3840 x 1646 or 5244 x 2950</span></div>
+          <p>Skip for 1.0. Nothing in the repo is this size; the Google Play graphics are 1024 x 500 and 4096 x 2304.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Screenshots and app previews</h3><span class="pill bad">Needs you</span><span class="cost">iPhone 6.9-inch, 1320 x 2868, 2 to 10</span></div>
+          <p>None exist yet. Take them from a TestFlight build signed in to the demo account. Show: a small idea growing into a branch, a level you have stepped into, the Create sheet, a checklist, the Move sheet. Do not show the Profile plan section or anything about upgrading. App previews (video) are optional; skip.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Promotional text</h3><span class="pill good">Ready</span><span class="cost">162 of 170</span></div>
+          <div class="copy-line" id="f-promo">Give small ideas room to grow. Write down even the tiniest thought, then grow it into a cohesive project in one tree. Works offline and syncs across your devices.<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Description</h3><span class="pill good">Ready</span><span class="cost">1061 of 4,000</span></div>
+          <div class="copy-line multi" id="f-desc">Intraconnected gives small ideas room to grow.
+
+Write down even the tiniest thought, then grow it into a cohesive project. Start with a single idea and branch it into more. Tap any idea to step inside it and see only what belongs there, then step back out when you're ready. Ideas, notes and checklists all live in one tree, and big maps stay readable because you only ever look at one level at a time.
+
+• Branch ideas as deep as you like
+• Drag an idea onto another to move it, or drag it to the trash to delete it
+• Checklists and notes sit right inside your map
+• Mark ideas High, Medium or Low priority and sort by priority or age
+• Attach a link to any idea
+• Import from Markdown, OPML, Notion, FreeMind and XMind, and export your whole map at any time
+• Your map syncs between your phone and the web, and keeps working offline
+
+The text of your ideas is encrypted on your device before it is sent to our servers.
+
+Sign in with your Intraconnected account, or create one in the app. Delete your account and all of your data from Profile whenever you want.<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Keywords</h3><span class="pill good">Ready</span><span class="cost">96 of 100</span></div>
+          <div class="copy-line" id="f-keys">mind map,mindmap,ideas,notes,brainstorm,outline,checklist,planner,project,creative,organize,tree<button class="copy" type="button">Copy</button></div><p>Comma separated, no spaces after commas. Do not add competitor names; Apple rejects them.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Support URL</h3><span class="pill good">Ready</span></div>
+          <div class="copy-line" id="f-support">https://intraconnected.app/support<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Marketing URL</h3><span class="pill good">Ready</span></div>
+          <div class="copy-line" id="f-marketing">https://intraconnected.app<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Version</h3><span class="pill good">Ready</span></div>
+          <div class="copy-line" id="f-version">1.0<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Copyright</h3><span class="pill good">Ready</span><span class="cost">up to 200</span></div>
+          <div class="copy-line" id="f-copy">2026 Hunter Africk<button class="copy" type="button">Copy</button></div><p>Year plus the name of the owner. You are a sole proprietor, so use your own name.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Routing App Coverage File</h3><span class="pill mid">Skip</span></div>
+          <p>Only for navigation apps.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>App Clip and iMessage App</h3><span class="pill mid">Skip</span></div>
+          <p>Not applicable.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Build</h3><span class="pill bad">Needs you</span></div>
+          <p>Pick the TestFlight build once Codemagic has produced one. The export-compliance question (encryption) is yours to answer: the app uses AES-GCM through Web Crypto plus HTTPS. <code>ITSAppUsesNonExemptEncryption</code> is deliberately unset in the repo.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Game Center</h3><span class="pill mid">Skip</span></div>
+          <p>Leave off.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:32px">App Review Information</h3>
+      <div class="fields">
+        <div class="field">
+          <div class="field-head"><h3>Sign-in required</h3><span class="pill bad">Needs you</span></div>
+          <p>Tick it. Create the demo account first: sign up at intraconnected.app/login with an email you control, verify it, then build a small tree (3 top-level ideas, one with 3 children, one of those with 2 grandchildren, one checklist with a ticked item, one note, one link idea, priority on two). Stay under 50 ideas.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>User name and password</h3><span class="pill bad">Needs you</span></div>
+          <p>The demo account's email and password. They go into App Store Connect only, never into this repo or this page.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Contact: first and last name</h3><span class="pill good">Ready</span></div>
+          <div class="copy-line" id="f-first">Hunter<button class="copy" type="button">Copy</button></div><div class="copy-line" id="f-last">Africk<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Contact: phone number and email</h3><span class="pill bad">Needs you</span></div>
+          <p>Yours. Use a number and address you will actually answer during review.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Notes</h3><span class="pill good">Ready</span><span class="cost">397 of 4,000</span></div>
+          <div class="copy-line multi" id="f-notes">Intraconnected is a mind-mapping app. Sign in with the demo account above.
+
+The app does not sell anything and has no in-app purchases. Account plans, if any, are managed on our website. Users can delete their account and all data from Profile &gt; Account &gt; Delete account.
+
+The text of ideas is encrypted on the device before it is sent to our servers. The app only uses email and password sign-in.<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Attachment</h3><span class="pill mid">Skip</span></div>
+          <p>Optional. Not needed.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:32px">App Store Version Release</h3>
+      <div class="fields">
+        <div class="field">
+          <div class="field-head"><h3>Release option</h3><span class="pill mid">Your call</span></div>
+          <p>Recommended: <strong>Manually release this version</strong>. Billing and the website are not live yet (see the launch checklist), so approval should not publish the app on its own schedule.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:32px">Elsewhere in App Store Connect</h3>
+      <p>Not on the version page, but still needed before you can submit.</p>
+      <div class="fields">
+        <div class="field">
+          <div class="field-head"><h3>Subtitle (App Information)</h3><span class="pill good">Ready</span><span class="cost">30 of 30</span></div>
+          <div class="copy-line" id="f-sub">Give small ideas room to grow.<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Category</h3><span class="pill good">Ready</span></div>
+          <div class="copy-line" id="f-cat">Productivity<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Price</h3><span class="pill good">Ready</span></div>
+          <div class="copy-line" id="f-price">Free<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Privacy policy URL</h3><span class="pill good">Ready</span></div>
+          <div class="copy-line" id="f-privacy">https://intraconnected.app/privacy<button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>App Privacy label</h3><span class="pill bad">Needs you</span></div>
+          <p>Collected, linked to the user, for app functionality, not used for tracking: email address, and other user content (ideas, notes, checklists, feature requests). Nothing else is collected, and there are no analytics or advertising SDKs.</p>
+        </div>
+        <div class="field">
+          <div class="field-head"><h3>Age rating questionnaire</h3><span class="pill bad">Needs you</span></div>
+          <p>Decided 2026-10-14: accept <strong>16+</strong>. No built-in objectionable content. Ideas are private to each account, so user-generated content distribution is None. Unrestricted web access is Yes, because saved links open in an in-app browser sheet (<code>openExternal</code>). The "social media disabled for under 13" attestation is not ticked: the app has no social features and does not call the Declared Age Range API. Revisit all three if a theme gallery ships.</p>
+        </div>
+      </div>
+    </section>
+
     <section id="overview">
       <h2 class="sec">Overview</h2>
-      <p>Mind mapping is a crowded category, so "a mind-mapping app" is not a position. The product is strongest as a small, bright, playful tool for capturing a thought and growing it into a plan, in one tree, that you fully own.</p>
+      <p>Mind mapping is a crowded category, so "a mind-mapping app" is not a position. The product is strongest as a place where a small idea gets room to grow: you can write down even a tiny thought, because it has somewhere to live, and it can grow into a cohesive project in one tree that you fully own.</p>
       <ul>
-        <li><strong>Position:</strong> fast capture, one tree for ideas, notes and checklists, and no lock-in.</li>
+        <li><strong>Position:</strong> a home for small ideas. Anything is worth writing down, because it has a place and can grow. One tree for ideas, notes and checklists, and no lock-in.</li>
+        <li><strong>Who it is for:</strong> creators, meaning people who make things and want to turn the ideas that come to them into structure.</li>
         <li><strong>Proof points you already have:</strong> offline editing with sync, full export, a one-time Lifetime price, and honest wording about encryption.</li>
         <li><strong>The mind map's job:</strong> the whole-tree view that makes the product recognizable, upgraded with a priority lens and a recency lens so it does something search cannot.</li>
         <li><strong>Marketing:</strong> pick one audience, get 10 to 20 real users, and let what they say shape the message before spending on reach.</li>
       </ul>
-      <div class="callout"><p><strong>Short version:</strong> do not compete on features with Miro or Notion. Compete on feeling: quick to open, quick to write, easy to leave. Then find one group of people who think in hierarchies and show them.</p></div>
+      <div class="callout"><p><strong>Short version:</strong> do not compete on features with Miro or Notion. Give small ideas room to grow: quick to open, easy to write in, easy to leave. Then show it to creators, who already have more ideas than places to put them.</p></div>
     </section>
 
     <section id="standing">
@@ -182,32 +336,34 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
 
     <section id="statement">
       <h2 class="sec">Positioning statement</h2>
-      <div class="callout statement"><p>Intraconnected is the fun, colorful place to catch an idea and grow it into a plan. One tree holds your ideas, notes and checklists, it works offline, and you can take everything with you whenever you like.</p></div>
+      <div class="callout statement"><p>Intraconnected gives creators room for their small ideas. Write down even the tiniest thought, then grow it into a cohesive project, all in one tree. It works offline, and you can take everything with you whenever you like.</p></div>
+      <h3>Where it comes from</h3>
+      <p>Before this, ideas lived scattered in a notes app. They got buried and forgotten, acting on one was messy, and many were never written down at all. Small thoughts felt too minor for a note, and there was no good way to organize them, so nobody bothered. The product answers that: when everything has a place, nothing is too small to keep.</p>
       <h3>Shorter forms</h3>
-      <p>Pick the one that fits the space. Test them on real people before settling.</p>
+      <p>Decided on 2026-10-14, after talking it through. The tone is plain and calm in the words, and the bright art carries the personality, so "fun" and "colorful" stay out of the copy.</p>
       <ul>
-        <li><strong>Tagline:</strong> Catch the idea. Grow the plan.</li>
-        <li><strong>One line:</strong> A bold, colorful mind map where ideas, notes and checklists live in one tree.</li>
-        <li><strong>Store subtitle:</strong> Ideas, notes and checklists in one tree.</li>
+        <li><strong>Tagline:</strong> Give small ideas room to grow. (29 characters, so it also fits the iOS subtitle.)</li>
+        <li><strong>One line:</strong> A mind map where ideas, notes and checklists live in one tree, so even a small thought has a place.</li>
+        <li><strong>Store subtitle:</strong> Give small ideas room to grow.</li>
       </ul>
-      <p>These taglines are drafts. Only the statement above comes straight from the product's strengths.</p>
+      <p>Dropped: "Catch the idea. Grow the plan." Two short sentences read as two stops and did not flow. Keep "grow".</p>
     </section>
 
     <section id="audience">
       <h2 class="sec">Who it is for</h2>
-      <p>You need one group to start with. A tool that is "for everyone" gets no word of mouth. Three candidates, with a lean toward the first.</p>
+      <p>Decided: <strong>creators</strong>, meaning people who like to make things. Ideas come to them constantly and unevenly, and the app lets them make structure out of those ideas. That is also how the product's author uses it.</p>
       <div class="cards">
         <article class="card pick">
           <span class="tag">Lead with this</span>
-          <h3>Planners and project thinkers</h3>
-          <p>People who turn a loose idea into steps: side-project builders, freelancers, small-team leads. They use ideas, notes and checklists together, which is what the product is built for.</p>
-          <span class="cost">Fit: highest. Uses every feature.</span>
+          <h3>Creators</h3>
+          <p>Writers, designers, developers, makers and anyone building something of their own. They collect many small thoughts, only some of which become projects, and they have felt a notes app turn into a pile.</p>
+          <span class="cost">Fit: highest. Matches how the product is used today.</span>
         </article>
         <article class="card">
-          <span class="tag">Second</span>
-          <h3>Writers and researchers</h3>
-          <p>People who outline, collect sources and restructure. They value export, links and a tree they can reorganize by dragging.</p>
-          <span class="cost">Fit: good. Needs strong import and Markdown export, which you have.</span>
+          <span class="tag">Sharpen later</span>
+          <h3>Which creators first</h3>
+          <p>"Creators" is a group, not yet a person. Phase 1 should show which kind of maker picks it up fastest (writers, builders, designers), and the landing page can then speak to that one.</p>
+          <span class="cost">Open until the first 10 to 20 users.</span>
         </article>
         <article class="card">
           <span class="tag">Later</span>
@@ -216,7 +372,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
           <span class="cost">Fit: medium. Revisit after launch.</span>
         </article>
       </div>
-      <p style="margin-top:16px">Whichever you pick, write the landing page for one person in that group. You can widen it later; narrowing it later is harder.</p>
+      <p style="margin-top:16px">Write the landing page for one creator, with a real small idea as the example. You can widen it later; narrowing it later is harder.</p>
     </section>
 
     <section id="landscape">
@@ -226,7 +382,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
         <table>
           <thead><tr><th>Tool</th><th>What it is known for</th><th>Where Intraconnected can differ</th></tr></thead>
           <tbody>
-            <tr><td><a href="https://workflowy.com" target="_blank" rel="noopener noreferrer">Workflowy</a></td><td>Infinite nested lists. The closest in spirit.</td><td>The same core idea with a far more colorful, visual interface, a real whole-tree map, checklists and notes as distinct types, and a one-time price. Your sharpest comparison: "Workflowy, but fun to look at."</td></tr>
+            <tr><td><a href="https://workflowy.com" target="_blank" rel="noopener noreferrer">Workflowy</a></td><td>Infinite nested lists. The closest in spirit.</td><td>The same core idea with a whole-tree map, checklists and notes as distinct types, a distinctive visual style, and a one-time price. Workflowy is a list; this is a tree you can see and step into. Needs a one-sentence comparison once the position is settled.</td></tr>
             <tr><td><a href="https://whimsical.com" target="_blank" rel="noopener noreferrer">Whimsical</a></td><td>Clean diagrams and mind maps, built for teams.</td><td>Personal and offline-first, with no collaboration overhead.</td></tr>
             <tr><td><a href="https://miro.com" target="_blank" rel="noopener noreferrer">Miro</a></td><td>Giant shared canvas for workshops.</td><td>Fast and playful instead of a blank canvas. Do not compete on scale.</td></tr>
             <tr><td><a href="https://obsidian.md" target="_blank" rel="noopener noreferrer">Obsidian</a></td><td>Local notes with links and plugins.</td><td>No setup and no plugins to manage, with a structure that is visual by default.</td></tr>
@@ -243,14 +399,14 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
       <div class="cards">
         <article class="card">
           <span class="tag">1 · Core story</span>
-          <h3>Ideas, notes and checklists in one tree</h3>
-          <p>A thought becomes notes, then steps, then ticked-off steps, without leaving the tree. Most tools do one of these well.</p>
+          <h3>Room to grow</h3>
+          <p>A thought becomes notes, then steps, then ticked-off steps, without leaving the tree. Ideas, notes and checklists live together, so nothing has to move to another tool.</p>
           <span class="cost">Proof: the three creation types and the tree.</span>
         </article>
         <article class="card">
           <span class="tag">2 · Feel</span>
-          <h3>Fast capture</h3>
-          <p>The quickest way to get a thought down. Keyboard shortcuts on desktop, a one-tap add on the phone.</p>
+          <h3>Nothing is too small to keep</h3>
+          <p>Because every thought has a place, a tiny one is worth writing down. Quick to add, with keyboard shortcuts on desktop and a one-tap add on the phone.</p>
           <span class="cost">Proof today: shortcuts and mobile sheets. A quick-add shortcut and share-in from other apps would deepen it.</span>
         </article>
         <article class="card">
@@ -267,7 +423,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
         </article>
         <article class="card">
           <span class="tag">5 · Privacy</span>
-          <h3>Encrypted on your device before it is stored</h3>
+          <h3>Encrypted on your device before it is sent</h3>
           <p>Say exactly that. Do not say end-to-end, or "we cannot read your ideas": the email recovery option means the service technically could.</p>
           <span class="cost">Rule: keep the wording in the privacy page and store listings.</span>
         </article>
@@ -300,7 +456,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
 
     <section id="skip">
       <h2 class="sec">What to skip</h2>
-      <p>Each of these puts you against a much larger product, or adds weight that works against "fast and fun."</p>
+      <p>Each of these puts you against a much larger product, or adds weight that works against "quick to open, easy to write in."</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Skip</th><th>Why</th></tr></thead>
@@ -318,9 +474,10 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
       <h2 class="sec">Messaging</h2>
       <h3>Principles</h3>
       <ul>
-        <li>Lead with the feeling and the job: catch an idea, grow it into a plan.</li>
-        <li>Show the product in the first screen of the landing page: a real tree, a checklist ticking, the map opening.</li>
-        <li>Let the look carry the tone. The app's bright colors and bold outlines are part of the pitch, so use real screenshots and keep the copy light and a little cheeky. Avoid "calm", "minimal" and "zen".</li>
+        <li>Lead with the job: give small ideas room to grow. Start from the frustration of ideas buried in a notes app.</li>
+        <li>Show the product in the first screen of the landing page: a small idea growing into a branch, a checklist ticking, the map opening.</li>
+        <li>Let the look carry the tone. The art is distinctive and speaks for itself, so use real screenshots and keep the words plain. Do not describe the app as "fun" or "colorful" in the copy.</li>
+        <li>Avoid "zoom". It suggests a pinch gesture on a phone. Say "step into" an idea instead.</li>
         <li>Name what you are not: not a canvas, not a team workspace. That helps the right people recognize themselves.</li>
         <li>Make the exit visible. "Export everything, any time" earns more trust than a feature list.</li>
       </ul>
@@ -329,7 +486,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
         <table>
           <thead><tr><th>Use</th><th>Avoid</th></tr></thead>
           <tbody>
-            <tr><td>Encrypted on your device before it is stored</td><td>End-to-end encrypted. Only you can read it. We cannot read your data.</td></tr>
+            <tr><td>Encrypted on your device before it is sent to our servers</td><td>End-to-end encrypted. Only you can read it. We cannot read your data.</td></tr>
             <tr><td>Pay once, keep it (once the Lifetime price is confirmed)</td><td>Any price or discount that is not live in Stripe</td></tr>
             <tr><td>Works offline and syncs when you are back</td><td>Claims about speed or scale you have not measured</td></tr>
             <tr><td>Export to Markdown, OPML or JSON</td><td>"Unlimited" anything. The free plan is 50 nodes.</td></tr>
@@ -337,7 +494,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
         </table>
       </div>
       <h3>A first draft of the landing page opening</h3>
-      <div class="copy-line" id="draft-hero">Catch the idea. Grow the plan. Intraconnected keeps ideas, notes and checklists in one tree, works offline, and lets you take everything with you. Start free.<button class="copy" type="button">Copy</button></div>
+      <div class="copy-line" id="draft-hero">Give small ideas room to grow. Intraconnected keeps your ideas, notes and checklists in one tree, so even the tiniest thought has a place. It works offline, and you can take everything with you. Start free.<button class="copy" type="button">Copy</button></div>
       <p style="margin-top:12px">This is a draft to react to, not final copy.</p>
     </section>
 
@@ -374,7 +531,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
           <div>
             <h3>Content and communities</h3>
             <ul>
-              <li>Short screen recordings: "capture to plan in 30 seconds," the map lenses, offline editing.</li>
+              <li>Short screen recordings: "from a one-line thought to a checklist in 30 seconds," the map lenses, offline editing.</li>
               <li>A few useful posts about thinking in trees, written for the lead audience, with the product as an example.</li>
               <li>Join communities where your audience already talks about notes and planning, and take part before posting. Read each community's self-promotion rules first.</li>
               <li>Publish an import guide for people leaving other tools, since you already import several formats.</li>
@@ -447,7 +604,7 @@ th { background: var(--bg); font-size: 12px; letter-spacing: .08em; text-transfo
       <h2 class="sec">Open questions and next steps</h2>
       <h3>Questions for you</h3>
       <ol>
-        <li>Which audience first: planners and project thinkers, writers and researchers, or students?</li>
+        <li>Which kind of creator first (writers, builders, designers)? The audience is creators; this narrows it. Phase 1 should answer it.</li>
         <li>What is the Lifetime price, and are you willing to promote it as the headline offer?</li>
         <li>Do you want to build review mode, light sharing or AI help first, or hold all three until you have users?</li>
         <li>Who are the first 10 to 20 people you can invite?</li>

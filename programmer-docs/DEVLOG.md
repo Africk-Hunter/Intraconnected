@@ -4,6 +4,12 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Mobile Copy — 2026-10-14
+Typecheck, lint and 353 tests pass; **not tried on a phone.**
+- The mobile actions sheet (row ⋯ / long-press) gets a Copy row like the desktop card menu: Text/Link/Checklist/Note, plus Ideas inside and Branch when the idea has children. Confirms with the mobile toast.
+- The clipboard text moved to pure `idea/copyText.ts` (`ideaCopyText`, `childrenCopyText`, `branchCopyText`), used by both `useIdeaActions` and `MobileMindMap`, so the two copy the same thing.
+- Not ported: Censor idea (mobile rows don't render the veil yet).
+
 ## Later Fixes (checklist section 19) — 2026-10-13
 Typecheck, lint (0 warnings from `exhaustive-deps`) and 347 tests pass; **not deployed, not tried in a browser.**
 - E2: the Lifetime refund window counts from new `BillingDoc.lifetimePurchasedAt` (set on the purchase, kept on redelivery, cleared with the other Lifetime fields), falling back to `updatedAt` for older docs. Server (`refund-lifetime.ts`) and the Profile button agree.

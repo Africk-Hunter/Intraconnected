@@ -83,7 +83,8 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
         return children.flatMap((child, index) => {
             const id = Number(child.id);
             const isLast = index === children.length - 1;
-            const hasKids = ideasWithRoot.some(i => Number(i.parentID) === id);
+            const kidCount = ideasWithRoot.filter(i => Number(i.parentID) === id).length;
+            const hasKids = kidCount > 0;
             const isExpanded = expandedNodes.has(id);
             const isCurrent = id === currentId;
             const isLink = !!getIdeaLink(child);
@@ -107,7 +108,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
             }
 
             const rows: React.ReactNode[] = [
-                <div key={child.id} className="vtree-row">
+                <div key={child.id} className="vtree-row" style={{ '--i': Math.min(index, 8) } as React.CSSProperties}>
                     <div className="vtree-guides">
                         {guides.map((hasLine, gi) => (
                             <div key={gi} className={`vtree-guide${hasLine ? ' vtree-guide--line' : ''}`} />
@@ -119,7 +120,9 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
                         className={nodeClass}
                         onClick={handleClick}
                     >
-                        {resolveIdeaLabel(child).split('\n')[0]}
+                        <span className="vtree-node-label">{resolveIdeaLabel(child).split('\n')[0]}</span>
+                        {isCurrent && <span className="vtree-badge vtree-badge--here">You are here</span>}
+                        {!isCurrent && hasKids && <span className="vtree-badge">{kidCount}</span>}
                     </button>
                     {hasKids && (
                         <button
@@ -153,7 +156,13 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
             <div ref={swipe.sheetRef} className="mmobile-mindmap-sheet" style={style} role="dialog" aria-modal="true" aria-label="Mind map">
                 <div className="mmobile-mindmap-header" {...swipe.dragProps}>
                     <div className="mmobile-sheet-grab mmobile-sheet-grab--panel" aria-hidden="true" />
-                    <span className="mmobile-mindmap-title">Mind Map</span>
+                    <span className="mmobile-mindmap-title">
+                        <svg className="mmobile-mindmap-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3" /><circle cx="4.5" cy="5.5" r="2" /><circle cx="19.5" cy="6" r="2" /><circle cx="18" cy="19" r="2" />
+                            <path d="M10 10 6 7M14 10.5l4-3.5M13.5 14.5l3 3" />
+                        </svg>
+                        Mind Map
+                    </span>
                     <button className="mmobile-mindmap-close" onClick={onClose} aria-label="Close">✕</button>
                 </div>
                 <div className="vtree-scroll" ref={scrollRef}>

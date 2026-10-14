@@ -36,20 +36,31 @@ export async function markOnboardingSeen(): Promise<void> {
     await setDoc(prefsDoc, { onboardingSeen: true }, { merge: true });
 }
 
-// Whether this account has already seen the Lifetime celebration modal — kept
-// on the account (not localStorage) so it shows once per account, not browser.
-export async function fetchLifetimeCelebrated(): Promise<boolean> {
+// Whether this account has already seen the upgrade celebration for a plan —
+// kept on the account (not localStorage) so it shows once per account, not
+// browser. The Lifetime flag keeps its original field name.
+const CELEBRATED_FIELD = { annual: "annualCelebrated", lifetime: "lifetimeCelebrated" } as const;
+
+export async function fetchPlanCelebrated(plan: "annual" | "lifetime"): Promise<boolean> {
     const user = authCheck();
     if (!user) return true;
     const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
     const snap = await getDoc(prefsDoc);
     if (!snap.exists()) return false;
-    return (snap.data().lifetimeCelebrated as boolean) ?? false;
+    return (snap.data()[CELEBRATED_FIELD[plan]] as boolean) ?? false;
 }
 
-export async function markLifetimeCelebrated(): Promise<void> {
+export async function markPlanCelebrated(plan: "annual" | "lifetime"): Promise<void> {
     const user = authCheck();
     if (!user) return;
     const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
-    await setDoc(prefsDoc, { lifetimeCelebrated: true }, { merge: true });
+    await setDoc(prefsDoc, { [CELEBRATED_FIELD[plan]]: true }, { merge: true });
+}
+
+// Dev-only: lets both celebrations show again after "Reset to Free".
+export async function clearPlanCelebrated(): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    await setDoc(prefsDoc, { annualCelebrated: false, lifetimeCelebrated: false }, { merge: true });
 }

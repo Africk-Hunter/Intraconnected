@@ -1,0 +1,230 @@
+<!doctype html>
+<!-- App Store header / search-results art. Rendered by scripts/generate-appstore-banners.cjs
+     (headless Chrome) as banner.html?f=<format>. Drawn on a stage 1000 units tall, scaled to the window. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500..900&family=Space+Grotesk:wght@700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E9F9E5; --ink: #111; --roots: #A3703E; --sky: #00A9D8; --leaf: #41BC28;
+    --link: #E8E879; --indigo: #2049C5; --p1: #D62000; --p2: #E07800; --p3: #C8A200;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+  #stage {
+    position: absolute; top: 0; left: 0; height: 1000px; transform-origin: 0 0;
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(0,0,0,.07) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(0,0,0,.07) 2px, transparent 2px);
+    background-size: 44px 44px;
+    font-family: 'DM Sans', sans-serif; color: var(--ink);
+  }
+  svg#lines { position: absolute; inset: 0; overflow: visible; }
+
+  /* Idea nodes: the app's card (thick border, hard offset shadow). --s scales a generation. */
+  .node {
+    position: absolute; transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+    font-size: calc(var(--s) * 34px); font-weight: 700; letter-spacing: -0.01em; white-space: nowrap;
+    padding: .5em .85em; border: calc(var(--s) * 5px) solid var(--ink); border-radius: calc(var(--s) * 12px);
+    box-shadow: calc(var(--s) * 7px) calc(var(--s) * 7px) 0 calc(var(--s) * 2px) var(--ink);
+    display: flex; align-items: center; gap: .45em; line-height: 1;
+  }
+  .g1 { --s: 1; } .g2 { --s: .8; } .g3 { --s: .64; }
+  .leaf { background: var(--leaf); }
+  .parent { background: var(--sky); }
+  .link { background: var(--link); }
+  .check { background: var(--indigo); color: #fff; }
+  .node small { font-size: 1em; font-weight: 700; opacity: .62; }
+  .node svg { width: .9em; height: .9em; flex: none; }
+  .sprout {
+    background: rgba(255,255,255,.55); border-style: dashed; box-shadow: none; color: rgba(17,17,17,.6);
+  }
+  /* Hanging bookmark ribbon, as on the desktop card. */
+  .node.pri { padding-left: 1.8em; }
+  .node.pri::before {
+    content: ''; position: absolute; left: .55em; top: -.42em; width: .62em; height: var(--h);
+    background: var(--c); border: calc(var(--s) * 3.5px) solid var(--ink); border-radius: .2em 0 .3em .3em;
+    box-shadow: calc(var(--s) * 3px) calc(var(--s) * 3px) 0 calc(var(--s) * 1px) var(--ink);
+  }
+  .pri1 { --c: var(--p1); --h: 1.5em; } .pri2 { --c: var(--p2); --h: 1.15em; } .pri3 { --c: var(--p3); --h: .85em; }
+
+  /* Checklist card */
+  .node.list { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
+  .list .head { display: flex; align-items: center; gap: .45em; padding: .5em .85em; }
+  .list .head small { margin-left: auto; padding-left: .6em; }
+  .list .items { border-top: calc(var(--s) * 3px) solid rgba(255,255,255,.28); padding: .45em .85em .55em; font-size: .78em; font-weight: 600; }
+  .list .item { display: flex; align-items: center; gap: .5em; padding: .22em 0; }
+  .list .item.done span { text-decoration: line-through; opacity: .6; }
+  .box { width: .95em; height: .95em; border: calc(var(--s) * 3px) solid #fff; border-radius: .2em; flex: none; display: grid; place-items: center; }
+  .done .box { background: rgba(255,255,255,.28); border-color: rgba(255,255,255,.65); }
+
+  /* Headline: the landing page's highlighted chips. */
+  .chip {
+    position: absolute; transform: translate(-50%, -50%) rotate(var(--r));
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700; letter-spacing: -0.035em; line-height: 1;
+    font-size: calc(var(--hs) * 1px); padding: .13em .3em .17em; white-space: nowrap;
+    border: calc(var(--hs) * .06px) solid var(--ink); border-radius: calc(var(--hs) * .12px);
+    box-shadow: calc(var(--hs) * .08px) calc(var(--hs) * .08px) 0 calc(var(--hs) * .02px) var(--ink);
+  }
+  .chip.one { background: var(--leaf); --r: -1.5deg; }
+  .chip.two { background: var(--sky); --r: 1deg; }
+  #safe { position: absolute; outline: 3px dashed red; display: none; }
+  .debug #safe { display: block; }
+</style>
+</head>
+<body>
+<div id="stage"><svg id="lines"></svg></div>
+<script>
+const P = new URLSearchParams(location.search);
+const F = P.get('f') || 'header';
+if (P.has('debug')) document.body.classList.add('debug');
+
+const ICON = {
+  arrow: '<svg viewBox="0 0 20 20"><path d="M5 15 15 5M7 5h8v8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  check: '<svg viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M6 10.5l3 3 5-7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  tick: '<svg viewBox="0 0 20 20" style="width:.7em;height:.7em"><path d="M4 10.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
+
+// Node kinds, matching the app: leaf (green), parent (blue, child count ›), link (yellow ↗),
+// checklist (indigo, progress), plus a dashed "sprout": the next idea about to be added.
+function html(n) {
+  const [kind, label, extra] = n.k;
+  if (kind === 'parent') return `${label}<small>${extra} ›</small>`;
+  if (kind === 'link') return `${label}${ICON.arrow}`;
+  if (kind === 'check') return `${ICON.check}${label}<small>${extra}</small>`;
+  if (kind === 'list') return `<div class="head">${ICON.check}${label}<small>${extra.filter(i => i[1]).length}/${extra.length}</small></div>
+    <div class="items">${extra.map(([t, d]) => `<div class="item${d ? ' done' : ''}"><span class="box">${d ? ICON.tick : ''}</span><span>${t}</span></div>`).join('')}</div>`;
+  if (kind === 'sprout') return `+ ${label}`;
+  return label;
+}
+const cls = { leaf: 'leaf', parent: 'parent', link: 'link', check: 'check', list: 'check list', sprout: 'sprout' };
+
+// Layouts. x/y are offsets from the headline centre. `p` is the parent node's index, or -1 for
+// "Watch it grow." and -2 for "Plant one idea."; `side` (l/r/t/b) is the parent edge the connector
+// leaves from (default: whichever side the child is on).
+const LIST = ['list', 'Packing', [['Passport', true], ['Charger', true], ['Sunscreen', false]]];
+const T = {
+  // 21:9 product page header. Safe area ~43% x 40% (centred): the headline lives there, the map is mood.
+  header: {
+    aspect: 3840 / 1646, hs: 112, cy: 0, safe: [0.43, 0.40],
+    nodes: [
+      /* 0 */ { x: -640, y: -215, g: 1, k: ['parent', 'Projects', 3] },
+      /* 1 */ { x: -655, y: 215, g: 1, k: LIST },
+      /* 2 */ { x: 640, y: -230, g: 1, k: ['parent', 'Music', 2], pri: 1 },
+      /* 3 */ { x: 650, y: 200, g: 1, k: ['parent', 'Writing', 3] },
+      /* 4 */ { x: -890, y: -370, g: 2, p: 0, k: ['leaf', 'Website'] },
+      { x: -905, y: -110, g: 2, p: 0, k: ['link', 'Design ref'] },
+      { x: -915, y: 365, g: 2, p: 1, k: ['leaf', 'Book flights'], pri: 2 },
+      { x: 900, y: -385, g: 2, p: 2, k: ['leaf', 'Learn guitar'] },
+      { x: 905, y: -140, g: 2, p: 2, k: ['link', 'Chord chart'] },
+      /* 9 */ { x: 885, y: 90, g: 2, p: 3, k: ['parent', 'Novel', 4] },
+      { x: 910, y: 345, g: 2, p: 3, k: ['leaf', 'Podcast idea'] },
+      { x: 1085, y: 10, g: 3, p: 9, k: ['leaf', 'Chapter 1'] },
+      { x: 1080, y: 175, g: 3, p: 9, k: ['sprout', 'New idea'] },
+      { x: -1080, y: -455, g: 3, p: 4, k: ['sprout', 'New idea'] },
+      { x: -1090, y: -270, g: 3, p: 4, k: ['leaf', 'Logo'] },
+    ],
+  },
+  // 3:2 search results card. Safe area ~56% x 40% (centred). The map grows up and down from the headline.
+  search: {
+    aspect: 3840 / 2560, hs: 92, cy: 0, safe: [0.565, 0.40],
+    nodes: [
+      /* 0 */ { x: -335, y: -310, g: 1, p: -2, side: 't', k: ['parent', 'Projects', 3] },
+      /* 1 */ { x: -345, y: 315, g: 1, p: -1, side: 'b', k: LIST },
+      /* 2 */ { x: 335, y: -320, g: 1, p: -2, side: 't', k: ['parent', 'Music', 2], pri: 1 },
+      /* 3 */ { x: 330, y: 290, g: 1, p: -1, side: 'b', k: ['parent', 'Writing', 3] },
+      { x: -605, y: -425, g: 2, p: 0, k: ['leaf', 'Website'] },
+      { x: -610, y: -200, g: 2, p: 0, k: ['link', 'Design ref'] },
+      { x: 610, y: -430, g: 2, p: 2, k: ['leaf', 'Learn guitar'] },
+      { x: 600, y: -205, g: 2, p: 2, k: ['link', 'Chords'] },
+      { x: -598, y: 425, g: 2, p: 1, k: ['leaf', 'Book flights'], pri: 2 },
+      { x: 615, y: 205, g: 2, p: 3, k: ['sprout', 'New idea'] },
+      { x: 620, y: 410, g: 2, p: 3, k: ['leaf', 'Podcast idea'] },
+    ],
+  },
+  // 16:9 universal asset: one image cropped for both placements, so the headline sits in a small
+  // area a little above centre and the map stays clear of it.
+  universal: {
+    aspect: 5244 / 2950, hs: 64, cy: -40, safe: [0.30, 0.33],
+    nodes: [
+      /* 0 */ { x: -470, y: -220, g: 1, k: ['parent', 'Projects', 3] },
+      /* 1 */ { x: -480, y: 220, g: 1, k: LIST },
+      /* 2 */ { x: 470, y: -235, g: 1, k: ['parent', 'Music', 2], pri: 1 },
+      /* 3 */ { x: 480, y: 200, g: 1, k: ['parent', 'Writing', 3] },
+      { x: -725, y: -370, g: 2, p: 0, k: ['leaf', 'Website'] },
+      { x: -735, y: -110, g: 2, p: 0, k: ['link', 'Design ref'] },
+      { x: -745, y: 370, g: 2, p: 1, k: ['leaf', 'Book flights'], pri: 2 },
+      { x: 730, y: -385, g: 2, p: 2, k: ['leaf', 'Learn guitar'] },
+      { x: 735, y: -140, g: 2, p: 2, k: ['link', 'Chord chart'] },
+      { x: 720, y: 95, g: 2, p: 3, k: ['parent', 'Novel', 4] },
+      { x: 740, y: 345, g: 2, p: 3, k: ['leaf', 'Podcast idea'] },
+      { x: 250, y: 400, g: 3, p: 3, side: 'b', k: ['sprout', 'New idea'] },
+    ],
+  },
+}[F];
+
+const stage = document.getElementById('stage');
+const W = Math.round(1000 * T.aspect), CX = W / 2, CY = 500 + T.cy;
+stage.style.width = W + 'px';
+const K = (+P.get('h') || innerHeight) / 1000;
+stage.style.transform = `scale(${K})`;
+
+const safe = document.createElement('div');
+safe.id = 'safe';
+Object.assign(safe.style, { width: T.safe[0] * W + 'px', height: T.safe[1] * 1000 + 'px', left: (1 - T.safe[0]) * W / 2 + 'px', top: (1 - T.safe[1]) * 500 + 'px' });
+stage.append(safe);
+
+// Headline: "Plant one idea." (a leaf) grows a stem down to "Watch it grow." (a parent), which the map branches from.
+const hs = T.hs, gap = hs * 0.5;
+const one = Object.assign(document.createElement('div'), { className: 'chip one', textContent: 'Plant one idea.' });
+const two = Object.assign(document.createElement('div'), { className: 'chip two', textContent: 'Watch it grow.' });
+for (const c of [one, two]) { c.style.setProperty('--hs', hs); stage.append(c); }
+const chipH = hs * 1.3;
+one.style.left = CX + 'px'; one.style.top = CY - (chipH + gap) / 2 + 'px';
+two.style.left = CX + 'px'; two.style.top = CY + (chipH + gap) / 2 + 'px';
+
+const els = T.nodes.map((n) => {
+  const d = document.createElement('div');
+  d.className = `node g${n.g} ${cls[n.k[0]]}${n.pri ? ` pri pri${n.pri}` : ''}`;
+  d.innerHTML = html(n);
+  d.style.left = CX + n.x + 'px';
+  d.style.top = CY + n.y + 'px';
+  stage.append(d);
+  return d;
+});
+
+document.fonts.ready.then(() => {
+  const k = K;
+  const box = (el) => { const r = el.getBoundingClientRect(); return { l: r.left / k, r: r.right / k, t: r.top / k, b: r.bottom / k, cx: (r.left + r.right) / 2 / k, cy: (r.top + r.bottom) / 2 / k }; };
+  const svg = document.getElementById('lines');
+  const path = (d, w) => `<path d="${d}" fill="none" stroke="#111" stroke-width="${w}" stroke-linecap="round"/>`;
+  const out = [];
+  const A = box(one), B = box(two);
+  out.push(path(`M${A.cx} ${A.b - 6} L${B.cx} ${B.t + 6}`, 7));
+  T.nodes.forEach((n, i) => {
+    const from = n.p === undefined || n.p === -1 ? B : n.p === -2 ? A : box(els[n.p]);
+    const to = box(els[i]);
+    const w = n.g === 1 ? 6 : n.g === 2 ? 5 : 4;
+    const side = n.side || (to.cx < from.cx ? 'l' : 'r');
+    if (side === 't' || side === 'b') {
+      // Vertical S-curve from the parent's top/bottom edge to the child's facing edge.
+      const x1 = Math.min(Math.max(to.cx, from.l + 40), from.r - 40);
+      const y1 = side === 't' ? from.t + 6 : from.b - 6, y2 = side === 't' ? to.b - 4 : to.t + 4, my = (y1 + y2) / 2;
+      out.push(path(`M${x1} ${y1} C${x1} ${my} ${to.cx} ${my} ${to.cx} ${y2}`, w));
+      return;
+    }
+    // Horizontal S-curve from the parent's side edge to the child's near edge.
+    const x1 = side === 'l' ? from.l + 6 : from.r - 6, y1 = from.cy;
+    const x2 = to.cx < x1 ? to.r - 4 : to.l + 4, y2 = to.cy, mx = (x1 + x2) / 2;
+    out.push(path(`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`, w));
+  });
+  svg.innerHTML = out.join('');
+  document.title = 'ready';
+});
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import { ImportError, parseImportFiles, SUPPORTED_IMPORT_EXTENSIONS } from '../.
 import { applyImport, DAILY_IMPORT_LIMIT, ImportPlan, planImport } from '../../utilities/idea/importIdeas';
 import { SUPPORT_EMAIL } from '../../utilities/support';
 import { usePurchaseMode } from '../../utilities/billing/purchaseMode';
+import { useIsMobileUI } from '../../utilities/useIsMobileUI';
 
 // The File System Access picker (Chrome/Edge). Not in TypeScript's DOM lib yet.
 type OpenFilePicker = (options: {
@@ -67,14 +68,15 @@ type ImportState =
     | { step: 'idle' }
     | { step: 'reading' }
     | { step: 'preview'; plan: ImportPlan; title: string; format: string; skipped: number }
-    | { step: 'done'; count: number; title: string }
+    | { step: 'done'; count: number; title: string; rootId: number }
     | { step: 'error'; message: string };
 
 // Profile → Import Data. Reads another app's export entirely in the browser
 // (see importers.ts for the formats) and adds it under one new top-level
 // idea, so an import never mixes into existing ideas and is one drag to undo.
 function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
-    const { profileModalOpen, setNewIdeaSwitch } = useIdeaContext();
+    const { profileModalOpen, setProfileModalOpen, setNewIdeaSwitch, navigateToId, setPendingOpenId } = useIdeaContext();
+    const isMobileUI = useIsMobileUI();
     const canUpgrade = usePurchaseMode() !== 'none';
     const [state, setState] = useState<ImportState>({ step: 'idle' });
     const [promptCopied, setPromptCopied] = useState(false);
@@ -146,10 +148,18 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
             setNewIdeaSwitch((prev: boolean) => !prev);
             setPasteText('');
             setShowPaste(false);
-            setState({ step: 'done', count: state.plan.ideas.length, title: state.title });
+            setState({ step: 'done', count: state.plan.ideas.length, title: state.title, rootId: state.plan.ideas[0].id });
         } catch (error) {
             setState({ step: 'error', message: error instanceof ImportError ? error.message : 'The import couldn’t be saved.' });
         }
+    }
+
+    // The phone layout owns its current level, so it is asked through the context.
+    function openImported() {
+        if (state.step !== 'done') return;
+        setProfileModalOpen(false);
+        if (isMobileUI) setPendingOpenId(state.rootId);
+        else navigateToId(state.rootId);
     }
 
     async function copyPrompt() {
@@ -298,6 +308,7 @@ function ImportDataSection({ onUpgrade }: { onUpgrade: () => void }) {
                         </p>
                     </div>
                 </div>
+                <button type="button" className="profile-action-btn neobrutal-button" onClick={openImported}>Take me there</button>
                 {dropzone('Drop another file or click to choose', 'Import another file')}
                 {pasteArea}
             </>

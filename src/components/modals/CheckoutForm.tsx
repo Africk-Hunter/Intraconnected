@@ -6,6 +6,7 @@ import { getCardElementStyle } from "../../utilities/billing/stripeAppearance";
 import NodeLoader from "./NodeLoader";
 import ReportLink from "../ReportLink";
 import { LockIcon } from "../Icons";
+import { primeCelebrationSound } from "../../utilities/celebrationSound";
 
 const PLAN_LABEL: Record<CheckoutPlan, { label: string; suffix: string }> = {
     annual: { label: "Annual Plan", suffix: "/year" },
@@ -29,6 +30,7 @@ function CheckoutForm({ plan, intent, onDone }: Props) {
         const card = elements?.getElement(CardElement);
         if (!stripe || !card || submitting) return;
 
+        primeCelebrationSound();
         setSubmitting(true);
         setError(null);
 

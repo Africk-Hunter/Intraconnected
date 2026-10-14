@@ -554,6 +554,13 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     .profile-format-chip--3 { background: lighten($orange, 30%); }
 }
 
+// The mobile layout isn't a flex column (desktop's gap handles this there), so
+// chips, body and the AI note need explicit spacing or they butt together.
+.profile-mobile .profile-section--import {
+    .profile-format-chips { margin-bottom: 0.9rem; }
+    > .profile-import-ai { margin-top: 0.9rem; }
+}
+
 .profile-import-body {
     display: flex;
     flex-direction: column;

@@ -358,21 +358,231 @@
     z-index: 200;
 }
 
-.upgrade-celebration-modal {
+// On mobile .overlay top-aligns its modal; here the modal's auto margin centres
+// it instead, and still lets the overlay scroll if the screen is too short.
+.overlay.upgrade-celebration-overlay > .upgrade-celebration-modal {
+    margin: auto;
+}
+
+@keyframes upgradeCelebrationRise {
+    from { transform: translateY(0.75rem); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes upgradeCelebrationFloat {
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50%      { transform: translateY(-0.4rem) rotate(1.5deg); }
+}
+
+@keyframes upgradeCelebrationSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes upgradeCelebrationFleck {
+    from { transform: scale(0) rotate(0deg); opacity: 0; }
+    to   { transform: scale(1) rotate(45deg); opacity: 1; }
+}
+
+@keyframes upgradeCelebrationSticker {
+    from { transform: translate(-50%, 50%) rotate(-14deg) scale(0); opacity: 0; }
+    to   { transform: translate(-50%, 50%) rotate(-4deg) scale(1); opacity: 1; }
+}
+
+// Colour block on top (plan colour, rotating rays, confetti flecks, mascot),
+// white-ish body below. The hero's colour is the only per-plan difference.
+.neobrutal.modal.upgrade-celebration-modal {
     position: relative;
     z-index: 202;
-    gap: 1.5rem;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    justify-content: flex-start;
     text-align: center;
+    --celebration-color: #{$neutral};
+
+    &.upgrade-celebration-modal--lifetime {
+        --celebration-color: #{$link};
+    }
+    &.upgrade-celebration-modal--annual {
+        --celebration-color: #{$sky};
+    }
+
+    @media (max-width: $mobile) {
+        width: min(88%, 25rem);
+    }
+}
+
+.upgrade-celebration-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 13rem;
+    background: var(--celebration-color);
+    border-bottom: $neo-card-border;
+    overflow: visible;
+
+    @media (max-width: $mobile) {
+        height: 12rem;
+    }
+}
+
+// Sits inside .upgrade-celebration-backdrop, which clips it to the hero.
+.upgrade-celebration-rays {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 64rem;
+    height: 64rem;
+    margin: -32rem 0 0 -32rem;
+    fill: rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    animation: upgradeCelebrationSpin 40s linear infinite;
+}
+
+.upgrade-celebration-backdrop {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.upgrade-celebration-fleck {
+    position: absolute;
+    width: 1.1rem;
+    height: 1.1rem;
+    border: $neo-detail-border;
+    transform: rotate(45deg);
+    animation: upgradeCelebrationFleck 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    pointer-events: none;
+
+    &--round {
+        border-radius: 50%;
+        width: 0.9rem;
+        height: 0.9rem;
+    }
 }
 
 .upgrade-celebration-icon {
-    font-size: 4rem;
-    margin: 0;
-    line-height: 1;
-    animation: trophyBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    position: relative;
+    display: flex;
+    animation: trophyBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 
     .crowned-node {
         display: block;
-        margin: 0 auto;
+        width: 8rem;
+        height: auto;
+        // Starts once the mascot has landed.
+        animation: upgradeCelebrationFloat 3.2s ease-in-out 0.6s infinite;
+    }
+
+    @media (max-width: $mobile) {
+        .crowned-node {
+            width: 7.5rem;
+        }
     }
 }
+
+// Sticker straddling the hero's bottom edge.
+.upgrade-celebration-sticker {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 50%) rotate(-4deg);
+    padding: 0.35rem 1.4rem;
+    background: $neo-pink;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: $neo-detail-border;
+    border-radius: 999px;
+    box-shadow: $neo-detail-shadow;
+    animation: upgradeCelebrationSticker 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s both;
+}
+
+.upgrade-celebration-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 0.5rem;
+    padding: 2rem 1.25rem 1.25rem;
+
+    @media (min-width: $large-desktop) {
+        padding: 3rem 2rem 2rem;
+    }
+}
+
+.upgrade-celebration-title,
+.upgrade-celebration-subtitle,
+.upgrade-celebration-buttons {
+    margin: 0;
+    animation: upgradeCelebrationRise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.upgrade-celebration-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    text-shadow: 2px 2px 0 var(--celebration-color);
+    line-height: 1.15;
+    animation-delay: 0.3s;
+    text-wrap: balance;
+
+    @media (max-width: $mobile) {
+        font-size: 2.4rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 2.75rem;
+    }
+}
+
+.upgrade-celebration-subtitle {
+    font-size: 1.5rem;
+    line-height: 1.35;
+    max-width: 28ch;
+    animation-delay: 0.38s;
+    text-wrap: balance;
+
+    @media (max-width: $mobile) {
+        font-size: 1.5rem;
+    }
+
+    @media (min-width: $large-desktop) {
+        font-size: 2rem;
+    }
+}
+
+.upgrade-celebration-buttons {
+    justify-content: center;
+    margin-top: 0.5rem;
+    animation-delay: 0.54s;
+
+    @media (max-width: $mobile) {
+        width: 100%;
+
+        .modalButton {
+            width: 100%;
+            height: 4rem;
+            font-size: 1.6rem;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .upgrade-celebration-rays,
+    .upgrade-celebration-fleck,
+    .upgrade-celebration-icon,
+    .upgrade-celebration-icon .crowned-node,
+    .upgrade-celebration-sticker,
+    .upgrade-celebration-title,
+    .upgrade-celebration-subtitle,
+    .upgrade-celebration-buttons {
+        animation: none;
+    }
+}
+

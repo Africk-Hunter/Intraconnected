@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { CheckoutPlan } from '../../utilities/billing/billing';
 import { launchConfetti } from '../../utilities/confetti';
+import { getCelebrationSound } from '../../utilities/celebrationSound';
 
 interface Props {
     plan: CheckoutPlan;
@@ -64,6 +65,39 @@ const PartyNode: React.FC = () => (
     </svg>
 );
 
+// Flat light rays fanning out from behind the mascot; the hero rotates them slowly.
+const RaysBackdrop: React.FC = () => (
+    <svg className="upgrade-celebration-rays" viewBox="-100 -100 200 200" aria-hidden="true">
+        {Array.from({ length: 12 }, (_, i) => (
+            <path key={i} d="M0 0 L-14 -100 L14 -100 Z" transform={`rotate(${i * 30})`} />
+        ))}
+    </svg>
+);
+
+// Confetti-coloured flecks around the mascot (same palette as confetti.ts).
+const FLECKS = [
+    { x: 12, y: 22, color: '#DB44A4', round: false },
+    { x: 86, y: 18, color: '#7322C3', round: true },
+    { x: 20, y: 70, color: '#EC8A13', round: true },
+    { x: 80, y: 74, color: '#1EB899', round: false },
+    { x: 50, y: 8, color: '#FFFFFF', round: true },
+    { x: 94, y: 48, color: '#DB44A4', round: true },
+    { x: 6, y: 48, color: '#00A9D8', round: false },
+];
+
+const Sparkles: React.FC = () => (
+    <>
+        {FLECKS.map((f, i) => (
+            <span
+                key={i}
+                className={`upgrade-celebration-fleck${f.round ? ' upgrade-celebration-fleck--round' : ''}`}
+                style={{ left: `${f.x}%`, top: `${f.y}%`, background: f.color, animationDelay: `${0.3 + i * 0.17}s` }}
+                aria-hidden="true"
+            />
+        ))}
+    </>
+);
+
 // Same confetti/audio treatment as FeatureImplementedModal.tsx, for the
 // moment a paid upgrade is actually confirmed (see CheckoutModal.tsx, which
 // only opens this once the Firestore billing doc reflects the new plan —
@@ -72,20 +106,25 @@ const UpgradeCelebrationModal: React.FC<Props> = ({ plan, onClose }) => {
     const launchedRef = useRef(false);
 
     useEffect(() => {
-        const audio = new Audio('/sounds/roblox-badge.mp3');
-        audio.volume = 0.7;
-        let played = false;
+        // Primed on the Pay tap (CheckoutForm), so this normally plays at once.
+        const audio = getCelebrationSound();
+        audio.currentTime = 0;
+        // touchstart doesn't count as a gesture that unlocks audio on mobile
+        // browsers (touchend/click do), so listen for those and keep trying
+        // until play() is actually accepted.
+        const GESTURES = ['pointerup', 'touchend', 'click', 'keydown'] as const;
+
+        const stopListening = () => {
+            GESTURES.forEach(type => document.removeEventListener(type, tryPlay, true));
+        };
 
         const tryPlay = () => {
-            if (played) return;
-            played = true;
-            audio.play().catch(() => {});
+            audio.play().then(stopListening).catch(() => {});
         };
 
         audio.play().catch(() => {
-            // Autoplay blocked — play on first user interaction (e.g. clicking "Let's go!")
-            document.addEventListener('mousedown', tryPlay, { once: true });
-            document.addEventListener('touchstart', tryPlay, { once: true });
+            // Autoplay blocked — play on the first tap/click/key (e.g. "Let's go!")
+            GESTURES.forEach(type => document.addEventListener(type, tryPlay, true));
         });
 
         // Launched on its own canvas so it keeps going after the modal closes.
@@ -95,38 +134,49 @@ const UpgradeCelebrationModal: React.FC<Props> = ({ plan, onClose }) => {
             launchConfetti();
         }
 
-        return () => {
-            document.removeEventListener('mousedown', tryPlay);
-            document.removeEventListener('touchstart', tryPlay);
-        };
+        return stopListening;
     }, []);
 
-    const { icon, title, subtitle } = plan === 'lifetime'
+    const { icon, label, title, subtitle } = plan === 'lifetime'
         ? {
             icon: <CrownedNode />,
+            label: 'Lifetime',
             title: 'Lifetime access unlocked!',
             subtitle: "Unlimited nodes are yours forever. LET'S GOOOO!",
         }
         : {
             icon: <PartyNode />,
+            label: 'Annual',
             title: "You're on the Annual plan!",
             subtitle: 'Unlimited nodes are yours for the year. Thanks for upgrading :)',
         };
 
     return (
         <section className="overlay upgrade-celebration-overlay" onClick={onClose}>
-            <div className="modal neobrutal confirmModal upgrade-celebration-modal" onClick={e => e.stopPropagation()}>
-                <p className="upgrade-celebration-icon">{icon}</p>
-                <p className="confirmText">
-                    <strong className="confirmName">{title}</strong>
-                    <br />
-                    {subtitle}
-                </p>
-                <section className="modalButtons" style={{ justifyContent: 'center' }}>
-                    <button className="modalButton continue neobrutal-button" onClick={onClose}>
-                        Let's go!
-                    </button>
-                </section>
+            <div
+                className={`modal neobrutal confirmModal upgrade-celebration-modal upgrade-celebration-modal--${plan}`}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="upgrade-celebration-title"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="upgrade-celebration-hero">
+                    <div className="upgrade-celebration-backdrop">
+                        <RaysBackdrop />
+                        <Sparkles />
+                    </div>
+                    <div className="upgrade-celebration-icon">{icon}</div>
+                    <span className="upgrade-celebration-sticker">{label}</span>
+                </div>
+                <div className="upgrade-celebration-body">
+                    <h2 className="upgrade-celebration-title" id="upgrade-celebration-title">{title}</h2>
+                    <p className="upgrade-celebration-subtitle">{subtitle}</p>
+                    <section className="modalButtons upgrade-celebration-buttons">
+                        <button className="modalButton continue neobrutal-button" onClick={onClose} autoFocus>
+                            Let's go!
+                        </button>
+                    </section>
+                </div>
             </div>
         </section>
     );

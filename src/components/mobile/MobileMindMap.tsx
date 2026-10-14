@@ -33,6 +33,7 @@ import MobileMoveSheet from './MobileMoveSheet';
 import MobileMindMapSheet from './MobileMindMapSheet';
 import MobileSearchSheet from './MobileSearchSheet';
 import { recordVisit } from '../../utilities/idea/recentVisits';
+import { branchCopyText, childrenCopyText, ideaCopyText } from '../../utilities/idea/copyText';
 import type { SearchResult } from '../../utilities/idea/search';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
 import MobileUndoToast, { type UndoToastState } from './MobileUndoToast';
@@ -96,7 +97,7 @@ function pointerOrigin() {
 
 
 function MobileMindMap() {
-    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
+    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason, pendingOpenId, setPendingOpenId } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
     // Rows pop in one by one when a level opens, not on create/delete/move.
@@ -106,6 +107,15 @@ function MobileMindMap() {
         const t = setTimeout(() => setStaggerIn(false), 1200);
         return () => clearTimeout(t);
     }, [currentId]);
+
+    // "Take me there" after an import (the Profile modal lives outside this component).
+    useEffect(() => {
+        if (pendingOpenId === null) return;
+        recordVisit(pendingOpenId);
+        setCurrentId(pendingOpenId);
+        setSheet(null);
+        setPendingOpenId(null);
+    }, [pendingOpenId, setPendingOpenId]);
 
     // Another device's changes were just pulled in (Idea.tsx already
     // re-renders via newIdeaSwitch) — if the idea being viewed was deleted
@@ -1272,6 +1282,26 @@ function MobileMindMap() {
         closeSheet();
     }
 
+    // Same text as the desktop card menu's Copy items (idea/copyText.ts).
+    function copyFromMenu(text: string, message: string) {
+        navigator.clipboard.writeText(text)
+            .then(() => showToast(message))
+            .catch(() => showToast('Couldn’t copy to the clipboard'));
+        closeSheet();
+    }
+
+    function copyIdeaFromMenu(node: IdeaType) {
+        const link = getIdeaLink(node);
+        copyFromMenu(ideaCopyText(node), link !== '' ? 'Copied link' : `Copied “${shortLabel(node)}”`);
+    }
+
+    function copyListFromMenu(node: IdeaType, branch: boolean) {
+        const built = branch ? branchCopyText(node.id) : childrenCopyText(node.id);
+        if (!built) { closeSheet(); return; }
+        const what = `${built.count} ${built.count === 1 ? 'idea' : 'ideas'}`;
+        copyFromMenu(built.text, `Copied ${what} from “${shortLabel(node)}”${branch ? ' and below' : ''}`);
+    }
+
     function commitEdit() {
         if (!sheet || sheet.type !== 'edit') return;
         const node = allIdeas.find(i => i.id === sheet.nodeId);
@@ -1334,6 +1364,7 @@ function MobileMindMap() {
 
     const sheetNode = sheet ? allIdeas.find(i => i.id === sheet.nodeId) : null;
     const sheetNodeLink = getIdeaLink(sheetNode ?? undefined);
+    const sheetNodeHasChildren = !!sheetNode && allIdeas.some(i => i.parentID === sheetNode.id);
     const sheetTitle =
         sheet?.type === 'move' ? 'Move under…' :
         sheet?.type === 'create' ? (createTab === 'checklist' ? 'New checklist' : createTab === 'note' ? 'New note' : 'New idea') :
@@ -1986,6 +2017,25 @@ function MobileMindMap() {
                                     <img src="/images/Move.svg" className="mmobile-action-icon" alt="" />
                                     Move…
                                 </button>
+                                {/* Laid out like the priority row; --none drops the ribbon swatch. */}
+                                <div className="mmobile-priority-row" role="group" aria-labelledby="mmobile-copy-label">
+                                    <span className="mmobile-priority-label" id="mmobile-copy-label">Copy</span>
+                                    <div className="mmobile-priority-btns">
+                                        <button type="button" className="mmobile-priority-btn mmobile-priority-btn--none" onClick={() => copyIdeaFromMenu(sheetNode)}>
+                                            {sheetNodeLink !== '' ? 'Link' : sheetNode.type === 'checklist' ? 'Checklist' : isNoteMode(sheetNode) ? 'Note' : 'Text'}
+                                        </button>
+                                        {sheetNodeHasChildren && (
+                                            <>
+                                                <button type="button" className="mmobile-priority-btn mmobile-priority-btn--none" onClick={() => copyListFromMenu(sheetNode, false)}>
+                                                    Ideas inside
+                                                </button>
+                                                <button type="button" className="mmobile-priority-btn mmobile-priority-btn--none" onClick={() => copyListFromMenu(sheetNode, true)}>
+                                                    Branch
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                                 <MobilePriorityPicker value={sheetNode.priority} onChange={p => setPriorityFromMenu(sheetNode.id, p)} />
                                 <button className="mmobile-action-btn mmobile-action-btn--delete" onClick={() => requestDelete(sheetNode.id)}>
                                     <img src="/images/Trash.svg" className="mmobile-action-icon" alt="" />

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { IdeaType, getIdeaLink, resolveIdeaLabel, isNoteMode } from '../../utilities';
+import { searchIdeas } from '../../utilities/idea/search';
 
 interface Props {
     nodeId: number;
@@ -8,7 +9,8 @@ interface Props {
 }
 
 function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
-    const [expandedMoveNodes, setExpandedMoveNodes] = useState<Set<number>>(new Set());
+    const [query, setQuery] = useState('');
+    const [expandedMoveNodes,setExpandedMoveNodes] = useState<Set<number>>(new Set());
     const moveListRef = useRef<HTMLDivElement>(null);
     const moveParentBtnRef = useRef<HTMLButtonElement | null>(null);
 
@@ -110,9 +112,73 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
             });
     }
 
+    const trimmed = query.trim();
+    const matches = trimmed
+        ? searchIdeas(allIdeas.filter(i => !hidden.has(i.id)), trimmed).filter(r => r.isMatch)
+        : [];
+
+    function renderMatches(): ReactNode {
+        if (matches.length === 0) return <p className="mmobile-move-empty">No ideas match.</p>;
+        return matches.map(r => {
+            const idea = allIdeas.find(i => i.id === r.id);
+            if (!idea) return null;
+            const isDisabled = disabled.has(r.id) || r.kind !== 'idea';
+            const isCurrentParent = r.id === movingNode?.parentID;
+            const colorClass = r.kind === 'checklist'
+                ? 'mmobile-move-btn--checklist'
+                : r.kind === 'note'
+                ? 'mmobile-move-btn--note'
+                : r.kind === 'link'
+                ? 'mmobile-move-btn--link'
+                : r.hasChildren ? 'mmobile-move-btn--parent'
+                : 'mmobile-move-btn--leaf';
+            return (
+                <div key={r.id} className="mmobile-move-row">
+                    <button
+                        className={`mmobile-move-btn ${colorClass}${isDisabled ? ' mmobile-move-btn--disabled' : ''}`}
+                        disabled={isDisabled}
+                        onClick={isDisabled ? undefined : () => onMove(nodeId, r.id)}
+                    >
+                        <span className="mmobile-move-text">
+                            <span className="mmobile-move-label">{r.label}</span>
+                            {r.path.length > 0 && <span className="mmobile-move-path">{r.path.join(' › ')}</span>}
+                        </span>
+                        {isCurrentParent && <span className="mmobile-move-badge">Current</span>}
+                    </button>
+                </div>
+            );
+        });
+    }
+
     return (
         <>
+        <div className="mmobile-search-field mmobile-move-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" strokeWidth="3" /><path d="M15.5 15.5L21 21" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+            <input
+                className="mmobile-search-input"
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder="Search for where to move it…"
+                aria-label="Search for a destination"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.blur(); }
+                }}
+            />
+            {query !== '' && (
+                <button type="button" className="mmobile-search-clear" onMouseDown={(e) => e.preventDefault()} onClick={() => setQuery('')} aria-label="Clear search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" /></svg></button>
+            )}
+        </div>
         <p className="mmobile-move-hint">Tap an idea to move it there.</p>
+        {trimmed ? (
+            <div className="mmobile-move-list">{renderMatches()}</div>
+        ) : (
         <div className="mmobile-move-list" ref={moveListRef}>
             {root && (
                 <div className="mmobile-move-row">
@@ -137,6 +203,7 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
             )}
             {rootExpanded && renderMoveTree(1, 1)}
         </div>
+        )}
         </>
     );
 }

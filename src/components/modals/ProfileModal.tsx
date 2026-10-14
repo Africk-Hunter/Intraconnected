@@ -5,6 +5,7 @@ import { useIdeaContext } from '../../context/IdeaContext';
 import { getMailProvider, resetMailUrl, verifyMailUrl } from '../../utilities/mailProvider';
 import { signUserOut,deleteUserAccount, requestEmailChange,sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
 import { auth } from '../../firebaseConfig';
+import { clearPlanCelebrated } from '../../utilities/firebase/preferences';
 import { fetchFullIdeaList } from '../../utilities/idea/helpers';
 import { checkDevPassword } from '../../utilities/devPassword';
 import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, listUsersForTesting, grantLifetimeForTesting, lookupUidByEmailForTesting, type TestUser, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
@@ -194,6 +195,7 @@ function ProfileModal() {
         setResetPlanError('');
         try {
             await resetSubscriptionForTesting();
+            await clearPlanCelebrated();
             setBillingPlan('free');
             setBillingStatus(prev => ({
                 ...prev,

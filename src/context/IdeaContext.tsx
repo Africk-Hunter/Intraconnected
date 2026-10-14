@@ -74,6 +74,9 @@ interface IdeaContextType {
     setCardMenu: (menu: CardMenuState | null) => void;
     moveIdeaId: number | null;
     setMoveIdeaId: (id: number | null) => void;
+    // The phone layout keeps its own current level, so "open this idea" requests from elsewhere (an import) go through here.
+    pendingOpenId: number | null;
+    setPendingOpenId: (id: number | null) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -109,6 +112,7 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [celebrationPlan, setCelebrationPlan] = useState<CheckoutPlan | null>(null);
     const [cardMenu, setCardMenu] = useState<CardMenuState | null>(null);
     const [moveIdeaId, setMoveIdeaId] = useState<number | null>(null);
+    const [pendingOpenId, setPendingOpenId] = useState<number | null>(null);
 
     const rootIdStack = useRef<number[]>([]);
 
@@ -193,6 +197,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setCardMenu,
                 moveIdeaId,
                 setMoveIdeaId,
+                pendingOpenId,
+                setPendingOpenId,
             }}>
             {children}
         </IdeaContext.Provider>

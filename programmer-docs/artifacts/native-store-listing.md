@@ -13,7 +13,7 @@ Draft text and answers for the App Store (iOS) and Google Play (Android) listing
 | Field | Value |
 |---|---|
 | App name | Intraconnected (fallback if taken on iOS: Intraconnected: Mind Map) |
-| Bundle ID / package | `com.intraconnected.app` |
+| Bundle ID / package | iOS `Com.Intraconnected.app` (Apple saved it capitalized), Android `com.intraconnected.app` |
 | Category | Productivity |
 | Price | Free |
 | Support URL | https://intraconnected.app/support |

@@ -2,6 +2,9 @@ const COLORS = ['#41BC28', '#00A9D8', '#E8E879', '#DB44A4', '#7322C3', '#EC8A13'
 
 const GRAVITY = 0.22;
 const RAIN_MS = 6000;
+// Phone screens are small enough that the full show buries the modal.
+const PHONE_MAX_WIDTH = 576;
+const PHONE_SCALE = 0.4;
 // Staggered cannon volleys: [delay ms, particles per cannon]
 const VOLLEYS = [[0, 110], [350, 90], [750, 90], [1400, 70]];
 
@@ -16,6 +19,7 @@ interface Particle {
 // is independent of whichever component launched it (closing a modal does not
 // cut it short). The canvas removes itself once every piece has fallen away.
 export function launchConfetti(): void {
+    const scale = window.innerWidth <= PHONE_MAX_WIDTH ? PHONE_SCALE : 1;
     const canvas = document.createElement('canvas');
     canvas.className = 'confetti-canvas';
     canvas.style.zIndex = '9999';
@@ -64,7 +68,7 @@ export function launchConfetti(): void {
         ctx!.clearRect(0, 0, canvas.width, canvas.height);
 
         while (nextVolley < VOLLEYS.length && elapsed >= VOLLEYS[nextVolley][0]) {
-            const count = VOLLEYS[nextVolley][1];
+            const count = Math.round(VOLLEYS[nextVolley][1] * scale);
             particles.push(...burst(true, count), ...burst(false, count));
             nextVolley++;
         }
@@ -72,6 +76,7 @@ export function launchConfetti(): void {
         // Steady rain from above on top of the cannons
         if (elapsed < RAIN_MS) {
             for (let i = 0; i < 3; i++) {
+                if (Math.random() >= scale) continue;
                 particles.push(makeParticle(
                     Math.random() * canvas.width, -20,
                     (Math.random() - 0.5) * 3, 2 + Math.random() * 3, true,

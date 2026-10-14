@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { recursivelyDeleteChildren, restoreIdeas, updateIdeaCensored, updateIdeaParentId, updateIdeaPriority } from './ideaStore';
 import { fetchFullIdeaList, getIdeaLink, getNameFromID, getParentID, isNoteMode, openIdeaLink } from './helpers';
+import { branchCopyText, childrenCopyText, ideaCopyText } from './copyText';
 import { getIdeasByParentID } from './parsing';
 import { pushUndo, showNotice, undoLast } from './undoStack';
 import type { IdeaType } from '../types';
@@ -153,10 +154,7 @@ export function useIdeaActions() {
         const idea = findIdea(id);
         if (!idea) return;
         const link = getIdeaLink(idea);
-        const text = idea.type === 'checklist'
-            ? [idea.content, ...idea.items.map((item) => `${item.checked ? '[x]' : '[ ]'} ${item.text}`)].join('\n')
-            : link !== '' ? link : idea.content;
-        navigator.clipboard.writeText(text)
+        navigator.clipboard.writeText(ideaCopyText(idea))
             .then(() => {
                 markCopied(id);
                 showNotice(link !== '' ? 'Copied link' : `Copied "${shortName(id)}"`);
@@ -164,24 +162,13 @@ export function useIdeaActions() {
             .catch(() => showNotice("Couldn't copy to the clipboard"));
     }, []);
 
-    // Every idea directly inside this one, a line each (a link idea keeps its address after the text).
     // Resolves true once the clipboard has it, so a button can confirm.
-    const copyChildren = useCallback((id: number): Promise<boolean> => {
-        const children = getIdeasByParentID(id);
-        if (children.length === 0) return Promise.resolve(false);
-        const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
-        const list = children.map((child, i) => {
-            const body = isNoteMode(child)
-                ? [oneLine((child as { noteTitle?: string }).noteTitle ?? ''), oneLine(child.content)].filter(Boolean).join(' - ')
-                : oneLine(child.content);
-            const link = getIdeaLink(child);
-            return `${i + 1}. ${link !== '' ? `${body} (${link})` : body}`;
-        }).join('\n');
-        const text = `${oneLine(getNameFromID(id)) || 'Untitled'}\n-----------\n${list}\n########`;
-        return navigator.clipboard.writeText(text)
+    const copyList = useCallback((id: number, built: { text: string; count: number } | null, suffix: string): Promise<boolean> => {
+        if (!built) return Promise.resolve(false);
+        return navigator.clipboard.writeText(built.text)
             .then(() => {
                 markCopied(id);
-                showNotice(`Copied ${children.length} ${children.length === 1 ? 'idea' : 'ideas'} from "${shortName(id)}"`);
+                showNotice(`Copied ${built.count} ${built.count === 1 ? 'idea' : 'ideas'} from "${shortName(id)}"${suffix}`);
                 return true;
             })
             .catch(() => {
@@ -190,42 +177,10 @@ export function useIdeaActions() {
             });
     }, []);
 
-    // The whole branch under this idea, nested ideas indented with 1.1-style numbers.
-    const copyBranch = useCallback((id: number): Promise<boolean> => {
-        if (getIdeasByParentID(id).length === 0) return Promise.resolve(false);
-        const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
-        const seen = new Set<number>([id]);
-        let total = 0;
-        const lines: string[] = [];
-        const walk = (parentId: number, prefix: string, depth: number) => {
-            getIdeasByParentID(parentId).forEach((child, i) => {
-                if (seen.has(child.id)) return;
-                seen.add(child.id);
-                total++;
-                const body = isNoteMode(child)
-                    ? [oneLine((child as { noteTitle?: string }).noteTitle ?? ''), oneLine(child.content)].filter(Boolean).join(' - ')
-                    : oneLine(child.content);
-                const link = getIdeaLink(child);
-                const num = `${prefix}${i + 1}`;
-                lines.push(`${'   '.repeat(depth)}${num}. ${link !== '' ? `${body} (${link})` : body}`);
-                walk(child.id, `${num}.`, depth + 1);
-            });
-        };
-        walk(id, '', 0);
-        const text = `${oneLine(getNameFromID(id)) || 'Untitled'}\n-----------\n${lines.join('\n')}\n########`;
-        return navigator.clipboard.writeText(text)
-            .then(() => {
-                markCopied(id);
-                showNotice(`Copied ${total} ${total === 1 ? 'idea' : 'ideas'} from "${shortName(id)}" and below`);
-                return true;
-            })
-            .catch(() => {
-                showNotice("Couldn't copy to the clipboard");
-                return false;
-            });
-    }, []);
+    const copyChildren = useCallback((id: number) => copyList(id, childrenCopyText(id), ''), [copyList]);
+    const copyBranch = useCallback((id: number) => copyList(id, branchCopyText(id), ' and below'), [copyList]);
 
-    const openMovePicker =useCallback((id: number) => setMoveIdeaId(id), [setMoveIdeaId]);
+    const openMovePicker = useCallback((id: number) => setMoveIdeaId(id), [setMoveIdeaId]);
 
     const undo = useCallback(() => {
         if (undoLast()) refresh();
