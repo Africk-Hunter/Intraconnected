@@ -9,6 +9,7 @@ import {
     verifyPasswordResetCode,
 } from "firebase/auth";
 import BrandLogo from "../components/BrandLogo";
+import { stashLoginEmail } from "../utilities/loginPrefill";
 
 type Status = "working" | "verified" | "resetForm" | "resetDone" | "recovered" | "emailChanged" | "error";
 
@@ -156,7 +157,7 @@ const AuthAction: React.FC = () => {
                     <>
                         <h1 className="authActionTitle">Password updated</h1>
                         <p className="authActionText">You can now sign in with your new password.</p>
-                        <button className="authActionBtn neobrutal-button leaf" onClick={() => navigate("/login")}>
+                        <button className="authActionBtn neobrutal-button leaf" onClick={() => { stashLoginEmail(resetEmail); navigate("/login"); }}>
                             Go to sign in
                         </button>
                     </>

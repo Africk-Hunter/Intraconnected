@@ -64,9 +64,11 @@ const GROUPS: FaqGroup[] = [
                 a: (
                     <>
                         Choose "Forgot password" on the <Link to="/login">sign-in page</Link> and we'll
-                        email you a reset link. Your ideas come back with you: signing in with the new
-                        password restores access to them automatically. If the email never arrives,
-                        check your spam folder, and make sure you're using the address the account was created with.
+                        email you a reset link. After setting a new password, sign in again so the app
+                        can restore the encryption key and load your ideas. Older accounts may still
+                        use the previous email-based recovery method until they sign in after the new
+                        recovery system is enabled. If the email never arrives, check your spam folder
+                        and make sure you're using the address the account was created with.
                     </>
                 ),
             },
@@ -74,9 +76,9 @@ const GROUPS: FaqGroup[] = [
                 q: "I can't sign in and I no longer have access to my email.",
                 a: (
                     <>
-                        Your ideas are encrypted on your device, and resetting by email is how access
-                        to them is restored. If you have lost both your password and the email address
-                        on the account, we can't recover your ideas for you. Write to{" "}
+                        Your ideas are encrypted on your device, and the account email is required to
+                        reset your password. If you have lost both your password and access to the
+                        email address on the account, we can't recover your ideas for you. Write to{" "}
                         <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and we'll tell you what
                         options there are.
                     </>

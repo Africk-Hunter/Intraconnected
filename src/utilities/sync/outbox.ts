@@ -405,34 +405,41 @@ function stripUndefined<T extends object>(value: T): T {
     return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
 }
 
-async function encryptItems(items: ChecklistItem[], dek: CryptoKey): Promise<ChecklistItem[]> {
+async function encryptItems(items: ChecklistItem[], dek: CryptoKey, uid: string, ideaId: number): Promise<ChecklistItem[]> {
     return Promise.all(
         items.map(async (item) => {
-            const encrypted: ChecklistItem = { ...stripUndefined(item), text: await encryptField(item.text, dek) };
-            if (item.link) encrypted.link = await encryptField(item.link, dek);
+            const encrypted: ChecklistItem = {
+                ...stripUndefined(item),
+                text: await encryptField(item.text, dek, `${uid}|${ideaId}|items.${item.id}.text`),
+            };
+            if (item.link) encrypted.link = await encryptField(item.link, dek, `${uid}|${ideaId}|items.${item.id}.link`);
             return encrypted;
         })
     );
 }
 
-async function encryptIdea(idea: IdeaType, dek: CryptoKey): Promise<Record<string, unknown>> {
+async function encryptIdea(idea: IdeaType, dek: CryptoKey, uid: string): Promise<Record<string, unknown>> {
     const base = stripUndefined({ ...idea }) as Record<string, unknown>;
     if (idea.type === "checklist") {
-        return { ...base, content: await encryptField(idea.content, dek), items: await encryptItems(idea.items, dek) };
+        return {
+            ...base,
+            content: await encryptField(idea.content, dek, `${uid}|${idea.id}|content`),
+            items: await encryptItems(idea.items, dek, uid, idea.id),
+        };
     }
     return {
         ...base,
-        content: await encryptField(idea.content, dek),
-        link: await encryptField(idea.link ?? "", dek),
-        ...(idea.noteTitle !== undefined ? { noteTitle: await encryptField(idea.noteTitle, dek) } : {}),
+        content: await encryptField(idea.content, dek, `${uid}|${idea.id}|content`),
+        link: await encryptField(idea.link ?? "", dek, `${uid}|${idea.id}|link`),
+        ...(idea.noteTitle !== undefined ? { noteTitle: await encryptField(idea.noteTitle, dek, `${uid}|${idea.id}|noteTitle`) } : {}),
     };
 }
 
-async function encryptPatch(patch: IdeaPatch, dek: CryptoKey): Promise<{ [field: string]: FieldValue | string | number | boolean | ChecklistItem[] }> {
+async function encryptPatch(patch: IdeaPatch, dek: CryptoKey, uid: string, ideaId: number): Promise<{ [field: string]: FieldValue | string | number | boolean | ChecklistItem[] }> {
     const out: { [field: string]: FieldValue | string | number | boolean | ChecklistItem[] } = {};
-    if (patch.content !== undefined) out.content = await encryptField(patch.content, dek);
-    if (patch.link !== undefined) out.link = await encryptField(patch.link, dek);
-    if (patch.noteTitle !== undefined) out.noteTitle = await encryptField(patch.noteTitle, dek);
+    if (patch.content !== undefined) out.content = await encryptField(patch.content, dek, `${uid}|${ideaId}|content`);
+    if (patch.link !== undefined) out.link = await encryptField(patch.link, dek, `${uid}|${ideaId}|link`);
+    if (patch.noteTitle !== undefined) out.noteTitle = await encryptField(patch.noteTitle, dek, `${uid}|${ideaId}|noteTitle`);
     if (patch.parentID !== undefined) out.parentID = patch.parentID;
     if (patch.priority !== undefined) out.priority = patch.priority === null ? deleteField() : patch.priority;
     if (patch.censored !== undefined) {
@@ -440,7 +447,7 @@ async function encryptPatch(patch: IdeaPatch, dek: CryptoKey): Promise<{ [field:
         // Drops the field's old name from ideas saved before the rename.
         out.locked = deleteField();
     }
-    if (patch.items !== undefined) out.items = await encryptItems(patch.items, dek);
+    if (patch.items !== undefined) out.items = await encryptItems(patch.items, dek, uid, ideaId);
     return out;
 }
 
@@ -459,18 +466,18 @@ async function sendOp(op: SyncOp, uid: string): Promise<void> {
 
     switch (op.kind) {
         case "create":
-            batch.set(doc(ideas, String(op.idea.id)), { ...(await encryptIdea(op.idea, dek)), updatedAt: serverTimestamp() });
+            batch.set(doc(ideas, String(op.idea.id)), { ...(await encryptIdea(op.idea, dek, uid)), updatedAt: serverTimestamp() });
             countDelta = 1;
             break;
         case "createMany":
             if (op.ideas.length === 0) return;
             for (const idea of op.ideas) {
-                batch.set(doc(ideas, String(idea.id)), { ...(await encryptIdea(idea, dek)), updatedAt: serverTimestamp() });
+                batch.set(doc(ideas, String(idea.id)), { ...(await encryptIdea(idea, dek, uid)), updatedAt: serverTimestamp() });
             }
             countDelta = op.ideas.length;
             break;
         case "update": {
-            const fields = await encryptPatch(op.patch, dek);
+            const fields = await encryptPatch(op.patch, dek, uid, op.id);
             if (Object.keys(fields).length === 0) return;
             batch.update(doc(ideas, String(op.id)), { ...fields, updatedAt: serverTimestamp() });
             break;

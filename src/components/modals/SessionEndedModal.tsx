@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { getDEK } from '../../utilities/dekStore';
-import { wrapDEKWithEmail } from '../../utilities/crypto';
-import { fetchEncryptedDEK, storeEmailWrap } from '../../utilities/firebase/encryptionKeys';
-import { syncBillingEmail, unlockDEKForRewrap } from '../../utilities/firebase/authFirebase';
+import { syncBillingEmail } from '../../utilities/firebase/authFirebase';
 import AnimatedOverlay from '../AnimatedOverlay';
 import '../../styles/sessionEndedModal.scss';
 
@@ -54,15 +52,9 @@ function SessionEndedModal() {
                 return;
             }
 
-            // Re-wrap the email recovery key for the (possibly new) address,
-            // same as Auth.tsx does on sign-in.
-            try {
-                const encData = await fetchEncryptedDEK();
-                if (encData && user.email && (!encData.emailEncryptedDEK || encData.emailWrapFor !== user.email)) {
-                    await storeEmailWrap(await wrapDEKWithEmail(await unlockDEKForRewrap(password, user.uid), user.email, user.uid), user.email);
-                    if (encData.emailEncryptedDEK) syncBillingEmail().catch(() => { /* non-critical */ });
-                }
-            } catch { /* non-critical — Auth.tsx repeats this on the next sign-in */ }
+            // The recovery wrap is not tied to an email address, so only the
+            // Stripe Customer needs the (possibly new) address.
+            syncBillingEmail().catch(() => { /* non-critical */ });
 
             // Reload so every Firestore listener restarts under the new
             // session. The key comes back from sessionStorage and the outbox

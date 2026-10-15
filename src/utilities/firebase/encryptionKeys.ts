@@ -7,10 +7,10 @@ import { authCheck } from "./currentUser";
 
 export interface EncryptionDoc {
     encryptedDEK: string;
+    recoveryWrap?: string;
     emailEncryptedDEK?: string;
-    // The email emailEncryptedDEK was wrapped with. Sign-in compares it to the
-    // account's current email and re-wraps when they differ (after an email
-    // change), without paying for a key derivation on every login.
+    // Legacy recovery metadata: sign-in compares it to the current email and
+    // re-wraps only when they differ.
     emailWrapFor?: string;
     // Written when an email change is requested, while the key is in memory:
     // the same key wrapped for the *new* address. The change completes later,
@@ -20,39 +20,42 @@ export interface EncryptionDoc {
     pendingEmailEncryptedDEK?: string;
 }
 
-export async function storeEncryptedDEK(encryptedDEK: string, emailEncryptedDEK: string): Promise<void> {
+export async function storeEncryptedDEK(
+    encryptedDEK: string,
+    recoveryWrap: string
+): Promise<void> {
     const user = authCheck();
     if (!user) return;
     const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
-    await setDoc(metaDoc, { encryptedDEK, emailEncryptedDEK, ...(user.email ? { emailWrapFor: user.email } : {}) });
+    await setDoc(metaDoc, {
+        encryptedDEK,
+        recoveryWrap,
+    });
 }
 
-// Replaces the email wrap (and records which email it is for), leaving the
-// password wrap alone, and clears any pending wrap since it's now stale.
-// Replaces only the password wrap (a stronger re-wrap of the same key).
+// Replaces only the password wrap.
 export async function storePasswordWrap(encryptedDEK: string): Promise<void> {
     const user = authCheck();
     if (!user) return;
     await setDoc(doc(db, "users", user.uid, "meta", "encryption"), { encryptedDEK }, { merge: true });
 }
 
-export async function storeEmailWrap(emailEncryptedDEK: string, email: string): Promise<void> {
+export async function storeRecoveryWrap(recoveryWrap: string): Promise<void> {
     const user = authCheck();
     if (!user) return;
-    const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
-    await setDoc(metaDoc, {
-        emailEncryptedDEK,
-        emailWrapFor: email,
+    await setDoc(doc(db, "users", user.uid, "meta", "encryption"), { recoveryWrap }, { merge: true });
+}
+
+// Legacy accounts only: drops the old email-derived recovery fields.
+export async function removeLegacyEmailWrap(): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    await setDoc(doc(db, "users", user.uid, "meta", "encryption"), {
+        emailEncryptedDEK: deleteField(),
+        emailWrapFor: deleteField(),
         pendingEmail: deleteField(),
         pendingEmailEncryptedDEK: deleteField(),
     }, { merge: true });
-}
-
-export async function storePendingEmailWrap(pendingEmail: string, pendingEmailEncryptedDEK: string): Promise<void> {
-    const user = authCheck();
-    if (!user) return;
-    const metaDoc = doc(db, "users", user.uid, "meta", "encryption");
-    await setDoc(metaDoc, { pendingEmail, pendingEmailEncryptedDEK }, { merge: true });
 }
 
 export async function fetchEncryptedDEK(): Promise<EncryptionDoc | null> {

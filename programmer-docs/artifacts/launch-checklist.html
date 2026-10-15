@@ -429,7 +429,7 @@ const PHASES = [
     { d: 1, ref: "A3", l: `<b>A3 · One failed load left an empty map.</b> Fixed by the new sync layer in <code>src/utilities/sync/</code>.`, e: [`Loads fetch everything first and only then replace the local copy. Offline it throws instead of returning an empty list. Each idea decrypts separately, so one bad doc doesn't hide the rest`] },
     { d: 1, ref: "A4", l: `<b>A4 · Failed saves were silent and devices drifted apart.</b> Fixed by the same sync layer.`, e: [`Every change goes to an outbox on the device first, goes out one at a time in order, and retries until accepted. It survives reloads and offline periods`, `A refused change pauses sending and shows a banner with <b>Try again</b> or <b>Discard change</b>. Nothing is discarded automatically`, `Each device keeps its own change counter. A listener pulls others' changes only while the app is visible, 3 seconds after edits pause`, `Ideas left without a parent move to the top level`, `Cost: about 1 extra read per page load plus 1 per edit, no extra writes`, `Checked by hand Sep 29 with two signed-in windows: live sync, blocked connection and reload, refused save, stale edit. All passed`] },
     { d: 1, ref: "B1", l: `<b>B1 · <code>firestore.rules</code> published</b> to the Firebase Console (project <code>interconnectedness-3a37b</code>) on Sep 29.`, e: [`Clients can't write <code>meta/billing</code>, the 50-idea free cap is enforced on the server, and the rate-limit docs are locked`, `Any future edit to <code>firestore.rules</code> has to be re-published by hand`] },
-    { d: 1, ref: "C1", l: `<b>C1 · Decided Sep 29: keep email recovery</b> and reword the copy. Never describe the app as "end-to-end encrypted" anywhere, store listings included.` },
+    { d: 1, ref: "C1", l: `<b>C1 · Updated Oct 14:</b> replace the legacy email-derived recovery with KMS-backed recovery as accounts sign in. Successful key releases are logged and shown in-app; accounts that do not sign in after rollout retain the legacy recovery copy. Never claim that only the user can decrypt their ideas.` },
     { d: 1, ref: "C3", l: `<b>C3 · Decided Sep 29: Codemagic</b> for iOS builds. It supports Capacitor, signs with an App Store Connect API key, uploads to TestFlight and has a free monthly allowance. You still need an iPhone to test on.` },
     { d: 1, ref: "C4", l: `<b>C4 · Decided Sep 29: keep showing</b> the disabled "Customization: Coming soon" tab.` },
     { d: 1, ref: "E8", l: `<b>E8 · The landing page.</b> Done Oct 6: <code>/</code> is the landing page and the login form is at <code>/login</code>.` },
@@ -699,4 +699,3 @@ document.querySelectorAll(".copy[data-copy]").forEach(btn => {
   render();
 })();
 </script>
-

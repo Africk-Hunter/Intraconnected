@@ -20,10 +20,10 @@ const Privacy: React.FC = () => {
                     <p>
                         Intraconnected is a personal mind-mapping app, operated by an individual
                         (Hunter Africk), not a company. We take privacy seriously: the text of your
-                        ideas is encrypted on your device before it ever leaves it, and we do not look
-                        at your ideas. Because we also let you recover your ideas by email if you
-                        forget your password, this is not strict end-to-end encryption; see "How
-                        Your Data Is Protected" below for exactly what that means.
+                        ideas is encrypted on your device before it leaves it. We do not read ideas
+                        in the ordinary course of operating the service, but our recovery system can
+                        technically unlock your encryption key; see "How Your Data Is Protected"
+                        below.
                     </p>
                 </section>
 
@@ -37,10 +37,12 @@ const Privacy: React.FC = () => {
                     <p>
                         <strong>Your ideas.</strong> The text of each idea (its name, notes, links, and
                         checklist items) is encrypted on your device before being stored. We do not read
-                        it. The structure of your map is stored as plain data so that sync and the app
-                        can work: which ideas sit under which, whether each is an idea, note or
+                        it in the ordinary course of operating the service. The structure of your map
+                        is stored as plain data so that sync and the app can work: which ideas sit
+                        under which, whether each is an idea, note or
                         checklist, their priorities, whether an idea is censored, whether a checklist
-                        item is ticked, and when each idea was created and last changed.
+                        item is ticked, and when each idea was created and last changed. Idea IDs
+                        reflect their creation time, and ciphertext lengths are visible.
                     </p>
                     <p>
                         <strong>Sync and app settings.</strong> A random identifier for each device you
@@ -80,14 +82,52 @@ const Privacy: React.FC = () => {
                 <section className="legalSection">
                     <h2>How Your Data Is Protected</h2>
                     <p>
-                        The text of your ideas is encrypted on your device before being sent to our
-                        servers. This means:
+                        We use technical safeguards to protect your information. Idea text is
+                        encrypted on your device before it is sent to our servers, and connections
+                        between the app and our services use HTTPS/TLS. The encryption works as
+                        follows:
                     </p>
                     <ul>
-                        <li>What we store on our servers is encrypted, not the readable text of your ideas. The map's structure and timestamps are not encrypted, as described above.</li>
-                        <li>If you forget your password, use "Forgot password" to reset it by email. As long as you still control the email address on your account, your ideas are automatically recovered when you reset your password.</li>
-                        <li>To make that email recovery possible, we also store a recovery copy of your encryption key, locked with information tied to your account (your email address and account ID) rather than your password. This is a trade-off: it means someone with access to both our database and your account details, including us, could technically decrypt your ideas. We do not do this, and we will not do so unless required by law.</li>
-                        <li>If you lose access to both your password and your email account, you will not be able to sign in to recover your ideas yourself.</li>
+                        <li>
+                            Idea names, notes, links, and checklist text are encrypted individually
+                            with AES-256-GCM before syncing. We store the encrypted text in
+                            Firestore. The map's structure, idea IDs, creation and update times,
+                            priorities, checklist completion state, and ciphertext lengths are not
+                            encrypted.
+                        </li>
+                        <li>
+                            A randomly generated data key encrypts your idea text. Your password
+                            protects a wrapped copy of that key; the password itself is not stored.
+                            To support account recovery, the service also stores a separate
+                            encrypted copy of the data key. For accounts using KMS recovery, that
+                            copy is encrypted to a public key, and the corresponding private key is
+                            held in Google Cloud KMS. Some older account records may instead
+                            contain a legacy recovery copy protected by a key derived from the
+                            account email address and ID. Those are not secret values, so a person
+                            with a database copy and the associated email address could derive
+                            that legacy recovery key.
+                        </li>
+                        <li>
+                            KMS recovery requires an authenticated account and a recent sign-in.
+                            When the service requests a key recovery, Google records the KMS
+                            decryption in Cloud Audit Logs, and we record the successful recovery
+                            in an account audit log and show an in-app notice. These safeguards
+                            help protect the stored recovery copy and make its use visible; they do
+                            not prevent us, as the service operator, from technically recovering
+                            the key and decrypting idea text.
+                        </li>
+                        <li>
+                            The app needs access to the key to display your ideas. Scripts or
+                            browser extensions running in the page may be able to use it while you
+                            are signed in, and the web app is delivered by us. On a device, a
+                            decrypted copy of your ideas is cached for the app to use.
+                        </li>
+                        <li>
+                            If you forget your password, reset it through your email account and
+                            sign in with the new password to restore access when a recovery copy is
+                            available. If you lose access to both your password and email account,
+                            you may not be able to recover your ideas.
+                        </li>
                     </ul>
                 </section>
 
@@ -110,6 +150,12 @@ const Privacy: React.FC = () => {
                         </a>
                         . Your email address is handled by Firebase Authentication. Your encrypted idea
                         data is stored in Firebase Firestore.
+                    </p>
+                    <p>
+                        When KMS recovery is enabled for your account, <strong>Google Cloud KMS</strong>
+                        holds the private recovery key. With Data Access audit logging enabled,
+                        Google records key-decryption operations in Cloud Audit Logs; our service
+                        also records successful recoveries so the app can notify you.
                     </p>
                     <p>
                         If you upgrade to a paid plan, we use <strong>Stripe</strong> to process your
@@ -175,9 +221,10 @@ const Privacy: React.FC = () => {
                     </p>
                     <p>
                         To keep you signed in, your device holds your encryption key: in the browser
-                        it is held in the browser's storage, and if you choose "Remember me" it stays
-                        for up to 30 days. After 30 minutes without activity (or 30 days with "Remember
-                        me"), you are signed out and the key is removed from the device.
+                        it is held as a non-extractable key in browser storage. Without "Remember me"
+                        it is limited to the current tab session; with "Remember me" it can remain
+                        available for up to 30 days. After 30 minutes without activity (or 30 days
+                        with "Remember me"), you are signed out and the key is removed from the device.
                     </p>
                     <p>
                         In the mobile app, the encryption key is kept in the device's secure storage
@@ -198,7 +245,7 @@ const Privacy: React.FC = () => {
                         You can permanently delete your account and all associated data at any time,
                         yourself, from Profile → Danger Zone → Delete Account in the app. No need to contact us.
                         Deleting your account permanently erases your ideas and every copy of your
-                        encryption key from our servers, so that data cannot be recovered afterward, along with any problem reports you sent while signed in and any usage counts and flags. Payment records held by our payment processor (Stripe), such as past charges and the email on them, are kept as the processor and tax rules require. Public GitHub issues are not removed (see Problem Reports and Feature Requests). If you'd rather
+                        encryption key and recovery audit records from our servers, so that data cannot be recovered afterward, along with any problem reports you sent while signed in and any usage counts and flags. Payment records held by our payment processor (Stripe), such as past charges and the email on them, are kept as the processor and tax rules require. Public GitHub issues are not removed (see Problem Reports and Feature Requests). If you'd rather
                         we do it for you, or you can't access the app, email us at the address below.
                     </p>
                 </section>

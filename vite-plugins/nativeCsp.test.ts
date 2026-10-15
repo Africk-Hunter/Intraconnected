@@ -28,8 +28,8 @@ describe('nativeCsp', () => {
         expect(directive(nativeCsp('https://deploy-preview-3--x.netlify.app/'), 'connect-src')).toContain('https://deploy-preview-3--x.netlify.app');
     });
 
-    it("never allows anything but the app's own origin for scripts, plus inline", () => {
-        expect(directive(csp, 'script-src')).toEqual(["'self'", "'unsafe-inline'"]);
+    it("allows only app scripts and the runtime features needed by crypto", () => {
+        expect(directive(csp, 'script-src')).toEqual(["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'"]);
     });
 
     it('stays within the website policy: no host here that netlify.toml does not allow', () => {

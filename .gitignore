@@ -31,3 +31,6 @@ stripe-testing.local.md
 .netlify
 
 .webtool/
+
+# Published artifacts (local copies)
+programmer-docs/artifacts/

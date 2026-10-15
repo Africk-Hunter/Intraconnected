@@ -6,12 +6,14 @@ import MessageBox from "./MessageBox";
 import ReportLink from "./ReportLink";
 import { LinkOutIcon } from "./Icons";
 import { useIdeaContext } from "../context/IdeaContext";
-import { generateDEK, wrapDEK, unwrapDEK, wrapDEKWithEmail, unwrapDEKWithEmail, isLegacyPasswordWrap } from "../utilities/crypto";
+import { generateDEK, wrapDEK, unwrapDEK, unwrapDEKWithEmail, wrapDEKForRecovery, importDEK, needsPasswordWrapUpgrade } from "../utilities/crypto";
+import { takeLoginEmail } from "../utilities/loginPrefill";
+import { flagCryptoUpgradeProblem, clearCryptoUpgradeProblem, hasCryptoUpgradeProblem, reportCryptoUpgradeResolved } from "../utilities/cryptoUpgradeNotice";
 import { setDEK, loadPersistedDEK } from "../utilities/dekStore";
 import { getMailProvider, resetMailUrl } from "../utilities/mailProvider";
-import { storeEncryptedDEK, fetchEncryptedDEK, storeEmailWrap, storePasswordWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
+import { storeEncryptedDEK, fetchEncryptedDEK, storePasswordWrap, storeRecoveryWrap, removeLegacyEmailWrap, type EncryptionDoc } from "../utilities/firebase/encryptionKeys";
 import { syncBillingEmail } from "../utilities/firebase/authFirebase";
-import { isNative, hideSplash } from "../utilities/platform";
+import { apiUrl, isNative, hideSplash } from "../utilities/platform";
 import { discardForeignIdeas } from "../utilities/sync/syncEngine";
 
 const Auth: React.FC = () => {
@@ -34,8 +36,20 @@ const Auth: React.FC = () => {
 
     const { setMessageBoxMessage, setMessageType } = useIdeaContext();
     const [reportableFailure, setReportableFailure] = useState<string | null>(null);
+    // True from pressing Continue on sign-in until it fails or the page moves on.
+    const [signingIn, setSigningIn] = useState(false);
 
     useEffect(() => { hideSplash(); }, []);
+
+    // After a password reset the email is already known: fill it in and put the
+    // cursor in the password field.
+    const passwordRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        const prefilled = takeLoginEmail();
+        if (!prefilled) return;
+        setEmail(prefilled);
+        passwordRef.current?.focus();
+    }, []);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -65,7 +79,7 @@ const Auth: React.FC = () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
-    }, [showConfirmPassword, email, password, confirmPassword]);
+    }, [showConfirmPassword, email, password, confirmPassword, signingIn]);
 
     // `reportable` marks a failure of ours (not a wrong password or a bad
     // field): the toast vanishes after 3s, so the "Send a report" link below
@@ -94,8 +108,27 @@ const Auth: React.FC = () => {
             displayMessage("Password must be less than 128 characters long", "bad");
             return false;
         }
+
         setMessageBoxMessage("");
         return true;
+    }
+
+    // Throws when the KMS wrap can't be made (public key missing, WebCrypto
+    // failure). There is no email-derived fallback any more, so a new key is
+    // never stored without a recovery path.
+    async function createRecoveryWrap(dek: CryptoKey, uid: string): Promise<string> {
+        try {
+            return await wrapDEKForRecovery(dek, uid);
+        } catch (error) {
+            console.error("KMS recovery wrap could not be created.", error);
+            flagCryptoUpgradeProblem(uid, "recovery-wrap");
+            throw error;
+        }
+    }
+
+    async function storeInitialKey(dek: CryptoKey, password: string, uid: string): Promise<void> {
+        const encryptedDEK = await wrapDEK(dek, password, uid);
+        await storeEncryptedDEK(encryptedDEK, await createRecoveryWrap(dek, uid));
     }
 
     // "Keep me signed in" gates both the Firebase Auth session itself and
@@ -140,12 +173,19 @@ const Auth: React.FC = () => {
                 // block account creation. Resend is available from Profile.
                 sendEmailVerification(user).catch(() => { /* non-critical */ });
 
-                const dek = await generateDEK();
-                const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
-                const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
-
-                await storeEncryptedDEK(encryptedDEK, emailEncryptedDEK);
-                await setDEK(dek, rememberMe);
+                try {
+                    const dek = await generateDEK();
+                    await storeInitialKey(dek, capturedPassword, user.uid);
+                    await setDEK(dek, rememberMe);
+                } catch (error) {
+                    // The account exists but has no key yet. Signing in finishes
+                    // the setup (the "no key yet" branch of handleSignIn).
+                    console.error("Encryption setup failed after sign-up.", error);
+                    await auth.signOut().catch(() => { /* non-critical */ });
+                    isSigningIn.current = false;
+                    displayMessage('Your account was created, but its encryption setup did not finish. Sign in to try again.', 'bad', true);
+                    return;
+                }
 
                 sessionStorage.setItem('new_user', 'true');
                 isSigningIn.current = false;
@@ -177,6 +217,16 @@ const Auth: React.FC = () => {
 
     async function handleSignIn(e: React.MouseEvent<HTMLButtonElement>): Promise<void> {
         e.preventDefault();
+        if (signingIn) return;
+        setSigningIn(true);
+        try {
+            await runSignIn();
+        } finally {
+            setSigningIn(false);
+        }
+    }
+
+    async function runSignIn(): Promise<void> {
         const capturedPassword = password;
         isSigningIn.current = true;
         await applyPersistence();
@@ -195,45 +245,85 @@ const Auth: React.FC = () => {
             const encData = await fetchEncryptedDEK();
 
             if (encData) {
+                let dek: CryptoKey;
                 try {
-                    const dek = await unwrapDEK(encData.encryptedDEK, capturedPassword, user.uid);
-                    await setDEK(dek, rememberMe);
-
-                    // The recovery wrap is derived from the account's email. If it
-                    // isn't for the current one (accounts that predate email
-                    // recovery, or the email was changed/reverted since), re-wrap
-                    // it now that the key is unlocked, so password-reset recovery
-                    // keeps working.
-                    if (!encData.emailEncryptedDEK || encData.emailWrapFor !== user.email) {
-                        try {
-                            await storeEmailWrap(await wrapDEKWithEmail(dek, user.email!, user.uid), user.email!);
-                            // An email change also has to reach Stripe, so
-                            // receipts and renewal notices follow it.
-                            if (encData.emailEncryptedDEK) syncBillingEmail().catch(() => { /* non-critical */ });
-                        } catch { /* non-critical */ }
+                    dek = await unwrapDEK(encData.encryptedDEK, capturedPassword, user.uid);
+                } catch (error) {
+                    if ((error as { code?: string }).code === "crypto/argon2-unavailable") {
+                        isSigningIn.current = false;
+                        displayMessage("This account's encryption could not be unlocked because the security module failed to load. Please reload and try again.", "bad", true);
+                        return;
                     }
-                    if (isLegacyPasswordWrap(encData.encryptedDEK)) {
-                        try {
-                            await storePasswordWrap(await wrapDEK(dek, capturedPassword, user.uid));
-                        } catch { /* non-critical: the old wrap still works */ }
-                    }
-                    isSigningIn.current = false;
-                    window.location.replace('/main');
-                } catch {
-                    // DEK decryption failed — password was reset; auto-recover via email
+                    // DEK decryption failed — password may have been reset; try the configured recovery path.
                     pendingPasswordRef.current = capturedPassword;
                     pendingUidRef.current = user.uid;
                     pendingEncDataRef.current = encData;
                     isSigningIn.current = false;
                     await handleEmailRecovery();
+                    return;
                 }
+
+                await setDEK(dek, rememberMe);
+                // Anything below still to do means an upgrade is attempted this
+                // sign-in; a failure re-flags, a clean pass clears the record.
+                const hasLegacyFields = Boolean(encData.emailEncryptedDEK || encData.emailWrapFor || encData.pendingEmailEncryptedDEK || encData.pendingEmail);
+                const upgradeAttempted = !encData.recoveryWrap || hasLegacyFields || needsPasswordWrapUpgrade(encData.encryptedDEK);
+                clearCryptoUpgradeProblem(user.uid);
+
+                // An account still on the old email-derived recovery wrap gets a
+                // KMS one now; only then is the old wrap removed. If any step
+                // fails the account keeps working and we try again next sign-in.
+                let hasRecoveryWrap = Boolean(encData.recoveryWrap);
+                if (!hasRecoveryWrap) {
+                    let recoveryWrap: string | null = null;
+                    try {
+                        recoveryWrap = await createRecoveryWrap(dek, user.uid);
+                    } catch { /* already logged and flagged */ }
+                    if (recoveryWrap) {
+                        try {
+                            await storeRecoveryWrap(recoveryWrap);
+                            hasRecoveryWrap = true;
+                        } catch (error) {
+                            console.error("Could not save the KMS recovery wrap.", error);
+                            flagCryptoUpgradeProblem(user.uid, "recovery-store");
+                        }
+                    }
+                }
+                if (hasRecoveryWrap) {
+                    if (hasLegacyFields) {
+                        try {
+                            await removeLegacyEmailWrap();
+                        } catch (error) {
+                            console.error("Could not remove the migrated legacy email recovery fields.", error);
+                            flagCryptoUpgradeProblem(user.uid, "legacy-removal");
+                        }
+                    }
+                    syncBillingEmail().catch(() => { /* non-critical */ });
+                }
+                if (needsPasswordWrapUpgrade(encData.encryptedDEK)) {
+                    try {
+                        await storePasswordWrap(await wrapDEK(dek, capturedPassword, user.uid));
+                    } catch (error) {
+                        console.error("Could not upgrade the password wrap; the existing wrap remains usable.", error);
+                        flagCryptoUpgradeProblem(user.uid, "password-wrap");
+                    }
+                }
+                // A clean upgrade pass takes the account off the server's stuck list.
+                if (upgradeAttempted && !hasCryptoUpgradeProblem(user.uid)) {
+                    reportCryptoUpgradeResolved();
+                }
+                isSigningIn.current = false;
+                window.location.replace('/main');
             } else {
                 // No DEK yet — account predates encryption
                 const dek = await generateDEK();
-                const encryptedDEK = await wrapDEK(dek, capturedPassword, user.uid);
-                const emailEncryptedDEK = await wrapDEKWithEmail(dek, user.email!, user.uid);
-                await storeEncryptedDEK(encryptedDEK, emailEncryptedDEK);
+                const hadUpgradeProblem = hasCryptoUpgradeProblem(user.uid);
+                await storeInitialKey(dek, capturedPassword, user.uid);
                 await setDEK(dek, rememberMe);
+                if (hadUpgradeProblem) {
+                    clearCryptoUpgradeProblem(user.uid);
+                    reportCryptoUpgradeResolved();
+                }
 
                 isSigningIn.current = false;
                 window.location.replace('/main');
@@ -249,40 +339,63 @@ const Auth: React.FC = () => {
         const encData = pendingEncDataRef.current;
         const uid = pendingUidRef.current;
         const newPassword = pendingPasswordRef.current;
-        const userEmail = auth.currentUser?.email;
+        const user = auth.currentUser;
+        const userEmail = user?.email;
 
-        if (!encData?.emailEncryptedDEK || !userEmail) {
-            displayMessage('Email recovery is not set up for this account. Please contact support.', 'bad', true);
+        if (!encData || !user) {
+            displayMessage('Key recovery is not set up for this account. Please contact support.', 'bad', true);
             return;
         }
 
+        // Recovery asks the server to release the key and then re-wraps it, which
+        // can take a while. displayMessage (any failure below) replaces this.
+        setMessageBoxMessage('Restoring access to your ideas. This can take up to a minute, so please keep this page open.');
+        setMessageType('good');
+
         let dek: CryptoKey;
         try {
-            try {
-                dek = await unwrapDEKWithEmail(encData.emailEncryptedDEK, userEmail, uid);
-            } catch (err) {
-                // The email was changed but no password sign-in has happened
-                // since, so the wrap is still for the old address — use the one
-                // stored when the change was requested.
-                if (!encData.pendingEmailEncryptedDEK || encData.pendingEmail !== userEmail) throw err;
-                dek = await unwrapDEKWithEmail(encData.pendingEmailEncryptedDEK, userEmail, uid);
+            if (encData.recoveryWrap) {
+                const idToken = await user.getIdToken();
+                const response = await fetch(apiUrl("/.netlify/functions/recover-key"), {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${idToken}` },
+                    cache: "no-store",
+                });
+                if (!response.ok) {
+                    const body = await response.json().catch(() => ({})) as { error?: string };
+                    throw new Error(body.error ?? "The encryption key could not be recovered.");
+                }
+                const body = await response.json() as { dek: string };
+                dek = await importDEK(Uint8Array.from(atob(body.dek), c => c.charCodeAt(0)));
+            } else if (encData.emailEncryptedDEK && userEmail) {
+                try {
+                    dek = await unwrapDEKWithEmail(encData.emailEncryptedDEK, userEmail, uid);
+                } catch (error) {
+                    // The email changed but no password sign-in has happened
+                    // since; use the pending wrap for the new address.
+                    if (!encData.pendingEmailEncryptedDEK || encData.pendingEmail !== userEmail) throw error;
+                    dek = await unwrapDEKWithEmail(encData.pendingEmailEncryptedDEK, userEmail, uid);
+                }
+            } else {
+                throw new Error("No recovery wrap is available.");
             }
-        } catch {
-            displayMessage('Email recovery failed. Your email may have changed since setup.', 'bad', true);
+        } catch (error) {
+            console.error("Encryption-key recovery failed.", error);
+            displayMessage(error instanceof Error ? error.message : 'Encryption-key recovery failed. Please try again.', 'bad', true);
             return;
         }
 
         try {
             const newEncryptedDEK = await wrapDEK(dek, newPassword, uid);
-            const newEmailEncryptedDEK = await wrapDEKWithEmail(dek, userEmail, uid);
-            await storeEncryptedDEK(newEncryptedDEK, newEmailEncryptedDEK);
+            // A full overwrite: the old email-derived fields, if any, go too.
+            const recoveryWrap = encData.recoveryWrap ?? await createRecoveryWrap(dek, uid);
+            await storeEncryptedDEK(newEncryptedDEK, recoveryWrap);
             await setDEK(dek, rememberMe);
-            if (encData.emailWrapFor !== userEmail) {
-                await syncBillingEmail().catch(() => { /* non-critical */ });
-            }
+            await syncBillingEmail().catch(() => { /* non-critical */ });
 
             window.location.replace('/main');
-        } catch {
+        } catch (error) {
+            console.error("Could not save the recovered encryption key.", error);
             displayMessage('Could not save your new keys. Please try again.', 'bad', true);
         }
     }
@@ -300,7 +413,7 @@ const Auth: React.FC = () => {
                 <section className="authInputs">
                     <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     <div className="passwordField">
-                        <input type="password" className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                        <input type="password" ref={passwordRef} className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
                         <div className={`passwordFieldRow${native ? " nativeRow" : ""}`}>
                             {!native && <label className={`rememberMe ${showConfirmPassword ? "hidden" : ""}`} inert={showConfirmPassword}>
                                 <input type="checkbox" className="rememberMeInput" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
@@ -335,8 +448,12 @@ const Auth: React.FC = () => {
                         } else if (showConfirmPassword) {
                             defaultSignUp(e);
                         }
-                    }}>
-                    Continue
+                    }}
+                    aria-disabled={signingIn}
+                    aria-busy={signingIn}>
+                    {signingIn && !showConfirmPassword
+                        ? <><span className="authSpinner" aria-hidden="true" />Please wait...</>
+                        : "Continue"}
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={(show) => { setConfirmPassword(""); setShowConfirmPassword(show); }} />
             </section>

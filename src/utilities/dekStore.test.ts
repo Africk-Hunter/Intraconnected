@@ -80,10 +80,14 @@ describe('dekStore', () => {
     });
 
     describe('on the web', () => {
-        it('keeps the key in sessionStorage only without Remember me', async () => {
-            const { setDEK } = await import('./dekStore');
+        it('keeps a non-extractable key in IndexedDB for this tab without Remember me', async () => {
+            const { setDEK, getDEK } = await import('./dekStore');
             await setDEK(await newKey(), false);
-            expect(sessionStorage.getItem('dek_session')).not.toBeNull();
+            expect(sessionStorage.getItem('dek_session')).toBeNull();
+            expect(sessionStorage.getItem('dek_session_marker')).toBe('1');
+            expect(localStorage.getItem('session_remembered')).toBeNull();
+            expect((indexedDB as unknown as ReturnType<typeof fakeIndexedDB>).data.get('dek')).toBeInstanceOf(CryptoKey);
+            expect(getDEK().extractable).toBe(false);
             expect(localStorage.getItem('dek_local')).toBeNull();
             expect(secure.set).not.toHaveBeenCalled();
         });
@@ -98,6 +102,19 @@ describe('dekStore', () => {
             expect(localStorage.getItem('session_remembered')).toBe('1');
         });
 
+        it('migrates and removes a legacy raw session key', async () => {
+            const key = await newKey();
+            const raw = new Uint8Array(await crypto.subtle.exportKey('raw', key));
+            sessionStorage.setItem('dek_session', btoa(String.fromCharCode(...raw)));
+
+            const { loadPersistedDEK, getDEK } = await import('./dekStore');
+            expect(await loadPersistedDEK()).toBe(true);
+            expect(sessionStorage.getItem('dek_session')).toBeNull();
+            expect(sessionStorage.getItem('dek_session_marker')).toBe('1');
+            expect(getDEK().extractable).toBe(false);
+            expect((indexedDB as unknown as ReturnType<typeof fakeIndexedDB>).data.get('dek')).toBeInstanceOf(CryptoKey);
+        });
+
         it('a fresh load recovers a remembered key', async () => {
             const first = await import('./dekStore');
             await first.setDEK(await newKey(), true);
@@ -109,11 +126,24 @@ describe('dekStore', () => {
             expect(() => reloaded.getDEK()).not.toThrow();
         });
 
-        it('falls back to this tab session when IndexedDB is unavailable', async () => {
+        it('drops a session-only IndexedDB key after its tab marker is gone', async () => {
+            const first = await import('./dekStore');
+            await first.setDEK(await newKey(), false);
+            sessionStorage.removeItem('dek_session_marker');
+
+            vi.resetModules();
+            const reloaded = await import('./dekStore');
+            expect(await reloaded.loadPersistedDEK()).toBe(false);
+            expect((indexedDB as unknown as ReturnType<typeof fakeIndexedDB>).data.has('dek')).toBe(false);
+        });
+
+        it('keeps the key in memory without writing raw bytes when IndexedDB is unavailable', async () => {
             vi.stubGlobal('indexedDB', undefined);
-            const { setDEK } = await import('./dekStore');
+            const { setDEK, getDEK } = await import('./dekStore');
             await setDEK(await newKey(), true);
-            expect(sessionStorage.getItem('dek_session')).not.toBeNull();
+            expect(sessionStorage.getItem('dek_session')).toBeNull();
+            expect(sessionStorage.getItem('dek_session_marker')).toBeNull();
+            expect(getDEK().extractable).toBe(false);
             expect(localStorage.getItem('dek_local')).toBeNull();
         });
 
@@ -137,6 +167,7 @@ describe('dekStore', () => {
             await clearDEK();
             expect(() => getDEK()).toThrow();
             expect(sessionStorage.getItem('dek_session')).toBeNull();
+            expect(sessionStorage.getItem('dek_session_marker')).toBeNull();
             expect(localStorage.getItem('dek_local')).toBeNull();
             expect(localStorage.getItem('last_activity')).toBeNull();
             expect(await loadPersistedDEK()).toBe(false);

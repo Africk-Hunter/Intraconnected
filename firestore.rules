@@ -93,6 +93,11 @@ service cloud.firestore {
       }
     }
 
+    match /recoveryAudit/{auditId} {
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+
     // Explicit default-deny for everything else (belt-and-suspenders —
     // Firestore already denies unmatched paths by default, but this
     // documents intent).

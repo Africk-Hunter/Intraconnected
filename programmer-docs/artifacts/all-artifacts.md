@@ -10,6 +10,8 @@ Links to every published artifact for this project (as of 2026-10-13). Saved cop
 - [Intraconnected Native Playbook](https://claude.ai/artifact/JrqQFnieyn8tu5r7peGjHC)
 - [Intraconnected iOS Build Guide (Codemagic)](https://claude.ai/artifact/15b9a7XREbhUHF5dzejRKR)
 
+- [Encryption and KMS Recovery](https://claude.ai/artifact/T63cfL7YtwmMrmxSHWeRhX) — `encryption-kms-recovery.html`
+
 ## Audits and reviews
 - [Desktop UX Audit](https://claude.ai/artifact/4sNVMmM2KKocZheaeHTnNN) — `desktop-ux-audit.html`
 - [Desktop UX Principles](https://claude.ai/artifact/LfAr6jMV2uSnMiiq9UhCfk)
@@ -21,6 +23,7 @@ Links to every published artifact for this project (as of 2026-10-13). Saved cop
 - [Billing & Pricing Audit](https://claude.ai/artifact/KjzQqVo4nDRfEs8KABRQ49)
 - [Refresh Speed Review](https://claude.ai/artifact/TGvCEysv1hGp7im6r3mqzZ)
 - [Firestore Cost Savings](https://claude.ai/artifact/Swdp6bWu5EckW6vMrANBJt) — `firestore-cost-savings.html`
+- [Encryption Hardening Plan](https://claude.ai/artifact/TTbeoKgTHFqxkSAg7TFgCr) — `encryption-hardening-plan.html` (2026-10-14)
 
 ## Design explorations
 - [Desktop Mind Map Options](https://claude.ai/artifact/RzpWpgGzZxXnWpWo7AQA1K) — `desktop-mind-map-options.html`

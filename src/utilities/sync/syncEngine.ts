@@ -109,7 +109,7 @@ function isCensored(data: DocumentData): boolean {
 
 // Decrypts one idea doc. Throws on anything malformed so the caller can skip
 // just this doc — a single unreadable idea must never hide all the others.
-async function decodeIdea(data: DocumentData, dek: CryptoKey): Promise<IdeaType> {
+async function decodeIdea(data: DocumentData, dek: CryptoKey, uid: string): Promise<IdeaType> {
     if (typeof data.id !== "number" || typeof data.parentID !== "number") {
         throw new Error("Idea document is missing its id or parentID.");
     }
@@ -117,12 +117,16 @@ async function decodeIdea(data: DocumentData, dek: CryptoKey): Promise<IdeaType>
         return {
             id: data.id,
             type: "checklist",
-            content: await decryptField(data.content as string, dek),
+            content: await decryptField(data.content as string, dek, `${uid}|${data.id}|content`),
             parentID: data.parentID,
             items: await Promise.all(
                 ((data.items ?? []) as ChecklistItem[]).map(async (item) => {
-                    const result: ChecklistItem = { id: item.id, text: await decryptField(item.text, dek), checked: item.checked };
-                    if (item.link) result.link = await decryptField(item.link, dek);
+                    const result: ChecklistItem = {
+                        id: item.id,
+                        text: await decryptField(item.text, dek, `${uid}|${data.id}|items.${item.id}.text`),
+                        checked: item.checked,
+                    };
+                    if (item.link) result.link = await decryptField(item.link, dek, `${uid}|${data.id}|items.${item.id}.link`);
                     return result;
                 })
             ),
@@ -132,13 +136,13 @@ async function decodeIdea(data: DocumentData, dek: CryptoKey): Promise<IdeaType>
     }
     return {
         id: data.id,
-        content: await decryptField(data.content as string, dek),
+        content: await decryptField(data.content as string, dek, `${uid}|${data.id}|content`),
         parentID: data.parentID,
-        link: await decryptField(data.link as string | null | undefined, dek),
+        link: await decryptField(data.link as string | null | undefined, dek, `${uid}|${data.id}|link`),
         ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
         ...(isCensored(data) ? { censored: true } : {}),
         ...(data.isNote !== undefined ? { isNote: data.isNote as boolean } : {}),
-        ...(data.noteTitle !== undefined ? { noteTitle: await decryptField(data.noteTitle as string, dek) } : {}),
+        ...(data.noteTitle !== undefined ? { noteTitle: await decryptField(data.noteTitle as string, dek, `${uid}|${data.id}|noteTitle`) } : {}),
     };
 }
 
@@ -157,7 +161,7 @@ async function pullFromServer(uid: string): Promise<boolean> {
             snapshot.docs.map(async (docSnap) => {
                 try {
                     const data = docSnap.data();
-                    return { ok: true as const, idea: await decodeIdea(data, dek), legacyName: data.locked !== undefined };
+                    return { ok: true as const, idea: await decodeIdea(data, dek, uid), legacyName: data.locked !== undefined };
                 } catch (error) {
                     console.error(`Sync: couldn't read idea ${docSnap.id}.`, error);
                     return { ok: false as const, docId: Number(docSnap.id) };
@@ -268,7 +272,7 @@ async function pullIncremental(uid: string): Promise<boolean | "fallback"> {
         for (const docSnap of changedSnap.docs) {
             try {
                 const data = docSnap.data();
-                const idea = await decodeIdea(data, dek);
+                const idea = await decodeIdea(data, dek, uid);
                 changed.push(idea);
                 if (data.locked !== undefined) legacyCensor.push(idea);
             } catch (error) {

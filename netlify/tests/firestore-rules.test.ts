@@ -8,4 +8,11 @@ describe("firestore.rules", () => {
         const rules = readFileSync(new URL("../../firestore.rules", import.meta.url), "utf8");
         expect(rules).toContain(`.data.count < ${FREE_NODE_LIMIT}`);
     });
+
+    it("lets users read only their recovery audit records and never write them", () => {
+        const rules = readFileSync(new URL("../../firestore.rules", import.meta.url), "utf8");
+        expect(rules).toMatch(
+            /match \/recoveryAudit\/\{auditId\}\s*\{\s*allow read: if request\.auth != null && resource\.data\.uid == request\.auth\.uid;\s*allow write: if false;\s*\}/
+        );
+    });
 });

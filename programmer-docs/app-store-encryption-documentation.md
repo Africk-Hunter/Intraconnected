@@ -5,24 +5,26 @@ Developer: Hunter Africk (sole proprietor)
 
 ## Summary
 
-Intraconnected is a mind-mapping app for organising ideas. It uses only standard, published encryption algorithms, all from the Web Crypto API built into the system web view (WebKit on iOS). The app contains no proprietary or unpublished cryptography and no custom cryptographic implementation. Encryption is used solely to protect the user's own data (idea text, checklist text and links) before it leaves the device, and to protect network traffic. It is not used for any other purpose, and the app offers no encryption service, messaging, VPN, or file-encryption feature to users.
+Intraconnected is a mind-mapping app for organising ideas. It uses standard, published encryption algorithms through the Web Crypto API, a bundled Argon2id implementation, and Google Cloud KMS for server-side recovery. The app contains no proprietary or unpublished cryptography and no custom cryptographic implementation. Encryption is used solely to protect the user's own data (idea text, checklist text and links) before it leaves the device, and to protect network traffic. It is not used for any other purpose, and the app offers no encryption service, messaging, VPN, or file-encryption feature to users.
 
 ## Algorithms
 
 | Purpose | Algorithm | Notes |
 |---|---|---|
 | Encrypting idea text, notes, links and checklist items before storage on the server | AES-256-GCM | 96-bit random IV per field, generated with `crypto.getRandomValues` |
-| Protecting the data encryption key (DEK) under the user's password | AES-256-GCM, key derived with PBKDF2-HMAC-SHA-256 | 600,000 iterations (100,000 for older accounts); salt derived from the account id |
-| Account-recovery wrap of the DEK, derived from the account email | AES-256-GCM, key derived with PBKDF2-HMAC-SHA-256 | 100,000 iterations |
+| Protecting the data encryption key (DEK) under the user's password | AES-256-GCM with a key derived by Argon2id | New format uses 32 MiB memory, 3 iterations, parallelism 1; older v2 wraps use PBKDF2-HMAC-SHA-256 with 600,000 iterations, and legacy wraps use 100,000 |
+| Account-recovery wrap for enrolled accounts | RSA-OAEP with SHA-256 and a 3,072-bit Google Cloud KMS key | Client encrypts the 32-byte DEK and account ID with the public key; the private key stays in Cloud KMS and is used only by the authenticated recovery function |
+| Legacy account-recovery wrap | AES-256-GCM, key derived with PBKDF2-HMAC-SHA-256 | 100,000 iterations; derived from the email address and account ID |
 | DEK generation | AES-256 key from `crypto.subtle.generateKey` | Random, per account |
 | Storing the DEK on the device | iOS Keychain (device-only, no iCloud sync) | Uses Apple's system encryption; the app adds none of its own |
 | Network traffic to Firebase (Authentication, Firestore) and the app's own API | TLS (HTTPS) via the operating system's networking stack | No custom TLS code or certificate handling |
 
-Key length is 256 bits for all symmetric keys. No asymmetric cryptography, key exchange, or digital-signature code is implemented in the app.
+Key length is 256 bits for symmetric keys. RSA-OAEP is used only to wrap a user's own DEK for account recovery; the app has no general-purpose asymmetric cryptography, key exchange, or digital-signature feature.
 
 ## Where the cryptography lives
 
-- `src/utilities/crypto.ts`: AES-GCM field encryption, PBKDF2 key derivation, key wrapping. All calls go to the platform's `crypto.subtle`.
+- `src/utilities/crypto.ts`: AES-GCM field encryption and password wrapping through the Web Crypto API; Argon2id is loaded from the bundled `hash-wasm` module. RSA-OAEP public-key wrapping also uses the Web Crypto API.
+- `netlify/functions/recover-key.ts`: calls Google Cloud KMS to unwrap an enrolled recovery key after a recent sign-in; successful key releases are logged to a Firestore audit collection and Google Cloud Audit Logs.
 - `src/utilities/dekStore.ts`: holds the unwrapped key in memory and in the iOS Keychain.
 
 ## Use of encryption

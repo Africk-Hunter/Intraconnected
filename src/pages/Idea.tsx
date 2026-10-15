@@ -63,6 +63,8 @@ import { useIsMobileUI } from '../utilities/useIsMobileUI';
 import { syncOnLoad, startSyncListener } from '../utilities/sync/syncEngine';
 import { onSyncRefreshed } from '../utilities/sync/syncStore';
 import SyncStatusBanner from '../components/SyncStatusBanner';
+import RecoveryUseNotice from '../components/RecoveryUseNotice';
+import CryptoUpgradeNotice from '../components/CryptoUpgradeNotice';
 import UndoToast from '../components/UndoToast';
 import CardMenu from '../components/CardMenu';
 import Breadcrumb from '../components/Breadcrumb';
@@ -657,6 +659,8 @@ function Idea() {
             </section>
             {isMobileUI && <MobileMindMap />}
             <SyncStatusBanner />
+            <RecoveryUseNotice />
+            <CryptoUpgradeNotice />
             {!isMobileUI && <UndoToast />}
             <MindMap onClose={() => setShowMindMap(false)} visible={showMindMap} reveal={mapReveal} />
             <RenameModal />

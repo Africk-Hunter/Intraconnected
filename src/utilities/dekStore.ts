@@ -1,6 +1,7 @@
 import { isNative } from './platform';
 
 const SESSION_KEY = 'dek_session';
+const SESSION_MARKER = 'dek_session_marker';
 const LOCAL_KEY = 'dek_local';
 const NATIVE_KEY = 'dek';
 // Set when "Remember me" was used: the idle limit is longer for those sessions.
@@ -18,9 +19,9 @@ function encodeRaw(raw: ArrayBuffer): string {
     return btoa(binary);
 }
 
-async function importEncoded(stored: string): Promise<CryptoKey> {
+async function importEncoded(stored: string, extractable = false): Promise<CryptoKey> {
     const raw = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
-    return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+    return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, extractable, ['encrypt', 'decrypt']);
 }
 
 // "Remember me" on the web keeps the key as a non-extractable CryptoKey in
@@ -89,10 +90,10 @@ function nativeStore() {
 }
 
 export async function setDEK(key: CryptoKey, remember = false): Promise<void> {
-    _dek = key;
     try {
         const raw = await crypto.subtle.exportKey('raw', key);
         const encoded = encodeRaw(raw);
+        _dek = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
         if (isNative()) {
             // An app is expected to keep you signed in, so "remember" doesn't
             // apply: the key is always kept.
@@ -101,27 +102,31 @@ export async function setDEK(key: CryptoKey, remember = false): Promise<void> {
             return;
         }
         localStorage.removeItem(LOCAL_KEY); // the old raw copy, if this browser still has one
-        if (remember) {
-            try {
-                await storeRememberedKey(raw);
-                sessionStorage.removeItem(SESSION_KEY);
+        try {
+            await storeRememberedKey(raw);
+            sessionStorage.removeItem(SESSION_KEY);
+            if (remember) {
+                sessionStorage.removeItem(SESSION_MARKER);
                 localStorage.setItem(REMEMBERED_FLAG, '1');
-                return;
-            } catch {
-                // IndexedDB refused (some private modes): this tab session only
+            } else {
+                localStorage.removeItem(REMEMBERED_FLAG);
+                sessionStorage.setItem(SESSION_MARKER, '1');
             }
+        } catch (error) {
+            // Never fall back to storing readable key bytes in browser storage.
+            console.error('Could not persist the non-extractable encryption key.', error);
+            await clearRememberedKey();
+            localStorage.removeItem(REMEMBERED_FLAG);
+            sessionStorage.removeItem(SESSION_MARKER);
         }
-        await clearRememberedKey();
-        localStorage.removeItem(REMEMBERED_FLAG);
-        sessionStorage.setItem(SESSION_KEY, encoded);
-    } catch {
-        // non-extractable key, or the secure store refused — skip persistence
+    } catch (error) {
+        console.error('Could not initialize the encryption key store.', error);
     }
 }
 
-// Reads the key back after a page load or an app restart. On the web that is
-// sessionStorage (or localStorage when "Remember me" was checked); in the app,
-// the Keychain / Keystore.
+// Reads the key back after a page load or an app restart. Web keys are always
+// stored as non-extractable CryptoKeys in IndexedDB; a session marker decides
+// whether a non-remembered key is still valid for this tab.
 export async function loadPersistedDEK(): Promise<boolean> {
     if (isNative()) {
         try {
@@ -139,34 +144,63 @@ export async function loadPersistedDEK(): Promise<boolean> {
     }
     const session = sessionStorage.getItem(SESSION_KEY);
     if (session) {
+        let migrated = false;
         try {
-            _dek = await importEncoded(session);
-            return true;
-        } catch {
+            const oldKey = await importEncoded(session, true);
+            const raw = await crypto.subtle.exportKey('raw', oldKey);
+            _dek = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+            await storeRememberedKey(raw);
+            migrated = true;
+        } catch (error) {
+            console.error('Could not migrate the session encryption key.', error);
+        }
+        if (_dek) {
             sessionStorage.removeItem(SESSION_KEY);
+            if (migrated) sessionStorage.setItem(SESSION_MARKER, '1');
+            return true;
+        }
+        sessionStorage.removeItem(SESSION_KEY);
+    }
+
+    // Written by an older build: migrate the raw copy and remove it even when
+    // IndexedDB is unavailable; keep the key only in memory for this session.
+    const legacy = localStorage.getItem(LOCAL_KEY);
+    if (legacy) {
+        try {
+            const oldKey = await importEncoded(legacy, true);
+            const raw = await crypto.subtle.exportKey('raw', oldKey);
+            _dek = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+            try {
+                await storeRememberedKey(raw);
+                localStorage.setItem(REMEMBERED_FLAG, '1');
+            } catch (error) {
+                console.error('Could not migrate the remembered encryption key to IndexedDB.', error);
+                localStorage.removeItem(REMEMBERED_FLAG);
+                sessionStorage.setItem(SESSION_MARKER, '1');
+            }
+            localStorage.removeItem(LOCAL_KEY);
+            return true;
+        } catch (error) {
+            console.error('Could not read the legacy remembered encryption key.', error);
+            localStorage.removeItem(LOCAL_KEY);
         }
     }
-    const remembered = await loadRememberedKey();
-    if (remembered) {
-        _dek = remembered;
-        return true;
-    }
-    // Written by an older build: move it into IndexedDB, then drop the raw copy.
-    const legacy = localStorage.getItem(LOCAL_KEY);
-    if (!legacy) return false;
-    try {
-        const key = await importEncoded(legacy);
-        _dek = key;
-        await storeRememberedKey(await crypto.subtle.exportKey('raw', key));
-        localStorage.setItem(REMEMBERED_FLAG, '1');
-        localStorage.removeItem(LOCAL_KEY);
-        return true;
-    } catch {
-        // Unreadable, or IndexedDB refused: keep using it this load if it parsed.
-        if (_dek) return true;
-        localStorage.removeItem(LOCAL_KEY);
+
+    const sessionMarked = sessionStorage.getItem(SESSION_MARKER) === '1';
+    const rememberedFlag = localStorage.getItem(REMEMBERED_FLAG) === '1';
+    if (!sessionMarked && !rememberedFlag) {
+        await clearRememberedKey();
         return false;
     }
+
+    const persisted = await loadRememberedKey();
+    if (persisted) {
+        _dek = persisted;
+        return true;
+    }
+    sessionStorage.removeItem(SESSION_MARKER);
+    localStorage.removeItem(REMEMBERED_FLAG);
+    return false;
 }
 
 export function isRememberedSession(): boolean {
@@ -198,6 +232,7 @@ async function clearNativeKey(): Promise<void> {
 export function clearDEK(): Promise<void> {
     _dek = null;
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_MARKER);
     localStorage.removeItem(LOCAL_KEY);
     localStorage.removeItem(REMEMBERED_FLAG);
     localStorage.removeItem(ACTIVITY_KEY);

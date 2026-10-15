@@ -98,15 +98,20 @@ function ReportModal() {
             >
                 {state === 'sent' ? (
                     <div className="report-sent">
-                        <svg className="report-sent-icon" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M7.5 12.5l3 3 6-6.5" />
-                        </svg>
-                        <h2 className="report-title" id="report-title">Report sent</h2>
-                        <p className="report-text">Thanks. We read every report and will look into it.</p>
-                        <section className="modalButtons">
-                            <button className="modalButton continue neobrutal-button" autoFocus onClick={close}>Done</button>
-                        </section>
+                        <div className="report-header report-header--sent">
+                            <span className="report-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                                </svg>
+                            </span>
+                            <h2 className="report-title" id="report-title">Report sent</h2>
+                        </div>
+                        <div className="report-body">
+                            <p className="report-text">Thanks. We read every report and will look into it.</p>
+                            <section className="modalButtons">
+                                <button className="modalButton continue neobrutal-button" autoFocus onClick={close}>Done</button>
+                            </section>
+                        </div>
                     </div>
                 ) : (
                     <form
@@ -119,7 +124,16 @@ function ReportModal() {
                             }
                         }}
                     >
-                        <h2 className="report-title" id="report-title">Send a report</h2>
+                        <div className="report-header">
+                            <span className="report-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M4 21V4" />
+                                    <path d="M4 4h13l-2.5 4.5L17 13H4" />
+                                </svg>
+                            </span>
+                            <h2 className="report-title" id="report-title">Send a report</h2>
+                        </div>
+                        <div className="report-body">
                         <p className="report-text">What happened? What were you doing when it went wrong?</p>
 
                         <div className="report-field">
@@ -165,6 +179,7 @@ function ReportModal() {
                                 {state === 'sending' ? 'Sending…' : 'Send'}
                             </button>
                         </section>
+                        </div>
                     </form>
                 )}
             </div>

@@ -33,11 +33,13 @@ function mockDb({
     ideaCount = 0,
     bugReportCount = 0,
     usageFlagCount = 0,
+    recoveryAuditCount = 0,
 }: {
     billingData: Record<string, unknown> | null;
     ideaCount?: number;
     bugReportCount?: number;
     usageFlagCount?: number;
+    recoveryAuditCount?: number;
 }) {
     const billingRef = fakeDocRef(billingData);
     const batchDelete = vi.fn();
@@ -46,6 +48,12 @@ function mockDb({
 
     firestoreMock.mockReturnValue({
         collection: vi.fn((top: string) => {
+            if (top === "recoveryAudit") {
+                return { where: vi.fn(() => ({ get: vi.fn(async () => ({ docs: Array.from({ length: recoveryAuditCount }, (_, i) => ({ ref: { id: `audit-${i}` } })) })) })) };
+            }
+            if (top === "cryptoUpgradeFailures") {
+                return { doc: vi.fn(() => ({ delete: vi.fn(async () => {}) })) };
+            }
             if (top === "bugReports") {
                 return { where: vi.fn(() => ({ get: vi.fn(async () => ({ docs: Array.from({ length: bugReportCount }, (_, i) => ({ ref: { id: `report-${i}` } })) })) })) };
             }
@@ -153,6 +161,18 @@ describe("delete-account", () => {
         expect(res.status).toBe(200);
         expect(batchDelete).toHaveBeenCalledWith({ id: "flag-0" });
         expect(usageWatchDelete).toHaveBeenCalled();
+    });
+
+    it("deletes recovery audit records for the account", async () => {
+        verifyIdTokenWithAuthTime.mockResolvedValue(freshCaller());
+        const { batchDelete } = mockDb({ billingData: null, recoveryAuditCount: 2 });
+        deleteUser.mockResolvedValue(undefined);
+
+        const res = await handler(fakeRequest(), {} as never);
+
+        expect(res.status).toBe(200);
+        expect(batchDelete).toHaveBeenCalledWith({ id: "audit-0" });
+        expect(batchDelete).toHaveBeenCalledWith({ id: "audit-1" });
     });
 
     it("rejects a token whose sign-in is too old, without touching anything", async () => {

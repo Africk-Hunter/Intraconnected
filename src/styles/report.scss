@@ -7,28 +7,38 @@
 
 $report-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-@keyframes reportSentIn {
-    from { opacity: 0; transform: scale(0.6); }
-    to   { opacity: 1; transform: scale(1); }
-}
-
 @keyframes reportFadeUp {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes reportIconIn {
+    from { opacity: 0; transform: rotate(-24deg) scale(0.6); }
+}
+
+// Same card anatomy as the crash screen and session-ended modal: coloured
+// header band with a tilted icon badge, then the body.
 .neobrutal.modal.report-modal {
     display: block;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0;
     width: min(32rem, 92vw);
     min-height: auto;
-    padding: 1.5rem;
+    padding: 0;
+    overflow: hidden;
     box-sizing: border-box;
     text-align: left;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    background-size: 40px 40px;
 
     @media (max-width: $mobile) {
         width: 92%;
         min-height: auto;
-        padding: 1.25rem 1rem;
+        padding: 0;
+        margin-block: auto;
     }
 
     @media (min-width: $large-desktop) {
@@ -44,6 +54,11 @@ $report-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
         .modalButton {
             flex: 1;
+            width: auto;
+            height: 3.25rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: inherit;
         }
     }
 }
@@ -52,34 +67,70 @@ $report-ease: cubic-bezier(0.22, 1, 0.36, 1);
 .report-sent {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
 }
 
 .report-sent {
-    align-items: center;
-    text-align: center;
     animation: reportFadeUp 0.25s $report-ease both;
+}
 
-    .report-text {
-        max-width: 24rem;
+.report-header {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 1.2rem 1.5rem;
+    background: $burnt-orange;
+    color: #fff;
+    border-bottom: 3px solid #000;
+
+    &--sent {
+        background: $leaf;
+        color: #000;
     }
 }
 
-.report-sent-icon {
-    color: $leaf;
-    animation: reportSentIn 0.35s $report-ease both;
+.report-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    background: $link;
+    color: #000;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    box-shadow: $neo-detail-shadow;
+    transform: rotate(-6deg);
+    animation: reportIconIn 0.5s $report-ease 0.1s backwards;
+
+    svg {
+        width: 1.7rem;
+        height: 1.7rem;
+    }
 }
 
 .report-title {
     margin: 0;
     font-size: 1.6rem;
     font-weight: 700;
+    line-height: 1.1;
+}
+
+.report-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.4rem 1.5rem 1.6rem;
+
+    @media (max-width: $mobile) {
+        padding: 1.2rem 1rem 1.4rem;
+    }
 }
 
 .report-text {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     line-height: 1.4;
+    color: #222;
 }
 
 .report-field {
@@ -87,21 +138,27 @@ $report-ease: cubic-bezier(0.22, 1, 0.36, 1);
     display: flex;
 }
 
-.report-textarea {
+.report-textarea,
+.report-contact {
     box-sizing: border-box;
     width: 100%;
-    min-height: 8rem;
-    padding: 0.6rem 0.75rem;
-    resize: vertical;
+    padding: 0.7rem 0.85rem;
     font-family: inherit;
     font-size: 1rem; // 16px+ so iOS doesn't zoom on focus
     line-height: 1.4;
+    color: #000;
+    background: #fff;
+}
+
+.report-textarea {
+    min-height: 8rem;
+    resize: vertical;
 }
 
 .report-count {
     position: absolute;
-    right: 0.6rem;
-    bottom: 0.45rem;
+    right: 0.7rem;
+    bottom: 0.5rem;
     font-size: 0.8rem;
     font-variant-numeric: tabular-nums;
     opacity: 0;
@@ -113,25 +170,23 @@ $report-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 }
 
-.report-contact {
-    box-sizing: border-box;
-    width: 100%;
-    padding: 0.6rem 0.75rem;
-    font-family: inherit;
-    font-size: 1rem;
-}
-
 .report-textarea:disabled,
 .report-contact:disabled {
     opacity: 0.6;
     cursor: progress;
 }
 
+// What is sent: its own chip so it reads as reassurance, not fine print.
 .report-attached {
     margin: 0;
+    padding: 0.65rem 0.85rem;
     font-size: 0.9rem;
+    font-weight: 600;
     line-height: 1.35;
-    opacity: 0.75;
+    color: #000;
+    background: rgba($leaf, 0.22);
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
 }
 
 // Opens by grid rows so the buttons glide down instead of jumping.
@@ -166,7 +221,7 @@ $report-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
 @media (prefers-reduced-motion: reduce) {
     .report-sent,
-    .report-sent-icon {
+    .report-icon {
         animation: none;
     }
 

@@ -16,7 +16,7 @@ export function nativeCsp(apiOrigin: string = DEFAULT_API_ORIGIN): string {
     const origin = apiOrigin.replace(/\/+$/, '');
     return [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline'",
+        "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data:",

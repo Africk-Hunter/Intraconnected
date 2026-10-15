@@ -15,7 +15,7 @@ const Terms: React.FC = () => {
                     ← Back
                 </button>
                 <h1 className="legalTitle">Terms of Service</h1>
-                <p className="legalMeta">Intraconnected | Last updated October 12, 2026</p>
+                <p className="legalMeta">Intraconnected | Last updated October 14, 2026</p>
 
                 <section className="legalSection">
                     <h2>1. Who We Are</h2>
@@ -52,20 +52,29 @@ const Terms: React.FC = () => {
                     <p>
                         Your idea content is encrypted on your device before it's sent to our
                         servers, and we do not hold a copy of your password. To support recovery by
-                        email, we also store a recovery copy of your encryption key tied to your
-                        account details (see the <a href="/privacy">Privacy Policy</a>), so this is
-                        not strict end-to-end encryption, and we could technically decrypt your
-                        content. We don't do so in the ordinary course of operating the Service. No
-                        encryption or security measure is perfect, and we don't guarantee that your
-                        data will never be accessed by anyone else. This design has real
-                        consequences:
+                        email, we also store a recovery copy of your encryption key (see the{" "}
+                        <a href="/privacy">Privacy Policy</a>). Older accounts may use a legacy
+                        recovery copy encrypted with a key derived from the account email address
+                        and ID, neither of which is secret. For accounts enrolled in the new system,
+                        a public key wraps the recovery copy and its private counterpart is held in
+                        Google Cloud KMS. Our server can ask KMS to unlock it; with Cloud KMS
+                        Data Access audit logging enabled, Google records each decryption and the
+                        app shows an in-app notice. We can technically decrypt
+                        content through this recovery path, though we do not do so in the ordinary
+                        course of operating the Service. Scripts or browser extensions running in
+                        the page can also use the key while you are signed in, and you must trust the
+                        app code delivered to your browser. Idea IDs, map structure, timestamps and
+                        ciphertext lengths are visible. No encryption or security measure is
+                        perfect, and we don't guarantee that your data will never be accessed by
+                        anyone else. This design has real consequences:
                     </p>
                     <ul>
                         <li>
                             If you forget your password, use "Forgot password" to reset it by email.
-                            As long as you still control the email address on your account, resetting
-                            your password automatically restores access to your content. No recovery
-                            code or separate backup is needed.
+                            Then sign in with the new password to restore access to your content.
+                            Existing accounts move to the new recovery system only after it is
+                            enabled and they next sign in; accounts that never do remain on the
+                            legacy recovery copy.
                         </li>
                         <li>
                             If you lose access to both your password and the email address on your

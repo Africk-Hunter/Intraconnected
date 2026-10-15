@@ -55,6 +55,15 @@ async function deleteUsageRecords(db: Firestore, uid: string) {
     await db.collection("usageWatch").doc(uid).delete();
 }
 
+async function deleteRecoveryAudit(db: Firestore, uid: string) {
+    const snap = await db.collection("recoveryAudit").where("uid", "==", uid).get();
+    for (let i = 0; i < snap.docs.length; i += 500) {
+        const batch = db.batch();
+        snap.docs.slice(i, i + 500).forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+    }
+}
+
 // Terminal statuses that never charge again and that Stripe refuses to
 // cancel. incomplete_expired is what an abandoned Annual checkout becomes,
 // and the webhook still records its id on meta/billing.
@@ -114,6 +123,8 @@ export default authed(
         await deleteCollection(db, uid, "meta");
         await deleteBugReports(db, uid);
         await deleteUsageRecords(db, uid);
+        await deleteRecoveryAudit(db, uid);
+        await db.collection("cryptoUpgradeFailures").doc(uid).delete();
 
         await adminAuth().deleteUser(uid);
 
