@@ -416,3 +416,15 @@ describe("Intraconnected JSON import links", () => {
         expect(all).toEqual(["https://example.com", "http://example.com/x"]);
     });
 });
+
+describe("Intraconnected JSON import of vault notes", () => {
+    it("skips them", async () => {
+        const parsed = await parseImportFiles([
+            file("backup.json", JSON.stringify({ ideas: [
+                { id: 2, content: "kept", parentID: 1, link: "" },
+                { id: 3, content: "vault1:0a1b2c3d:c2VjcmV0", parentID: 1, link: "", isNote: true, isVault: true, noteTitle: "vault1:0a1b2c3d:dGl0bGU=" },
+            ] })),
+        ]);
+        expect(shape(parsed.nodes)).toEqual(["kept"]);
+    });
+});

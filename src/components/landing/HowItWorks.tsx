@@ -54,12 +54,12 @@ const STEPS = [
     body: 'Add a node and start typing. Every idea hangs off the one before it.',
   },
   {
-    title: 'Zoom into a branch',
+    title: 'Follow a branch',
     body: 'Click any node to dive into its details. Head back out whenever you like.',
   },
   {
     title: 'Drag to reorganize',
-    body: 'Drop a node onto another to move it. Your map reshapes instantly.',
+    body: 'Drop a node onto another to move it. Your tree reshapes instantly.',
   },
 ];
 

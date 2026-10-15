@@ -20,28 +20,48 @@ const Landing: React.FC = () => {
 
       <section className="landingHero">
         <h1 className="landingHeroTitle">
-          <span className="heroMark heroMark--leaf">Map your mind.</span>
+          <span className="heroMark heroMark--leaf">Plant a node.</span>
           <br />
-          <span className="heroMark heroMark--sky">Connect your ideas.</span>
+          <span className="heroMark heroMark--sky">Grow an{' '}
+            <span className="heroScribbleWord">
+              <i>idea</i>
+              <svg className="heroScribble" viewBox="0 0 120 14" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M3 8 C 35 4, 80 3, 117 5" />
+                <path d="M22 12.5 C 50 10.5, 80 10.5, 100 11.5" />
+              </svg>
+            </span>
+            .
+          </span>
         </h1>
         <p className="landingHeroSubline">
-          A node-based mind-mapping tool for organizing thoughts hierarchically, from broad
-          strokes down to the finest details.
+          Start with one rough thought. Break it into parts, add the to-dos and the links,
+          and lock away what's private. Intraconnected keeps all of it on one tree.
         </p>
 
         <div className="landingMindMapBox">
           <MindMapHeroAnimation />
         </div>
 
-        <Link to="/login" className="landingCta neobrutal-button">Get Started Free →</Link>
+        <Link to="/login" className="landingCta neobrutal-button">
+          Start growing for free
+          <svg className="ctaArrow" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M14 7l7 5-7 5" />
+          </svg>
+        </Link>
+        <p className="landingHeroFine">50 nodes free. No card.</p>
       </section>
 
       <HowItWorks />
 
       <section className="landingFinalCta">
         <div className="landingFinalCtaCard neobrutal">
-          <h2 className="landingFinalCtaTitle">Got an idea? Start with one node.</h2>
-          <Link to="/login" className="landingCta neobrutal-button">Get Started Free →</Link>
+          <h2 className="landingFinalCtaTitle">Got a thought you can't shake? Plant it.</h2>
+          <Link to="/login" className="landingCta neobrutal-button">
+          Start growing for free
+          <svg className="ctaArrow" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M14 7l7 5-7 5" />
+          </svg>
+        </Link>
         </div>
       </section>
     </div>

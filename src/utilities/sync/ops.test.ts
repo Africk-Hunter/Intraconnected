@@ -255,3 +255,14 @@ describe("findOrphans", () => {
         expect(findOrphans(list).map((i) => i.id)).toEqual([4]);
     });
 });
+
+describe("vault notes", () => {
+    it("keep isVault through every update, and a patch cannot carry it", () => {
+        const vault = idea(5, 1, { isNote: true, isVault: true, noteTitle: "vault1:a", content: "vault1:b" } as Partial<IdeaType>);
+        const after = applyOpLocally([vault], { kind: "update", id: 5, patch: { parentID: 2, priority: 1, content: "vault1:c", noteTitle: "vault1:d" } });
+        expect(after[0]).toMatchObject({ isVault: true, isNote: true, parentID: 2, content: "vault1:c" });
+        // @ts-expect-error isVault is not part of IdeaPatch: it is fixed at creation
+        const patch: import("./ops").IdeaPatch = { isVault: false };
+        expect(patch).toBeDefined();
+    });
+});

@@ -1,17 +1,27 @@
-import { IdeaType } from "../types";
+import { IdeaType, StandardIdea } from "../types";
 import { isNative, openExternal } from "../platform";
+import { getCachedVaultLabel } from "../vault/vaultSession";
+
+export const VAULT_LABEL = 'Vault note';
 
 export function isNoteMode(idea: IdeaType | undefined): boolean {
     if (!idea || idea.type === 'checklist') return false;
     return idea.isNote === true;
 }
 
+// Its text is vault ciphertext: only the vault UI may read it.
+export function isVaultIdea(idea: IdeaType | undefined): idea is StandardIdea & { isVault: true } {
+    return !!idea && idea.type !== 'checklist' && idea.isVault === true;
+}
+
 export function isNoteWide(idea: IdeaType | undefined): boolean {
-    return isNoteMode(idea);
+    return isNoteMode(idea) && !isVaultIdea(idea);
 }
 
 export function resolveIdeaLabel(idea: IdeaType | undefined): string {
     if (!idea) return 'Idea';
+    // The label once the vault is unlocked (decrypted into memory), otherwise a placeholder.
+    if (isVaultIdea(idea)) return getCachedVaultLabel(idea.noteTitle ?? '') || VAULT_LABEL;
     if (isNoteMode(idea)) {
         const noteTitle = (idea as { noteTitle?: string }).noteTitle;
         return noteTitle && noteTitle.trim() ? noteTitle : 'Untitled';
@@ -70,7 +80,8 @@ export function getNameFromID(id: number): string {
 }
 
 export function getIdeaLink(idea: IdeaType | undefined): string {
-    if (!idea || idea.type === 'checklist') return '';
+    // A vault note's stored link is ciphertext; the vault panel opens the real one.
+    if (!idea || idea.type === 'checklist' || isVaultIdea(idea)) return '';
     return idea.link ?? '';
 }
 

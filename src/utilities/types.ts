@@ -15,6 +15,7 @@ export interface StandardIdea {
     isNote?: boolean; // set at creation via the Note tab; immutable after that — ideas and notes can't convert into each other
     noteTitle?: string; // header label shown while isNote is true
     censored?: boolean; // shown masked until clicked (a screen-privacy veil, not a password)
+    isVault?: boolean; // set at creation via the Vault tab, always with isNote; immutable. noteTitle/content/link hold vault1: ciphertext
 }
 
 export interface ChecklistIdea {

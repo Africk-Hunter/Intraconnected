@@ -1,4 +1,4 @@
-import { getIdeaLink, getNameFromID, isNoteMode } from './helpers';
+import { getIdeaLink, getNameFromID, isNoteMode, isVaultIdea } from './helpers';
 import { getIdeasByParentID } from './parsing';
 import type { IdeaType } from '../types';
 
@@ -8,6 +8,7 @@ import type { IdeaType } from '../types';
 const oneLine = (s: string) => s.replace(/\s*\n\s*/g, ' ').trim();
 
 function childLine(child: IdeaType): string {
+    if (isVaultIdea(child)) return '[Vault note]';
     const body = isNoteMode(child)
         ? [oneLine((child as { noteTitle?: string }).noteTitle ?? ''), oneLine(child.content)].filter(Boolean).join(' - ')
         : oneLine(child.content);
@@ -17,6 +18,7 @@ function childLine(child: IdeaType): string {
 
 // One idea: its link if it has one, a checklist with its items, otherwise its text.
 export function ideaCopyText(idea: IdeaType): string {
+    if (isVaultIdea(idea)) return '';
     const link = getIdeaLink(idea);
     if (idea.type === 'checklist') {
         return [idea.content, ...idea.items.map((item) => `${item.checked ? '[x]' : '[ ]'} ${item.text}`)].join('\n');

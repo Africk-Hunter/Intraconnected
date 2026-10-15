@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
-import { fetchFullIdeaList, getIdeaLink, isNoteMode } from '../utilities';
+import { fetchFullIdeaList, getIdeaLink, isNoteMode, isVaultIdea } from '../utilities';
 import { useIdeaActions } from '../utilities/idea/useIdeaActions';
 
 interface MenuItem {
@@ -146,7 +146,17 @@ function CardMenu() {
     const hasChildren = fetchFullIdeaList().some((i) => i.parentID === id);
     const canEditLink = !isChecklist && !isNote && (!hasChildren || link !== '');
 
-    const items: MenuItem[] = [];
+    // A vault note's menu: open, edit, move, priority, delete. Nothing that
+    // would show or copy its text.
+    const vaultItems: MenuItem[] = isVaultIdea(idea) ? [
+        { label: 'Open vault note', hint: 'Enter', run: () => actions.openIdea(id) },
+        { label: 'Edit vault note', hint: 'R', run: () => actions.renameIdea(id) },
+        ...(!isCurrent ? [{ label: 'Move to…', hint: 'M', run: () => actions.openMovePicker(id) }] : []),
+    ] : [];
+
+    const vaultIdea = isVaultIdea(idea);
+    const items: MenuItem[] = vaultIdea ? vaultItems : [];
+    if (!vaultIdea) {
     if (!isCurrent) {
         if (isChecklist) items.push({ label: 'Open checklist', hint: 'Enter', run: () => actions.openIdea(id) });
         else if (link !== '') items.push({ label: 'Open link', hint: 'Enter', run: () => actions.openIdea(id) });
@@ -160,6 +170,7 @@ function CardMenu() {
     if (hasChildren) items.push({ label: 'Copy branch', run: () => actions.copyBranch(id) });
     if (!isCurrent) items.push({ label: 'Move to…', hint: 'M', run: () => actions.openMovePicker(id) });
     items.push({ label: idea.censored ? 'Uncensor idea' : 'Censor idea', run: () => actions.setCensored(id, !idea.censored) });
+    }
 
     const rect = document.querySelector<HTMLElement>(`[data-idea-id="${id}"]`)?.getBoundingClientRect();
     const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : undefined;

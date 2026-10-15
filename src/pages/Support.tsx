@@ -32,7 +32,7 @@ const TOPICS: Topic[] = [
     {
         icon: "sync",
         title: "Sync & devices",
-        body: "Using your map on more than one device.",
+        body: "Using your tree on more than one device.",
         href: "#sync",
     },
     {
@@ -84,6 +84,19 @@ const GROUPS: FaqGroup[] = [
                     </>
                 ),
             },
+            {
+                q: "I forgot my vault passphrase.",
+                a: (
+                    <>
+                        Open Profile, then Vault, and choose "Forgot passphrase?". Enter the recovery
+                        code you saved when you set up the vault, then choose a new passphrase.
+                        You'll get a new recovery code. If you don't have the recovery code either,
+                        we can't open your vault notes for you: they're locked with a key we never
+                        receive. You can delete them and start again with Reset vault.
+                    </>
+                ),
+            },
+
             {
                 q: "How do I delete my account?",
                 a: (
@@ -149,7 +162,7 @@ const GROUPS: FaqGroup[] = [
                 q: "Can I use Intraconnected on more than one device?",
                 a: (
                     <>
-                        Yes. Sign in with the same account and your map follows you. Changes made on
+                        Yes. Sign in with the same account and your tree follows you. Changes made on
                         one device show up on the others while the app is open.
                     </>
                 ),

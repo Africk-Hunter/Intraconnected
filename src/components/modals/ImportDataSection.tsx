@@ -22,7 +22,7 @@ const PICKER_TYPES = [{
 
 // Handed to an AI along with the user's notes; the answer is a Markdown outline
 // that the Markdown importer in importers.ts reads directly.
-const AI_PROMPT = `Turn the notes I give you into a nested Markdown outline for import into Intraconnected, a mind-mapping app. The app stores four kinds of item. Decide which kind each piece of my notes is, and write it in the matching form.
+const AI_PROMPT = `Turn the notes I give you into a nested Markdown outline for import into Intraconnected, an app that keeps ideas as a tree. The app stores four kinds of item. Decide which kind each piece of my notes is, and write it in the matching form.
 
 The four kinds:
 

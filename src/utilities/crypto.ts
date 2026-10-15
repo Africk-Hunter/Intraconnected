@@ -6,7 +6,7 @@ const PBKDF2_ITERATIONS_V2 = 600_000;
 const PASSWORD_WRAP_V2 = "v2:";
 const PASSWORD_WRAP_V3 = "v3:argon2id:";
 const FIELD_KEY_ID = "k1";
-const ARGON2_DEFAULTS = { m: 32_768, t: 3, p: 1 };
+export const ARGON2_DEFAULTS = { m: 32_768, t: 3, p: 1 };
 const ARGON2_LIMITS = { minMemory: 8, maxMemory: 65_536, maxIterations: 10, maxParallelism: 4 };
 
 export interface Argon2Parameters {
@@ -15,13 +15,13 @@ export interface Argon2Parameters {
     p: number;
 }
 
-function uint8ToBase64(bytes: Uint8Array): string {
+export function uint8ToBase64(bytes: Uint8Array): string {
     let binary = "";
     for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
     return btoa(binary);
 }
 
-function base64ToUint8(b64: string): Uint8Array {
+export function base64ToUint8(b64: string): Uint8Array {
     return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
@@ -39,7 +39,7 @@ async function deriveKEK(password: string, uid: string, suffix = "", iterations 
     );
 }
 
-async function aesEncrypt(data: Uint8Array, key: CryptoKey, aad?: string): Promise<string> {
+export async function aesEncrypt(data: Uint8Array, key: CryptoKey, aad?: string): Promise<string> {
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const algorithm: AesGcmParams = { name: "AES-GCM", iv };
     if (aad !== undefined) algorithm.additionalData = new TextEncoder().encode(aad);
@@ -50,7 +50,7 @@ async function aesEncrypt(data: Uint8Array, key: CryptoKey, aad?: string): Promi
     return uint8ToBase64(combined);
 }
 
-async function aesDecrypt(encoded: string, key: CryptoKey, aad?: string): Promise<Uint8Array> {
+export async function aesDecrypt(encoded: string, key: CryptoKey, aad?: string): Promise<Uint8Array> {
     const combined = base64ToUint8(encoded);
     if (combined.length < 28) throw new Error("Encrypted data is truncated.");
     const iv = combined.slice(0, 12);
@@ -123,7 +123,7 @@ async function importKey(raw: Uint8Array): Promise<CryptoKey> {
     return importDEK(raw, true);
 }
 
-async function deriveArgon2Key(password: string, salt: Uint8Array, parameters: Argon2Parameters): Promise<CryptoKey> {
+export async function deriveArgon2Key(password: string, salt: Uint8Array, parameters: Argon2Parameters): Promise<CryptoKey> {
     if (
         !Number.isInteger(parameters.m) || parameters.m < ARGON2_LIMITS.minMemory || parameters.m > ARGON2_LIMITS.maxMemory
         || !Number.isInteger(parameters.t) || parameters.t < 1 || parameters.t > ARGON2_LIMITS.maxIterations

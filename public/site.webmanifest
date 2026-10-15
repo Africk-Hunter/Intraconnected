@@ -1,7 +1,7 @@
 {
   "name": "Intraconnected",
   "short_name": "Intraconnected",
-  "description": "Private, encrypted mind mapping",
+  "description": "A place to grow ideas, on one encrypted tree",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#E9F9E5",

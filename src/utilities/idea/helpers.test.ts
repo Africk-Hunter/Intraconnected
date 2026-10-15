@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildAncestorPath, cleanLink, isOpenableLink } from './helpers';
+import { buildAncestorPath, cleanLink, getIdeaLink, isNoteWide, isOpenableLink, isVaultIdea, resolveIdeaLabel, VAULT_LABEL } from './helpers';
 import { IdeaType } from '../types';
 
 describe('buildAncestorPath', () => {
@@ -56,5 +56,31 @@ describe('link safety', () => {
 
     it('a javascript: link without slashes is turned into plain https text, not a script URL', () => {
         expect(cleanLink('javascript:alert(1)').startsWith('https://')).toBe(true);
+    });
+});
+
+describe('vault notes', () => {
+    const vault = { id: 9, parentID: 1, isNote: true, isVault: true, noteTitle: 'vault1:0a1b2c3d:dGl0bGU=', content: 'vault1:0a1b2c3d:c2VjcmV0', link: 'vault1:0a1b2c3d:bGluaw==' } as IdeaType;
+
+    it('show a placeholder label until the vault is unlocked, then the cached one', async () => {
+        const { setVaultUnlocked, cacheVaultLabel, lockVault } = await import('../vault/vaultSession');
+        expect(resolveIdeaLabel(vault)).toBe(VAULT_LABEL);
+        setVaultUnlocked({} as CryptoKey, '0a1b2c3d', 'uid-1');
+        cacheVaultLabel(vault.type === 'checklist' ? '' : vault.noteTitle!, 'Bank login');
+        expect(resolveIdeaLabel(vault)).toBe('Bank login');
+        lockVault('signout');
+        expect(resolveIdeaLabel(vault)).toBe(VAULT_LABEL);
+    });
+
+    it('never expose the stored link and are not wide', () => {
+        expect(isVaultIdea(vault)).toBe(true);
+        expect(getIdeaLink(vault)).toBe('');
+        expect(isNoteWide(vault)).toBe(false);
+    });
+
+    it('leave ordinary text that looks like vault ciphertext alone', () => {
+        const plain = { id: 10, parentID: 1, content: 'vault1:0a1b2c3d:abc', link: '' } as IdeaType;
+        expect(isVaultIdea(plain)).toBe(false);
+        expect(resolveIdeaLabel(plain)).toBe('vault1:0a1b2c3d:abc');
     });
 });

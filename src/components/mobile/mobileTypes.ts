@@ -4,7 +4,8 @@ export type SheetState =
     | { type: 'actions'; nodeId: number }
     | { type: 'move'; nodeId: number }
     | { type: 'confirmDelete'; nodeId: number }
-    | { type: 'checklist'; nodeId: number };
+    | { type: 'checklist'; nodeId: number }
+    | { type: 'vault'; nodeId: number; mode: 'view' | 'edit' };
 
 export const SWIPE_REVEAL_W = 160;
 export const SWIPE_THRESHOLD = 55;

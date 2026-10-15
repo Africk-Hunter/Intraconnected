@@ -60,7 +60,7 @@ class ErrorBoundary extends Component<Props, State> {
                             <h2 className="error-boundary-title" id="error-boundary-title">Something went wrong</h2>
                         </div>
                         <div className="error-boundary-body">
-                            <p className="error-boundary-text" id="error-boundary-desc">Sorry about that. Reloading the page should get you back to your map.</p>
+                            <p className="error-boundary-text" id="error-boundary-desc">Sorry about that. Reloading the page should get you back to your ideas.</p>
                             <p className="error-boundary-safe">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                     <path d="m5 12.5 4.5 4.5L19 7.5" />

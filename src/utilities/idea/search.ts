@@ -1,5 +1,5 @@
 import type { IdeaType } from '../types';
-import { getIdeaLink, isNoteMode, resolveIdeaLabel } from './helpers';
+import { getIdeaLink, isNoteMode, isVaultIdea, resolveIdeaLabel } from './helpers';
 
 export type IdeaKind = 'idea' | 'link' | 'checklist' | 'note';
 
@@ -98,6 +98,7 @@ function newestIdeas(ideas: IdeaType[], limit = 5): SearchResult[] {
 // What an empty search box offers: the ideas the user opened lately, or the
 // newest ones if they haven't opened any yet.
 export function suggestedIdeas(ideas: IdeaType[], visitedIds: number[], limit = 5): { title: 'Recent' | 'Newest'; results: SearchResult[] } {
+    ideas = ideas.filter((idea) => !isVaultIdea(idea));
     const recent = recentIdeas(ideas, visitedIds, limit);
     return recent.length > 0 ? { title: 'Recent', results: recent } : { title: 'Newest', results: newestIdeas(ideas, limit) };
 }
@@ -160,6 +161,9 @@ function matchWord(word: string, fields: string[]): number | null {
 // a name above it. Matches come back each followed by the ideas beneath it, so a
 // half-remembered name still leads to what is inside.
 export function searchIdeas(ideas: IdeaType[], query: string, limit = 50): SearchResult[] {
+    // Vault notes are never searched: their stored text is ciphertext, and a
+    // match on the label would show it outside the vault.
+    ideas = ideas.filter((idea) => !isVaultIdea(idea));
     const words = oneLine(query).toLowerCase().split(' ').filter(Boolean);
     if (words.length === 0) return [];
 

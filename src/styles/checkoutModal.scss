@@ -106,6 +106,39 @@
         &.link { background: $link; animation-delay: 0.3s; }
     }
 
+    // Same loader without the three node colors: one fill, picked by where it
+    // sits. Light tint by default (reads on the green Continue button); on the
+    // idea-loading card it takes the leaf green, the color of the ideas coming.
+    &.mono {
+        margin-right: 0;
+        --nodeLoader-lift: 0.5rem;
+
+        .nodeLoader-node,
+        .nodeLoader-node.parent,
+        .nodeLoader-node.link {
+            background: $background-color;
+        }
+    }
+
+    &.mono.dark {
+        .nodeLoader-node,
+        .nodeLoader-node.parent,
+        .nodeLoader-node.link {
+            background: black;
+        }
+    }
+
+    &.mono.small.dark {
+        .nodeLoader-node {
+            width: 0.7rem;
+            height: 0.7rem;
+        }
+    }
+
+    .ideaNode-loading &.mono .nodeLoader-node {
+        background: $leaf;
+    }
+
     &.small {
         gap: 0.4rem;
         margin-right: 0.8rem;
@@ -115,6 +148,16 @@
             width: 0.8rem;
             height: 0.8rem;
             box-shadow: 1px 1px 0 0 black;
+        }
+    }
+
+    &.mono.small {
+        margin-right: 0;
+        --nodeLoader-lift: 0.4rem;
+
+        .nodeLoader-node {
+            width: 0.95rem;
+            height: 0.95rem;
         }
     }
 
@@ -132,7 +175,7 @@
 
 @keyframes nodeLoaderBounce {
     0%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-0.7rem); }
+    40% { transform: translateY(calc(var(--nodeLoader-lift, 0.7rem) * -1)); }
 }
 
 .checkoutVerify {

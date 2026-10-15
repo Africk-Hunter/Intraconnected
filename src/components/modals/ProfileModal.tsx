@@ -6,7 +6,7 @@ import { getMailProvider, resetMailUrl, verifyMailUrl } from '../../utilities/ma
 import { signUserOut,deleteUserAccount, requestEmailChange,sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
 import { auth } from '../../firebaseConfig';
 import { clearPlanCelebrated } from '../../utilities/firebase/preferences';
-import { fetchFullIdeaList } from '../../utilities/idea/helpers';
+import { fetchFullIdeaList, isVaultIdea } from '../../utilities/idea/helpers';
 import { checkDevPassword } from '../../utilities/devPassword';
 import { cancelSubscription, resetSubscriptionForTesting, setPlanForTesting, listUsersForTesting, grantLifetimeForTesting, lookupUidByEmailForTesting, type TestUser, requestLifetimeRefund, isLifetimeRefundEligible } from '../../utilities/billing/billing';
 import { getCachedBillingStatus, BillingStatus } from '../../utilities/billing/billingCache';
@@ -16,11 +16,12 @@ import type { SortMode } from '../../utilities/idea/sorting';
 import { downloadFile } from '../../utilities/download';
 import { useSmoothHeight } from '../../utilities/useSmoothHeight';
 import ImportDataSection from './ImportDataSection';
+import VaultSettings from '../vault/VaultSettings';
 import { usePurchaseMode } from '../../utilities/billing/purchaseMode';
 import '../../styles/profileModal.scss';
 import '../../styles/sessionEndedModal.scss';
 
-type Tab = 'account' | 'data' | 'danger' | 'developer';
+type Tab = 'account' | 'data' | 'vault' | 'danger' | 'developer';
 type ExportFormat = 'md' | 'opml' | 'json';
 
 const EXPORT_MIME_TYPES: Record<ExportFormat, string> = {
@@ -34,6 +35,7 @@ type MobileView = 'tabs' | Tab;
 const TABS: { id: Tab; label: string; desc: string }[] = [
     { id: 'account', label: 'Account', desc: 'Plan, email, password & account settings' },
     { id: 'data', label: 'Data', desc: 'Import & export your ideas' },
+    { id: 'vault', label: 'Vault', desc: 'Passphrase, recovery code and auto-lock for vault notes' },
     { id: 'danger', label: 'Danger Zone', desc: 'Delete your account' },
     ...(import.meta.env.DEV
         ? [{ id: 'developer' as const, label: 'Developer Testing', desc: 'Dev-only tools' }]
@@ -43,7 +45,7 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
 function ProfileModal() {
     // The app offers no upgrade prompts (purchaseMode.ts); managing a plan bought on the website still works.
     const purchaseMode = usePurchaseMode();
-    const { profileModalOpen, setProfileModalOpen, billingPlan, setBillingPlan, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
+    const { profileModalOpen, setProfileModalOpen, billingPlan, setBillingPlan, setUpgradeModalOpen, setUpgradeModalReason, profileTabRequest, setProfileTabRequest } = useIdeaContext();
 
     const [activeTab, setActiveTab] = useState<Tab>('account');
     const [mobileView, setMobileView] = useState<MobileView>('tabs');
@@ -99,6 +101,15 @@ function ProfileModal() {
             refreshEmailVerified().then(setEmailVerified).catch(() => {});
         }
     }, [profileModalOpen]);
+
+    // "Set up vault" elsewhere opens Profile straight on the Vault tab.
+    useEffect(() => {
+        if (profileModalOpen && profileTabRequest) {
+            setActiveTab(profileTabRequest);
+            setMobileView(profileTabRequest);
+            setProfileTabRequest(null);
+        }
+    }, [profileModalOpen, profileTabRequest, setProfileTabRequest]);
 
     function handleOpenUpgrade() {
         handleClose();
@@ -294,7 +305,7 @@ function ProfileModal() {
     // Blob/object-URL download pattern. Never plan-gated — exporting is the no-lock-in promise.
     function handleExportData(format: ExportFormat) {
         const now = new Date();
-        const ideas = fetchFullIdeaList();
+        const ideas = fetchFullIdeaList().filter(idea => !isVaultIdea(idea));
         const sortMode = (localStorage.getItem('idea_sort_mode') as SortMode | null) ?? 'priority';
         let contents: string;
         if (format === 'md') {
@@ -677,7 +688,7 @@ function ProfileModal() {
             <section className="profile-section profile-section--export">
                 <h3 className="profile-section-title">Export Your Data</h3>
                 <p className="profile-section-desc">
-                    Download a copy of your ideas anytime. Pick the format that fits where they're going.
+                    Download a copy of your ideas anytime. Pick the format that fits where they're going. Vault notes are left out: export them from the Vault tab while it's unlocked.
                 </p>
                 <div className="profile-format-list">
                     {([
@@ -856,6 +867,7 @@ function ProfileModal() {
     const tabContent: Record<Tab, ReactNode> = {
         account: accountContent,
         data: dataContent,
+        vault: <VaultSettings />,
         danger: dangerContent,
         developer: import.meta.env.DEV ? developerContent : null,
     };

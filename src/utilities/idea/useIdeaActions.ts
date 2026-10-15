@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { recursivelyDeleteChildren, restoreIdeas, updateIdeaCensored, updateIdeaParentId, updateIdeaPriority } from './ideaStore';
-import { fetchFullIdeaList, getIdeaLink, getNameFromID, getParentID, isNoteMode, openIdeaLink } from './helpers';
+import { fetchFullIdeaList, getIdeaLink, getNameFromID, getParentID, isNoteMode, isVaultIdea, openIdeaLink } from './helpers';
 import { branchCopyText, childrenCopyText, ideaCopyText } from './copyText';
 import { getIdeasByParentID } from './parsing';
 import { pushUndo, showNotice, undoLast } from './undoStack';
@@ -60,7 +60,7 @@ export function useIdeaActions() {
         rootId, setIdeas, setNewIdeaSwitch, navigateToId, setChecklistModalId,
         setRenameModalOpen, setCurrentNameChangeId, setSelectedIdeaName,
         setLinkChangeModalOpen, setCurrentLinkID, setCurrentLink,
-        setPendingDeleteId, setDeleteConfirmModalOpen, setDeleteModalOrigin, setMoveIdeaId,
+        setPendingDeleteId, setDeleteConfirmModalOpen, setDeleteModalOrigin, setMoveIdeaId, setVaultNote,
     } = useIdeaContext();
 
     const refresh = useCallback(() => {
@@ -121,12 +121,13 @@ export function useIdeaActions() {
     const openIdea = useCallback((id: number) => {
         const idea = findIdea(id);
         if (!idea) return;
+        if (isVaultIdea(idea)) { setVaultNote({ id, mode: 'view' }); return; }
         if (idea.type === 'checklist') { setChecklistModalId(id); return; }
         if (isNoteMode(idea)) return;
         const link = getIdeaLink(idea);
         if (link !== '') { openIdeaLink(link); return; }
         navigateToId(id);
-    }, [navigateToId, setChecklistModalId]);
+    }, [navigateToId, setChecklistModalId, setVaultNote]);
 
     // Opens the rename dialog for a card; with no id, for the idea you are inside.
     const renameIdea = useCallback((id?: number) => {
@@ -138,11 +139,12 @@ export function useIdeaActions() {
         }
         const idea = findIdea(id);
         if (!idea) return;
+        if (isVaultIdea(idea)) { setVaultNote({ id, mode: 'edit' }); return; }
         const noteTitle = (idea as { noteTitle?: string }).noteTitle ?? '';
         setCurrentNameChangeId(id);
         setSelectedIdeaName(isNoteMode(idea) ? noteTitle : idea.content);
         setRenameModalOpen(true);
-    }, [rootId, setCurrentNameChangeId, setRenameModalOpen, setSelectedIdeaName]);
+    }, [rootId, setCurrentNameChangeId, setRenameModalOpen, setSelectedIdeaName, setVaultNote]);
 
     const editIdeaLink = useCallback((id: number) => {
         setCurrentLinkID(id);
@@ -153,6 +155,7 @@ export function useIdeaActions() {
     const copyIdea = useCallback((id: number) => {
         const idea = findIdea(id);
         if (!idea) return;
+        if (isVaultIdea(idea)) { showNotice('Open the vault note to copy its secret'); return; }
         const link = getIdeaLink(idea);
         navigator.clipboard.writeText(ideaCopyText(idea))
             .then(() => {

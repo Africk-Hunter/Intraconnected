@@ -1809,17 +1809,27 @@
 // connected segmented control (matches desktop's .creation-tabs).
 .mmobile-create-tabs {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 12px;
+    flex: none;
+
+    // Too narrow for four labels in a row (Checklist is the long one): two rows of two.
+    @media (max-width: 349px) { flex-wrap: wrap; }
 }
 
 .mmobile-create-tab {
     all: unset;
     box-sizing: border-box;
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
     text-align: center;
-    padding: 10px 0;
-    font-size: 1rem;
+    padding: 0 2px;
+    font-size: 0.82rem; // 13px: "Checklist" fits one of four tabs on a 360px screen
     font-weight: 700;
     cursor: pointer;
     background: $neutral;
@@ -1827,16 +1837,151 @@
     border: 2px solid #111;
     border-radius: 10px;
     box-shadow: 0 3px 0 #111;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+    @media (max-width: 349px) { flex-basis: calc(50% - 3px); }
+
+    &:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
 
     // Selected tab takes the color of the node type it represents — matches
-    // the leaf/checklist/note node colors used on desktop.
+    // the leaf/checklist/note node colors used on desktop. It also sits
+    // pressed in (lower, no shadow), so selection never relies on color alone.
     &--active {
         color: white;
+        transform: translateY(3px);
+        box-shadow: 0 0 0 #111;
     }
 
     &--idea.mmobile-create-tab--active { background: $leaf; }
     &--checklist.mmobile-create-tab--active { background: $indigo; }
     &--note.mmobile-create-tab--active { background: $neo-green; }
+}
+
+// The create sheet is three zones: a fixed header (grab handle + ✕), a body that
+// scrolls, and a pinned footer. With the keyboard up the sheet is short, and the
+// tabs and the main button must never scroll out of reach.
+.mmobile-sheet.mmobile-sheet--create {
+    --cp-x: 16px;
+    --cp-y: 12px;
+    padding: var(--cp-y) var(--cp-x);
+    overflow: hidden;
+
+    // The sheet itself no longer scrolls, so the header needs no sticky offset.
+    .mmobile-sheet-top {
+        position: relative;
+        top: auto;
+        margin: calc(var(--cp-y) * -1) calc(var(--cp-x) * -1) 0;
+        padding: 0 var(--cp-x);
+        height: 44px;
+        // Body and footer sit above the keyboard; this row is the swipe-down grab.
+    }
+    .mmobile-sheet-grab { position: absolute; top: 9px; left: 50%; margin: 0; transform: translateX(-50%); }
+    .mmobile-sheet-title--bare { margin: 0; padding: 0; height: 44px; }
+
+    .mmobile-discard { margin-bottom: 8px; flex: none; }
+}
+
+.mmobile-create-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 2px 3px 6px 0; // room for the inputs' offset shadows
+    margin-bottom: -3px;
+
+    > * { flex-shrink: 0; }
+    &::-webkit-scrollbar { display: none; }
+}
+
+.mmobile-sheet-btns.mmobile-create-footer {
+    flex: none;
+    margin: 6px calc(var(--cp-x, 16px) * -1) 0;
+    padding: 10px var(--cp-x, 16px) 3px;
+    border-top: 2px solid #111;
+
+    .mmobile-sheet-btn { min-height: 44px; padding: 8px 10px; }
+    .mmobile-sheet-btn--cancel { flex: 1; }
+    .mmobile-sheet-btn--save { flex: 2; }
+}
+
+// Idea tab: name field plus a 44px-or-larger link button; the link field opens beneath.
+.mmobile-create-name-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    flex: none;
+
+    .mmobile-rename-input { flex: 1; min-width: 0; }
+}
+
+.mmobile-create-link-btn {
+    all: unset;
+    box-sizing: border-box;
+    flex: none;
+    width: 48px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #111;
+    border-radius: 11px;
+    box-shadow: 0 3px 0 #111;
+    background: $neutral;
+    color: #111;
+    cursor: pointer;
+
+    // A link is typed in but the field is folded: still visible that there is one.
+    &--filled { background: $link; }
+    &:active { transform: translateY(2px); box-shadow: 0 1px 0 #111; }
+    &:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
+}
+
+// The note text grows with what is typed, then scrolls itself so the caret stays on screen.
+.mmobile-rename-input--capped {
+    overflow-y: auto;
+    max-height: 9.5rem;
+}
+
+// Priority on one line where height is short (the create sheet).
+.mmobile-priority-row--inline {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 0;
+
+    .mmobile-priority-label { flex: none; width: 3.5rem; }
+    .mmobile-priority-btns { flex: 1; min-width: 0; gap: 5px; }
+    .mmobile-priority-btn {
+        font-size: 0.85rem;
+        padding: 0;
+        &::before { margin-right: 4px; }
+    }
+}
+
+// Phones: tighter fields, still 16px text (iOS zooms into smaller) and 44px targets.
+@media (max-width: 639px) {
+    .mmobile-sheet--create {
+        .mmobile-rename-input { font-size: 1rem; padding: 10px 12px; }
+        .mmobile-sheet-create-fields,
+        .mmobile-sheet-cl-create { gap: 8px; }
+        .mmobile-sheet-cl-items { max-height: none; overflow: visible; }
+        .mmobile-sheet-cl-item-del {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+            margin: -12px -12px -12px 0;
+            padding: 0;
+        }
+    }
+}
+
+@media (min-width: 640px) {
+    .mmobile-sheet.mmobile-sheet--create { --cp-x: 22px; --cp-y: 16px; }
 }
 
 // Checklist creation form in the new-item sheet
@@ -2253,12 +2398,12 @@
     }
 
     .mmobile-create-tabs {
-        gap: 12px;
+        gap: 8px;
         margin-bottom: 16px;
     }
 
     .mmobile-create-tab {
-        font-size: 1.2rem;
+        font-size: 1.05rem;
         padding: 14px 0;
         border-width: 3px;
         border-radius: 14px;

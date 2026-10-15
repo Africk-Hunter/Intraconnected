@@ -10,7 +10,9 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { dragPreviewScale } from '../utilities/idea/dragPreview';
 import { pushItemDeleteUndo } from '../utilities/idea/checklistUndo';
-import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, openIdeaLink, isNoteMode, isNoteWide, updateIdeaName } from '../utilities';
+import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, openIdeaLink, isNoteMode, isNoteWide, isVaultIdea, resolveIdeaLabel, updateIdeaName, VAULT_LABEL } from '../utilities';
+import VaultLockGlyph from './vault/VaultLockGlyph';
+import { useVaultState } from '../utilities/vault/useVaultState';
 
 const NOTE_BODY_MAX_LENGTH = 2000;
 
@@ -74,7 +76,9 @@ interface IdeaNodeProps {
 }
 
 const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
-    const { navigateToId, setRenameModalOpen, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId, setCardMenu } = useIdeaContext();
+    const { navigateToId, setRenameModalOpen, setCurrentNameChangeId, setSelectedIdeaName, setNewIdeaSwitch, setChecklistModalId, pendingDeleteId, setCardMenu, setVaultNote } = useIdeaContext();
+    const vault = isVaultIdea(idea);
+    const { unlocked: vaultUnlocked } = useVaultState();
 
     const { id, content: title } = idea;
     const link = getIdeaLink(idea);
@@ -104,7 +108,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     const [leafCollapseBtnHeight, setLeafCollapseBtnHeight] = useState<string | undefined>(undefined);
     const leafCollapseBtnAnimRef = useRef<Animation | null>(null);
 
-    const noteMode = isNoteMode(idea);
+    const noteMode = isNoteMode(idea) && !vault;
     const [isEditingBody, setIsEditingBody] = useState(false);
     const bodyEditRef = useRef<HTMLDivElement>(null);
     const bodyEditClickPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -126,7 +130,8 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         return window.matchMedia('(max-width: 768px)').matches;
     });
 
-    const censored = idea.censored === true;
+    // A vault note has its own lock; the censor veil never applies to it.
+    const censored = idea.censored === true && !vault;
     // Revealing is per card and per visit: locking, navigating or reloading veils it again.
     const [revealed, setRevealed] = useState(false);
     useEffect(() => { setRevealed(false); }, [id, censored]);
@@ -168,7 +173,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     useEffect(() => {
         if (!textRef.current || !isLeaf || isExpanded) return;
         setNeedsExpand(textRef.current.scrollHeight > textRef.current.clientHeight);
-    }, [title, isLeaf, isExpanded]);
+    }, [title, isLeaf, isExpanded, veiled]);
 
     useEffect(() => {
         setIsChecklistExpanded(false);
@@ -234,7 +239,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     });
     // Checklists, notes and links can't hold children: they stay in collision detection
     // (handleDragEnd refuses the drop) so they can tint red instead of lighting up.
-    const canAcceptDrop = !(isChecklist || noteMode || link !== '');
+    const canAcceptDrop = !(isChecklist || noteMode || vault || link !== '');
     const nodeElRef = useRef<HTMLElement | null>(null);
     const dragXRef = useRef(0);
     dragXRef.current = transform?.x ?? 0;
@@ -714,6 +719,46 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         const newItems = arrayMove(localItems, oldIndex, newIndex);
         setLocalItems(newItems);
         updateChecklistItems(id, newItems);
+    }
+
+    if (vault) {
+        // Locked, the name is still ciphertext: show the type instead of a label.
+        const vaultLabel = resolveIdeaLabel(idea);
+        const nameKnown = vaultLabel !== VAULT_LABEL;
+        return (
+            <div
+                ref={setNodeRef}
+                style={combinedStyle}
+                className={`neobrutal-button ideaNode ideaNode--vault${vaultUnlocked ? ' ideaNode--vault-open' : ''}${fadeInClass}${priorityClass}`}
+                onClick={() => setVaultNote({ id, mode: 'view' })}
+                onKeyDown={e => {
+                    if (e.target === e.currentTarget && e.key === 'Enter') { e.preventDefault(); setVaultNote({ id, mode: 'view' }); }
+                }}
+                onContextMenu={handleContextMenu}
+                data-idea-id={id} data-dragging={isDragging || undefined}
+                {...attributes}
+                {...dragListeners}
+            >
+                <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} onPointerDown={e => e.stopPropagation()} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
+                {moreButton}
+                <div className="vault-card-head">
+                    {nameKnown && <span className="vault-card-eyebrow">Vault note</span>}
+                    <span className="vault-card-title">{vaultLabel}</span>
+                </div>
+                <div className="vault-card-body">
+                    <div className="vault-card-slot" aria-hidden="true">
+                        <span className="vault-card-dots">••••••••••</span>
+                    </div>
+                    <div className="vault-card-foot">
+                        <span className="vault-chip">
+                            <VaultLockGlyph open={vaultUnlocked} />
+                            {vaultUnlocked ? 'Unlocked' : 'Locked'}
+                        </span>
+                        <span className="vault-card-hint">{vaultUnlocked ? 'Click to open' : 'Click to unlock'}</span>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     if (veiled) {

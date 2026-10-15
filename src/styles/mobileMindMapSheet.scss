@@ -4,7 +4,7 @@
 
 .mmobile-mindmap-sheet {
     position: fixed;
-    top: 8px;
+    top: max(8px, env(safe-area-inset-top, 8px));
     left: 8px;
     right: 8px;
     bottom: calc(max(10px, env(safe-area-inset-bottom, 10px)) + 102px);

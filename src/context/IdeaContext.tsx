@@ -15,6 +15,11 @@ export interface CardMenuState {
     y: number;
 }
 
+export interface VaultNoteState {
+    id: number;
+    mode: 'view' | 'edit';
+}
+
 interface IdeaContextType {
     ideas: IdeaType[];
     setIdeas: React.Dispatch<React.SetStateAction<IdeaType[]>>;
@@ -77,6 +82,15 @@ interface IdeaContextType {
     // The phone layout keeps its own current level, so "open this idea" requests from elsewhere (an import) go through here.
     pendingOpenId: number | null;
     setPendingOpenId: (id: number | null) => void;
+    // The vault note open in the desktop vault modal, and how.
+    vaultNote: VaultNoteState | null;
+    setVaultNote: (note: VaultNoteState | null) => void;
+    // Opens Profile at a given tab (e.g. "Set up vault" from the Create modal).
+    profileTabRequest: 'vault' | null;
+    setProfileTabRequest: (tab: 'vault' | null) => void;
+    // Which Create UI sent the person to Profile → Vault; it reopens on the Vault tab when Profile closes.
+    createReturn: 'desktop' | 'mobile' | null;
+    setCreateReturn: (target: 'desktop' | 'mobile' | null) => void;
 }
 
 const IdeaContext = createContext<IdeaContextType | undefined>(undefined);
@@ -113,6 +127,9 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [cardMenu, setCardMenu] = useState<CardMenuState | null>(null);
     const [moveIdeaId, setMoveIdeaId] = useState<number | null>(null);
     const [pendingOpenId, setPendingOpenId] = useState<number | null>(null);
+    const [vaultNote, setVaultNote] = useState<VaultNoteState | null>(null);
+    const [profileTabRequest, setProfileTabRequest] = useState<'vault' | null>(null);
+    const [createReturn, setCreateReturn] = useState<'desktop' | 'mobile' | null>(null);
 
     const rootIdStack = useRef<number[]>([]);
 
@@ -199,6 +216,12 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setMoveIdeaId,
                 pendingOpenId,
                 setPendingOpenId,
+                vaultNote,
+                setVaultNote,
+                profileTabRequest,
+                setProfileTabRequest,
+                createReturn,
+                setCreateReturn,
             }}>
             {children}
         </IdeaContext.Provider>

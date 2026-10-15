@@ -66,6 +66,12 @@ export function updateChecklistItems(id: number, items: ChecklistItem[]): void {
     commit({ kind: "update", id, patch: { items } }, { debounceMs: DEBOUNCE_MS });
 }
 
+// A vault note's edited fields (already vault ciphertext) as one write.
+export function updateVaultFields(id: number, patch: { content?: string; noteTitle?: string; link?: string }): void {
+    if (Object.keys(patch).length === 0) return;
+    commit({ kind: "update", id, patch });
+}
+
 // The idea and everything under it, children before parents.
 function collectSubtreeIds(list: IdeaType[], rootIdeaId: number): number[] {
     const childrenOf = new Map<number, number[]>();
@@ -88,8 +94,16 @@ function collectSubtreeIds(list: IdeaType[], rootIdeaId: number): number[] {
 
 // Returns what was removed, so the caller can offer Undo (restoreIdeas).
 export function recursivelyDeleteChildren(ideaId: number): IdeaType[] {
+    return deleteIds(collectSubtreeIds(fetchFullIdeaList(), ideaId));
+}
+
+// Exactly these ideas (no subtrees), e.g. every vault note when the vault is reset.
+export function deleteIdeasById(ids: number[]): IdeaType[] {
+    return deleteIds(ids);
+}
+
+function deleteIds(ids: number[]): IdeaType[] {
     const list = fetchFullIdeaList();
-    const ids = collectSubtreeIds(list, ideaId);
     const removed = new Set(ids);
     writeLocal(list.filter((idea) => !removed.has(idea.id)));
 

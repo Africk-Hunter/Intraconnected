@@ -34,3 +34,9 @@ stripe-testing.local.md
 
 # Published artifacts (local copies)
 programmer-docs/artifacts/
+
+# Self-signed dev certificate (scripts/dev-https.cjs)
+.cert/
+
+# Personal ngrok settings (scripts/dev-local.cjs)
+.ngrok.local.json

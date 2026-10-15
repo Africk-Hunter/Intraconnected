@@ -134,7 +134,7 @@ const Pricing: React.FC = () => {
       </section>
 
       <div className="pricingTaglineWrap">
-        <div className="pricingTagline">Under $1.25 a month. Your ideas last forever.</div>
+        <div className="pricingTagline">Under $1.25 a month. Your idea won't outgrow it.</div>
         <p className="pricingNoLockIn">
           Your data is never locked in. Export to Markdown, OPML or JSON anytime, on any plan.
         </p>

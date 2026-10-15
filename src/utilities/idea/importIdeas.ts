@@ -101,7 +101,7 @@ export function applyImport(plan: ImportPlan, options: { useException?: boolean 
     const room = freeRoom(existing.length);
     if (room !== null && plan.ideas.length > room) throw new ImportError('This import would go over the Free plan’s limit.');
     const taken = new Set(existing.map((i) => i.id));
-    if (plan.ideas.some((idea) => taken.has(idea.id))) throw new ImportError('Your map changed while importing. Please try again.');
+    if (plan.ideas.some((idea) => taken.has(idea.id))) throw new ImportError('Your ideas changed while importing. Please try again.');
 
     try {
         localStorage.setItem('ideas', JSON.stringify([...existing, ...plan.ideas]));

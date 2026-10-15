@@ -3,6 +3,13 @@ import { useIdeaContext } from "../../context/IdeaContext";
 import { cleanLink } from "../../utilities";
 import { ChecklistItem } from "../../utilities/types";
 import AnimatedOverlay from "../AnimatedOverlay";
+import VaultCreateFields from "../vault/VaultCreateFields";
+import type { VaultDraft } from "../vault/VaultSecretFields";
+import { useVaultState } from "../../utilities/vault/useVaultState";
+import { useOpenVaultSettings } from "../vault/vaultUi";
+
+type Tab = 'idea' | 'checklist' | 'note' | 'vault';
+const EMPTY_VAULT: VaultDraft = { label: '', secret: '', link: '' };
 
 const ITEM_REMOVE_ANIM_MS = 300;
 // Checklist title is a single-line input; note body mirrors the 2000-char cap
@@ -16,12 +23,13 @@ interface CreationModalProps {
     handleIdeaCreation: (content: string, parentId: number, link: string, priority?: 1 | 2 | 3) => void;
     handleChecklistCreation: (title: string, parentId: number, items: ChecklistItem[], priority?: 1 | 2 | 3) => void;
     handleNoteCreation: (title: string, parentId: number, body: string, priority?: 1 | 2 | 3) => void;
+    handleVaultCreation: (label: string, parentId: number, secret: string, link: string, priority?: 1 | 2 | 3) => Promise<boolean>;
 }
 
-function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNoteCreation }: CreationModalProps) {
+function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNoteCreation, handleVaultCreation }: CreationModalProps) {
     const { rootId, creationModalOpen, setCreationModalOpen, modalContent, setModalContent, setNewIdeaSwitch } = useIdeaContext();
 
-    const [activeTab, setActiveTab] = useState<'idea' | 'checklist' | 'note'>('idea');
+    const [activeTab, setActiveTab] = useState<Tab>('idea');
     const [isLinkBoxShown, setisLinkBoxShown] = useState(false);
     const [isLinkClosing, setIsLinkClosing] = useState(false);
     const [link, setLink] = useState('');
@@ -33,6 +41,20 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     const [noteTitle, setNoteTitle] = useState('');
     const [noteBody, setNoteBody] = useState('');
     const [priority, setPriority] = useState<1 | 2 | 3 | undefined>(undefined);
+    // The vault tab's text is kept apart from the other tabs on purpose: a secret must never carry over into an ordinary idea.
+    const [vaultDraft, setVaultDraft] = useState<VaultDraft>(EMPTY_VAULT);
+    const [vaultCreating, setVaultCreating] = useState(false);
+    const { unlocked: vaultUnlocked } = useVaultState();
+    const openVaultSettings = useOpenVaultSettings('desktop');
+    const { profileModalOpen, createReturn, setCreateReturn } = useIdeaContext();
+
+    // Profile → Vault was opened from this modal: come back to the Vault tab once Profile closes.
+    useEffect(() => {
+        if (createReturn !== 'desktop' || profileModalOpen) return;
+        setCreateReturn(null);
+        setActiveTab('vault');
+        setCreationModalOpen(true);
+    }, [createReturn, profileModalOpen, setCreateReturn, setCreationModalOpen]);
     const [removingItemIds, setRemovingItemIds] = useState<Set<string>>(new Set());
     const [panelHeight, setPanelHeight] = useState<number | undefined>(undefined);
 
@@ -48,6 +70,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     const noteSectionRef = useRef<HTMLElement>(null);
     const noteContentHolderRef = useRef<HTMLElement>(null);
     const noteBodyRef = useRef<HTMLTextAreaElement>(null);
+    const vaultSectionRef = useRef<HTMLDivElement>(null);
     const removeTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
     const pressFallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Full, untruncated text last typed into the idea or note fields (the two
@@ -71,7 +94,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     useEffect(() => {
         if (activeTab === 'idea') ideaTextareaRef.current?.focus();
         else if (activeTab === 'checklist') checklistTitleRef.current?.focus();
-        else noteTitleRef.current?.focus();
+        else if (activeTab === 'note') noteTitleRef.current?.focus();
     }, [activeTab]);
 
     // AnimatedOverlay mounts the modal's content on its own effect-driven timing
@@ -133,6 +156,10 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
             const holderStyle = getComputedStyle(holder);
             const borderY = parseFloat(holderStyle.borderTopWidth) + parseFloat(holderStyle.borderBottomWidth);
             setPanelHeight(borderY + measureNatural(textarea) + linkArea.offsetHeight);
+        } else if (activeTab === 'vault') {
+            const section = vaultSectionRef.current;
+            if (!section) return;
+            setPanelHeight(Math.max(measureNatural(section), 0));
         } else {
             const section = noteSectionRef.current;
             const title = noteTitleRef.current;
@@ -163,7 +190,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
             };
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-runs only when the listed deps change, by design
-    }, [recomputePanelHeight, checklistItems, removingItemIds, modalContent, isLinkBoxShown, link, noteTitle, noteBody]);
+    }, [recomputePanelHeight, checklistItems, removingItemIds, modalContent, isLinkBoxShown, link, noteTitle, noteBody, vaultUnlocked, vaultDraft]);
 
     // Fires when AnimatedOverlay actually mounts this modal's DOM (fresh
     // node every open, since it unmounts on close) — the one point where we
@@ -199,6 +226,8 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         setNoteTitle('');
         setNoteBody('');
         setPriority(undefined);
+        setVaultDraft(EMPTY_VAULT);
+        setVaultCreating(false);
         masterContentRef.current = '';
         removeTimeoutsRef.current.forEach(t => clearTimeout(t));
         removeTimeoutsRef.current.clear();
@@ -237,6 +266,26 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         setCreationModalOpen(false);
         setNewIdeaSwitch(prev => !prev);
         reset();
+    }
+
+    async function handleCreateVault() {
+        if (!vaultDraft.label.trim() || !vaultDraft.secret.trim() || !vaultUnlocked || vaultCreating) return;
+        setVaultCreating(true);
+        try {
+            const created = await handleVaultCreation(vaultDraft.label.trim(), rootId, vaultDraft.secret, vaultDraft.link, priority);
+            if (!created) { setVaultCreating(false); return; }
+            setCreationModalOpen(false);
+            setNewIdeaSwitch(prev => !prev);
+            reset();
+        } catch {
+            setVaultCreating(false);
+        }
+    }
+
+    // "Set up vault" / "Forgot passphrase?": leave this modal, open Profile → Vault.
+    function openVaultSettingsFromCreate() {
+        handleClose();
+        openVaultSettings();
     }
 
     function addItem() {
@@ -293,7 +342,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         }
     }
 
-    function getTabContent(tab: 'idea' | 'checklist' | 'note'): string {
+    function getTabContent(tab: Tab): string {
         if (tab === 'idea') return modalContent;
         if (tab === 'checklist') return checklistTitle;
         return noteBody;
@@ -308,8 +357,8 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     // view of the master; it never feeds back into it. If the master is empty
     // (user only ever typed in checklist), the short checklist text is carried
     // over instead, same as before.
-    function switchTab(tab: 'idea' | 'checklist' | 'note') {
-        if (tab !== activeTab) {
+    function switchTab(tab: Tab) {
+        if (tab !== activeTab && tab !== 'vault' && activeTab !== 'vault') {
             const source = masterContentRef.current || getTabContent(activeTab);
             if (tab === 'checklist') setChecklistTitle(source.slice(0, CHECKLIST_TITLE_MAX_LENGTH));
             else if (tab === 'note') setNoteBody(source.slice(0, NOTE_BODY_MAX_LENGTH));
@@ -339,6 +388,12 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                 onClick={() => switchTab('note')}
                             >
                                 Note
+                            </button>
+                            <button
+                                className={`creation-tab creation-tab--vault${activeTab === 'vault' ? ' creation-tab--active' : ''}`}
+                                onClick={() => switchTab('vault')}
+                            >
+                                Vault
                             </button>
                         </div>
 
@@ -440,6 +495,17 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                     </section>
                                 </section>
                             </div>
+
+                            <div className={`creation-panel${activeTab === 'vault' ? ' creation-panel--active' : ''}`}>
+                                <div ref={vaultSectionRef} className="vault-creation">
+                                    <VaultCreateFields
+                                        draft={vaultDraft}
+                                        onChange={setVaultDraft}
+                                        onOpenSettings={openVaultSettingsFromCreate}
+                                        onSubmitShortcut={handleCreateVault}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="priority-picker">
@@ -483,6 +549,15 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                     className="modalButton continue neobrutal-button"
                                     onClick={handleCreateNote}
                                     disabled={!noteTitle.trim()}
+                                >
+                                    Create
+                                </button>
+                            )}
+                            {activeTab === 'vault' && (
+                                <button
+                                    className="modalButton continue neobrutal-button"
+                                    onClick={handleCreateVault}
+                                    disabled={!vaultDraft.label.trim() || !vaultDraft.secret.trim() || !vaultUnlocked || vaultCreating}
                                 >
                                     Create
                                 </button>

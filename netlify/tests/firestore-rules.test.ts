@@ -15,4 +15,10 @@ describe("firestore.rules", () => {
             /match \/recoveryAudit\/\{auditId\}\s*\{\s*allow read: if request\.auth != null && resource\.data\.uid == request\.auth\.uid;\s*allow write: if false;\s*\}/
         );
     });
+
+    it("leaves meta/vault under the owner-only meta rule (it is the user's own wrapped key, written from the browser)", () => {
+        const rules = readFileSync(new URL("../../firestore.rules", import.meta.url), "utf8");
+        expect(rules).not.toContain("'vault'");
+        expect(rules).toMatch(/match \/meta\/\{metaDocId\}/);
+    });
 });

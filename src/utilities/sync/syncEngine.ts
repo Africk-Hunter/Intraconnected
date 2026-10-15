@@ -142,6 +142,7 @@ async function decodeIdea(data: DocumentData, dek: CryptoKey, uid: string): Prom
         ...(data.priority !== undefined ? { priority: data.priority as 1 | 2 | 3 } : {}),
         ...(isCensored(data) ? { censored: true } : {}),
         ...(data.isNote !== undefined ? { isNote: data.isNote as boolean } : {}),
+        ...(data.isVault === true ? { isVault: true } : {}),
         ...(data.noteTitle !== undefined ? { noteTitle: await decryptField(data.noteTitle as string, dek, `${uid}|${data.id}|noteTitle`) } : {}),
     };
 }

@@ -1,5 +1,5 @@
 import { ChecklistItem, IdeaType } from "../types";
-import { getIdeaLink, isNoteMode, resolveIdeaLabel } from "./helpers";
+import { getIdeaLink, isNoteMode, isVaultIdea, resolveIdeaLabel } from "./helpers";
 import { sortIdeas, SortMode } from "./sorting";
 
 // Pure serializers for the Profile → Export Your Data formats. No DOM, no
@@ -28,6 +28,8 @@ export interface ExportTree {
 // same as syncEngine does. Ideas caught in a parent cycle are unreachable from
 // the root, so they're appended to the top level too, rather than dropped.
 export function buildIdeaTree(ideas: IdeaType[], sortMode: SortMode): ExportTree {
+    // Vault notes never leave in an ordinary export (Profile → Vault has its own).
+    ideas = ideas.filter((idea) => !isVaultIdea(idea));
     const root = ideas.find((i) => i.id === ROOT_ID);
     const rest = ideas.filter((i) => i.id !== ROOT_ID);
     const ids = new Set(rest.map((i) => i.id));

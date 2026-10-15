@@ -138,3 +138,14 @@ describe("escapeXmlAttribute", () => {
         expect(escapeXmlAttribute("a\u0000b\u0007c\tdo😀\uD800")).toBe("abc&#9;do😀");
     });
 });
+
+describe("vault notes", () => {
+    const vault = idea(9, 1, { isNote: true, isVault: true, noteTitle: "vault1:0a1b2c3d:dGl0bGU=", content: "vault1:0a1b2c3d:c2VjcmV0", link: "vault1:0a1b2c3d:bGluaw==" } as Partial<IdeaType>);
+
+    it("are left out of Markdown and OPML", () => {
+        const list = [idea(2), vault];
+        expect(ideasToMarkdown(list)).toBe("# Ideas\n\n- idea 2\n");
+        expect(ideasToOpml(list, { exportedAt })).not.toContain("vault1");
+        expect(ideasToOpml(list, { exportedAt })).not.toContain("Vault note");
+    });
+});

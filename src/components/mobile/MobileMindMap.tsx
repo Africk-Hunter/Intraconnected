@@ -14,6 +14,8 @@ import {
     updateIdeaLink,
     updateIdeaNoteTitle,
     isNoteMode,
+    isVaultIdea,
+    handleVaultCreation,
     resolveIdeaLabel,
     updateIdeaParentId,
     updateIdeaPriority,
@@ -38,6 +40,11 @@ import type { SearchResult } from '../../utilities/idea/search';
 import MobilePatchNotesSheet from './MobilePatchNotesSheet';
 import MobileUndoToast, { type UndoToastState } from './MobileUndoToast';
 import MobilePriorityPicker from './MobilePriorityPicker';
+import VaultNotePanel from '../vault/VaultNotePanel';
+import VaultCreateFields, { type VaultDraft } from '../vault/VaultCreateFields';
+import { useOpenVaultSettings, type VaultSetupStatus } from '../vault/vaultUi';
+import { useVaultState } from '../../utilities/vault/useVaultState';
+import VaultLockGlyph from '../vault/VaultLockGlyph';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 import { playSheetExit } from './sheetExit';
 import ExitPresence from './ExitPresence';
@@ -74,6 +81,9 @@ function isTypingSheet(sheet: SheetState | null): boolean {
     return sheet?.type === 'create' || sheet?.type === 'edit';
 }
 
+// The locked Vault tab's unlock form lives in the sheet body, but its button sits in the pinned footer.
+const VAULT_UNLOCK_FORM_ID = 'mmobile-vault-unlock';
+
 // How many characters of a line-clamped title are on screen (all of them if not clamped).
 function visibleChars(el: HTMLElement | null): number {
     const node = el?.firstChild;
@@ -98,7 +108,7 @@ function pointerOrigin() {
 
 
 function MobileMindMap() {
-    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason, pendingOpenId, setPendingOpenId } = useIdeaContext();
+    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason, pendingOpenId, setPendingOpenId, createReturn, setCreateReturn } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
     // Rows pop in one by one when a level opens, not on create/delete/move.
@@ -152,7 +162,18 @@ function MobileMindMap() {
     const [inlineDrafts, setInlineDrafts] = useState<Record<number, string>>({});
     const [sheetItems, setSheetItems] = useState<ChecklistItem[]>([]);
     const [sheetItemDraft, setSheetItemDraft] = useState('');
-    const [createTab, setCreateTab] = useState<'idea' | 'checklist' | 'note'>('idea');
+    const [createTab, setCreateTab] = useState<'idea' | 'checklist' | 'note' | 'vault'>('idea');
+    // Kept apart from the other tabs: a secret must never carry over into an ordinary idea.
+    const [vaultDraft, setVaultDraft] = useState<VaultDraft>({ label: '', secret: '', link: '' });
+    const vaultSheetDirty = useRef(false);
+    const { unlocked: vaultUnlocked } = useVaultState();
+    const openVaultSettings = useOpenVaultSettings();
+    const openVaultSettingsFromCreate = useOpenVaultSettings('mobile');
+    // Reported by the Vault tab's fields; picks the footer's main button.
+    const [vaultStatus, setVaultStatus] = useState<VaultSetupStatus>('loading');
+    // The Idea tab's link field stays folded away until asked for (or filled).
+    const [showLink, setShowLink] = useState(false);
+    const linkInputRef = useRef<HTMLInputElement>(null);
     const [checklistTitle, setChecklistTitle] = useState('');
     const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
     const [checklistItemDraft, setChecklistItemDraft] = useState('');
@@ -174,6 +195,9 @@ function MobileMindMap() {
     const [found, setFound] = useState<{ id: number } | null>(null);
     const [keyboardInset, setKeyboardInset] = useState(0);
     const [viewportHeight, setViewportHeight] = useState(() => window.visualViewport?.height ?? window.innerHeight);
+    // iOS pans the visual viewport down when a field gains focus; a top-anchored
+    // sheet must follow it or half of it ends up above the screen.
+    const [viewportOffsetTop, setViewportOffsetTop] = useState(0);
     const [keyboardOpen, setKeyboardOpen] = useState(false);
     // Visible height with no keyboard, for telling when one is up (see below).
     const tallestViewport = useRef({ width: window.visualViewport?.width ?? 0, height: window.visualViewport?.height ?? 0 });
@@ -337,6 +361,9 @@ function MobileMindMap() {
             setKeyboardOpen(inset > 0 || (typing && tallestViewport.current.height - visible > 150));
             setKeyboardInset(inset);
             setViewportHeight(Math.min(visible, window.innerHeight - inset));
+            // Always follow the pan: iOS moves the visual viewport before keyboardOpen settles,
+            // and a top-anchored sheet in the layout viewport would sit partly off screen.
+            setViewportOffsetTop(Math.max(0, vv?.offsetTop ?? 0));
         }
         update();
         const stopNative = onKeyboardHeight(height => { nativeKeyboard = height; update(); });
@@ -362,6 +389,7 @@ function MobileMindMap() {
             vv?.removeEventListener('resize', update);
             vv?.removeEventListener('scroll', update);
             setKeyboardInset(0);
+            setViewportOffsetTop(0);
             setKeyboardOpen(false);
         };
     }, [sheet, showSearch]);
@@ -376,12 +404,16 @@ function MobileMindMap() {
             const field = document.activeElement;
             const sheetEl = field instanceof HTMLElement ? field.closest<HTMLElement>('.mmobile-sheet') : null;
             if (!sheetEl || !(field instanceof HTMLElement)) return;
-            const sheetRect = sheetEl.getBoundingClientRect();
-            const top = (sheetEl.querySelector('.mmobile-sheet-top')?.getBoundingClientRect().bottom ?? sheetRect.top) + 8;
-            const bottom = sheetRect.bottom - 8;
+            // The create sheet scrolls only its body; its header and footer stay put.
+            const scroller = field.closest<HTMLElement>('.mmobile-create-body') ?? sheetEl;
+            const scrollRect = scroller.getBoundingClientRect();
+            const top = (scroller === sheetEl
+                ? (sheetEl.querySelector('.mmobile-sheet-top')?.getBoundingClientRect().bottom ?? scrollRect.top)
+                : scrollRect.top) + 8;
+            const bottom = scrollRect.bottom - 8;
             const rect = field.getBoundingClientRect();
-            if (rect.top < top) sheetEl.scrollTop -= top - rect.top;
-            else if (rect.bottom > bottom) sheetEl.scrollTop += Math.min(rect.bottom - bottom, rect.top - top);
+            if (rect.top < top) scroller.scrollTop -= top - rect.top;
+            else if (rect.bottom > bottom) scroller.scrollTop += Math.min(rect.bottom - bottom, rect.top - top);
         });
         return () => cancelAnimationFrame(frame);
     }, [keyboardOpen, keyboardInset, viewportHeight]);
@@ -856,8 +888,19 @@ function MobileMindMap() {
         setSheet(null);
         setConfirmDiscard(false);
         setNewIdeaLink('');
+        setShowLink(false);
         setEditLinkDraft('');
         setNewIdeaPriority(undefined);
+    }
+
+    function toggleLinkField() {
+        if (showLink && !newIdeaLink.trim()) {
+            setShowLink(false);
+            createNameRef.current?.focus();
+            return;
+        }
+        setShowLink(true);
+        requestAnimationFrame(() => linkInputRef.current?.focus());
     }
 
     // Something typed into the open Create/Edit sheet that a stray tap on the
@@ -865,8 +908,10 @@ function MobileMindMap() {
     function isSheetDirty(): boolean {
         if (sheet?.type === 'create') {
             return !!(draft.trim() || newIdeaLink.trim() || checklistTitle.trim() || checklistItems.length
-                || checklistItemDraft.trim() || newNoteTitle.trim() || newNoteBody.trim());
+                || checklistItemDraft.trim() || newNoteTitle.trim() || newNoteBody.trim()
+                || vaultDraft.label.trim() || vaultDraft.secret.trim() || vaultDraft.link.trim());
         }
+        if (sheet?.type === 'vault') return vaultSheetDirty.current;
         if (sheet?.type === 'edit') {
             const node = allIdeas.find(i => i.id === sheet.nodeId);
             if (!node) return false;
@@ -919,6 +964,11 @@ function MobileMindMap() {
         recordVisit(result.id);
         setShowSearch(false);
         setSheet(null);
+        if (result.kind === 'idea') {
+            // A plain idea opens: its children fill the list.
+            setCurrentId(result.id);
+            return;
+        }
         setCurrentId(result.parentID);
         setFound({ id: result.id });
     }
@@ -960,6 +1010,7 @@ function MobileMindMap() {
             toggleChecklistExpanded(nodeId);
             return;
         }
+        if (node && isVaultIdea(node)) { vaultSheetDirty.current = false; setSheet({ type: 'vault', nodeId, mode: 'view' }); return; }
         // A note has nothing inside it; tapping opens it to read or edit.
         if (node && isNoteMode(node)) { openEditSheet(node); return; }
         const nodeLink = getIdeaLink(node);
@@ -1079,6 +1130,15 @@ function MobileMindMap() {
         setShowPatchNotes(true);
     }
 
+    // Profile → Vault was opened from the Create sheet: reopen it on the Vault tab once Profile closes.
+    useEffect(() => {
+        if (createReturn !== 'mobile' || profileModalOpen) return;
+        setCreateReturn(null);
+        addChild();
+        setCreateTab('vault');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [createReturn, profileModalOpen]);
+
     function addChild() {
         if (!canCreateIdea()) {
             setUpgradeModalReason('limit');
@@ -1093,6 +1153,7 @@ function MobileMindMap() {
         setChecklistItemDraft('');
         setNewNoteTitle('');
         setNewNoteBody('');
+        setVaultDraft({ label: '', secret: '', link: '' });
         setNewIdeaPriority(undefined);
         setSheet({ type: 'create', nodeId: -1 });
     }
@@ -1145,8 +1206,12 @@ function MobileMindMap() {
 
     function commitCreate() {
         if (!sheet || sheet.type !== 'create') return;
-        const missing = createTab === 'idea' ? !draft.trim() : createTab === 'checklist' ? !checklistTitle.trim() : !newNoteTitle.trim();
+        const missing = createTab === 'idea' ? !draft.trim() : createTab === 'checklist' ? !checklistTitle.trim() : createTab === 'vault' ? !vaultDraft.label.trim() : !newNoteTitle.trim();
         if (missing) { flashMissingName(); return; }
+        if (createTab === 'vault' && vaultUnlocked && !vaultDraft.secret.trim()) {
+            document.getElementById('vault-create-secret')?.focus();
+            return;
+        }
 
         if (createTab === 'checklist') {
             const title = checklistTitle.trim();
@@ -1158,6 +1223,18 @@ function MobileMindMap() {
             handleChecklistCreation(title, currentId, items, newIdeaPriority);
             setNewIdeaSwitch(prev => !prev);
             closeSheet();
+            return;
+        }
+
+        if (createTab === 'vault') {
+            if (!vaultUnlocked) return;
+            handleVaultCreation(vaultDraft.label.trim(), currentId, vaultDraft.secret, vaultDraft.link, newIdeaPriority)
+                .then((created) => {
+                    if (!created) return;
+                    setNewIdeaSwitch(prev => !prev);
+                    closeSheet();
+                })
+                .catch(() => {});
             return;
         }
 
@@ -1267,6 +1344,7 @@ function MobileMindMap() {
 
     function openEditSheet(node: IdeaType) {
         if (swipeRevealedId !== null) resetSwipeNode(swipeRevealedId);
+        if (isVaultIdea(node)) { vaultSheetDirty.current = false; setSheet({ type: 'vault', nodeId: node.id, mode: 'edit' }); return; }
         setDraft(isNoteMode(node) && node.type !== 'checklist' ? (node.noteTitle ?? '') : node.content);
         setEditBodyDraft(node.content);
         setEditLinkDraft(getIdeaLink(node));
@@ -1366,9 +1444,15 @@ function MobileMindMap() {
     const sheetNode = sheet ? allIdeas.find(i => i.id === sheet.nodeId) : null;
     const sheetNodeLink = getIdeaLink(sheetNode ?? undefined);
     const sheetNodeHasChildren = !!sheetNode && allIdeas.some(i => i.parentID === sheetNode.id);
+    // The create sheet's main button: Unlock / Set up vault stand in for a Create that could not work yet.
+    const mainAction: 'create' | 'unlock' | 'setup' =
+        sheet?.type === 'create' && createTab === 'vault' && !vaultUnlocked
+            ? (vaultStatus === 'none' ? 'setup' : vaultStatus === 'ready' ? 'unlock' : 'create')
+            : 'create';
     const sheetTitle =
         sheet?.type === 'move' ? 'Move under…' :
-        sheet?.type === 'create' ? (createTab === 'checklist' ? 'New checklist' : createTab === 'note' ? 'New note' : 'New idea') :
+        sheet?.type === 'vault' ? 'Vault note' :
+        sheet?.type === 'create' ? (createTab === 'checklist' ? 'New checklist' : createTab === 'note' ? 'New note' : createTab === 'vault' ? 'New vault note' : 'New idea') :
         sheet?.type === 'edit' ? (sheetNode?.type === 'checklist' ? 'Edit checklist' : isNoteMode(sheetNode ?? undefined) ? 'Edit note' : 'Edit idea') :
         sheet?.type === 'confirmDelete' ? 'Delete idea?' :
         sheet?.type === 'actions' ? shortLabel(sheetNode ?? undefined) :
@@ -1682,8 +1766,11 @@ function MobileMindMap() {
                         );
                     }
 
-                    const noteMode = isNoteMode(child);
-                    const colorClass = noteMode
+                    const vaultRow = isVaultIdea(child);
+                    const noteMode = isNoteMode(child) && !vaultRow;
+                    const colorClass = vaultRow
+                        ? 'mmobile-node--vault'
+                        : noteMode
                         ? 'mmobile-node--note'
                         : childLink
                         ? 'mmobile-node--link'
@@ -1732,7 +1819,13 @@ function MobileMindMap() {
                                     onTouchEnd={e => e.stopPropagation()}
                                     onTouchStart={e => e.stopPropagation()}
                                 />
-                                {noteMode ? (
+                                {vaultRow ? (
+                                    <span className="mmobile-node-title mmobile-node-vault">
+                                        <VaultLockGlyph open={vaultUnlocked} size={18} />
+                                        <span>{resolveIdeaLabel(child)}</span>
+                                        <span className="mmobile-node-vault-dots" aria-hidden="true">••••••</span>
+                                    </span>
+                                ) : noteMode ? (
                                     <span className="mmobile-node-title mmobile-node-title--note">
                                         <span className="mmobile-node-note-header">{resolveIdeaLabel(child)}</span>
                                         <span className="mmobile-node-note-body">{child.content}</span>
@@ -1802,6 +1895,7 @@ function MobileMindMap() {
                 if (!dragNode) return null;
                 const dragLink = getIdeaLink(dragNode);
                 const dragColorClass = dragNode.type === 'checklist' ? 'mmobile-node--checklist'
+                    : isVaultIdea(dragNode) ? 'mmobile-node--vault'
                     : isNoteMode(dragNode) ? 'mmobile-node--note'
                     : dragLink ? 'mmobile-node--link'
                     : allIdeas.some(i => i.parentID === dragNode.id) ? 'mmobile-node--parent'
@@ -1822,7 +1916,7 @@ function MobileMindMap() {
                     <div className="mmobile-scrim" onClick={() => { if (Date.now() - lastLongPressTime.current < 400) return; requestCloseSheet(); }} />
                     <div
                         ref={sheetSwipe.sheetRef}
-                        className={`mmobile-sheet${sheet.type === 'checklist' ? ' mmobile-sheet--checklist' : ''}${isTypingSheet(sheet) ? ' mmobile-sheet--top' : ''}`}
+                        className={`mmobile-sheet${sheet.type === 'checklist' ? ' mmobile-sheet--checklist' : ''}${isTypingSheet(sheet) ? ' mmobile-sheet--top' : ''}${sheet.type === 'create' ? ' mmobile-sheet--create' : ''}`}
                         role="dialog"
                         aria-modal="true"
                         aria-label={sheetTitle || 'Sheet'}
@@ -1834,16 +1928,20 @@ function MobileMindMap() {
                             // the keyboard on iOS), scrolling inside if needed.
                             // In the app the status bar overlays the page, so stay below it.
                             // Typing sheets keep their top and only stop short of the keyboard.
-                            ...(keyboardOpen && isTypingSheet(sheet)
-                                ? { maxHeight: `max(160px, calc(${viewportHeight - 8}px - max(8px, env(safe-area-inset-top, 8px))))` }
+                            ...(isTypingSheet(sheet) && (keyboardOpen || viewportOffsetTop > 0)
+                                ? {
+                                    top: `calc(${viewportOffsetTop}px + max(8px, env(safe-area-inset-top, 8px)))`,
+                                    ...(keyboardOpen ? { maxHeight: `max(160px, calc(${viewportHeight - 8}px - max(8px, env(safe-area-inset-top, 8px))))` } : {}),
+                                }
                                 : {}),
                             ...(keyboardOpen && !isTypingSheet(sheet) ? { bottom:`${keyboardInset + 8}px`, maxHeight: `max(160px, calc(${viewportHeight - 16}px - env(safe-area-inset-top, 0px)))` } : {}),
                         } as React.CSSProperties}
                     >
                         <div className="mmobile-sheet-top" {...sheetSwipe.dragProps}>
                             <div className="mmobile-sheet-grab" aria-hidden="true" />
-                            <div className="mmobile-sheet-title">
-                                {sheetTitle}
+                            {/* The create sheet has no title: the selected tab already says what is being made. */}
+                            <div className={`mmobile-sheet-title${sheet.type === 'create' ? ' mmobile-sheet-title--bare' : ''}`}>
+                                {sheet.type !== 'create' && sheetTitle}
                                 <button className="mmobile-sheet-close" onClick={() => requestCloseSheet()} aria-label="Close">✕</button>
                             </div>
                         </div>
@@ -1860,29 +1958,29 @@ function MobileMindMap() {
 
                         {sheet.type === 'create' && (
                             <>
-                                <div className="mmobile-create-tabs">
+                                {/* mouseDown is cancelled so a tab tap never blurs the field: the keyboard stays up while the type changes. */}
+                                <div className="mmobile-create-tabs" role="tablist" aria-label="What to create">
+                                    {([['idea', 'Idea'], ['checklist', 'Checklist'], ['note', 'Note'], ['vault', 'Vault']] as const).map(([tab, label]) => (
                                         <button
-                                            className={`mmobile-create-tab mmobile-create-tab--idea${createTab === 'idea' ? ' mmobile-create-tab--active' : ''}`}
-                                            onClick={() => { setCreateTab('idea'); setNameFlash(0); }}
+                                            key={tab}
+                                            type="button"
+                                            role="tab"
+                                            id={`mmobile-create-tab-${tab}`}
+                                            aria-selected={createTab === tab}
+                                            aria-controls="mmobile-create-panel"
+                                            className={`mmobile-create-tab mmobile-create-tab--${tab}${createTab === tab ? ' mmobile-create-tab--active' : ''}`}
+                                            onMouseDown={e => e.preventDefault()}
+                                            onClick={() => { setCreateTab(tab); setNameFlash(0); }}
                                         >
-                                            Idea
+                                            {label}
                                         </button>
-                                        <button
-                                            className={`mmobile-create-tab mmobile-create-tab--checklist${createTab === 'checklist' ? ' mmobile-create-tab--active' : ''}`}
-                                            onClick={() => { setCreateTab('checklist'); setNameFlash(0); }}
-                                        >
-                                            Checklist
-                                        </button>
-                                        <button
-                                            className={`mmobile-create-tab mmobile-create-tab--note${createTab === 'note' ? ' mmobile-create-tab--active' : ''}`}
-                                            onClick={() => { setCreateTab('note'); setNameFlash(0); }}
-                                        >
-                                            Note
-                                        </button>
+                                    ))}
                                 </div>
 
+                                <div className="mmobile-create-body" id="mmobile-create-panel" role="tabpanel" aria-labelledby={`mmobile-create-tab-${createTab}`}>
                                 {createTab === 'idea' && (
                                     <div className="mmobile-sheet-create-fields">
+                                        <div className="mmobile-create-name-row">
                                         <textarea
                                             ref={el => { createNameRef.current = el; }}
                                             autoFocus
@@ -1898,17 +1996,35 @@ function MobileMindMap() {
                                             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitCreate(); } }}
                                             enterKeyHint="done"
                                             placeholder="Idea name"
+                                            {...((showLink || newIdeaLink.trim() !== '') && { autoCorrect: 'off', autoComplete: 'off', spellCheck: false })}
                                             rows={1}
                                         />
-                                        <input
-                                            className="mmobile-rename-input mmobile-link-input"
-                                            placeholder="Link (optional)"
-                                            value={newIdeaLink}
-                                            onChange={e => setNewIdeaLink(e.target.value)}
-                                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitCreate(); } }}
-                                            enterKeyHint="done"
-                                            type="url"
-                                        />
+                                        <button
+                                            type="button"
+                                            className={`mmobile-create-link-btn${newIdeaLink.trim() ? ' mmobile-create-link-btn--filled' : ''}`}
+                                            aria-label={showLink || newIdeaLink.trim() ? 'Link' : 'Add a link'}
+                                            aria-expanded={showLink || !!newIdeaLink.trim()}
+                                            onMouseDown={e => e.preventDefault()}
+                                            onClick={toggleLinkField}
+                                        >
+                                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1" />
+                                            </svg>
+                                        </button>
+                                        </div>
+                                        {(showLink || newIdeaLink.trim() !== '') && (
+                                            <input
+                                                ref={linkInputRef}
+                                                className="mmobile-rename-input mmobile-link-input"
+                                                placeholder="Link (optional)"
+                                                aria-label="Link"
+                                                value={newIdeaLink}
+                                                onChange={e => setNewIdeaLink(e.target.value)}
+                                                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); commitCreate(); } }}
+                                                enterKeyHint="done"
+                                                type="url"
+                                            />
+                                        )}
                                     </div>
                                 )}
 
@@ -1920,6 +2036,7 @@ function MobileMindMap() {
                                             className="mmobile-rename-input"
                                             aria-invalid={nameFlash > 0 && !checklistTitle.trim()}
                                             placeholder="Checklist title"
+                                            autoCorrect="off" autoComplete="off" spellCheck={false}
                                             value={checklistTitle}
                                             onChange={e => setChecklistTitle(e.target.value)}
                                             enterKeyHint="next"
@@ -1947,6 +2064,7 @@ function MobileMindMap() {
                                                 ref={checklistItemInputRef}
                                                 className="mmobile-rename-input"
                                                 placeholder="Add an item"
+                                                autoCorrect="off" autoComplete="off" spellCheck={false}
                                                 value={checklistItemDraft}
                                                 onChange={e => setChecklistItemDraft(e.target.value)}
                                                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addChecklistItem(); } }}
@@ -1974,13 +2092,14 @@ function MobileMindMap() {
                                             className="mmobile-rename-input"
                                             aria-invalid={nameFlash > 0 && !newNoteTitle.trim()}
                                             placeholder="Note title"
+                                            autoCorrect="off" autoComplete="off" spellCheck={false}
                                             value={newNoteTitle}
                                             onChange={e => setNewNoteTitle(e.target.value)}
                                             enterKeyHint="next"
                                             maxLength={100}
                                         />
                                         <textarea
-                                            className="mmobile-rename-input mmobile-rename-input--grow"
+                                            className="mmobile-rename-input mmobile-rename-input--grow mmobile-rename-input--capped"
                                             value={newNoteBody}
                                             onChange={e => {
                                                 setNewNoteBody(e.target.value);
@@ -1989,23 +2108,46 @@ function MobileMindMap() {
                                                 el.style.height = el.scrollHeight + 'px';
                                             }}
                                             placeholder="Write your note..."
+                                            autoCorrect="off" autoComplete="off" spellCheck={false}
                                             maxLength={2000}
-                                            rows={4}
+                                            rows={3}
                                         />
                                     </div>
                                 )}
 
-                                <MobilePriorityPicker value={newIdeaPriority} onChange={setNewIdeaPriority} />
+                                {createTab === 'vault' && (
+                                    <div className="mmobile-sheet-create-fields">
+                                        <VaultCreateFields
+                                            draft={vaultDraft}
+                                            onChange={setVaultDraft}
+                                            onSubmitShortcut={commitCreate}
+                                            onOpenSettings={() => { closeSheet(); openVaultSettingsFromCreate(); }}
+                                            footerAction={{ unlockFormId: VAULT_UNLOCK_FORM_ID, onStatus: setVaultStatus }}
+                                        />
+                                    </div>
+                                )}
 
-                                <div className="mmobile-sheet-btns">
-                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={closeSheet}>Cancel</button>
-                                    <button
-                                        className="mmobile-sheet-btn mmobile-sheet-btn--save"
-                                        onClick={commitCreate}
-                                        aria-disabled={(createTab === 'idea' && !draft.trim()) || (createTab === 'checklist' && !checklistTitle.trim()) || (createTab === 'note' && !newNoteTitle.trim())}
-                                    >
-                                        Create
-                                    </button>
+                                {/* Nothing to prioritise until the vault is open. */}
+                                {(createTab !== 'vault' || vaultUnlocked) && (
+                                    <MobilePriorityPicker value={newIdeaPriority} onChange={setNewIdeaPriority} inline />
+                                )}
+                                </div>
+
+                                <div className="mmobile-sheet-btns mmobile-create-footer">
+                                    <button className="mmobile-sheet-btn mmobile-sheet-btn--cancel" onClick={() => requestCloseSheet()}>Cancel</button>
+                                    {mainAction === 'unlock' ? (
+                                        <button type="submit" form={VAULT_UNLOCK_FORM_ID} className="mmobile-sheet-btn mmobile-sheet-btn--save">Unlock</button>
+                                    ) : mainAction === 'setup' ? (
+                                        <button className="mmobile-sheet-btn mmobile-sheet-btn--save" onClick={() => { closeSheet(); openVaultSettingsFromCreate(); }}>Set up vault</button>
+                                    ) : (
+                                        <button
+                                            className="mmobile-sheet-btn mmobile-sheet-btn--save"
+                                            onClick={commitCreate}
+                                            aria-disabled={(createTab === 'idea' && !draft.trim()) || (createTab === 'checklist' && !checklistTitle.trim()) || (createTab === 'note' && !newNoteTitle.trim()) || (createTab === 'vault' && (!vaultDraft.label.trim() || !vaultDraft.secret.trim() || !vaultUnlocked))}
+                                        >
+                                            Create
+                                        </button>
+                                    )}
                                 </div>
                             </>
                         )}
@@ -2021,7 +2163,7 @@ function MobileMindMap() {
                                     Move…
                                 </button>
                                 {/* Laid out like the priority row; --none drops the ribbon swatch. */}
-                                <div className="mmobile-priority-row" role="group" aria-labelledby="mmobile-copy-label">
+                                {!isVaultIdea(sheetNode) && <div className="mmobile-priority-row" role="group" aria-labelledby="mmobile-copy-label">
                                     <span className="mmobile-priority-label" id="mmobile-copy-label">Copy</span>
                                     <div className="mmobile-priority-btns">
                                         <button type="button" className="mmobile-priority-btn mmobile-priority-btn--none" onClick={() => copyIdeaFromMenu(sheetNode)}>
@@ -2038,13 +2180,25 @@ function MobileMindMap() {
                                             </>
                                         )}
                                     </div>
-                                </div>
+                                </div>}
                                 <MobilePriorityPicker value={sheetNode.priority} onChange={p => setPriorityFromMenu(sheetNode.id, p)} />
                                 <button className="mmobile-action-btn mmobile-action-btn--delete" onClick={() => requestDelete(sheetNode.id)}>
                                     <img src="/images/Trash.svg" className="mmobile-action-icon" alt="" />
                                     Delete
                                 </button>
                             </div>
+                        )}
+
+                        {sheet.type === 'vault' && (
+                            <VaultNotePanel
+                                key={sheet.nodeId}
+                                ideaId={sheet.nodeId}
+                                initialMode={sheet.mode}
+                                onClose={closeSheet}
+                                onOpenVaultSettings={openVaultSettings}
+                                onDelete={requestDelete}
+                                onDirtyChange={(dirty) => { vaultSheetDirty.current = dirty; }}
+                            />
                         )}
 
                         {sheet.type === 'move' && (

@@ -377,9 +377,10 @@
     @include focus-card;
 }
 
-// Checklists and notes use white text, which orange can't carry.
+// Checklists, notes and vault notes use white text, which orange can't carry.
 .ideaNode.ideaNode.checklist:focus-visible,
-.ideaNode.ideaNode.note:focus-visible {
+.ideaNode.ideaNode.note:focus-visible,
+.ideaNode.ideaNode.ideaNode--vault:focus-visible {
     --card-bg: #{$burnt-orange};
 }
 

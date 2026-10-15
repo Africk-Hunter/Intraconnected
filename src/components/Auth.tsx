@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, setPersiste
 import AuthOptionMessage from "./AuthOptionMessage";
 import MessageBox from "./MessageBox";
 import ReportLink from "./ReportLink";
+import NodeLoader from "./modals/NodeLoader";
 import { LinkOutIcon } from "./Icons";
 import { useIdeaContext } from "../context/IdeaContext";
 import { generateDEK, wrapDEK, unwrapDEK, unwrapDEKWithEmail, wrapDEKForRecovery, importDEK, needsPasswordWrapUpgrade } from "../utilities/crypto";
@@ -44,6 +45,7 @@ const Auth: React.FC = () => {
     // After a password reset the email is already known: fill it in and put the
     // cursor in the password field.
     const passwordRef = useRef<HTMLInputElement>(null);
+    const submitRef = useRef<HTMLButtonElement>(null);
     useEffect(() => {
         const prefilled = takeLoginEmail();
         if (!prefilled) return;
@@ -160,6 +162,7 @@ const Auth: React.FC = () => {
     }
 
     async function handleSignUp() {
+        if (!connectionIsSecure()) return;
         isSigningIn.current = true;
         await applyPersistence();
         createUserWithEmailAndPassword(auth, email.trim(), password)
@@ -226,7 +229,18 @@ const Auth: React.FC = () => {
         }
     }
 
+    // Encryption needs a secure connection (https, or localhost). Over a plain
+    // http address such as a phone reaching a dev PC by IP, the browser hides
+    // the crypto tools and every later step would fail with a cryptic error.
+    function connectionIsSecure(): boolean {
+        if (typeof crypto !== 'undefined' && crypto.subtle) return true;
+        isSigningIn.current = false;
+        displayMessage("This page isn't on a secure connection, so your browser won't let it unlock your ideas. Open the https:// version of the site and try again.", 'bad');
+        return false;
+    }
+
     async function runSignIn(): Promise<void> {
+        if (!connectionIsSecure()) return;
         const capturedPassword = password;
         isSigningIn.current = true;
         await applyPersistence();
@@ -410,7 +424,10 @@ const Auth: React.FC = () => {
             )}
             <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
             <section className="authForm">
-                <section className="authInputs">
+                <section className="authInputs" onFocus={() => {
+                    // The keyboard covers the button; once it is up, scroll the page so Continue is visible.
+                    setTimeout(() => submitRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350);
+                }}>
                     <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     <div className="passwordField">
                         <input type="password" ref={passwordRef} className="input neobrutal-input" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -440,6 +457,7 @@ const Auth: React.FC = () => {
                     <input type="password" className={`input neobrutal-input confirmPassword ${showConfirmPassword ? "visible" : "hidden"}`} inert={!showConfirmPassword} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                 </section>
                 <button
+                    ref={submitRef}
                     className={`authSubmit neobrutal-button ${showConfirmPassword ? "register" : "login"}`}
                     onClick={(e) => {
                         e.preventDefault();
@@ -452,16 +470,18 @@ const Auth: React.FC = () => {
                     aria-disabled={signingIn}
                     aria-busy={signingIn}>
                     {signingIn && !showConfirmPassword
-                        ? <><span className="authSpinner" aria-hidden="true" />Please wait...</>
+                        ? <span role="status" aria-label="Please wait"><NodeLoader className="mono small dark" /></span>
                         : "Continue"}
                 </button>
                 <AuthOptionMessage showConfirmPassword={showConfirmPassword} setShowConfirmPassword={(show) => { setConfirmPassword(""); setShowConfirmPassword(show); }} />
             </section>
-            {!native && <a href="/" className="authLearnMore">New here? See what Intraconnected does →</a>}
-            <div className="legalLinks">
-                <a href="/terms" className="legalLink">Terms of Service</a>
-                <a href="/privacy" className="legalLink">Privacy Policy</a>
-            </div>
+            <footer className="authFooter">
+                {!native && <a href="/" className="authLearnMore">New here? See what Intraconnected does →</a>}
+                <div className="legalLinks">
+                    <a href="/terms" className="legalLink">Terms of Service</a>
+                    <a href="/privacy" className="legalLink">Privacy Policy</a>
+                </div>
+            </footer>
         </div>
     );
 };

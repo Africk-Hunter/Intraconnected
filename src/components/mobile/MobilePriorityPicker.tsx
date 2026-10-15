@@ -3,6 +3,8 @@ type Priority = 1 | 2 | 3 | undefined;
 interface Props {
     value: Priority;
     onChange: (priority: Priority) => void;
+    // Label and buttons on one line (the create sheet, where height is short).
+    inline?: boolean;
 }
 
 const OPTIONS: { value: Priority; label: string; cls: string }[] = [
@@ -14,9 +16,9 @@ const OPTIONS: { value: Priority; label: string; cls: string }[] = [
 
 // High / Med / Low / None, coloured like the row ribbons. Used by the Create,
 // Edit and action sheets so priority reads the same everywhere.
-function MobilePriorityPicker({ value, onChange }: Props) {
+function MobilePriorityPicker({ value, onChange, inline = false }: Props) {
     return (
-        <div className="mmobile-priority-row">
+        <div className={`mmobile-priority-row${inline ? ' mmobile-priority-row--inline' : ''}`}>
             <span className="mmobile-priority-label" id="mmobile-priority-label">Priority</span>
             <div className="mmobile-priority-btns" role="radiogroup" aria-labelledby="mmobile-priority-label">
                 {OPTIONS.map(option => {

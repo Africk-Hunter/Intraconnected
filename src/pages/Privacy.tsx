@@ -18,12 +18,14 @@ const Privacy: React.FC = () => {
                 <section className="legalSection">
                     <h2>Overview</h2>
                     <p>
-                        Intraconnected is a personal mind-mapping app, operated by an individual
-                        (Hunter Africk), not a company. We take privacy seriously: the text of your
+                        Intraconnected is a personal app for growing ideas on a tree, operated by an individual
+                        (Hunter Africk), not a company. Hunter Africk is the "controller" of your
+                        personal data (the person who decides how it is used), and "we" in this
+                        policy means him. We take privacy seriously: the text of your
                         ideas is encrypted on your device before it leaves it. We do not read ideas
-                        in the ordinary course of operating the service, but our recovery system can
-                        technically unlock your encryption key; see "How Your Data Is Protected"
-                        below.
+                        in the ordinary course of operating the service, but this is not end-to-end
+                        encryption: our recovery system can technically unlock your encryption key;
+                        see "How Your Data Is Protected" below.
                     </p>
                 </section>
 
@@ -37,12 +39,15 @@ const Privacy: React.FC = () => {
                     <p>
                         <strong>Your ideas.</strong> The text of each idea (its name, notes, links, and
                         checklist items) is encrypted on your device before being stored. We do not read
-                        it in the ordinary course of operating the service. The structure of your map
+                        it in the ordinary course of operating the service. The structure of your tree
                         is stored as plain data so that sync and the app can work: which ideas sit
                         under which, whether each is an idea, note or
                         checklist, their priorities, whether an idea is censored, whether a checklist
                         item is ticked, and when each idea was created and last changed. Idea IDs
-                        reflect their creation time, and ciphertext lengths are visible.
+                        reflect their creation time, and ciphertext lengths are visible. Because you
+                        decide what to write, your ideas may contain any kind of information about
+                        you or others, including sensitive information. We do not use it for any
+                        purpose other than providing the service to you.
                     </p>
                     <p>
                         <strong>Sync and app settings.</strong> A random identifier for each device you
@@ -56,13 +61,21 @@ const Privacy: React.FC = () => {
                         account's count is unusually high or grows suddenly, we record a flag with the
                         account's email so we can look at it, and post a notice containing only the
                         counts (no account details) to our public issue tracker on GitHub. Nothing is
-                        blocked or changed as a result.
+                        blocked or changed as a result, and no decision about you is made by
+                        automated means.
                     </p>
                     <p>
                         <strong>Network address, when signed out.</strong> To limit abuse of our
                         problem-report form, which also opens from sign-in errors, we store a keyed
                         one-way hash of your IP address. We cannot reverse it to an address, and it is
                         deleted automatically a few days after your last report.
+                    </p>
+                    <p>
+                        <strong>Hosting logs.</strong> Our hosting and authentication providers
+                        (Netlify and Google) necessarily receive your IP address and basic request
+                        details whenever your device contacts the service, and they may keep
+                        ordinary server logs of them under their own policies (see Third-Party
+                        Services).
                     </p>
                     <p>
                         <strong>Payment information, if you upgrade.</strong> If you choose a paid
@@ -75,7 +88,28 @@ const Privacy: React.FC = () => {
                     <p>
                         <strong>Nothing else.</strong> We do not use analytics, advertising trackers,
                         or cookies of our own. We do not sell or share any of the above for
-                        marketing purposes.
+                        marketing or advertising purposes, and we have not done so in the past
+                        12 months.
+                    </p>
+                </section>
+
+                <section className="legalSection">
+                    <h2>Why We Use Your Data</h2>
+                    <p>
+                        We use your data only to run the service you asked for: to create and
+                        secure your account, store and sync your ideas, process payments and keep
+                        your plan accurate, recover your account, answer problem reports, prevent
+                        abuse and keep the service running and secure, and meet legal obligations.
+                    </p>
+                    <p>
+                        If you are in the European Economic Area, the United Kingdom or a similar
+                        region, the legal bases for this are: performing our contract with you
+                        (account, sync, billing, recovery); our legitimate interests in keeping the
+                        service secure, preventing abuse and keeping costs sustainable (the
+                        abuse-prevention hash, usage counts and logs), which we balance against your
+                        rights; compliance with legal obligations (tax and accounting records,
+                        responding to valid legal requests); and, where we ask for it, your
+                        consent, which you can withdraw at any time.
                     </p>
                 </section>
 
@@ -128,11 +162,36 @@ const Privacy: React.FC = () => {
                             available. If you lose access to both your password and email account,
                             you may not be able to recover your ideas.
                         </li>
+                        <li>
+                            Vault notes get a second layer of encryption. Their name, text and link
+                            are encrypted on your device with a separate vault key before the
+                            encryption described above is applied. The vault key is protected by
+                            your vault passphrase and by a recovery code that only you are shown. We
+                            never receive your vault passphrase, your recovery code or the vault key,
+                            and our key recovery system cannot unlock vault notes, so we cannot read
+                            them. Which ideas are vault notes, where they sit in your tree, their
+                            priority and their approximate size are not hidden. The web app is
+                            delivered by our servers each time you open it, so this protection
+                            relies on that code working as described; in the mobile apps, the code
+                            is fixed when the app is installed or updated. If you forget your vault
+                            passphrase and lose your recovery code, no one, including us, can open
+                            your vault notes.
+                        </li>
+                        <li>
+                            No system is perfectly secure. If a breach affects your personal data in
+                            a way that the law requires us to report, we will notify you and the
+                            relevant authorities as required, without undue delay.
+                        </li>
                     </ul>
                 </section>
 
                 <section className="legalSection">
                     <h2>Third-Party Services</h2>
+                    <p>
+                        We share personal data only with the service providers below, who process it
+                        to run the service, and in the situations described under Legal Requests and
+                        Business Transfers. We do not sell your personal data.
+                    </p>
                     <p>
                         Intraconnected uses <strong>Netlify</strong> to host the website and run the
                         server functions that handle billing, account deletion and reports. Every
@@ -178,6 +237,18 @@ const Privacy: React.FC = () => {
                             Google's Privacy Policy
                         </a>
                         .
+                    </p>
+                </section>
+
+                <section className="legalSection">
+                    <h2>International Transfers</h2>
+                    <p>
+                        We operate from the United States, and our providers process data in the
+                        United States and other countries. If you use the service from the EEA, the
+                        UK or Switzerland, your data is therefore transferred outside your region.
+                        Where required, those transfers rely on the safeguards our providers offer,
+                        such as the EU-U.S. Data Privacy Framework or Standard Contractual Clauses.
+                        You can ask us for details using the contact address below.
                     </p>
                 </section>
 
@@ -231,6 +302,32 @@ const Privacy: React.FC = () => {
                         (the iOS Keychain or Android Keystore). It is not backed up to the cloud and
                         does not leave the device.
                     </p>
+                    <p>
+                        This browser and device storage is strictly necessary for the service to
+                        work and to keep your account secure, and is used for nothing else, so we do
+                        not show a cookie banner. It is not used to track you across other sites. We
+                        do not sell or share personal data, so there is nothing for an opt-out
+                        signal such as Global Privacy Control or "Do Not Track" to change; we treat
+                        such a signal as a valid opt-out request regardless.
+                    </p>
+                </section>
+
+                <section className="legalSection">
+                    <h2>How Long We Keep Data</h2>
+                    <ul>
+                        <li>Your ideas, account details and settings: until you delete your account.</li>
+                        <li>The abuse-prevention hash of your IP address: deleted automatically a few days after your last report.</li>
+                        <li>Problem reports linked to your account and usage counts and flags: until you delete your account.</li>
+                        <li>
+                            Billing records: Stripe keeps payment records as long as the law and tax
+                            rules require, even after you delete your account.
+                        </li>
+                        <li>
+                            Google Cloud Audit Logs of key recovery: kept by Google under its own
+                            retention settings.
+                        </li>
+                        <li>Public GitHub issues: until we close or remove them on request.</li>
+                    </ul>
                 </section>
 
                 <section className="legalSection">
@@ -239,7 +336,9 @@ const Privacy: React.FC = () => {
                         You can download a copy of your data at any time from Profile → Data → Export
                         Your Data, on any plan. You can choose Markdown or OPML (your decrypted ideas,
                         for use in other notes, outliner or mind-map apps) or JSON (your decrypted
-                        ideas plus basic account information, as a full backup).
+                        ideas plus basic account information, as a full backup). Vault notes are not
+                        included in these exports; you can export them separately from Profile →
+                        Vault while your vault is unlocked, and that file is not encrypted.
                     </p>
                     <p>
                         You can permanently delete your account and all associated data at any time,
@@ -248,13 +347,60 @@ const Privacy: React.FC = () => {
                         encryption key and recovery audit records from our servers, so that data cannot be recovered afterward, along with any problem reports you sent while signed in and any usage counts and flags. Payment records held by our payment processor (Stripe), such as past charges and the email on them, are kept as the processor and tax rules require. Public GitHub issues are not removed (see Problem Reports and Feature Requests). If you'd rather
                         we do it for you, or you can't access the app, email us at the address below.
                     </p>
+                    <p>
+                        <strong>Other rights.</strong> Depending on where you live (including the
+                        EEA, the UK, California and other US states with privacy laws), you may also
+                        have the right to: know what personal data we hold about you and get a
+                        copy; correct it (you can edit your ideas and your account email in the app);
+                        delete it; receive it in a portable format; restrict or object to some uses;
+                        withdraw consent you gave; and not be treated differently for using these
+                        rights. We do not sell or share personal data and do not use it for
+                        targeted advertising or automated decisions about you. We do not use
+                        sensitive personal information to infer characteristics about you.
+                    </p>
+                    <p>
+                        <strong>How to use them.</strong> Email us at the address below. We may need
+                        to confirm the request comes from the account's email address before
+                        acting on it. We respond within one month (45 days for US state requests,
+                        extendable once where the law allows). You can also ask an authorized
+                        agent to make a request for you. Because your idea text is encrypted, a
+                        copy of it comes from the in-app export, which decrypts it on your device. If we decline a request, you can
+                        appeal by replying to our answer, and if you are still unhappy you can
+                        complain to your data protection authority (in the EU, the authority in your
+                        country; in the UK, the Information Commissioner's Office) or, in the US, to
+                        your state attorney general.
+                    </p>
+                </section>
+
+                <section className="legalSection">
+                    <h2>Legal Requests</h2>
+                    <p>
+                        We may disclose personal data if a valid legal process requires it, or if
+                        needed to protect people from serious harm or to defend our legal rights.
+                        Because the recovery system can technically unlock your encryption key, we
+                        could be required to use it. We review each request for validity and
+                        disclose only what the law requires, and unless the law forbids it, we will
+                        tell you before we do.
+                    </p>
+                </section>
+
+                <section className="legalSection">
+                    <h2>Business Transfers</h2>
+                    <p>
+                        If the service is sold, transferred or restructured, your data may move to
+                        the new operator. We will tell you before that happens, and the new
+                        operator must honor this policy or give you a fresh choice, including the
+                        option to export and delete your data.
+                    </p>
                 </section>
 
                 <section className="legalSection">
                     <h2>Children's Privacy</h2>
                     <p>
-                        Intraconnected is not directed at children under 13. We do not knowingly collect
-                        personal information from children under 13.
+                        Intraconnected is not directed at children under 13 (or under the higher age
+                        of digital consent in your country, up to 16). We do not knowingly collect
+                        personal information from them. If you believe a child has given us personal
+                        information, contact us and we will delete it.
                     </p>
                 </section>
 
@@ -262,15 +408,17 @@ const Privacy: React.FC = () => {
                     <h2>Changes to This Policy</h2>
                     <p>
                         If we make material changes to this policy, we will update the date at the top
-                        of this page. Continued use of the app after changes constitutes acceptance of
-                        the updated policy.
+                        of this page and notify you in the app or by email before the change takes
+                        effect. We will not use personal data we already hold for a materially
+                        different purpose without telling you first and, where the law requires,
+                        getting your consent.
                     </p>
                 </section>
 
                 <section className="legalSection">
                     <h2>Contact</h2>
                     <p>
-                        Questions? Reach us at{" "}
+                        Questions or privacy requests? Reach us at{" "}
                         <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. See
                         also our <a href="/terms">Terms of Service</a>.
                     </p>

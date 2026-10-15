@@ -7,10 +7,12 @@ Links to every published artifact for this project (as of 2026-10-13). Saved cop
 - [Native App Plan](https://claude.ai/artifact/8AfWNA2bCDKhoEq7AumzaC) — `native-app-plan.html`
 - [Native Store Listing](https://claude.ai/artifact/WxjYNp7ZvDLoNzAWTQtByj) — `native-store-listing.html`
 - [Intraconnected Positioning](https://claude.ai/artifact/58EzPrz6frain9ZKcBfRFH) — `positioning-and-marketing-plan.html`
+- [Intraconnected Messaging](https://claude.ai/artifact/SJpmpRqS4r1Y5Pxd4F7gmt) — `intraconnected-messaging.html` (tagline "Plant a node. Grow an idea.", site and ad copy)
 - [Intraconnected Native Playbook](https://claude.ai/artifact/JrqQFnieyn8tu5r7peGjHC)
 - [Intraconnected iOS Build Guide (Codemagic)](https://claude.ai/artifact/15b9a7XREbhUHF5dzejRKR)
 
 - [Encryption and KMS Recovery](https://claude.ai/artifact/T63cfL7YtwmMrmxSHWeRhX) — `encryption-kms-recovery.html`
+- [Creation Modal Plans](https://claude.ai/artifact/WvjWXb4ub3cPYVM9ciNNbe) — `creation-modal-plans.html`
 
 ## Audits and reviews
 - [Desktop UX Audit](https://claude.ai/artifact/4sNVMmM2KKocZheaeHTnNN) — `desktop-ux-audit.html`

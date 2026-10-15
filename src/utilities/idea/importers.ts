@@ -505,7 +505,8 @@ export function parseIntraconnectedJson(json: string): ImportDoc {
     if (!Array.isArray(list) || !list.every(isIdeaLike)) {
         throw new ImportError('This JSON file isn’t an Intraconnected export.');
     }
-    const tree = buildIdeaTree(list, 'recent');
+    // A vault note's text is ciphertext bound to its original id: never imported.
+    const tree = buildIdeaTree(list.filter((idea) => (idea as { isVault?: unknown }).isVault !== true), 'recent');
     const toNode = (idea: IdeaType): ImportNode => {
         const out = node('');
         if (idea.type === 'checklist') {

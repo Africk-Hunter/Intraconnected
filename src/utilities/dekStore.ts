@@ -1,4 +1,5 @@
 import { isNative } from './platform';
+import { lockVault } from './vault/vaultSession';
 
 const SESSION_KEY = 'dek_session';
 const SESSION_MARKER = 'dek_session_marker';
@@ -230,6 +231,8 @@ async function clearNativeKey(): Promise<void> {
 // treats "key already cleared" as a deliberate sign-out). Await the promise
 // before leaving the page so the Keychain / Keystore removal isn't cut off.
 export function clearDEK(): Promise<void> {
+    // Every sign-out path comes through here, so the vault locks with it.
+    lockVault('signout');
     _dek = null;
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_MARKER);

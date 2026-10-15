@@ -35,6 +35,7 @@ $icons: (
     'import': "<path d='M12 3v11M7 9l5 5 5-5'/><path d='M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3'/>",
     'shield': "<path d='M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z'/><path d='M9 12l2 2 4-4'/>",
     'terminal': "<path d='M4 17l6-6-6-6M12 19h8'/>",
+    'lock': "<rect x='5' y='11' width='14' height='10' rx='2'/><path d='M8 11V8a4 4 0 0 1 8 0v3'/>",
 );
 
 $profile-corner: 4.2rem;
@@ -973,7 +974,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 }
 
-@each $tab, $name in ('account': 'user', 'data': 'data', 'customization': 'sliders', 'danger': 'alert', 'developer': 'terminal') {
+@each $tab, $name in ('account': 'user', 'data': 'data', 'vault': 'lock', 'customization': 'sliders', 'danger': 'alert', 'developer': 'terminal') {
     .profile-left .profile-tab--#{$tab}::before {
         -webkit-mask-image: icon(map.get($icons, $name));
         mask-image: icon(map.get($icons, $name));
@@ -1024,7 +1025,9 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     min-height: 0;
     overflow-y: auto;
     // The scrollbar gutter is reserved on the right, so take it off the padding.
-    padding: 1.6rem calc(2rem - #{$profile-scrollbar}) 2rem 2rem;
+    // Cards and buttons cast a 4px shadow to the right, so add it to keep card + shadow centred
+    // (same compensation as the sidebar tabs).
+    padding: 1.6rem calc(2rem - #{$profile-scrollbar} + 4px) 2rem 2rem;
 }
 
 .profile-account-content {
@@ -1166,7 +1169,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 }
 
-@each $tab, $name in ('account': 'user', 'data': 'data', 'customization': 'sliders', 'danger': 'alert', 'developer': 'terminal') {
+@each $tab, $name in ('account': 'user', 'data': 'data', 'vault': 'lock', 'customization': 'sliders', 'danger': 'alert', 'developer': 'terminal') {
     .profile-mobile .profile-tab--mobile.profile-tab--#{$tab}::before {
         background-image: icon(map.get($icons, $name));
     }
@@ -1269,6 +1272,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     .profile-tab--account::before { background-color: $sky; }
     .profile-tab--data::before { background-color: $leaf; }
+    .profile-tab--vault::before { background-color: $vault; }
     .profile-tab--developer::before { background-color: $neutral; }
     .profile-tab--customization::before { background-color: $link; }
     .profile-tab--danger::before { background-color: #ffb3b3; }

@@ -122,7 +122,7 @@
     color: #111;
     max-width: 840px;
 
-    // Keep "Connect your ideas." on one line down to ~320px screens.
+    // Keep "Grow an idea." on one line down to ~320px screens.
     @media (max-width: $mobile) {
         font-size: min(38px, 8.6vw);
         letter-spacing: -1.4px;
@@ -146,10 +146,51 @@
     &--sky {
         background: $sky;
         transform: rotate(1deg);
+        // Larger than the first line so it runs wider than "Plant a node."
+        font-size: 1.16em;
+        padding: 0 18px;
     }
 
     @media (max-width: $mobile) {
         padding: 0 8px;
+
+        &--sky {
+            font-size: 1.1em;
+            padding: 0 10px;
+        }
+    }
+}
+
+// Hand-drawn scribble under "idea".
+.heroScribbleWord {
+    position: relative;
+    display: inline-block;
+}
+
+// A gentle slant instead of the font's full italic.
+.heroScribbleWord i {
+    display: inline-block;
+    font-style: normal;
+    transform: skewX(-7deg);
+}
+
+.heroScribble {
+    position: absolute;
+    left: -3%;
+    bottom: -0.08em;
+    width: 106%;
+    height: 0.32em;
+    overflow: visible;
+    pointer-events: none;
+    display: none;
+
+    path {
+        fill: none;
+        stroke: $back;
+        stroke-width: 3.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
     }
 }
 
@@ -277,7 +318,9 @@
 }
 
 .landingCta {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
     padding: 18px 54px;
     background: $leaf;
     font-size: 20px;
@@ -294,6 +337,29 @@
         font-size: 18px;
         max-width: 100%;
     }
+}
+
+.ctaArrow {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+
+    path {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vector-effect: non-scaling-stroke;
+    }
+}
+
+.landingHeroFine {
+    margin-top: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
 }
 
 // ── How it works ─────────────────────────────────────────────────────────

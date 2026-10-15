@@ -7,9 +7,14 @@
     margin-top: 10rem;
     gap: 5rem;
     font-family: "DM Sans", sans-serif;
+    box-sizing: border-box;
 
     @media (max-width: $mobile) {
-        margin-top: 7rem;
+        margin-top: calc(1rem + env(safe-area-inset-top, 0px));
+        gap: 1.5rem;
+        min-height: calc(100dvh - 1rem - env(safe-area-inset-top, 0px));
+        // Spare room below the form while typing, so the page can scroll the button above the keyboard.
+        &:has(input:focus) { padding-bottom: 50vh; }
     }
 
     @media (min-width: $large-desktop) {
@@ -112,7 +117,7 @@ div.largeLogo:not(.brandLogo){
 
     @media (max-width: $mobile) {
         width: 22rem;
-        height: 3rem;
+        height: 3.75rem;
     }
 }
 
@@ -500,7 +505,6 @@ div.largeLogo:not(.brandLogo){
     font-weight: 600;
     color: $neo-green;
     text-decoration: none;
-    margin-top: -3rem;
 
     &:hover {
         text-decoration: underline;
@@ -508,18 +512,34 @@ div.largeLogo:not(.brandLogo){
 
     @media (max-width: $mobile) {
         font-size: 0.9rem;
-        margin-top: -1.5rem;
+    }
+}
+
+// Pinned to the bottom of the page (.auth stretches to the viewport height).
+.authFooter {
+    margin-top: auto;
+    padding-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+
+    // Desktop: the form's slide transforms leave layout space behind it, so the
+    // content is taller than it looks and the in-flow footer fell below the fold.
+    // Pin it to the window instead.
+    @media (min-width: #{$mobile + 1}) {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin-top: 0;
+        padding-bottom: 1rem;
     }
 }
 
 .legalLinks {
     display: flex;
     gap: 1rem;
-    margin-top: -3rem;
-
-    @media (max-width: $mobile) {
-        margin-top: -1.5rem;
-    }
 }
 
 .legalLink {
@@ -625,6 +645,23 @@ div.largeLogo:not(.brandLogo){
     font-size: 1rem;
     padding: .25rem;
 
+    // On phones the toast sits at the top of the screen, above the fields and
+    // clear of the software keyboard. Scoped to the login page: the checkout
+    // banner reuses this class and pins itself.
+    @media (max-width: $mobile) {
+        .auth > & {
+            position: fixed;
+            top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+            bottom: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: min(18rem, calc(100vw - 2rem));
+            height: auto;
+            min-height: 4rem;
+            pointer-events: none;
+        }
+    }
 
     @media (min-width: $desktop) {
         font-size: 1.5rem;
@@ -655,22 +692,29 @@ div.largeLogo:not(.brandLogo){
 }
 // Shown inside the Continue button while sign-in runs (key recovery can take a
 // while). Sized in em so it follows the button's font size at every breakpoint.
-.authSpinner {
-    display: inline-block;
-    width: 0.8em;
-    height: 0.8em;
-    margin-right: 0.5em;
-    vertical-align: -0.1em;
-    border: 0.17em solid rgba(0, 0, 0, 0.25);
-    border-top-color: black;
-    border-radius: 50%;
-    animation: authSpin 0.8s linear infinite;
+// Same bouncing dots as the idea loader (.ideaNode-loading-dot).
+.authLoading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.authLoading-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    background: black;
+    animation: ideaLoadingBounce 1s ease-in-out infinite;
+
+    &:nth-child(2) {
+        animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+        animation-delay: 0.3s;
+    }
 
     @media (prefers-reduced-motion: reduce) {
         animation-duration: 2.4s;
     }
-}
-
-@keyframes authSpin {
-    to { transform: rotate(360deg); }
 }

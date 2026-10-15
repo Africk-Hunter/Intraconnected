@@ -105,3 +105,19 @@ describe("suggestedIdeas", () => {
         expect(results.map((r) => r.id)).toEqual([20, 14]);
     });
 });
+
+describe("vault notes", () => {
+    const vault = { id: 30, content: "vault1:0a1b2c3d:c2VjcmV0", noteTitle: "vault1:0a1b2c3d:dGl0bGU=", parentID: 1, link: "vault1:0a1b2c3d:bGluaw==", isNote: true, isVault: true } as IdeaType;
+    const withVault = [...ideas, vault];
+
+    it("never match, even on their stored text", () => {
+        expect(searchIdeas(withVault, "vault1")).toEqual([]);
+        expect(searchIdeas(withVault, "vault note")).toEqual([]);
+        expect(searchIdeas(withVault, "c2VjcmV0")).toEqual([]);
+    });
+
+    it("never appear as suggestions", () => {
+        expect(suggestedIdeas(withVault, [30]).results.map((r) => r.id)).not.toContain(30);
+        expect(suggestedIdeas(withVault, []).results.map((r) => r.id)).not.toContain(30);
+    });
+});

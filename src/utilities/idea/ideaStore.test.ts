@@ -15,6 +15,8 @@ import {
     updateIdeaNoteTitle,
     updateIdeaParentId,
     updateIdeaPriority,
+    updateVaultFields,
+    deleteIdeasById,
 } from "./ideaStore";
 
 const store = new Map<string, string>();
@@ -137,5 +139,32 @@ describe("ideaStore", () => {
         restoreIdeas([idea(3, 2), idea(7, 3)]);
         expect(saved().map((i) => i.id)).toEqual([2, 3, 7]);
         expect(enqueueMany.mock.calls[0][0]).toEqual([{ kind: "create", idea: idea(7, 3) }]);
+    });
+});
+
+describe("vault helpers", () => {
+    beforeEach(() => {
+        store.clear();
+        vi.clearAllMocks();
+    });
+
+    it("updateVaultFields sends every changed field as one update, and nothing when empty", () => {
+        seed(idea(2, 1, { isNote: true, isVault: true, noteTitle: "vault1:a", content: "vault1:b", link: "vault1:c" }));
+        updateVaultFields(2, { noteTitle: "vault1:x", link: "vault1:y" });
+        expect(enqueue).toHaveBeenCalledTimes(1);
+        expect(enqueue).toHaveBeenCalledWith({ kind: "update", id: 2, patch: { noteTitle: "vault1:x", link: "vault1:y" } }, undefined);
+        expect(saved()[0]).toMatchObject({ isVault: true, noteTitle: "vault1:x", content: "vault1:b", link: "vault1:y" });
+        updateVaultFields(2, {});
+        expect(enqueue).toHaveBeenCalledTimes(1);
+    });
+
+    it("deleteIdeasById removes exactly those ideas, in chunks", () => {
+        const many = Array.from({ length: 500 }, (_, i) => idea(i + 10, 1));
+        seed(idea(2, 1), idea(3, 2), ...many);
+        const removed = deleteIdeasById([2, ...many.map((i) => i.id)]);
+        expect(removed).toHaveLength(501);
+        expect(saved().map((i) => i.id)).toEqual([3]);
+        const ops = enqueueMany.mock.calls[0][0] as { kind: string; ids: number[] }[];
+        expect(ops.map((op) => op.ids.length)).toEqual([450, 51]);
     });
 });

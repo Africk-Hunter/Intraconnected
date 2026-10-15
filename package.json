@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "dev:functions": "netlify dev",
+    "dev:functions": "node scripts/dev-local.cjs",
     "dev:stripe": "concurrently -n netlify,stripe -c blue,magenta \"netlify dev\" \"stripe listen --forward-to localhost:8888/.netlify/functions/stripe-webhook\"",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

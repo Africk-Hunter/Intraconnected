@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import IdeaNode from '../components/IdeaNode';
 import CreationModal from '../components/modals/CreationModal';
 import RenameModal from '../components/modals/RenameModal';
+import NodeLoader from '../components/modals/NodeLoader';
 import Help from '../components/Help';
 import PatchNotes from '../components/PatchNotes';
 import Trash from '../components/Trash';
@@ -30,6 +31,7 @@ import {
     handleIdeaCreation,
     handleChecklistCreation,
     handleNoteCreation,
+    handleVaultCreation,
     getIdeasByParentID,
     buildAncestorPath,
     IdeaType,
@@ -41,6 +43,7 @@ import {
     sortIdeas,
     isNoteWide,
     isNoteMode,
+    isVaultIdea,
     resolveIdeaLabel,
 } from '../utilities/index';
 import LinkChangeModal from '../components/modals/LinkChangeModal';
@@ -49,6 +52,8 @@ import ChecklistModal from '../components/modals/ChecklistModal';
 import FeatureImplementedModal from '../components/modals/FeatureImplementedModal';
 import OnboardingModal from '../components/modals/OnboardingModal';
 import ProfileModal from '../components/modals/ProfileModal';
+import VaultNoteModal from '../components/vault/VaultNoteModal';
+import { useVaultLabels } from '../utilities/vault/useVaultLabels';
 import SessionEndedModal from '../components/modals/SessionEndedModal';
 import UpgradeModal from '../components/modals/UpgradeModal';
 import LazyCheckoutModal from '../components/modals/LazyCheckoutModal';
@@ -194,6 +199,7 @@ function Idea() {
     useBillingPlanSync(setBillingPlan);
     useIdleSignOut();
     useNodeCountResync(billingPlan, serverSynced);
+    useVaultLabels(newIdeaSwitch, setNewIdeaSwitch);
     const isMobileUI = useIsMobileUI();
     const { requestDelete, moveIdea, copyChildren } = useIdeaActions();
 
@@ -285,7 +291,7 @@ function Idea() {
                 urlAppliedRef.current = true;
                 const wanted = readIdeaFromUrl();
                 const everything = fetchFullIdeaList();
-                if (wanted !== null && wanted !== 1 && everything.some((idea: IdeaType) => idea.id === wanted)) {
+                if (wanted !== null && wanted !== 1 && everything.some((idea: IdeaType) => idea.id === wanted && !isVaultIdea(idea))) {
                     startId = wanted;
                     rootIdStack.current = buildAncestorPath(wanted, everything);
                     setRootId(wanted);
@@ -415,7 +421,7 @@ function Idea() {
         function onPopState() {
             if (window.location.pathname !== '/main') return;
             const wanted = readIdeaFromUrl() ?? 1;
-            const exists = wanted === 1 || fetchFullIdeaList().some((idea: IdeaType) => idea.id === wanted);
+            const exists = wanted === 1 || fetchFullIdeaList().some((idea: IdeaType) => idea.id === wanted && !isVaultIdea(idea));
             if (exists) navigateToId(wanted, { history: 'none' });
             else navigateToId(1, { history: 'replace' });
         }
@@ -440,7 +446,12 @@ function Idea() {
             setMapReveal({ id: result.id, tick: Date.now() });
             return;
         }
-        const focusIt = () => document.querySelector<HTMLElement>(`[data-idea-id="${result.id}"]`)?.focus();
+        // A plain idea opens: its children fill the grid. Checklists, notes and links can't be entered.
+        if (result.kind === 'idea') {
+            navigateToId(result.id);
+            return;
+        }
+        const focusIt = () =>document.querySelector<HTMLElement>(`[data-idea-id="${result.id}"]`)?.focus();
         if (result.parentID === rootId) {
             setTimeout(focusIt, 50);
         } else {
@@ -629,9 +640,7 @@ function Idea() {
                                 <section className={`ideaNodes${!nodesVisible ? ' ideaNodes--fade' : ''}${isLoadingIdeas ? ' ideaNodes--loading' : ''}`} ref={ideaNodesRef}>
                                     {isLoadingIdeas ? (
                                         <div className="ideaNode-loading" role="status" aria-label="Loading ideas">
-                                            <span className="ideaNode-loading-dot" />
-                                            <span className="ideaNode-loading-dot" />
-                                            <span className="ideaNode-loading-dot" />
+                                            <NodeLoader className="mono" />
                                         </div>
                                     ) : displayedIdeas?.map((idea: IdeaType, index: number) => (
                                         <div
@@ -685,8 +694,9 @@ function Idea() {
             <LinkChangeModal />
             <DeleteConfirmModal />
             <ChecklistModal />
-            <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} handleNoteCreation={handleNoteCreation} />
+            <CreationModal handleIdeaCreation={handleIdeaCreation} handleChecklistCreation={handleChecklistCreation} handleNoteCreation={handleNoteCreation} handleVaultCreation={handleVaultCreation} />
             <OnboardingModal />
+            {!isMobileUI && <VaultNoteModal />}
             <ProfileModal />
             <SessionEndedModal />
             <UpgradeModal />

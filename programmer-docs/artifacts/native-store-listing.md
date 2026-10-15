@@ -23,35 +23,37 @@ Draft text and answers for the App Store (iOS) and Google Play (Android) listing
 
 ## Text
 
-**Subtitle (iOS, 30 characters max):** `Catch the idea. Grow the plan.`
+**Subtitle (iOS, 30 characters max):** `Plant a node. Grow an idea.`
 
 **Keywords (iOS, 100 characters max, comma separated):**
 `mind map,mindmap,ideas,notes,brainstorm,outline,checklist,planner,thinking,tree,organize,nodes`
 
 **Promotional text (iOS, 170 max):**
-`Catch the idea, then grow the plan. A bright, playful mind map where ideas, notes and checklists live in one tree, work offline and sync across your devices.`
+`Plant a node, grow an idea. A place to build it out branch by branch: ideas, notes, checklists and links on one tree, offline and synced across your devices.`
 
 **Short description (Google Play, 80 max):**
-`A colorful mind map for ideas, notes and checklists. Works offline.`
+`A place to grow ideas. Start with one node and build it out, branch by branch.`
 
 **Full description (both stores):**
 
 ```
-Intraconnected is a bright, playful place to catch an idea and grow it into a plan.
+Plant a node. Grow an idea.
 
-Start with a single idea and branch it into more. Tap any idea to step inside it and see only what belongs there, then step back out when you're ready. Ideas, notes and checklists all live in one tree, and big maps stay readable because you only ever look at one level at a time.
+Every big thing starts as one small thought. Write yours down, then keep building on it: break it into parts, tick off the to-dos, pin the links, lock away the passwords. It all stays on one tree, from the first note to the finished thing.
 
-• Branch ideas as deep as you like
-• Drag an idea onto another to move it, or drag it to the trash to delete it
-• Checklists and notes sit right inside your map
-• Mark ideas High, Medium or Low priority and sort by priority or age
-• Attach a link to any idea
-• Import from Markdown, OPML, Notion, FreeMind and XMind, and export your whole map at any time
-• Your map syncs between your phone and the web, and keeps working offline
+Tap any idea to step inside it. You only see one level at a time, so even a huge project stays calm.
 
-Your ideas are encrypted on your device before they are saved.
+• Ideas inside ideas, as deep as you like
+• Checklists and notes right where they belong
+• Vault notes for passwords and codes, locked with a passphrase only you know. We can't read them
+• A link on any idea
+• High, Medium and Low priority
+• Search the whole tree. Undo a delete or a move
+• Hold and drag to rearrange
+• Works offline and syncs with the web
+• Import from Notion, Markdown, OPML, FreeMind and XMind. Export any time
 
-Sign in with your Intraconnected account, or create one in the app. Delete your account and all of your data from Profile whenever you want.
+Sign in or create an account in the app. Delete your account and all your data from Profile whenever you want.
 ```
 
 (The free plan holds 50 ideas. Do not mention plans, prices or upgrading in the app listing.)
@@ -74,16 +76,18 @@ Sign in with your Intraconnected account, or create one in the app. Delete your 
 
 ## Apple: App Review information
 
-Demo account: create a verified account with a few sample ideas (tree two levels deep, one checklist, one note). Put its email and password in App Store Connect, not in this repo.
+Demo account: create a verified account with a few sample ideas (tree two levels deep, one checklist, one note) and a vault already set up with one vault note. Put its email, password and vault passphrase in App Store Connect, not in this repo.
 
 Review notes:
 
 ```
-Intraconnected is a mind-mapping app. Sign in with the demo account above.
+Intraconnected is an app for growing ideas as a tree. Users start with one idea, branch it into more, and tap any idea to step inside it. Ideas can hold notes, checklists, links and vault notes. Sign in with the demo account above.
 
-The app does not sell anything and has no in-app purchases. Account plans, if any, are managed on our website. Users can delete their account and all data from Profile > Account > Delete account.
+Vault notes are for passwords and other secrets. They are locked with a separate vault passphrase, which is included with the demo account details. To try them, open Profile > Vault and unlock, or tap the vault note in the demo tree.
 
-Ideas are encrypted on the device before they are saved to our servers. The app only uses email and password sign-in.
+The app does not sell anything and has no in-app purchases. Account plans are managed on our website. Users can delete their account and all data from Profile > Account > Delete account.
+
+Ideas are encrypted on the device before they are saved to our servers. Vault notes are encrypted a second time with the vault passphrase. The app only uses email and password sign-in.
 ```
 
 ## Google Play: Data safety

@@ -4,6 +4,39 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## New Tagline and Site Copy — 2026-10-15
+Copy only; typecheck, lint, tests and build **not run** on these edits. Not deployed. Write-up: `programmer-docs/artifacts/intraconnected-messaging.html`.
+- Tagline "Map your mind. Connect your ideas." became "Plant a node. Grow an idea."; the product is called an idea tree ("a place to grow ideas"), not a mind map. New landing subline, button ("Start growing, free"), "50 nodes free. No card." line (`.landingHeroFine`), final CTA, pricing tagline, How It Works step 3, Privacy overview.
+- `index.html` descriptions, JSON-LD and `site.webmanifest` updated; store listing subtitle, promo text and Play short description updated (keywords keep "mind map" on purpose).
+- "Your map" → "your tree"/"your ideas" in Support, Privacy, ErrorBoundary, the import error and the AI import prompt. "Mind map" kept as the name of the G overlay / mobile sheet view. Store full description rewritten.
+- **Still old: `public/og-image.png` (shows the previous tagline) and its two alt strings.** Regenerate the image, then update the alts.
+
+## Phone Create Sheet Rework — 2026-10-15
+Typecheck, lint, 428 tests and `npm run build` pass. **Not deployed; not yet seen on a device or emulator.** Plan: `programmer-docs/artifacts/creation-modal-plans.html`.
+- The create sheet no longer scrolls as a whole: fixed header (grab handle + ✕, no title), tab row, a body that scrolls, and a pinned Cancel/Create footer. Create and the tabs stay on screen with the keyboard up. The scroll-into-view effect now scrolls `.mmobile-create-body`.
+- Tabs: one row of four labels at 13px, 44px tall, `role=tablist`; the selected tab sits pressed in (no color change otherwise). A tab tap keeps the keyboard up (mouseDown cancelled). Under 350px wide they wrap to two rows. The Vault tab's idle tint is removed.
+- Idea: the link field is folded behind a link button beside the name (tinted while a link is typed). Note: text area capped at 9.5rem and scrolls itself. Priority is one line (`MobilePriorityPicker inline`) and hidden on a locked Vault tab.
+- Vault: the footer's main button is Create, Unlock (submits the unlock form by `form=` id) or Set up vault, from the status the tab reports (`footerAction`); the inline buttons are left out in that case. Desktop modal unchanged.
+- Phones under 640px: input text 16px (iOS no-zoom floor), field padding 10px, gaps 8px, 44px targets kept.
+- Cancel now goes through `requestCloseSheet` (asks before throwing away typed text, like ✕ and Back); it used to discard directly.
+- To check on a device: Create visible with the keyboard up on every tab; "Checklist" fits on a 320-340px screen; caret stays visible in a long note; iOS keyboard handling.
+
+## Vault Notes — 2026-10-15
+Typecheck, lint, tests, `npm run build` and `build:native` pass. **Not deployed; UI not yet clicked through on a device or in the browser.** Plan: `programmer-docs/vault-notes-plan.md`.
+- New note type `isVault` (always with `isNote`). Label, secret and link are encrypted with a separate vault key (`vault1:` strings, AAD per idea and field) before the outbox encrypts them again, so `outbox.ts` is unchanged; `syncEngine.decodeIdea` now carries `isVault` (without it every pull dropped the flag).
+- Vault key lives in `meta/vault`, wrapped by a vault passphrase (`vpw1:`, Argon2id) and a recovery code (`vrc1:`, HKDF); AAD binds each wrap to uid and keyId so the account's own password wrap can never stand in for it. Memory only; locks on Lock now, 1/5/15 min idle, 60 s in the background, and in `clearDEK()`. The wraps are cached in localStorage so it unlocks offline. No Firestore rules or function changes.
+- Profile → Vault tab: setup (two-step, re-type two code groups before anything is saved), unlock, change passphrase, new recovery code, forgot passphrase, auto-lock, export vault notes (unencrypted JSON), Reset vault (type RESET). No passphrase rules, no clipboard clearing, no biometrics, as decided.
+- Vault notes are skipped by search, suggestions, Markdown/OPML/JSON export and import; copy never copies a secret; labels read "Vault note" until unlocked. Desktop: card, card menu, modal, Create tab. Phone: Vault tab in the create sheet, vault sheet, rows.
+- Copy added to Privacy, Terms and Support, plus a help line and a changelog entry (V 1.11). **The Privacy/Terms wording says "we cannot read" vault notes: needs the owner's sign-off before shipping.** `app-store-encryption-documentation.md` not touched.
+- To check on a device: backgrounding the native app for over a minute locks the vault.
+
+## Legal Review of Terms and Privacy — 2026-10-14
+Copy only (`Terms.tsx`, `Privacy.tsx`); **not typechecked or built, not deployed.**
+- Terms: eligibility adds local digital-consent age; "not end-to-end"; new Section 6 (license/IP); sanctions/export clause; Annual auto-renewal authorization and price-change notice; "Lifetime" defined as the life of the Service (60 days' notice and export on shutdown); EEA/UK 14-day withdrawal right; failed-payment text; refund of unused Annual term if we end access or materially cut the Service; liability carve-outs the law won't let us cap; consumer-law, venue and small-claims carve-outs; narrower indemnity; 30 days' notice for material changes. Sections renumbered (survival list updated).
+- Privacy: controller named; purposes and legal bases; hosting logs; international transfers; retention list; GDPR/CCPA-style rights, request process, appeal and complaint routes; legal-requests and business-transfer sections; ePrivacy/GPC note on browser storage; breach-notice promise; children's age wording; change-notice promise.
+- Checked against code: email change exists in Profile; delete-account removes usageFlags/bugReports/recoveryAudit; free-plan cap only blocks creating (nothing deletes ideas on downgrade); Stripe tax is NOT configured, so tax wording is conditional; Google Fonts still loads from Google (`index.html`).
+- Open (needs the owner, not copy): sign-up shows only links to the Terms, no "I agree" checkbox; no renewal-reminder email beyond whatever Stripe sends (California requires one for annual plans); EU representative and a postal address for the operator; Google Fonts self-hosting; Annual withdrawal and pro-rata refunds are manual by email.
+
 ## Encryption Switches On, Legacy Email Wrap Retired — 2026-10-14
 Typecheck, lint, 384 tests, `npm run build` and `build:native` pass; `npm audit --omit=dev` finds 0 (the critical `tar` finding is dev tooling inside `@capacitor/assets`, not shipped). **Not deployed; KMS not yet tested live.**
 - Nothing has shipped, so no staged rollout: `WRITE_ENC2` and `WRITE_PASSWORD_WRAP_V3` are on; `WRITE_KMS_RECOVERY` is removed. The real public key is in `recoveryKey.ts`.
