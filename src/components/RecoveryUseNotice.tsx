@@ -7,7 +7,15 @@ interface RecoveryNotice {
     at: number;
 }
 
-const LAST_SEEN_PREFIX = "recovery_audit_seen_";
+const DISMISSED_PREFIX = "recovery_notice_dismissed_";
+
+function isDismissed(uid: string): boolean {
+    try {
+        return localStorage.getItem(`${DISMISSED_PREFIX}${uid}`) === "1";
+    } catch {
+        return false;
+    }
+}
 
 function timestampMillis(value: unknown): number | null {
     if (value && typeof value === "object" && "toMillis" in value && typeof value.toMillis === "function") {
@@ -27,7 +35,7 @@ function RecoveryUseNotice() {
         const unsubscribe = auth.onAuthStateChanged(user => {
             currentUid = user?.uid ?? null;
             setNotice(null);
-            if (!user) return;
+            if (!user || isDismissed(user.uid)) return;
 
             void (async () => {
                 try {
@@ -41,10 +49,8 @@ function RecoveryUseNotice() {
                         const at = timestampMillis(audit.data().at);
                         if (at !== null && (latestAt === null || at > latestAt)) latestAt = at;
                     }
-                    if (latestAt === null) return;
-
-                    const lastSeen = Number(localStorage.getItem(`${LAST_SEEN_PREFIX}${user.uid}`) ?? 0);
-                    if (latestAt > lastSeen) setNotice({ uid: user.uid, at: latestAt });
+                    if (latestAt === null || isDismissed(user.uid)) return;
+                    setNotice({ uid: user.uid, at: latestAt });
                 } catch (error) {
                     console.error("Could not check the encryption recovery audit log.", error);
                 }
@@ -72,7 +78,7 @@ function RecoveryUseNotice() {
                     aria-label="Dismiss recovery notice"
                     onClick={() => {
                         try {
-                            localStorage.setItem(`${LAST_SEEN_PREFIX}${notice.uid}`, String(notice.at));
+                            localStorage.setItem(`${DISMISSED_PREFIX}${notice.uid}`, "1");
                             setNotice(null);
                         } catch (error) {
                             console.error("Could not remember that the recovery notice was dismissed.", error);
