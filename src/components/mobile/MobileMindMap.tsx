@@ -1821,9 +1821,13 @@ function MobileMindMap() {
                                 />
                                 {vaultRow ? (
                                     <span className="mmobile-node-title mmobile-node-vault">
-                                        <VaultLockGlyph open={vaultUnlocked} size={18} />
-                                        <span>{resolveIdeaLabel(child)}</span>
-                                        <span className="mmobile-node-vault-dots" aria-hidden="true">••••••</span>
+                                        <span className="mmobile-node-vault-head">
+                                            <VaultLockGlyph open={vaultUnlocked} size={18} />
+                                            <span className="mmobile-node-vault-label">{resolveIdeaLabel(child)}</span>
+                                        </span>
+                                        <span className="mmobile-node-vault-slot" aria-hidden="true">
+                                            <span className="mmobile-node-vault-dots">••••••</span>
+                                        </span>
                                     </span>
                                 ) : noteMode ? (
                                     <span className="mmobile-node-title mmobile-node-title--note">

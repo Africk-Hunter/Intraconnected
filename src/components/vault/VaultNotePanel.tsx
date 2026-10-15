@@ -123,7 +123,7 @@ function VaultNotePanel({ ideaId, initialMode, onClose, onOpenVaultSettings, onD
                 <p className="vault-sheet vault-sheet--message">{message}</p>
                 <footer className="vault-actions">
                     <button className="vault-action vault-action--danger neobrutal-button" onClick={() => { onClose(); onDelete(ideaId); }}>Delete</button>
-                    <button className="vault-action vault-action--go neobrutal-button" onClick={onClose}>Close</button>
+                    <button className="vault-action vault-action--back neobrutal-button" onClick={onClose}>Close</button>
                 </footer>
             </div>
         );
@@ -151,7 +151,7 @@ function VaultNotePanel({ ideaId, initialMode, onClose, onOpenVaultSettings, onD
                     ? <p className="vault-sheet vault-sheet--message vault-error" role="alert">{vaultErrorText(error)}</p>
                     : <p className="vault-sheet vault-sheet--message vault-opening" role="status">Opening…</p>}
                 <footer className="vault-actions">
-                    <button className="vault-action vault-action--go neobrutal-button" onClick={onClose}>Close</button>
+                    <button className="vault-action vault-action--back neobrutal-button" onClick={onClose}>Close</button>
                 </footer>
             </div>
         );
@@ -196,7 +196,7 @@ function VaultNotePanel({ ideaId, initialMode, onClose, onOpenVaultSettings, onD
                 </div>
                 {error !== null && <p className="vault-error" role="alert">{errorText(error)}</p>}
                 <footer className="vault-actions">
-                    <button type="button" className="vault-action vault-action--cancel neobrutal-button" onClick={() => { setDraft(text); setMode('view'); setError(null); }}>Cancel</button>
+                    <button type="button" className="vault-action vault-action--back neobrutal-button" onClick={() => { setDraft(text); setMode('view'); setError(null); }}>Cancel</button>
                     <button type="submit" className="vault-action vault-action--go neobrutal-button" disabled={!draft.label.trim() || saving}>
                         {saving ? 'Saving…' : 'Save'}
                     </button>
@@ -252,7 +252,7 @@ function VaultNotePanel({ ideaId, initialMode, onClose, onOpenVaultSettings, onD
             <span className="vault-sr-only" role="status">{copied ? 'Copied to the clipboard' : ''}</span>
             {error !== null && <p className="vault-error" role="alert">{errorText(error)}</p>}
             <footer className="vault-actions">
-                <button className="vault-action vault-action--cancel neobrutal-button" onClick={() => { touchVault(); setDraft(text); setMode('edit'); }}>Edit</button>
+                <button className="vault-action vault-action--edit neobrutal-button" onClick={() => { touchVault(); setDraft(text); setMode('edit'); }}>Edit</button>
                 <button className="vault-action vault-action--go neobrutal-button" onClick={onClose}>Done</button>
             </footer>
         </div>

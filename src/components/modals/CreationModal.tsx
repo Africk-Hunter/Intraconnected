@@ -3,13 +3,15 @@ import { useIdeaContext } from "../../context/IdeaContext";
 import { cleanLink } from "../../utilities";
 import { ChecklistItem } from "../../utilities/types";
 import AnimatedOverlay from "../AnimatedOverlay";
-import VaultCreateFields from "../vault/VaultCreateFields";
+import VaultCreateCard, { type VaultCardFooter } from "../vault/VaultCreateCard";
 import type { VaultDraft } from "../vault/VaultSecretFields";
 import { useVaultState } from "../../utilities/vault/useVaultState";
 import { useOpenVaultSettings } from "../vault/vaultUi";
 
 type Tab = 'idea' | 'checklist' | 'note' | 'vault';
 const EMPTY_VAULT: VaultDraft = { label: '', secret: '', link: '' };
+// The locked Vault tab's passphrase form; the modal's Unlock button submits it.
+const VAULT_UNLOCK_FORM_ID = 'creation-vault-unlock';
 
 const ITEM_REMOVE_ANIM_MS = 300;
 // Checklist title is a single-line input; note body mirrors the 2000-char cap
@@ -44,6 +46,8 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     // The vault tab's text is kept apart from the other tabs on purpose: a secret must never carry over into an ordinary idea.
     const [vaultDraft, setVaultDraft] = useState<VaultDraft>(EMPTY_VAULT);
     const [vaultCreating, setVaultCreating] = useState(false);
+    // Reported by the Vault tab: whether the main button creates, unlocks or sets up.
+    const [vaultFooter, setVaultFooter] = useState<VaultCardFooter>({ action: 'wait', canSubmit: false, busy: false });
     const { unlocked: vaultUnlocked } = useVaultState();
     const openVaultSettings = useOpenVaultSettings('desktop');
     const { profileModalOpen, createReturn, setCreateReturn } = useIdeaContext();
@@ -498,11 +502,14 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
 
                             <div className={`creation-panel${activeTab === 'vault' ? ' creation-panel--active' : ''}`}>
                                 <div ref={vaultSectionRef} className="vault-creation">
-                                    <VaultCreateFields
+                                    <VaultCreateCard
                                         draft={vaultDraft}
                                         onChange={setVaultDraft}
+                                        active={creationModalOpen && activeTab === 'vault'}
+                                        formId={VAULT_UNLOCK_FORM_ID}
+                                        onSubmit={handleCreateVault}
                                         onOpenSettings={openVaultSettingsFromCreate}
-                                        onSubmitShortcut={handleCreateVault}
+                                        onFooter={setVaultFooter}
                                     />
                                 </div>
                             </div>
@@ -553,7 +560,22 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                                     Create
                                 </button>
                             )}
-                            {activeTab === 'vault' && (
+                            {activeTab === 'vault' && vaultFooter.action === 'unlock' && (
+                                <button
+                                    type="submit"
+                                    form={VAULT_UNLOCK_FORM_ID}
+                                    className="modalButton continue neobrutal-button"
+                                    disabled={!vaultFooter.canSubmit || vaultFooter.busy}
+                                >
+                                    {vaultFooter.busy ? 'Unlocking…' : 'Unlock'}
+                                </button>
+                            )}
+                            {activeTab === 'vault' && vaultFooter.action === 'setup' && (
+                                <button className="modalButton continue neobrutal-button" onClick={openVaultSettingsFromCreate}>
+                                    Set up vault
+                                </button>
+                            )}
+                            {activeTab === 'vault' && (vaultFooter.action === 'create' || vaultFooter.action === 'wait') && (
                                 <button
                                     className="modalButton continue neobrutal-button"
                                     onClick={handleCreateVault}

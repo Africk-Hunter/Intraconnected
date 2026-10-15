@@ -79,7 +79,7 @@ function VaultUnlockForm({ onUnlocked, onOpenSettings, autoFocus = true, variant
                     )}
                 </div>
                 <footer className="vault-actions">
-                    {onCancel && <button type="button" className="vault-action vault-action--cancel neobrutal-button" onClick={onCancel}>Close</button>}
+                    {onCancel && <button type="button" className="vault-action vault-action--back neobrutal-button" onClick={onCancel}>Close</button>}
                     {notSetUp && onOpenSettings
                         ? <button type="button" className="vault-action vault-action--go neobrutal-button" onClick={onOpenSettings}>Set up vault</button>
                         : unlockButton('vault-action vault-action--go')}
