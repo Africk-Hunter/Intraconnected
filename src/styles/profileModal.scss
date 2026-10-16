@@ -42,7 +42,9 @@ $profile-corner: 4.2rem;
 // Mobile header row height, including its 3px bottom rule.
 $profile-header-mobile: 3.9rem;
 // Mobile .overlay pads 1.5rem top and bottom; the modal's 3px borders on top.
-$profile-modal-max-mobile: calc(100dvh - 3rem - 6px);
+// viewport-fit=cover draws under the iPhone status bar and home indicator, so
+// keep the modal clear of both safe areas, not just the overlay padding.
+$profile-modal-max-mobile: calc(100dvh - 3rem - 6px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
 
 .neobrutal.modal.profile-modal {
     display: flex;
@@ -1024,10 +1026,11 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    // The scrollbar gutter is reserved on the right, so take it off the padding.
-    // Cards and buttons cast a 4px shadow to the right, so add it to keep card + shadow centred
-    // (same compensation as the sidebar tabs).
-    padding: 1.6rem calc(2rem - #{$profile-scrollbar} + 4px) 2rem 2rem;
+    // The scrollbar gutter sits outside the padding (it is reserved beyond it),
+    // so the right padding is the gap between the cards and the scrollbar's
+    // black line. Cards cast a 4px shadow to the right: add it so the shadow's
+    // far edge is as far from the line as the cards' left edge is from the border.
+    padding: 1.6rem calc(2rem + 4px) 2rem 2rem;
 }
 
 .profile-account-content {

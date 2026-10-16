@@ -1,6 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { IdeaType } from "../types";
 import { searchIdeas, suggestedIdeas } from "./search";
+
+const unlockedLabels = vi.hoisted(() => new Map<string, string>());
+vi.mock("../vault/vaultSession", () => ({ getCachedVaultLabel: (cipher: string) => unlockedLabels.get(cipher) }));
 
 const ideas: IdeaType[] = [
     { id: 1, content: "Ideas", parentID: 0, link: "" },
@@ -110,10 +113,22 @@ describe("vault notes", () => {
     const vault = { id: 30, content: "vault1:0a1b2c3d:c2VjcmV0", noteTitle: "vault1:0a1b2c3d:dGl0bGU=", parentID: 1, link: "vault1:0a1b2c3d:bGluaw==", isNote: true, isVault: true } as IdeaType;
     const withVault = [...ideas, vault];
 
-    it("never match, even on their stored text", () => {
+    it("never match while locked, even on their stored text", () => {
         expect(searchIdeas(withVault, "vault1")).toEqual([]);
         expect(searchIdeas(withVault, "vault note")).toEqual([]);
         expect(searchIdeas(withVault, "c2VjcmV0")).toEqual([]);
+    });
+
+    it("match on their label once unlocked, never on content or link", () => {
+        unlockedLabels.set("vault1:0a1b2c3d:dGl0bGU=", "Bank logins");
+        try {
+            expect(searchIdeas(withVault, "bank").map((r) => r.id)).toEqual([30]);
+            expect(searchIdeas(withVault, "bank")[0].snippet).toBe("");
+            expect(searchIdeas(withVault, "c2VjcmV0")).toEqual([]);
+            expect(searchIdeas(withVault, "vault1")).toEqual([]);
+        } finally {
+            unlockedLabels.clear();
+        }
     });
 
     it("never appear as suggestions", () => {

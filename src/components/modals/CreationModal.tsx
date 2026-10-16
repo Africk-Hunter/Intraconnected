@@ -14,10 +14,10 @@ const EMPTY_VAULT: VaultDraft = { label: '', secret: '', link: '' };
 const VAULT_UNLOCK_FORM_ID = 'creation-vault-unlock';
 
 const ITEM_REMOVE_ANIM_MS = 300;
-// Checklist title is a single-line input; note body mirrors the 2000-char cap
+// Checklist title is a single-line input; note body mirrors the 20000-char cap
 // enforced on already-created notes (IdeaNode.tsx's contentEditable body).
 const CHECKLIST_TITLE_MAX_LENGTH = 100;
-const NOTE_BODY_MAX_LENGTH = 2000;
+const NOTE_BODY_MAX_LENGTH = 20000;
 // How long the add input stays visually "pressed" after Enter.
 const ITEM_PRESS_MS = 120;
 

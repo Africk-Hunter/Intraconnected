@@ -57,6 +57,24 @@ export async function markPlanCelebrated(plan: "annual" | "lifetime"): Promise<v
     await setDoc(prefsDoc, { [CELEBRATED_FIELD[plan]]: true }, { merge: true });
 }
 
+// The "your backup key was used" notice is dismissed once per account, on
+// every device.
+export async function fetchRecoveryNoticeDismissed(): Promise<boolean> {
+    const user = authCheck();
+    if (!user) return true;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    const snap = await getDoc(prefsDoc);
+    if (!snap.exists()) return false;
+    return (snap.data().recoveryNoticeDismissed as boolean) ?? false;
+}
+
+export async function markRecoveryNoticeDismissed(): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
+    await setDoc(prefsDoc, { recoveryNoticeDismissed: true }, { merge: true });
+}
+
 // Dev-only: lets both celebrations show again after "Reset to Free".
 export async function clearPlanCelebrated(): Promise<void> {
     const user = authCheck();

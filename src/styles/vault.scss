@@ -390,10 +390,40 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     line-height: 1;
 }
 
+// Thin white thumb, offset toward the right edge of its track.
+@mixin vault-scrollbar($track) {
+    scrollbar-width: thin;
+    scrollbar-color: white $track;
+
+    &::-webkit-scrollbar {
+        width: 0.8rem;
+        height: 0.8rem;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: $track;
+        border-radius: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: white;
+        border-radius: 6px;
+        // Wider left border pushes the visible thumb toward the right edge.
+        border: 2px solid $track;
+        border-left-width: 5px;
+        border-right-width: 1px;
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: $track;
+    }
+}
+
 .vault-secret {
     max-height: 12rem;
     margin: 0;
     overflow: auto;
+    @include vault-scrollbar($vault-deep);
     font-family: $note-font;
     font-size: 1rem;
     line-height: 1.45;
@@ -665,6 +695,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 .vault-secret-input {
     resize: vertical;
     font-family: $note-font;
+    @include vault-scrollbar($neutral);
 }
 
 .vault-field {

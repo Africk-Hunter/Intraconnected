@@ -276,6 +276,7 @@ $search-row-stagger: 25ms;
     &--link      { --kind-color: #{$link}; }
     &--note      { --kind-color: #{$neo-green}; color: #fff; }
     &--checklist { --kind-color: #{$indigo}; color: #fff; }
+    &--vault     { --kind-color: #{$vault}; color: #{$vault-ink}; }
 
     // Under a match, not a match itself.
     &--context {

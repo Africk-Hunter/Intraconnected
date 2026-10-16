@@ -28,7 +28,7 @@ function MoveModal() {
     const open = moveIdeaId !== null;
 
     useEffect(() => {
-        if (open) { setQuery(''); setActive(0); }
+        if (open) setQuery('');
     }, [open]);
 
     const { options, movingName } = useMemo(() => {
@@ -58,12 +58,27 @@ function MoveModal() {
         return list.slice(0, MAX_ROWS);
     }, [options, q]);
 
-    useEffect(() => { setActive(0); }, [q]);
+    // With nothing typed the list starts on where the idea sits now.
+    const homeIndex = useMemo(() => Math.max(0, shown.findIndex((o) => o.isCurrent)), [shown]);
+    useEffect(() => { setActive(q ? 0 : homeIndex); }, [q, open]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Keep the highlighted row in view while arrowing through a long list.
     useEffect(() => {
         listRef.current?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
     }, [active, shown]);
+
+    // On open (or when the filter is cleared) the "Here now" row goes to the top of the list, not just into view.
+    useEffect(() => {
+        if (!open || q) return;
+        const raf = requestAnimationFrame(() => {
+            const list = listRef.current;
+            const row = list?.querySelector<HTMLElement>('[data-active="true"]');
+            if (!list || !row) return;
+            // offsetTop, not getBoundingClientRect: the modal is still scaling in, which would skew the distance.
+            list.scrollTop = row.offsetTop - list.offsetTop - 4;
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [open, q, homeIndex]);
 
     function close() { setMoveIdeaId(null); }
 

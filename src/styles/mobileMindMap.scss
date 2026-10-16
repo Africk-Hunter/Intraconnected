@@ -1516,6 +1516,7 @@
     &--link       { background: $link; }
     &--note       { background: $neo-green; color: white; }
     &--checklist  { background: $indigo; color: white; }
+    &--vault      { background: $vault; color: $vault-ink; }
 
     &:active:not(:disabled) {
         transform: translate(2px, 2px);

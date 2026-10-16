@@ -120,7 +120,7 @@ function VaultSecretFields({ idPrefix, draft, onChange, onSubmitShortcut, autoFo
                     id={secretId}
                     className="vault-input vault-secret-input neobrutal-input"
                     placeholder="Password or secret"
-                    maxLength={2000}
+                    maxLength={20000}
                     rows={foldLink ? 2 : 4}
                     spellCheck={false}
                     enterKeyHint="done"

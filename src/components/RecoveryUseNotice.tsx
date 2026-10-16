@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { collection, getDocsFromServer, query, where } from "firebase/firestore";
 import { auth, db } from "../firebaseConfig";
+import { fetchRecoveryNoticeDismissed, markRecoveryNoticeDismissed } from "../utilities/firebase/preferences";
 
 interface RecoveryNotice {
     uid: string;
@@ -39,6 +40,12 @@ function RecoveryUseNotice() {
 
             void (async () => {
                 try {
+                    if (await fetchRecoveryNoticeDismissed()) {
+                        try { localStorage.setItem(`${DISMISSED_PREFIX}${user.uid}`, "1"); } catch { /* optional */ }
+                        return;
+                    }
+                    if (!active || currentUid !== user.uid) return;
+
                     const auditQuery = query(collection(db, "recoveryAudit"), where("uid", "==", user.uid));
                     const snapshot = await getDocsFromServer(auditQuery);
                     if (!active || currentUid !== user.uid) return;
@@ -77,6 +84,9 @@ function RecoveryUseNotice() {
                     className="syncBanner__dismiss"
                     aria-label="Dismiss recovery notice"
                     onClick={() => {
+                        markRecoveryNoticeDismissed().catch(error => {
+                            console.error("Could not save the dismissed recovery notice to the account.", error);
+                        });
                         try {
                             localStorage.setItem(`${DISMISSED_PREFIX}${notice.uid}`, "1");
                             setNotice(null);

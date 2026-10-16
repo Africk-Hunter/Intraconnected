@@ -126,6 +126,8 @@ function MobileMoveSheet({ nodeId, allIdeas, onMove }: Props) {
             const isCurrentParent = r.id === movingNode?.parentID;
             const colorClass = r.kind === 'checklist'
                 ? 'mmobile-move-btn--checklist'
+                : r.kind === 'vault'
+                ? 'mmobile-move-btn--vault'
                 : r.kind === 'note'
                 ? 'mmobile-move-btn--note'
                 : r.kind === 'link'

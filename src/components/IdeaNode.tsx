@@ -14,7 +14,7 @@ import { IdeaType, ChecklistItem, getIdeaLink, updateChecklistItems, openIdeaLin
 import VaultLockGlyph from './vault/VaultLockGlyph';
 import { useVaultState } from '../utilities/vault/useVaultState';
 
-const NOTE_BODY_MAX_LENGTH = 2000;
+const NOTE_BODY_MAX_LENGTH = 20000;
 
 function cssLengthToPx(value: string, el: Element): number {
     const num = parseFloat(value);

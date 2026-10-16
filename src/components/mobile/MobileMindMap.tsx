@@ -2113,7 +2113,7 @@ function MobileMindMap() {
                                             }}
                                             placeholder="Write your note..."
                                             autoCorrect="off" autoComplete="off" spellCheck={false}
-                                            maxLength={2000}
+                                            maxLength={20000}
                                             rows={3}
                                         />
                                     </div>
@@ -2235,7 +2235,7 @@ function MobileMindMap() {
                                     }}
                                     onFocus={e => { const el = e.target; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }}
                                     placeholder="Note body"
-                                    maxLength={2000}
+                                    maxLength={20000}
                                     rows={4}
                                 />
                                 <MobilePriorityPicker value={editPriority} onChange={setEditPriority} />

@@ -133,7 +133,7 @@ function VaultCreateCard({ draft, onChange, active, formId, onSubmit, onOpenSett
                             className="vault-ccard-secret"
                             aria-label="Secret"
                             placeholder="Password or secret"
-                            maxLength={2000}
+                            maxLength={20000}
                             rows={3}
                             spellCheck={false}
                             value={draft.secret}

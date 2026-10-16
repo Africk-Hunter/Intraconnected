@@ -687,7 +687,7 @@
 
     // An idea result is a small copy of the idea's own card: same colour,
     // heavy border and hard shadow, pressing in on hover / keyboard selection.
-    &--leaf, &--parent, &--link, &--note, &--checklist {
+    &--leaf, &--parent, &--link, &--note, &--checklist, &--vault {
         margin: 0;
         padding: 0.55rem 0.9rem;
         background: var(--kind-color);
@@ -702,6 +702,7 @@
     &--link      { --kind-color: #{$link}; }
     &--note      { --kind-color: #{$neo-green}; color: #fff; }
     &--checklist { --kind-color: #{$indigo}; color: #fff; }
+    &--vault     { --kind-color: #{$vault}; color: #{$vault-ink}; }
 
     // Shown because it sits under a match: a smaller card.
     &--context {
@@ -717,9 +718,19 @@
     &--parent.search-modal-row--active,
     &--link.search-modal-row--active,
     &--note.search-modal-row--active,
-    &--checklist.search-modal-row--active {
+    &--checklist.search-modal-row--active,
+    &--vault.search-modal-row--active {
         translate: 2px 2px;
-        box-shadow: 1px 1px 0 #111, inset 0 0 0 3px rgba(255, 255, 255, 0.75);
+        box-shadow: 1px 1px 0 #111;
+        background: $orange;
+        color: #111;
+    }
+    // White-text kinds can't carry plain orange, same as the focused card.
+    &--note.search-modal-row--active,
+    &--checklist.search-modal-row--active,
+    &--vault.search-modal-row--active {
+        background: $burnt-orange;
+        color: #fff;
     }
 
     &--active:not(.search-modal-row--idea) {

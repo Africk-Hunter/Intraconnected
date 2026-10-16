@@ -1,9 +1,9 @@
 import type { IdeaType } from '../types';
-import { getIdeaLink, isNoteMode, isVaultIdea, resolveIdeaLabel } from './helpers';
+import { getIdeaLink, isNoteMode, isVaultIdea, resolveIdeaLabel, VAULT_LABEL } from './helpers';
 
-export type IdeaKind = 'idea' | 'link' | 'checklist' | 'note';
+export type IdeaKind = 'idea' | 'link' | 'checklist' | 'note' | 'vault';
 
-export const KIND_LABEL: Record<IdeaKind, string> = { idea: 'Idea', link: 'Link', checklist: 'Checklist', note: 'Note' };
+export const KIND_LABEL: Record<IdeaKind, string> = { idea: 'Idea', link: 'Link', checklist: 'Checklist', note: 'Note', vault: 'Vault' };
 
 export interface SearchResult {
     id: number;
@@ -33,6 +33,7 @@ function oneLine(text: string): string {
 
 function kindOf(idea: IdeaType): IdeaKind {
     if (idea.type === 'checklist') return 'checklist';
+    if (isVaultIdea(idea)) return 'vault';
     if (isNoteMode(idea)) return 'note';
     return getIdeaLink(idea) !== '' ? 'link' : 'idea';
 }
@@ -161,9 +162,6 @@ function matchWord(word: string, fields: string[]): number | null {
 // a name above it. Matches come back each followed by the ideas beneath it, so a
 // half-remembered name still leads to what is inside.
 export function searchIdeas(ideas: IdeaType[], query: string, limit = 50): SearchResult[] {
-    // Vault notes are never searched: their stored text is ciphertext, and a
-    // match on the label would show it outside the vault.
-    ideas = ideas.filter((idea) => !isVaultIdea(idea));
     const words = oneLine(query).toLowerCase().split(' ').filter(Boolean);
     if (words.length === 0) return [];
 
@@ -208,7 +206,11 @@ export function searchIdeas(ideas: IdeaType[], query: string, limit = 50): Searc
     for (const idea of ideas) {
         if (idea.id === 1) continue;
         const label = oneLine(resolveIdeaLabel(idea)) || 'Untitled';
-        const body = isNoteMode(idea) ? idea.content : '';
+        // A vault note matches on its label only (known while the vault is
+        // unlocked); its content and link are ciphertext and never searched.
+        const vault = isVaultIdea(idea);
+        if (vault && label === VAULT_LABEL) continue;
+        const body = isNoteMode(idea) && !vault ? idea.content : '';
         const items = idea.type === 'checklist' ? idea.items.map((item) => item.text).join('\n') : '';
         const link = getIdeaLink(idea);
         const fields = [label, body, items, link].map((field) => field.toLowerCase());
