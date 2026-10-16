@@ -147,6 +147,22 @@ function ProfileModal() {
         setUpgradeModalOpen(true);
     }
 
+    function clearDeleteFields() {
+        setDeletePassword('');
+        setDeleteConfirm('');
+        setDeleteError('');
+    }
+
+    function cancelDeleteConfirm() {
+        setDeleteConfirmOpen(false);
+        clearDeleteFields();
+    }
+
+    // Backing out of a mobile tab to the tab list must not leave the password sitting in the field.
+    useEffect(() => {
+        if (isProfileMobile && mobileView === 'tabs') clearDeleteFields();
+    }, [isProfileMobile, mobileView]);
+
     function handleClose() {
         setProfileModalOpen(false);
         setActiveTab('account');
@@ -680,17 +696,28 @@ function ProfileModal() {
         <div className="profile-account-content">
             <section className="profile-section profile-section--danger">
                 <h3 className="profile-section-title profile-section-title--danger">Delete Account</h3>
-                <p className="profile-section-desc">This permanently deletes all your data. This cannot be undone.</p>
-                <input
-                    id="profile-delete-password"
-                    name="profile-delete-password"
-                    className="profile-input neobrutal-input"
-                    type="password"
-                    placeholder="Current password"
-                    value={deletePassword}
-                    onChange={e => setDeletePassword(e.target.value)}
-                    autoComplete="current-password"
-                />
+                <p className="profile-section-desc">This permanently deletes all your data. This cannot be undone. Enter your account password to confirm.</p>
+                <div className={`profile-fake-placeholder${deletePassword ? '' : ' empty'}`} data-hint="Password">
+                    <input
+                        id="profile-delete-verify"
+                        name="profile-delete-verify"
+                        className="profile-input neobrutal-input"
+                        // A masked text field with a CSS-drawn hint, not type="password" or a
+                        // placeholder: phones offer to autofill password fields and to save them
+                        // afterwards, neither of which belongs in an account deletion.
+                        type="text"
+                        style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
+                        value={deletePassword}
+                        onChange={e => setDeletePassword(e.target.value)}
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-form-type="other"
+                    />
+                </div>
                 <input
                     id="profile-delete-confirm"
                     name="profile-delete-confirm"
@@ -1050,7 +1077,7 @@ function ProfileModal() {
 
             {import.meta.env.DEV && <ModalTester open={modalTesterOpen} onClose={() => setModalTesterOpen(false)} />}
 
-            <AnimatedOverlay open={deleteConfirmOpen} onEscape={() => setDeleteConfirmOpen(false)}>
+            <AnimatedOverlay open={deleteConfirmOpen} onEscape={cancelDeleteConfirm}>
                 <div className="modal neobrutal session-ended">
                     <header className="session-ended-header session-ended-header--danger">
                         <span className="session-ended-icon" aria-hidden="true">
@@ -1068,7 +1095,7 @@ function ProfileModal() {
                             This permanently deletes your account and all your data. This cannot be undone.
                         </p>
                         <div className="session-ended-actions">
-                            <button className="session-ended-submit neobrutal-button neutral" onClick={() => setDeleteConfirmOpen(false)}>
+                            <button className="session-ended-submit neobrutal-button neutral" onClick={cancelDeleteConfirm}>
                                 Cancel
                             </button>
                             <button

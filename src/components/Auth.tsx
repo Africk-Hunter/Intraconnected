@@ -427,8 +427,8 @@ const Auth: React.FC = () => {
             <div className="largeLogo"><img src="/images/MainLargerLogo.svg" alt="" className="largeLogoImg" /></div>
             <section className="authForm">
                 <section className="authInputs" onFocus={() => {
-                    // The keyboard covers the button; once it is up, scroll the page so Continue is visible.
-                    setTimeout(() => submitRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350);
+                    // The keyboard covers the button; once it is up, scroll only as far as needed to show Continue ('nearest', not 'center', so the field doesn't get pushed to the top).
+                    setTimeout(() => submitRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 350);
                 }}>
                     <input type="text" className="input neobrutal-input" placeholder="email@domain.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                     <div className="passwordField">

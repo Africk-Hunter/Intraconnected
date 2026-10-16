@@ -25,6 +25,9 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     flex: none;
     overflow: visible;
     vertical-align: -0.15em;
+    // Always black, even inside white-ink vault surfaces ($vault-ink). The
+    // only white lock is the mobile Profile tab icon, a CSS mask in profileModal.scss.
+    color: black;
 }
 
 .vault-lock-shackle {
@@ -76,8 +79,16 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     // Hovering a locked card nudges the shackle: "this opens".
-    &:not(.ideaNode--vault-open):hover .vault-lock-shackle {
+    &:not(.ideaNode--vault-open):not([data-dragging]):hover .vault-lock-shackle {
         transform: translateY(-1.5px);
+    }
+
+    // While carried, drop everything that animates or needs its own raster pass.
+    &[data-dragging] {
+        .vault-lock-shackle,
+        .vault-chip { transition: none; }
+
+        .vault-card-slot { box-shadow: none; }
     }
 }
 
@@ -186,7 +197,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     font-weight: 800;
     transition: background-color 240ms ease;
 
-    .vault-lock { width: 1.15em; height: 1.15em; color: white; }
+    .vault-lock { width: 1.15em; height: 1.15em; }
 
     .ideaNode--vault-open & { background: $leaf; }
 

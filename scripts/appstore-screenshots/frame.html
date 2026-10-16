@@ -80,6 +80,12 @@ stage.style.transform = `scale(${innerWidth / W})`;
 const col = (name) => (name.startsWith('#') ? name : `var(--${name})`);
 const a = document.getElementById('a'), b = document.getElementById('b'), sub = document.getElementById('sub');
 a.textContent = P.get('a'); b.textContent = P.get('b'); sub.textContent = P.get('sub');
+// Per-shot tilt (ra, rb in degrees) and sideways shift (xa, xb in px) so the headlines don't all sit alike.
+if (P.get('ra')) a.style.setProperty('--r', P.get('ra') + 'deg');
+if (P.get('rb')) b.style.setProperty('--r', P.get('rb') + 'deg');
+const xa = +P.get('xa') || 0, xb = +P.get('xb') || 0;
+a.style.left = 660 + xa + 'px'; b.style.left = 660 + xb + 'px';
+document.getElementById('stem').style.left = 657 + (xa + xb) / 2 + 'px';
 a.style.setProperty('--c', col(P.get('ca') || 'leaf'));
 b.style.setProperty('--c', col(P.get('cb') || 'sky'));
 for (const [el, key] of [[a, 'ca'], [b, 'cb']]) if (['indigo', 'pink'].includes(P.get(key))) el.style.setProperty('--fg', '#fff');
@@ -92,13 +98,15 @@ Promise.all([document.fonts.ready, img.decode()]).then(() => {
   let fs = 124;
   const fit = () => { for (const c of [a, b]) c.style.setProperty('--fs', fs + 'px'); return Math.max(a.offsetWidth, b.offsetWidth); };
   while (fit() > 1180 && fs > 70) fs -= 2;
-  const chipH = a.offsetHeight, gap = 46, topA = 70 + chipH / 2;
+  const single = !P.get('b'); // one-line headline: no second chip, no stem
+  const chipH = a.offsetHeight, gap = single ? 0 : 46, topA = 70 + chipH / 2;
   a.style.top = topA + 'px';
   b.style.top = topA + chipH + gap + 'px';
   const stem = document.getElementById('stem');
+  if (single) { b.style.display = 'none'; stem.style.display = 'none'; }
   stem.style.top = topA + chipH / 2 - 4 + 'px';
   stem.style.height = gap + 8 + 'px';
-  const subTop = topA + chipH * 1.5 + gap + 34;
+  const subTop = single ? topA + chipH / 2 + 60 : topA + chipH * 1.5 + gap + 34;
   sub.style.top = subTop + 'px';
 
   // Phone sized to the space left; screen = status bar + capture + home indicator, as on an iPhone.

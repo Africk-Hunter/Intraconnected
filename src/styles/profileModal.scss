@@ -379,6 +379,28 @@ $profile-scrollbar-end-gap: 6px;
     outline: none;
 }
 
+// Hint drawn by CSS, not a placeholder: phones read the placeholder/label of a field to decide
+// whether to offer password autofill (delete-account field).
+.profile-fake-placeholder {
+    position: relative;
+    margin-bottom: 0.75rem;
+
+    .profile-input {
+        margin-bottom: 0;
+    }
+
+    &.empty::before {
+        content: attr(data-hint);
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        color: #757575;
+        pointer-events: none;
+    }
+}
+
 // Markdown / OPML / JSON side by side; stacked full-width on mobile, where
 // .profile-mobile makes every .profile-action-btn width: 100%.
 .profile-export-buttons {

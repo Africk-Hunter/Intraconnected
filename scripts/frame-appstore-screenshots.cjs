@@ -21,12 +21,12 @@ const page = path.join(__dirname, 'appstore-screenshots', 'frame.html');
 
 // Store order. [raw file, output name, headline line 1, line 2, tag line, chip colours]
 const SHOTS = [
-  ['Main View.png', '01-plant-one-idea', 'Plant one idea.', 'Watch it grow.', 'Every idea branches into the next', 'leaf', 'sky'],
-  ['Mind Map.png', '02-mind-map', 'Your whole map,', 'one screen.', 'Jump to any branch in a tap', 'pink', 'link'],
-  ['Checklist and Note.png', '03-checklists-notes', 'Lists and notes,', 'right in place.', 'Tick things off as you go', 'indigo', 'leaf'],
-  ['Idea creation.png', '04-capture', 'Catch it', 'in seconds.', 'Ideas, checklists and notes', 'leaf', 'link'],
-  ['Dragging Idea.png', '05-reorganize', 'Hold, drag,', 'reorganize.', 'Move any idea to a new branch', 'orange', 'sky'],
-  ['Search.png', '06-search', 'Find any idea.', 'Instantly.', 'Search every branch at once', 'pink', 'leaf'],
+  ['Main View.png', '01-plant-an-idea', 'Plant an idea.', '', 'Every idea branches into the next', 'leaf', 'sky', -2, 0, 0, 0],
+  ['Idea creation.png', '02-capture', 'Catch it', 'in seconds.', 'Ideas, checklists and notes', 'leaf', 'link', 1.5, -1.5, -18, 18],
+  ['Checklist and Note.png', '03-expand', 'Expand it with', 'notes and lists.', 'Break it down, tick things off', 'indigo', 'leaf', -2.5, 2, 16, -16],
+  ['Dragging Idea.png', '04-reorganize', 'Hold and drag', 'to reorganize.', 'Shape your idea tree your way', 'orange', 'sky', 2, -2, -14, 14],
+  ['Search.png', '05-search', 'Find any idea.', 'Instantly.', 'Search every branch at once', 'pink', 'leaf', -1, 2.5, 20, -12],
+  ['Mind Map.png', '06-mind-map', 'Your whole map,', 'one screen.', 'Jump to any branch in a tap', 'pink', 'link', 2.5, -1, -16, 14],
 ];
 const SIZES = [['', 1320, 2868], ['iphone-6.1', 1179, 2556], ['play', 1080, 2160]];
 
@@ -49,7 +49,7 @@ async function edgeColour(file, fromBottom) {
   if (!CHROME) throw new Error('Chrome or Edge not found');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'frame-'));
   for (const [dir] of SIZES) fs.mkdirSync(path.join(base, 'framed', dir), { recursive: true });
-  for (const [raw, name, a, b, sub, ca, cb] of SHOTS) {
+  for (const [raw, name, a, b, sub, ca, cb, ra, rb, xa, xb] of SHOTS) {
     let src = path.join(base, 'raw', raw);
     if (!fs.existsSync(src)) { console.log(`Missing ${raw}, skipped`); continue; }
     const meta = await sharp(src).metadata();
@@ -61,7 +61,7 @@ async function edgeColour(file, fromBottom) {
       src = up;
     }
     const q = new URLSearchParams({
-      shot: 'file:///' + src.replace(/\\/g, '/'), a, b, sub, ca, cb,
+      shot: 'file:///' + src.replace(/\\/g, '/'), a, b, sub, ca, cb, ra, rb, xa, xb,
       top: await edgeColour(src, false), bottom: await edgeColour(src, true),
     });
     for (const [dir, w, h] of SIZES) {

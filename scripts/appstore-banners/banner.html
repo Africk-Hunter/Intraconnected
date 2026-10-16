@@ -104,7 +104,7 @@ function html(n) {
 const cls = { leaf: 'leaf', parent: 'parent', link: 'link', check: 'check', list: 'check list', sprout: 'sprout' };
 
 // Layouts. x/y are offsets from the headline centre. `p` is the parent node's index, or -1 for
-// "Watch it grow." and -2 for "Plant one idea."; `side` (l/r/t/b) is the parent edge the connector
+// "Watch it grow." and -2 for "Plant an idea."; `side` (l/r/t/b) is the parent edge the connector
 // leaves from (default: whichever side the child is on).
 const LIST = ['list', 'Packing', [['Passport', true], ['Charger', true], ['Sunscreen', false]]];
 const T = {
@@ -178,9 +178,9 @@ safe.id = 'safe';
 Object.assign(safe.style, { width: T.safe[0] * W + 'px', height: T.safe[1] * 1000 + 'px', left: (1 - T.safe[0]) * W / 2 + 'px', top: (1 - T.safe[1]) * 500 + 'px' });
 stage.append(safe);
 
-// Headline: "Plant one idea." (a leaf) grows a stem down to "Watch it grow." (a parent), which the map branches from.
+// Headline: "Plant an idea." (a leaf) grows a stem down to "Watch it grow." (a parent), which the map branches from.
 const hs = T.hs, gap = hs * 0.5;
-const one = Object.assign(document.createElement('div'), { className: 'chip one', textContent: 'Plant one idea.' });
+const one = Object.assign(document.createElement('div'), { className: 'chip one', textContent: 'Plant an idea.' });
 const two = Object.assign(document.createElement('div'), { className: 'chip two', textContent: 'Watch it grow.' });
 for (const c of [one, two]) { c.style.setProperty('--hs', hs); stage.append(c); }
 const chipH = hs * 1.3;

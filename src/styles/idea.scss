@@ -1628,8 +1628,10 @@ body.dnd-blocked * {
 // A picked-up card gets a deeper, lifted shadow so the shrunken preview reads
 // as held above the page.
 [data-idea-id][data-dragging] {
-    box-shadow: 0.35rem 0.6rem 0 rgba(0, 0, 0, 0.35), 0 1.2rem 2rem rgba(0, 0, 0, 0.25);
-    opacity: 0.95;
+    // Hard offset only: a blurred shadow is re-rasterized every frame, and
+    // opacity would force an offscreen pass over the whole card.
+    box-shadow: 0.35rem 0.6rem 0 rgba(0, 0, 0, 0.35);
+    will-change: transform;
 }
 
 // The card being dragged turns red while it hovers one that can't take a drop

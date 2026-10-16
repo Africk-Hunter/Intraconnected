@@ -14,7 +14,7 @@
         gap: 1.5rem;
         min-height: calc(100dvh - 1rem - env(safe-area-inset-top, 0px));
         // Spare room below the form while typing, so the page can scroll the button above the keyboard.
-        &:has(input:focus) { padding-bottom: 50vh; }
+        &:has(input:focus) { padding-bottom: 25vh; }
     }
 
     @media (min-width: $large-desktop) {

@@ -40,3 +40,7 @@ programmer-docs/artifacts/
 
 # Personal ngrok settings (scripts/dev-local.cjs)
 .ngrok.local.json
+
+# Store listing graphics (not used by the app itself)
+assets/app-store/
+assets/play-store/

@@ -34,7 +34,7 @@ const Landing: React.FC = () => {
           </span>
         </h1>
         <p className="landingHeroSubline">
-          Start with one rough thought. Break it into parts, add the to-dos and the links,
+          Start with a rough thought. Break it into parts, add the to-dos and the links,
           and lock away what's private. Intraconnected keeps all of it on one tree.
         </p>
 
