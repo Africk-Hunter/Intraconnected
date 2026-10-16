@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { VaultError } from '../../utilities/vault/vaultError';
-import { loadVaultMeta } from '../../utilities/vault/vaultService';
+import { loadVaultMeta, peekVaultStatus } from '../../utilities/vault/vaultService';
 import { useVaultState } from '../../utilities/vault/useVaultState';
 
 // What a person reads when a vault action fails. Never shows a wrong-passphrase
@@ -29,13 +29,14 @@ export type VaultSetupStatus = 'loading' | 'none' | 'ready' | 'offline';
 // that case costs no read.
 export function useVaultSetupStatus(): { status: VaultSetupStatus; refresh: () => void } {
     const { unlocked } = useVaultState();
-    const [status, setStatus] = useState<VaultSetupStatus>(unlocked ? 'ready' : 'loading');
+    const [status, setStatus] = useState<VaultSetupStatus>(() => unlocked ? 'ready' : (peekVaultStatus() ?? 'loading'));
     const [tick, setTick] = useState(0);
 
     useEffect(() => {
         if (unlocked) { setStatus('ready'); return; }
         let cancelled = false;
-        setStatus('loading');
+        // A saved answer shows at once; the read below only corrects it.
+        setStatus(peekVaultStatus() ?? 'loading');
         loadVaultMeta()
             .then((meta) => { if (!cancelled) setStatus(meta ? 'ready' : 'none'); })
             .catch(() => { if (!cancelled) setStatus('offline'); });

@@ -7,6 +7,7 @@ import ReportLink from "./ReportLink";
 import NodeLoader from "./modals/NodeLoader";
 import { LinkOutIcon } from "./Icons";
 import { useIdeaContext } from "../context/IdeaContext";
+import { markNoVault } from "../utilities/vault/vaultService";
 import { generateDEK, wrapDEK, unwrapDEK, unwrapDEKWithEmail, wrapDEKForRecovery, importDEK, needsPasswordWrapUpgrade } from "../utilities/crypto";
 import { takeLoginEmail } from "../utilities/loginPrefill";
 import { flagCryptoUpgradeProblem, clearCryptoUpgradeProblem, hasCryptoUpgradeProblem, reportCryptoUpgradeResolved } from "../utilities/cryptoUpgradeNotice";
@@ -190,6 +191,7 @@ const Auth: React.FC = () => {
                     return;
                 }
 
+                markNoVault(user.uid);
                 sessionStorage.setItem('new_user', 'true');
                 isSigningIn.current = false;
                 window.location.replace('/main');

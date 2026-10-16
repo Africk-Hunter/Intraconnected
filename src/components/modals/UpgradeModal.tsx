@@ -14,7 +14,7 @@ import { useIsMobileUI } from "../../utilities/useIsMobileUI";
 import MobileUpgradeSheet from "../mobile/MobileUpgradeSheet";
 
 function UpgradeModal() {
-    const { upgradeModalOpen, setUpgradeModalOpen, billingPlan, upgradeModalReason, setCheckoutPlan } = useIdeaContext();
+    const { profileModalOpen, upgradeModalOpen, setUpgradeModalOpen, billingPlan, upgradeModalReason, setCheckoutPlan } = useIdeaContext();
     const containerRef = useRef<HTMLDivElement>(null);
     // The touch UI gets its own bottom sheet (MobileUpgradeSheet).
     const isMobileUI = useIsMobileUI();
@@ -91,6 +91,7 @@ function UpgradeModal() {
                 lifetimeLoading={lifetimeLoading}
                 onUpgrade={handleUpgrade}
                 onOpenPricing={handleOpenPricing}
+                fromProfile={profileModalOpen}
             />
         );
     }

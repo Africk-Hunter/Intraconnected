@@ -71,16 +71,6 @@ export function WarningIcon(props: IconProps) {
     );
 }
 
-// Celebration burst (replaces the party popper).
-export function SparkleIcon(props: IconProps) {
-    return (
-        <svg {...base(props)}>
-            <path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21" />
-            <path d="m6 6 2.6 2.6M15.4 15.4 18 18M18 6l-2.6 2.6M8.6 15.4 6 18" />
-        </svg>
-    );
-}
-
 // Square checkbox, ticked or empty.
 export function CheckboxIcon({ checked, ...props }: IconProps & { checked: boolean }) {
     return (

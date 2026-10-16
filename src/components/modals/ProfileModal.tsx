@@ -14,6 +14,7 @@ function useIsProfileMobile(): boolean {
     return is;
 }
 import AnimatedOverlay from '../AnimatedOverlay';
+import { useBackHandler } from '../../utilities/backStack';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { getMailProvider, resetMailUrl, verifyMailUrl } from '../../utilities/mailProvider';
 import { signUserOut,deleteUserAccount, requestEmailChange,sendPasswordReset, resendVerificationEmail, refreshEmailVerified } from '../../utilities/firebase/authFirebase';
@@ -108,6 +109,9 @@ function ProfileModal() {
     const { contentRef, height: contentHeight, animate: animateHeight } = useSmoothHeight<HTMLDivElement>();
     const isProfileMobile = useIsProfileMobile();
 
+    // Phone Back inside a tab steps out to the tab list (above MobileMindMap's close-Profile handler).
+    useBackHandler(profileModalOpen && isProfileMobile && mobileView !== 'tabs', () => setMobileView('tabs'), 2);
+
     // Rows pop in one by one when the mobile tab list appears, same as idea rows do.
     const [tabsStaggerIn, setTabsStaggerIn] = useState(true);
     useLayoutEffect(() => {
@@ -137,7 +141,8 @@ function ProfileModal() {
     }, [profileModalOpen, profileTabRequest, setProfileTabRequest]);
 
     function handleOpenUpgrade() {
-        handleClose();
+        // On the touch UI the upgrade sheet opens over Profile, whose Back returns here.
+        if (!isProfileMobile) handleClose();
         setUpgradeModalReason(null);
         setUpgradeModalOpen(true);
     }

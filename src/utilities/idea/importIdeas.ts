@@ -14,7 +14,7 @@ import { ImportError, importToIdeas, ParsedImport } from "./importers";
 // cap is the only server-enforced one).
 export const DAILY_IMPORT_LIMIT = 2000;
 // Times an account may go past the daily limit, ever. After that: support.
-export const IMPORT_EXCEPTIONS = 3;
+const IMPORT_EXCEPTIONS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const importLogKey = (uid: string) => `import_log_${uid}`;
 const exceptionsKey = (uid: string) => `import_exceptions_${uid}`;

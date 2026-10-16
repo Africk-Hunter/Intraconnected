@@ -52,7 +52,7 @@ function errorLine(error: unknown): string | undefined {
 }
 
 // Only the path: the query string can hold the idea id of the level being viewed.
-export async function collectDiagnostics(context: ReportContext): Promise<ReportDiagnostics> {
+async function collectDiagnostics(context: ReportContext): Promise<ReportDiagnostics> {
     const sync = getSyncStatus();
     const diagnostics: ReportDiagnostics = {
         error: errorLine(context.error),

@@ -1,5 +1,6 @@
 import { useState, useEffect, ReactNode, useRef } from 'react';
 import { useModalFocusTrap } from '../utilities/useModalFocusTrap';
+import { useKeyboardInset } from '../utilities/useKeyboardInset';
 
 const lastPointer = { x: 0, y: 0 };
 if (typeof window !== 'undefined') {
@@ -27,6 +28,7 @@ export default function AnimatedOverlay({ open, scrollable, onClick, onEscape, c
     const everOpenedRef = useRef(open);
     const sectionRef = useRef<HTMLElement>(null);
     useModalFocusTrap(open && show && !!onEscape, sectionRef, onEscape ?? (() => {}));
+    useKeyboardInset(open && show, sectionRef);
 
     useEffect(() => {
         if (open) {

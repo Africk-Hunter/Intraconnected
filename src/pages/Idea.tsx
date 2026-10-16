@@ -65,6 +65,7 @@ import { useBillingPlanSync } from '../utilities/billing/useBillingPlanSync';
 import { useNodeCountResync } from '../utilities/billing/useNodeCountResync';
 import { useIsMobileUI } from '../utilities/useIsMobileUI';
 import { syncOnLoad, startSyncListener } from '../utilities/sync/syncEngine';
+import { warmVaultMeta } from '../utilities/vault/vaultService';
 import { onSyncRefreshed } from '../utilities/sync/syncStore';
 import SyncStatusBanner from '../components/SyncStatusBanner';
 import RecoveryUseNotice from '../components/RecoveryUseNotice';
@@ -278,6 +279,7 @@ function Idea() {
                 const { serverOk } = await syncOnLoad(auth.currentUser.uid);
                 setServerSynced(serverOk);
                 setInitialFetch(true);
+                warmVaultMeta();
             }
 
             // A link or refresh can name the level to open (?idea=ID). Use it only if

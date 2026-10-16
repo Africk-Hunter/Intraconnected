@@ -66,6 +66,22 @@ $mupgrade-press: 120ms;
 
 .mupgrade-close { flex-shrink: 0; }
 
+.mupgrade-back {
+    flex-shrink: 0;
+    height: 2.2rem;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+    background: $back;
+    color: #fff;
+    border: 2px solid #111;
+    border-radius: 9px;
+    box-shadow: 2px 2px 0 #111;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .mupgrade-body {
     flex: 1 1 auto;
     min-height: 0;

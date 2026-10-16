@@ -32,6 +32,8 @@ interface Props {
     lifetimeLoading: boolean;
     onUpgrade: (plan: Plan) => void;
     onOpenPricing: () => void;
+    // Opened from Profile: shows Back (returns to Profile) instead of ✕.
+    fromProfile?: boolean;
 }
 
 // The phone version of UpgradeModal: a bottom sheet with one plan picker and
@@ -47,11 +49,11 @@ export default function MobileUpgradeSheet(props: Props) {
 
 function UpgradeSheetBody({
     onClose, mode, title, notice, subtitle, showAnnual,
-    lifetimePrice, lifetimeWasPrice, lifetimeNote, lifetimeLoading, onUpgrade, onOpenPricing,
+    lifetimePrice, lifetimeWasPrice, lifetimeNote, lifetimeLoading, onUpgrade, onOpenPricing, fromProfile,
 }: Props) {
     const [plan, setPlan] = useState<Plan>(showAnnual ? DEFAULT_PLAN : 'lifetime');
     const swipe = useSheetSwipeDown(onClose);
-    useBackHandler(true, onClose, 2);
+    useBackHandler(true, onClose, 3);
     useModalFocusTrap(true, swipe.sheetRef, onClose);
 
     const selected = showAnnual ? plan : 'lifetime';
@@ -123,7 +125,11 @@ function UpgradeSheetBody({
                     <div className="mmobile-sheet-grab" aria-hidden="true" />
                     <div className="mupgrade-head">
                         <h2 className="mupgrade-title" id="mupgradeTitle">{title}</h2>
-                        <button type="button" className="mmobile-help-close mupgrade-close" onClick={onClose} aria-label="Close">✕</button>
+                        {fromProfile ? (
+                            <button type="button" className="mupgrade-back" onClick={onClose}>← Back</button>
+                        ) : (
+                            <button type="button" className="mmobile-help-close mupgrade-close" onClick={onClose} aria-label="Close">✕</button>
+                        )}
                     </div>
                 </div>
 

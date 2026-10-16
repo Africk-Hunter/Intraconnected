@@ -5,7 +5,7 @@ export const REPORT_FIELD_MAX = 300;
 
 // Where the person was when they hit "Send a report". Free text would let a
 // client label an issue anything, so the server accepts only these.
-export const REPORT_AREAS = [
+const REPORT_AREAS = [
     "crash",
     "sync",
     "sign-in",

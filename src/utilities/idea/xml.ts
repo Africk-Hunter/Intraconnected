@@ -12,7 +12,7 @@ export interface XmlElement {
     children: XmlNode[];
 }
 
-export type XmlNode = XmlElement | string;
+type XmlNode = XmlElement | string;
 
 export class XmlParseError extends Error {}
 

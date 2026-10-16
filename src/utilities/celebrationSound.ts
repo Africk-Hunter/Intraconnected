@@ -29,17 +29,3 @@ export function primeCelebrationSound(): void {
             audio.muted = false;
         });
 }
-
-// Unlocks the sound on the first tap/click/key anywhere, so a celebration that
-// opens later (a dev-granted plan, a slow webhook) can still play on its own.
-// Returns a cleanup function.
-export function primeCelebrationSoundOnFirstGesture(): () => void {
-    const events = ['pointerup', 'touchend', 'click', 'keydown'] as const;
-    const stop = () => events.forEach(type => document.removeEventListener(type, onGesture, true));
-    function onGesture() {
-        stop();
-        primeCelebrationSound();
-    }
-    events.forEach(type => document.addEventListener(type, onGesture, true));
-    return stop;
-}

@@ -52,6 +52,9 @@
         overflow-y: auto;
         align-items: flex-start;
         padding-block: 1.5rem;
+        // --kb-inset is the software keyboard's height (useKeyboardInset), so the
+        // modal's buttons can be scrolled up above it
+        padding-bottom: calc(1.5rem + var(--kb-inset, 0px));
         box-sizing: border-box;
     }
 }
@@ -60,6 +63,7 @@
     overflow-y: auto;
     align-items: flex-start;
     padding-block: 2rem;
+    padding-bottom: calc(2rem + var(--kb-inset, 0px));
     box-sizing: border-box;
 
     > .modal.neobrutal {

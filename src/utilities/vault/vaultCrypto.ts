@@ -75,7 +75,7 @@ export function generateRecoveryCode(): string {
 }
 
 // Upper case, O read as 0 and I/L as 1, so a code copied by hand still works.
-export function normalizeRecoveryInput(input: string): string {
+function normalizeRecoveryInput(input: string): string {
     return input.toUpperCase().replace(/[\s-]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
 }
 

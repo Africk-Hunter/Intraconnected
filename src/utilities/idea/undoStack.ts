@@ -14,7 +14,7 @@ export interface UndoEntry {
     action?: ToastAction;
 }
 
-export interface ToastAction {
+interface ToastAction {
     label: string;
     run: () => void;
 }

@@ -188,11 +188,6 @@ export async function unwrapDEK(encryptedDEK: string, password: string, uid: str
     return importKey(await aesDecrypt(v2 ? encryptedDEK.slice(PASSWORD_WRAP_V2.length) : encryptedDEK, kek));
 }
 
-export async function wrapDEKWithEmail(dek: CryptoKey, email: string, uid: string): Promise<string> {
-    const kek = await deriveKEK(email, uid, "-email");
-    return aesEncrypt(await exportKey(dek), kek);
-}
-
 export async function unwrapDEKWithEmail(encryptedDEK: string, email: string, uid: string): Promise<CryptoKey> {
     const kek = await deriveKEK(email, uid, "-email");
     return importKey(await aesDecrypt(encryptedDEK, kek));

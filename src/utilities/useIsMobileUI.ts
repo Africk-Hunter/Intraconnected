@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 // $mobile-ui in src/styles/variables.scss, which hides one layout and shows
 // the other in CSS; this lets code that only belongs to one of them (the
 // mobile back-button history, for one) not run at all under the other.
-export const MOBILE_UI_QUERY = '(max-width: 1023px) and (pointer: coarse), (max-width: 576px)';
+const MOBILE_UI_QUERY = '(max-width: 1023px) and (pointer: coarse), (max-width: 576px)';
 
 function matches(): boolean {
     return typeof window !== 'undefined' && window.matchMedia(MOBILE_UI_QUERY).matches;

@@ -18,7 +18,7 @@ export interface HistoryLike {
     back(): void;
 }
 
-export interface BackHandler {
+interface BackHandler {
     // Higher runs first; among equals, the most recently registered.
     priority: number;
     onBack: () => void;

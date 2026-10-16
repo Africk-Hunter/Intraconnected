@@ -325,6 +325,19 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
         makeRoot();
     }
 
+    // Middle click opens a link card in a new tab. `click` never fires for it,
+    // and mousedown would start the browser's autoscroll, so that is cancelled.
+    const isMiddleClickOnLink = (e: React.MouseEvent) =>
+        e.button === 1 && link !== '' && !veiled && !(e.target as HTMLElement).closest('button, a, input, textarea');
+    function handleCardMouseDown(e: React.MouseEvent) {
+        if (isMiddleClickOnLink(e)) e.preventDefault();
+    }
+    function handleCardAuxClick(e: React.MouseEvent) {
+        if (!isMiddleClickOnLink(e)) return;
+        e.preventDefault();
+        openIdeaLink(link);
+    }
+
     // Cards are focusable (dnd-kit adds tabIndex), so Enter must do what a click does.
     function handleCardKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
         if (e.target !== e.currentTarget) return;
@@ -948,7 +961,7 @@ const IdeaNode: React.FC<IdeaNodeProps> = ({ idea, isLeaf }) => {
     }
 
     return (
-        <div onClick={handleNodeClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} data-dragging={isDragging || undefined} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...dragListeners}>
+        <div onClick={handleNodeClick} onMouseDown={handleCardMouseDown} onAuxClick={handleCardAuxClick} onKeyDown={handleCardKeyDown} onContextMenu={handleContextMenu} data-idea-id={id} data-dragging={isDragging || undefined} ref={setNodeRef} style={combinedStyle} className={`neobrutal-button ideaNode ${nodeType}${fadeInClass}${priorityClass}`} {...attributes} {...dragListeners}>
             <button className={`priority-ribbon priority-ribbon--${priority ? `p${priority}` : 'none'}`} onClick={openMenuFromButton} title={priority ? `Priority ${priority}. Click for options.` : 'Set priority'} />
                 {censorButton}
                 {moreButton}

@@ -494,7 +494,7 @@ function isIdeaLike(value: unknown): value is IdeaType {
     return !!v && typeof v === 'object' && typeof v.id === 'number' && typeof v.parentID === 'number' && typeof v.content === 'string';
 }
 
-export function parseIntraconnectedJson(json: string): ImportDoc {
+function parseIntraconnectedJson(json: string): ImportDoc {
     let parsed: unknown;
     try {
         parsed = JSON.parse(json);

@@ -340,7 +340,7 @@ let fullRequested = false;
 // running schedules exactly one more pull afterwards, so a burst of
 // listener events costs at most two pulls. `full` forces a read of every
 // idea (used when something is known to be out of step).
-export function requestRefresh(options: { full?: boolean } = {}): Promise<boolean> {
+function requestRefresh(options: { full?: boolean } = {}): Promise<boolean> {
     const uid = auth.currentUser?.uid;
     if (!uid) return Promise.resolve(false);
     if (options.full) fullRequested = true;

@@ -83,13 +83,40 @@ function isVaultMeta(value: unknown): value is VaultMeta {
         && typeof v.passphraseWrap === "string" && typeof v.recoveryWrap === "string";
 }
 
+// "No vault" is stored as this marker, so the Vault tab can say so at once
+// instead of waiting on the network. It is only a first guess: the status hook
+// still checks the server and corrects it (a vault made on another device).
+const NO_VAULT_MARKER = "none";
+
 function cacheMeta(uid: string, meta: VaultMeta | null): void {
     try {
-        if (meta) localStorage.setItem(metaCacheKey(uid), JSON.stringify(meta));
-        else localStorage.removeItem(metaCacheKey(uid));
+        localStorage.setItem(metaCacheKey(uid), meta ? JSON.stringify(meta) : NO_VAULT_MARKER);
     } catch {
         // storage unavailable: unlocking offline just won't work on this device
     }
+}
+
+// A brand-new account cannot have a vault yet.
+export function markNoVault(uid: string): void {
+    cacheMeta(uid, null);
+}
+
+// What this device already knows, without a network read: "none", "ready"
+// (a vault exists) or null (unknown).
+export function peekVaultStatus(): "none" | "ready" | null {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return null;
+    if (cachedMeta(uid)) return "ready";
+    try {
+        return localStorage.getItem(metaCacheKey(uid)) === NO_VAULT_MARKER ? "none" : null;
+    } catch {
+        return null;
+    }
+}
+
+// Starts the vault read early (after sign-in) so the Vault tab finds it settled.
+export function warmVaultMeta(): void {
+    loadVaultMeta().catch(() => { /* the Vault tab reports it when opened */ });
 }
 
 function cachedMeta(uid: string): VaultMeta | null {

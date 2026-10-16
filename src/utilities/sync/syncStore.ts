@@ -8,7 +8,7 @@ export interface SyncFailure {
     message: string;
 }
 
-export interface SyncNotice {
+interface SyncNotice {
     id: number;
     text: string;
     // Notices sharing a key replace each other rather than stacking up
