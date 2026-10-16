@@ -27,6 +27,68 @@ export interface SearchResult {
 
 const SNIPPET_RADIUS = 40;
 
+// "is:" filters, typed in the search box and turned into chips once finished.
+export const SEARCH_TAGS = ['vault', 'parent', 'leaf', 'note', 'checklist', 'p1', 'p2', 'p3'] as const;
+export type SearchTag = (typeof SEARCH_TAGS)[number];
+
+export const TAG_HINT: Record<SearchTag, string> = {
+    vault: 'Vault notes',
+    parent: 'Ideas with ideas inside',
+    leaf: 'Ideas with nothing inside',
+    note: 'Notes',
+    checklist: 'Checklists',
+    p1: 'High priority',
+    p2: 'Medium priority',
+    p3: 'Low priority',
+};
+
+const PRIORITY_TAGS: SearchTag[] = ['p1', 'p2', 'p3'];
+
+function isSearchTag(value: string): value is SearchTag {
+    return (SEARCH_TAGS as readonly string[]).includes(value);
+}
+
+// A finished tag at the end of the box ("is:note " with the space typed): returns
+// the tag and the text left once it is taken out. Also handles a pasted "is:p1 foo bar".
+export function takeFinishedTag(value: string): { tag: SearchTag; rest: string } | null {
+    const match = /(^|\s)is:([a-z0-9]+)(\s)/i.exec(value);
+    if (!match) return null;
+    const tag = match[2].toLowerCase();
+    if (!isSearchTag(tag)) return null;
+    const before = value.slice(0, match.index);
+    const after = value.slice(match.index + match[0].length);
+    return { tag, rest: (before && after ? `${before} ${after}` : before + after).replace(/^\s+/, '') };
+}
+
+// Tags to offer while the last word is a half-typed "is:…".
+export function suggestTags(value: string, taken: readonly SearchTag[]): SearchTag[] {
+    const match = /(?:^|\s)is:([a-z0-9]*)$/i.exec(value);
+    if (!match) return [];
+    const typed = match[1].toLowerCase();
+    return SEARCH_TAGS.filter((tag) => !taken.includes(tag) && tag.startsWith(typed));
+}
+
+// Swaps the half-typed "is:…" at the end for a finished one, ready to become a chip.
+export function completeTag(value: string, tag: SearchTag): string {
+    return value.replace(/is:[a-z0-9]*$/i, `is:${tag} `);
+}
+
+// Tags of one kind widen the search (is:note is:checklist = either); different
+// kinds narrow it (is:note is:p1 = notes with high priority).
+function matchesTags(idea: IdeaType, tags: readonly SearchTag[], hasChildren: boolean): boolean {
+    if (tags.length === 0) return true;
+    const kinds = tags.filter((t) => !PRIORITY_TAGS.includes(t));
+    const priorities = tags.filter((t) => PRIORITY_TAGS.includes(t));
+    const kind = kindOf(idea);
+    const kindOk = kinds.length === 0 || kinds.some((t) => {
+        if (t === 'parent') return hasChildren;
+        if (t === 'leaf') return !hasChildren && kind === 'idea';
+        return kind === t;
+    });
+    const priorityOk = priorities.length === 0 || priorities.some((t) => `p${idea.priority ?? 0}` === t);
+    return kindOk && priorityOk;
+}
+
 function oneLine(text: string): string {
     return text.replace(/\s+/g, ' ').trim();
 }
@@ -161,9 +223,17 @@ function matchWord(word: string, fields: string[]): number | null {
 // Every word must match the idea (exactly, with a typo, or as letters in order) or
 // a name above it. Matches come back each followed by the ideas beneath it, so a
 // half-remembered name still leads to what is inside.
-export function searchIdeas(ideas: IdeaType[], query: string, limit = 50): SearchResult[] {
+export function searchIdeas(ideas: IdeaType[], query: string, limit = 50, tags: SearchTag[] = []): SearchResult[] {
     const words = oneLine(query).toLowerCase().split(' ').filter(Boolean);
-    if (words.length === 0) return [];
+    if (words.length === 0) {
+        if (tags.length === 0) return [];
+        const parentIds = new Set(ideas.map((idea) => idea.parentID));
+        const picked = ideas
+            .filter((idea) => idea.id !== 1 && matchesTags(idea, tags, parentIds.has(idea.id)))
+            .sort((a, b) => b.id - a.id)
+            .slice(0, limit);
+        return plainResults(ideas, picked);
+    }
 
     const pathOf = makePathOf(ideas);
     const byId = new Map(ideas.map((idea) => [idea.id, idea]));
@@ -205,6 +275,7 @@ export function searchIdeas(ideas: IdeaType[], query: string, limit = 50): Searc
     const matches = new Map<number, SearchResult>();
     for (const idea of ideas) {
         if (idea.id === 1) continue;
+        if (!matchesTags(idea, tags, children.has(idea.id))) continue;
         const label = oneLine(resolveIdeaLabel(idea)) || 'Untitled';
         // A vault note matches on its label only (known while the vault is
         // unlocked); its content and link are ciphertext and never searched.

@@ -16,6 +16,15 @@ function childLine(child: IdeaType): string {
     return link !== '' ? `${body} (${link})` : body;
 }
 
+// A checklist's items, one line each, indented under its own line.
+function itemLines(child: IdeaType, indent: string): string[] {
+    if (child.type !== 'checklist') return [];
+    return child.items.map((item) => {
+        const text = oneLine(item.text);
+        return `${indent}${item.checked ? '[x]' : '[ ]'} ${item.link ? `${text} (${item.link})` : text}`;
+    });
+}
+
 // One idea: its link if it has one, a checklist with its items, otherwise its text.
 export function ideaCopyText(idea: IdeaType): string {
     if (isVaultIdea(idea)) return '';
@@ -30,7 +39,7 @@ export function ideaCopyText(idea: IdeaType): string {
 export function childrenCopyText(id: number): { text: string; count: number } | null {
     const children = getIdeasByParentID(id);
     if (children.length === 0) return null;
-    const list = children.map((child, i) => `${i + 1}. ${childLine(child)}`).join('\n');
+    const list = children.flatMap((child, i) => [`${i + 1}. ${childLine(child)}`, ...itemLines(child, '   ')]).join('\n');
     return { text: `${oneLine(getNameFromID(id)) || 'Untitled'}\n-----------\n${list}\n########`, count: children.length };
 }
 
@@ -39,15 +48,18 @@ export function branchCopyText(id: number): { text: string; count: number } | nu
     if (getIdeasByParentID(id).length === 0) return null;
     const seen = new Set<number>([id]);
     const lines: string[] = [];
+    let count = 0;
     const walk = (parentId: number, prefix: string, depth: number) => {
         getIdeasByParentID(parentId).forEach((child, i) => {
             if (seen.has(child.id)) return;
             seen.add(child.id);
+            count++;
             const num = `${prefix}${i + 1}`;
             lines.push(`${'   '.repeat(depth)}${num}. ${childLine(child)}`);
+            lines.push(...itemLines(child, '   '.repeat(depth + 1)));
             walk(child.id, `${num}.`, depth + 1);
         });
     };
     walk(id, '', 0);
-    return { text: `${oneLine(getNameFromID(id)) || 'Untitled'}\n-----------\n${lines.join('\n')}\n########`, count: lines.length };
+    return { text: `${oneLine(getNameFromID(id)) || 'Untitled'}\n-----------\n${lines.join('\n')}\n########`, count };
 }

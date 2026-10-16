@@ -1,7 +1,8 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { IdeaType } from '../../utilities/types';
 import { readRecentVisits } from '../../utilities/idea/recentVisits';
-import { KIND_LABEL, searchIdeas, suggestedIdeas, visibleResults, type SearchResult } from '../../utilities/idea/search';
+import { KIND_LABEL, searchIdeas, suggestedIdeas, suggestTags, takeFinishedTag, visibleResults, type SearchResult, type SearchTag } from '../../utilities/idea/search';
+import SearchTagBar from '../SearchTagBar';
 import Highlighted from '../Highlighted';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 
@@ -29,13 +30,41 @@ function SearchIcon() {
 
 function MobileSearchSheet({ allIdeas, onPick, onOpenMindMap, onClose, style }: Props) {
     const [query, setQuery] = useState('');
+    const [tags, setTags] = useState<SearchTag[]>([]);
+    // Backspace in the empty field highlights the last box first; a second one deletes it.
+    const [armed, setArmed] = useState<SearchTag | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const swipe = useSheetSwipeDown(onClose);
 
     const suggested = useMemo(() => suggestedIdeas(allIdeas, readRecentVisits(), SUGGESTED_LIMIT), [allIdeas]);
-        const words = useMemo(() => query.trim().toLowerCase().split(/\s+/).filter(Boolean), [query]);
-    const hasQuery = words.length > 0;
-    const results = useMemo(() => (hasQuery ? searchIdeas(allIdeas, query) : suggested.results), [hasQuery, allIdeas, query, suggested]);
+    const words = useMemo(() => query.trim().toLowerCase().split(/\s+/).filter(Boolean), [query]);
+    const hasQuery = words.length > 0 || tags.length > 0;
+    const results = useMemo(() => (hasQuery ? searchIdeas(allIdeas, query, 50, tags) : suggested.results), [hasQuery, allIdeas, query, tags, suggested]);
+    const suggestions = useMemo(() => suggestTags(query, tags), [query, tags]);
+
+    useEffect(() => { setArmed(null); }, [query, tags]);
+
+    function addTag(tag: SearchTag) {
+        setTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
+        setExpanded(new Set());
+    }
+
+    // A finished "is:tag " becomes a box; anything typed or pasted around it stays.
+    function onQueryChange(value: string) {
+        let rest = value;
+        for (let found = takeFinishedTag(rest); found; found = takeFinishedTag(rest)) {
+            addTag(found.tag);
+            rest = found.rest;
+        }
+        setQuery(rest);
+        setExpanded(new Set());
+    }
+
+    function pickSuggestion(tag: SearchTag) {
+        addTag(tag);
+        setQuery((q) => q.replace(/(^|\s)is:[a-z0-9]*$/i, '$1').trimStart());
+        inputRef.current?.focus();
+    }
 
     const [expanded, setExpanded] = useState<Set<number>>(new Set());
     const shown = useMemo(() => visibleResults(results, expanded), [results, expanded]);
@@ -53,6 +82,7 @@ function MobileSearchSheet({ allIdeas, onPick, onOpenMindMap, onClose, style }: 
 
     function clear() {
         setQuery('');
+        setTags([]);
         inputRef.current?.focus();
     }
 
@@ -92,19 +122,29 @@ function MobileSearchSheet({ allIdeas, onPick, onOpenMindMap, onClose, style }: 
                         aria-label="Search ideas"
                         value={query}
                         autoFocus
-                        onChange={(e) => { setQuery(e.target.value); setExpanded(new Set()); }}
+                        onChange={(e) => onQueryChange(e.target.value)}
                         onKeyDown={(e) => {
+                            if (e.key === 'Backspace' && query === '' && tags.length > 0) {
+                                e.preventDefault();
+                                const last = tags[tags.length - 1];
+                                if (armed === last) setTags((prev) => prev.slice(0, -1));
+                                else setArmed(last);
+                                return;
+                            }
                             if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
                             e.preventDefault();
-                            if (hasQuery && results[0]) onPick(results[0]);
+                            if (suggestions.length > 0) pickSuggestion(suggestions[0]);
+                            else if (hasQuery && results[0]) onPick(results[0]);
                             else dismissKeyboard();
                         }}
                     />
-                    {query !== '' && (
+                    {(query !== '' || tags.length > 0) && (
                         // mousedown is cancelled so the field keeps focus and the keyboard stays up.
                         <button type="button" className="mmobile-search-clear" onMouseDown={(e) => e.preventDefault()} onClick={clear} aria-label="Clear search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" /></svg></button>
                     )}
                 </div>
+
+                <SearchTagBar armed={armed} tags={tags} suggestions={suggestions} onPick={pickSuggestion} onRemove={(tag) => { setTags((prev) => prev.filter((t) => t !== tag)); inputRef.current?.focus(); }} />
 
                 <div className="mmobile-search-results" onTouchMove={dismissKeyboard}>
                     {results.length > 0 && <p className="mmobile-search-heading" aria-live="polite">{heading}</p>}

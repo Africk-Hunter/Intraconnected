@@ -5,6 +5,7 @@ Links to every published artifact for this project (as of 2026-10-13). Saved cop
 ## Planning and status
 - [Launch Checklist](https://claude.ai/artifact/GNh85NxT9Zgwj43tZnXZag) — `launch-checklist.html`
 - [Native App Plan](https://claude.ai/artifact/8AfWNA2bCDKhoEq7AumzaC) — `native-app-plan.html`
+- [Desktop App Plan](https://claude.ai/artifact/QMNs7x9JEVe11qtagRxCLD) — `desktop-app-plan.html`
 - [Native Store Listing](https://claude.ai/artifact/WxjYNp7ZvDLoNzAWTQtByj) — `native-store-listing.html`
 - [Intraconnected Positioning](https://claude.ai/artifact/58EzPrz6frain9ZKcBfRFH) — `positioning-and-marketing-plan.html`
 - [Intraconnected Messaging](https://claude.ai/artifact/SJpmpRqS4r1Y5Pxd4F7gmt) — `intraconnected-messaging.html` (tagline "Plant a node. Grow an idea.", site and ad copy)

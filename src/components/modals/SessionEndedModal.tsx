@@ -3,6 +3,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../firebaseConfig';
 import { getDEK } from '../../utilities/dekStore';
 import { syncBillingEmail } from '../../utilities/firebase/authFirebase';
+import { useDevModalRequest } from '../../utilities/devModals';
 import AnimatedOverlay from '../AnimatedOverlay';
 import '../../styles/sessionEndedModal.scss';
 
@@ -21,6 +22,24 @@ function SessionEndedModal() {
     // Set while this modal's own sign-in is in flight, so the auth listener
     // doesn't treat a wrong-account sign-out as a second session loss.
     const handlingSignIn = useRef(false);
+    // Opened from Modal testing: the real one can't be dismissed, so Esc closes this one.
+    const devPreview = useRef(false);
+
+    useDevModalRequest('session-ended', () => {
+        devPreview.current = true;
+        setOpen(true);
+    });
+
+    useEffect(() => {
+        if (!open || !devPreview.current) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape') return;
+            devPreview.current = false;
+            setOpen(false);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [open]);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(user => {

@@ -1,0 +1,99 @@
+@use './variables' as *;
+
+// Modal testing (dev builds). Every modal opened from the tester has to sit above
+// it, and the tester above Profile, so closing a modal returns to the tester.
+// Overlays share z-index 10 and normally stack by DOM order, which would put
+// early-mounted ones (rename, move, ...) behind Profile.
+body.modal-tester-on {
+    .overlay {
+        z-index: 20;
+    }
+    .overlay:has(> .profile-modal) {
+        z-index: 10;
+    }
+    .overlay:has(> .modal-tester) {
+        z-index: 15;
+    }
+    // The celebrations own higher layers (and the confetti canvas) already.
+    .overlay.upgrade-celebration-overlay {
+        z-index: 200;
+    }
+}
+
+.neobrutal.modal.modal-tester {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 1rem;
+    box-sizing: border-box;
+    width: min(56rem, 92vw);
+    max-height: 86vh;
+    min-height: auto;
+    padding: 1.25rem;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.modal-tester-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.modal-tester-title {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.modal-tester-desc {
+    margin: 0.25rem 0 0;
+    font-size: 0.95rem;
+    color: #444;
+}
+
+.modal-tester-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: 0.9rem;
+}
+
+.modal-tester-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: white;
+    border: $neo-detail-border;
+    border-radius: 0.6rem;
+    box-shadow: $neo-detail-shadow;
+}
+
+.modal-tester-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.2;
+}
+
+.modal-tester-tag {
+    padding: 0.05rem 0.45rem;
+    background: $link;
+    border: 1.5px solid black;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.modal-tester-item .profile-action-btn {
+    align-self: flex-start;
+}

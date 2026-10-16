@@ -10,10 +10,14 @@ import { ANNUAL_PRICE_DISPLAY, ANNUAL_PRICE_PER_MONTH_DISPLAY, LIFETIME_PRICE_DI
 import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
 import { usePurchaseMode, PRICING_URL } from "../../utilities/billing/purchaseMode";
 import { openExternal } from "../../utilities/platform";
+import { useIsMobileUI } from "../../utilities/useIsMobileUI";
+import MobileUpgradeSheet from "../mobile/MobileUpgradeSheet";
 
 function UpgradeModal() {
     const { upgradeModalOpen, setUpgradeModalOpen, billingPlan, upgradeModalReason, setCheckoutPlan } = useIdeaContext();
     const containerRef = useRef<HTMLDivElement>(null);
+    // The touch UI gets its own bottom sheet (MobileUpgradeSheet).
+    const isMobileUI = useIsMobileUI();
     // In the app the website's checkout isn't offered (see purchaseMode.ts).
     const mode = usePurchaseMode();
     const { preview: lifetimePreview, loading: lifetimeLoading } = useLifetimePrice(upgradeModalOpen && mode === 'checkout', billingPlan === 'annual');
@@ -22,7 +26,7 @@ function UpgradeModal() {
         setUpgradeModalOpen(false);
     }
 
-    useModalFocusTrap(upgradeModalOpen, containerRef, handleClose);
+    useModalFocusTrap(upgradeModalOpen && !isMobileUI, containerRef, handleClose);
 
     function handleOpenPricing() {
         setUpgradeModalOpen(false);
@@ -51,6 +55,45 @@ function UpgradeModal() {
     const subtitle = billingPlan === 'annual'
         ? 'Pay once and keep unlimited nodes forever.'
         : `Free plans are limited to ${FREE_NODE_LIMIT} nodes. Upgrade for unlimited nodes and full feature access.`;
+    const notice = !forced
+        ? null
+        : mode === 'none'
+            ? `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused. Deleting ideas you no longer need makes room.`
+            : `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused until you upgrade.`;
+    const lifetimeDiscount = lifetimePreview && lifetimePreview.discountCents > 0 ? lifetimePreview : null;
+    const lifetimePrice = lifetimeLoading
+        ? '…'
+        : lifetimeDiscount
+            ? formatMoney(lifetimeDiscount.amount, lifetimeDiscount.currency)
+            : LIFETIME_PRICE_DISPLAY;
+    // Only for Annual subscribers; `where` says where the discounted price is shown.
+    const lifetimeCreditNote = (where: string) => billingPlan !== 'annual'
+        ? null
+        : lifetimeLoading
+            ? 'Applying your Annual credit…'
+            : lifetimeDiscount
+                ? `Your Annual payment is credited, ${formatMoney(lifetimeDiscount.discountCents, lifetimeDiscount.currency)} off, already applied ${where}.`
+                : "You've already paid for this year, that's credited at checkout.";
+
+    if (isMobileUI) {
+        return (
+            <MobileUpgradeSheet
+                open={upgradeModalOpen && (mode !== 'none' || forced)}
+                onClose={handleClose}
+                mode={mode}
+                title={title}
+                notice={notice}
+                subtitle={subtitle}
+                showAnnual={showAnnual}
+                lifetimePrice={lifetimePrice}
+                lifetimeWasPrice={!lifetimeLoading && lifetimeDiscount ? LIFETIME_PRICE_DISPLAY : null}
+                lifetimeNote={lifetimeCreditNote('to the price')}
+                lifetimeLoading={lifetimeLoading}
+                onUpgrade={handleUpgrade}
+                onOpenPricing={handleOpenPricing}
+            />
+        );
+    }
 
     return (
         <AnimatedOverlay open={upgradeModalOpen && (mode !== 'none' || forced)} scrollable onClick={handleClose}>
@@ -68,9 +111,7 @@ function UpgradeModal() {
                 {forced ? (
                     <p className="upgradeModalNotice">
                         <span className="upgradeModalNotice-icon" aria-hidden="true"><WarningIcon /></span>
-                        {mode === 'none'
-                            ? `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused. Deleting ideas you no longer need makes room.`
-                            : `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused until you upgrade.`}
+                        {notice}
                     </p>
                 ) : (
                     <p className="upgradeModalSubtitle">{subtitle}</p>
@@ -105,21 +146,11 @@ function UpgradeModal() {
                         variant="lifetime"
                         badge="LIFETIME"
                         tier="Lifetime"
-                        price={lifetimeLoading
-                            ? '…'
-                            : lifetimePreview && lifetimePreview.discountCents > 0
-                                ? formatMoney(lifetimePreview.amount, lifetimePreview.currency)
-                                : LIFETIME_PRICE_DISPLAY}
+                        price={lifetimePrice}
                         ctaDisabled={lifetimeLoading}
                         priceSuffix="one time"
                         subtitle="Pay once, yours forever"
-                        note={billingPlan === 'annual'
-                            ? lifetimeLoading
-                                ? 'Applying your Annual credit…'
-                                : lifetimePreview && lifetimePreview.discountCents > 0
-                                ? `Your Annual payment is credited, ${formatMoney(lifetimePreview.discountCents, lifetimePreview.currency)} off, already applied above.`
-                                : "You've already paid for this year, that's credited at checkout."
-                            : 'No renewals. No surprises.'}
+                        note={lifetimeCreditNote('above') ?? 'No renewals. No surprises.'}
                         features={[
                             { label: 'Unlimited nodes', bold: true },
                             { label: 'Full feature access' },

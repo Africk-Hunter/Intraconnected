@@ -66,7 +66,7 @@ const PartyNode: React.FC = () => (
 );
 
 // Flat light rays fanning out from behind the mascot; the hero rotates them slowly.
-const RaysBackdrop: React.FC = () => (
+export const RaysBackdrop: React.FC = () => (
     <svg className="upgrade-celebration-rays" viewBox="-100 -100 200 200" aria-hidden="true">
         {Array.from({ length: 12 }, (_, i) => (
             <path key={i} d="M0 0 L-14 -100 L14 -100 Z" transform={`rotate(${i * 30})`} />
@@ -85,7 +85,7 @@ const FLECKS = [
     { x: 6, y: 48, color: '#00A9D8', round: false },
 ];
 
-const Sparkles: React.FC = () => (
+export const Sparkles: React.FC = () => (
     <>
         {FLECKS.map((f, i) => (
             <span

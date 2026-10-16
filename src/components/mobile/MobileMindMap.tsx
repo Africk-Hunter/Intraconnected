@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { SheetState, SWIPE_REVEAL_W, SWIPE_THRESHOLD } from './mobileTypes';
-import MobileChecklistItemSheet from './MobileChecklistItemSheet';
+import MobileChecklistItemSheet, { MobileChecklistHead } from './MobileChecklistItemSheet';
 import { haptic, onKeyboardHeight } from '../../utilities/platform';
 import { useShake } from '../../utilities/useShake';
 import {
@@ -34,6 +34,7 @@ import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileMindMapSheet from './MobileMindMapSheet';
 import MobileSearchSheet from './MobileSearchSheet';
+import { updateIdeaCensored } from '../../utilities/idea/ideaStore';
 import { recordVisit } from '../../utilities/idea/recentVisits';
 import { branchCopyText, childrenCopyText, ideaCopyText } from '../../utilities/idea/copyText';
 import type { SearchResult } from '../../utilities/idea/search';
@@ -1829,6 +1830,8 @@ function MobileMindMap() {
                                             <span className="mmobile-node-vault-dots">••••••</span>
                                         </span>
                                     </span>
+                                ) : child.censored ? (
+                                    <span className="mmobile-node-title mmobile-node-censored" aria-label="Censored idea">••••••••</span>
                                 ) : noteMode ? (
                                     <span className="mmobile-node-title mmobile-node-title--note">
                                         <span className="mmobile-node-note-header">{resolveIdeaLabel(child)}</span>
@@ -1944,8 +1947,10 @@ function MobileMindMap() {
                         <div className="mmobile-sheet-top" {...sheetSwipe.dragProps}>
                             <div className="mmobile-sheet-grab" aria-hidden="true" />
                             {/* The create sheet has no title: the selected tab already says what is being made. */}
-                            <div className={`mmobile-sheet-title${sheet.type === 'create' ? ' mmobile-sheet-title--bare' : ''}`}>
-                                {sheet.type !== 'create' && sheetTitle}
+                            <div className={`mmobile-sheet-title${sheet.type === 'create' ? ' mmobile-sheet-title--bare' : ''}${sheet.type === 'checklist' ? ' mmobile-sheet-title--head' : ''}`}>
+                                {sheet.type === 'checklist'
+                                    ? <MobileChecklistHead title={sheetTitle} items={sheetItems} />
+                                    : sheet.type !== 'create' && sheetTitle}
                                 <button className="mmobile-sheet-close" onClick={() => requestCloseSheet()} aria-label="Close">✕</button>
                             </div>
                         </div>
@@ -2166,6 +2171,16 @@ function MobileMindMap() {
                                     <img src="/images/Move.svg" className="mmobile-action-icon" alt="" />
                                     Move…
                                 </button>
+                                {!isVaultIdea(sheetNode) && (
+                                    <button className="mmobile-action-btn" onClick={() => {
+                                        updateIdeaCensored(sheetNode.id, !sheetNode.censored);
+                                        setNewIdeaSwitch(prev => !prev);
+                                        closeSheet();
+                                    }}>
+                                        <img src="/images/Censor.svg" className="mmobile-action-icon" alt="" />
+                                        {sheetNode.censored ? 'Uncensor idea' : 'Censor idea'}
+                                    </button>
+                                )}
                                 {/* Laid out like the priority row; --none drops the ribbon swatch. */}
                                 {!isVaultIdea(sheetNode) && <div className="mmobile-priority-row" role="group" aria-labelledby="mmobile-copy-label">
                                     <span className="mmobile-priority-label" id="mmobile-copy-label">Copy</span>
@@ -2215,7 +2230,7 @@ function MobileMindMap() {
 
                         {sheet.type === 'edit' && isNoteMode(sheetNode ?? undefined) && (
                             <>
-                                <textarea
+                                <textarea autoCorrect="off" autoComplete="off" autoCapitalize="off" spellCheck={false}
                                     autoFocus
                                     className="mmobile-rename-input"
                                     value={draft}
@@ -2224,7 +2239,7 @@ function MobileMindMap() {
                                     maxLength={100}
                                     rows={1}
                                 />
-                                <textarea
+                                <textarea autoCorrect="off" autoComplete="off" autoCapitalize="off" spellCheck={false}
                                     className="mmobile-rename-input mmobile-rename-input--grow"
                                     value={editBodyDraft}
                                     onChange={e => {
@@ -2248,7 +2263,7 @@ function MobileMindMap() {
 
                         {sheet.type === 'edit' && !isNoteMode(sheetNode ?? undefined) && (
                             <>
-                                <textarea
+                                <textarea autoCorrect="off" autoComplete="off" autoCapitalize="off" spellCheck={false}
                                     autoFocus
                                     className="mmobile-rename-input mmobile-rename-input--grow"
                                     value={draft}
@@ -2265,8 +2280,8 @@ function MobileMindMap() {
                                     rows={1}
                                 />
                                 {sheetNode?.type !== 'checklist' && (!allIdeas.some(i => i.parentID === sheetNode?.id) || !!sheetNodeLink) && (
-                                    <input
-                                        className="mmobile-rename-input mmobile-link-input"
+                                    <input autoCorrect="off" autoComplete="off" autoCapitalize="off" spellCheck={false}
+                                        className="mmobile-rename-input mmobile-link-input mmobile-link-input--edit"
                                         placeholder="Link (optional)"
                                         value={editLinkDraft}
                                         onChange={e => setEditLinkDraft(e.target.value)}
@@ -2318,6 +2333,8 @@ function MobileMindMap() {
                                     setSheetItems(newItems);
                                     updateChecklistItems(nodeId, newItems);
                                 }}
+                                onEditChecklist={() => { if (sheetNode) openEditSheet(sheetNode); }}
+                                onDone={() => requestCloseSheet()}
                             />
                         )}
                     </div>

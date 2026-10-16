@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import type { IdeaType } from "../types";
-import { searchIdeas, suggestedIdeas } from "./search";
+import { searchIdeas, suggestedIdeas, suggestTags, takeFinishedTag } from "./search";
 
 const unlockedLabels = vi.hoisted(() => new Map<string, string>());
 vi.mock("../vault/vaultSession", () => ({ getCachedVaultLabel: (cipher: string) => unlockedLabels.get(cipher) }));
@@ -134,5 +134,26 @@ describe("vault notes", () => {
     it("never appear as suggestions", () => {
         expect(suggestedIdeas(withVault, [30]).results.map((r) => r.id)).not.toContain(30);
         expect(suggestedIdeas(withVault, []).results.map((r) => r.id)).not.toContain(30);
+    });
+});
+
+describe("is: tags", () => {
+    it("turns a finished tag into a chip and keeps the rest", () => {
+        expect(takeFinishedTag("is:note ")).toEqual({ tag: "note", rest: "" });
+        expect(takeFinishedTag("tomato is:p1 ")).toEqual({ tag: "p1", rest: "tomato" });
+        expect(takeFinishedTag("is:note")).toBeNull();
+        expect(takeFinishedTag("is:nope ")).toBeNull();
+    });
+
+    it("suggests tags while one is half typed", () => {
+        expect(suggestTags("is:", [])).toHaveLength(8);
+        expect(suggestTags("x is:p", ["p2"])).toEqual(["parent", "p1", "p3"]);
+        expect(suggestTags("tomato", [])).toEqual([]);
+    });
+
+    it("filters by kind and combines with text", () => {
+        expect(searchIdeas(ideas, "", 50, ["checklist"]).map((r) => r.id)).toEqual([13]);
+        expect(searchIdeas(ideas, "", 50, ["parent"]).map((r) => r.id)).toEqual([10]);
+        expect(searchIdeas(ideas, "tomato", 50, ["note"]).map((r) => r.id)).toEqual([14]);
     });
 });

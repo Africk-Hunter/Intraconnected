@@ -9,6 +9,7 @@
 @use "./mobileHelpSheet";
 @use "./mobileMindMapSheet";
 @use "./mobileSearchSheet";
+@use "./searchTags";
 @use "./mobileChecklistSheet";
 @use "./mindmap";
 @use "./landing";
@@ -16,6 +17,7 @@
 @use "./support";
 @use "./marketingTransition";
 @use "./upgradeModal";
+@use "./mobileUpgradeSheet";
 @use "./checkoutModal";
 @use "./syncStatus";
 @use "./undoToast";

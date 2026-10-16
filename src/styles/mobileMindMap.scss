@@ -2470,3 +2470,12 @@ html:has(.mmobile),
 body:has(.mmobile) {
     overscroll-behavior-y: none;
 }
+
+// Censored idea row: dots instead of the text (a visual veil, not encryption).
+.mmobile-node-censored {
+    letter-spacing: 0.15em;
+    opacity: 0.8;
+}
+
+// Edit sheet stacks the name and link fields with no gap container.
+.mmobile-link-input--edit { margin-top: 12px; }

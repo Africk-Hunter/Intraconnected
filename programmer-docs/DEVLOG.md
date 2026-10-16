@@ -4,6 +4,19 @@ Personal record of every update. Not displayed to users. See `programmer-docs/CH
 
 ---
 
+## Phone Upgrade Sheet — 2026-10-16
+Typecheck, lint, 432 tests and `npm run build` pass. **Not yet seen in the signed-in app, emulator or device** (try Profile → Developer Testing → Modal testing → Upgrade). Not deployed.
+- The touch UI (`useIsMobileUI`, so touch tablets too, not just ≤576px) now gets `MobileUpgradeSheet` instead of the desktop modal squeezed down: grab handle + title + 44px ✕, a scrolling body, and a pinned footer with one buy button, the renewal fine print and Not now. Closes by ✕, Not now, scrim, swipe down and Back (`useBackHandler`, priority 2).
+- Two stacked price cards became a plan picker (two radio rows, Annual ticked by default: `DEFAULT_PLAN`) plus one shared "Every plan includes" list; the button says what it buys ("Unlock Lifetime for $39.99").
+- Annual subscribers see one Lifetime row with the old price struck through and the credit note under it. That note was hidden on phones before.
+- Text 0.75–1.5rem (was 9–12px). `UpgradeModal` computes the copy once for both layouts; the dead `$mobile` rules in `upgradeModal.scss` are removed. Desktop look unchanged.
+
+## Checklist Full View Restyle — 2026-10-16
+Typecheck, lint and 432 tests pass. Checked in screenshots of the real components in a throwaway harness (desktop, 2560px, 390px phone, tablet); **not yet clicked through in the signed-in app or on a device**. Not deployed.
+- Desktop `ChecklistModal` now follows the vault note modal: indigo badge + "Checklist · 2 of 5 done" label + title, a bordered progress bar (green and "All done" at 100%, hidden with no items), one white card for the rows with the add field and an indigo + button pinned at its foot, and Rename / Done buttons. The big Add button is gone (+ or Enter). Rename was unreachable before: it reused `.copy`, which is invisible outside the grid card.
+- Modal rows (`.cl-item--modal`): larger indigo checkboxes that fill when ticked, lighter separators, hover tint.
+- Phone full view (`MobileChecklistItemSheet`) gets the same layout at sheet sizes: the head (`MobileChecklistHead`) sits in the sheet's sticky title row beside the ✕, the list scrolls inside the card with the add row pinned, then Edit (opens the edit sheet) / Done (`requestCloseSheet`). The + button keeps focus in the field so the keyboard stays up between items.
+
 ## New Tagline and Site Copy — 2026-10-15
 Copy only; typecheck, lint, tests and build **not run** on these edits. Not deployed. Write-up: `programmer-docs/artifacts/intraconnected-messaging.html`.
 - Tagline "Map your mind. Connect your ideas." became "Plant a node. Grow an idea."; the product is called an idea tree ("a place to grow ideas"), not a mind map. New landing subline, button ("Start growing, free"), "50 nodes free. No card." line (`.landingHeroFine`), final CTA, pricing tagline, How It Works step 3, Privacy overview.

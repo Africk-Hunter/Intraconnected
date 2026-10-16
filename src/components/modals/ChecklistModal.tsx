@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import AnimatedOverlay from '../AnimatedOverlay';
 import ChecklistItemRow from '../ChecklistItemRow';
+import { CheckboxIcon } from '../Icons';
 import { useEnteringIds } from '../../utilities/idea/useEnteringIds';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
@@ -115,28 +116,42 @@ function ChecklistModal() {
     }
 
     const checkedCount = items.filter(i => i.checked).length;
+    const allDone = items.length > 0 && checkedCount === items.length;
+    const status = items.length === 0
+        ? 'Checklist'
+        : allDone ? 'Checklist · All done' : `Checklist · ${checkedCount} of ${items.length} done`;
 
     return (
         <AnimatedOverlay open={checklistModalId !== null} scrollable onClick={close} onEscape={close}>
-            <div className="modal neobrutal checklistModal" onClick={e => e.stopPropagation()}>
-                <div className="checklistModal-title-row">
-                    <span className="checklistModal-title">{title}</span>
-                    <span className="checklistModal-progress">{checkedCount}/{items.length}</span>
-                    <button className="checklistModal-rename copy" onClick={openRename} title="Rename" aria-label="Rename checklist">
-                        <img src="images/Pen.svg" alt="" className="copyImg" />
-                    </button>
-                </div>
-                <div
-                    className={`checklistModal-bar${items.length > 0 && checkedCount === items.length ? ' checklistModal-bar--done' : ''}`}
-                    role="progressbar"
-                    aria-label="Checklist progress"
-                    aria-valuemin={0}
-                    aria-valuemax={items.length}
-                    aria-valuenow={checkedCount}
-                >
-                    <div className="checklistModal-bar-fill" style={{ transform: `scaleX(${items.length ? checkedCount / items.length : 0})` }} />
-                </div>
-                <div className="contentHolder checklistModal-body">
+            <div
+                className="modal neobrutal checklistModal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="checklistModal-title"
+                onClick={e => e.stopPropagation()}
+            >
+                <header className="checklistModal-head">
+                    <span className={`checklistModal-badge${allDone ? ' checklistModal-badge--done' : ''}`} aria-hidden="true">
+                        <CheckboxIcon checked size={34} />
+                    </span>
+                    <div className="checklistModal-head-text">
+                        <p className="checklistModal-eyebrow">{status}</p>
+                        <h2 className="checklistModal-title" id="checklistModal-title">{title}</h2>
+                    </div>
+                </header>
+                {items.length > 0 && (
+                    <div
+                        className={`checklistModal-bar${allDone ? ' checklistModal-bar--done' : ''}`}
+                        role="progressbar"
+                        aria-label="Checklist progress"
+                        aria-valuemin={0}
+                        aria-valuemax={items.length}
+                        aria-valuenow={checkedCount}
+                    >
+                        <div className="checklistModal-bar-fill" style={{ transform: `scaleX(${checkedCount / items.length})` }} />
+                    </div>
+                )}
+                <div className="checklistModal-sheet">
                     <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
@@ -159,26 +174,36 @@ function ChecklistModal() {
                                     />
                                 ))}
                                 {items.length === 0 && (
-                                    <li className="checklistModal-empty">No items yet.</li>
+                                    <li className="checklistModal-empty">Nothing here yet. Type below and press Enter.</li>
                                 )}
                             </ul>
                         </SortableContext>
                     </DndContext>
-                    <input
-                        ref={addInputRef}
-                        className="checklistModal-add-input"
-                        aria-label="Add item"
-                        placeholder="+ Add item"
-                        value={draft}
-                        onChange={e => setDraft(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } }}
-                        maxLength={200}
-                    />
+                    <form className="checklistModal-add" onSubmit={e => { e.preventDefault(); addItem(); }}>
+                        <input
+                            ref={addInputRef}
+                            className="checklistModal-add-input"
+                            aria-label="New item"
+                            placeholder="Add an item"
+                            value={draft}
+                            onChange={e => setDraft(e.target.value)}
+                            maxLength={200}
+                        />
+                        <button
+                            type="submit"
+                            className="checklistModal-add-btn neobrutal-button"
+                            disabled={!draft.trim()}
+                            aria-label="Add item"
+                            title="Add item (Enter)"
+                        >
+                            +
+                        </button>
+                    </form>
                 </div>
-                <section className="modalButtons">
-                    <button className="modalButton cancel neobrutal-button" onClick={close}>Close</button>
-                    <button className="modalButton continue neobrutal-button" onClick={addItem} disabled={!draft.trim()}>Add</button>
-                </section>
+                <footer className="checklistModal-actions">
+                    <button className="checklistModal-action checklistModal-action--edit neobrutal-button" onClick={openRename}>Rename</button>
+                    <button className="checklistModal-action checklistModal-action--go neobrutal-button" onClick={close}>Done</button>
+                </footer>
             </div>
         </AnimatedOverlay>
     );

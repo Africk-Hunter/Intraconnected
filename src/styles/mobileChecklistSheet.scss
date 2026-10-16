@@ -1,13 +1,112 @@
 @use 'sass:color';
 @use "./variables" as *;
 
-// Checklist bottom sheet
+// Checklist bottom sheet: same layout as the desktop ChecklistModal (badge +
+// label + title, progress bar, one card for the list and add row, Edit / Done).
+
+// Head, in the sheet's sticky title row next to the ✕.
+.mmobile-sheet-title.mmobile-sheet-title--head {
+    margin: 2px 0 12px;
+    padding: 0 40px 0 0;
+    text-align: left;
+}
+
+.mmobile-checklist-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+}
+
+.mmobile-checklist-badge {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    background: $indigo;
+    color: white;
+    border: $neo-m-detail-border;
+    border-radius: 10px;
+    box-shadow: $neo-m-detail-shadow;
+    transition: background-color 200ms ease;
+
+    &--done { background: $leaf; color: #111; }
+}
+
+.mmobile-checklist-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.mmobile-checklist-eyebrow {
+    overflow: hidden;
+    font-size: 0.7rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.6;
+}
+
+.mmobile-checklist-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    word-break: break-word;
+}
 
 .mmobile-checklist-sheet {
     display: flex;
     flex-direction: column;
     flex: 1;
+    min-height: 0;
+    gap: 12px;
     overflow: hidden;
+    // Room for the card's hard shadow, which overflow would otherwise clip.
+    padding: 0 4px 4px 0;
+}
+
+// Fill is scaled, never resized.
+.mmobile-checklist-bar {
+    flex-shrink: 0;
+    height: 12px;
+    box-sizing: border-box;
+    background: #fff;
+    border: $neo-m-detail-border;
+    border-radius: 999px;
+    overflow: hidden;
+
+    &-fill {
+        height: 100%;
+        background: $indigo;
+        transform-origin: left;
+        transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms ease;
+    }
+
+    &--done &-fill { background: $leaf; }
+}
+
+// The list scrolls inside the card; the add row stays pinned at its foot.
+.mmobile-checklist-card {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    border: $neo-m-card-border;
+    border-radius: 14px;
+    box-shadow: $neo-m-card-shadow;
 }
 
 .mmobile-checklist-sheet-items {
@@ -15,6 +114,7 @@
     margin: 0;
     padding: 0;
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     touch-action: pan-y;
 
@@ -234,29 +334,39 @@
 }
 
 .mmobile-checklist-sheet-empty {
-    padding: 20px;
-    color: #aaa;
+    padding: 24px 16px;
+    text-align: center;
     font-size: 0.95rem;
+    opacity: 0.55;
 }
 
 .mmobile-checklist-sheet-add {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 16px;
-    border-top: 2px solid $neutral;
+    margin: 0;
+    padding: 10px;
+    background: $neutral;
+    border-top: 2px solid #111;
 }
 
 .mmobile-checklist-sheet-input {
     flex: 1;
+    min-width: 0;
+    height: 44px;
+    box-sizing: border-box;
     font-family: inherit;
-    font-size: 1rem;
-    padding: 9px 12px;
+    font-size: 1rem; // 16px: iOS zooms in on anything smaller
+    color: #111;
+    padding: 0 12px;
     border-radius: 8px;
     border: $neo-m-detail-border;
-    background: $neutral;
+    background: #fff;
+    transition: box-shadow 160ms ease;
 
-    &:focus { outline: none; border-color: $indigo; }
+    &::placeholder { color: #111; opacity: 0.45; }
+    &:focus { outline: none; box-shadow: 0 0 0 3px $indigo; }
 }
 
 .mmobile-checklist-sheet-add-btn {
@@ -264,15 +374,36 @@
     cursor: pointer;
     width: 44px;
     height: 44px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
     background: $indigo;
     color: white;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 700;
     border-radius: 8px;
-    border: 2px solid #111;
+    border: $neo-m-detail-border;
+    box-shadow: 0 3px 0 #111;
     flex-shrink: 0;
+    transition: translate 100ms ease, box-shadow 100ms ease, opacity 160ms ease;
+
+    &:active { translate: 0 3px; box-shadow: none; }
+    &:disabled { opacity: 0.4; cursor: default; }
+}
+
+.mmobile-sheet-btns.mmobile-checklist-btns {
+    flex-shrink: 0;
+    margin-top: 0;
+}
+
+.mmobile-checklist-btn--edit { background: #fff; color: #111; }
+
+@media (prefers-reduced-motion: reduce) {
+    .mmobile-checklist-badge,
+    .mmobile-checklist-bar-fill,
+    .mmobile-checklist-sheet-input,
+    .mmobile-checklist-sheet-add-btn { transition: none; }
 }
 
 // ── Tablet scaling (640px – 1023px) ─────────────────────────────
@@ -280,6 +411,22 @@
     .mmobile-checklist-sheet-item {
         font-size: 1.15rem;
     }
+
+    .mmobile-checklist-head { gap: 16px; }
+
+    .mmobile-checklist-badge {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+
+        svg { width: 30px; height: 30px; }
+    }
+
+    .mmobile-checklist-eyebrow { font-size: 0.85rem; }
+    .mmobile-checklist-title { font-size: 1.5rem; }
+    .mmobile-checklist-sheet { gap: 16px; }
+    .mmobile-checklist-bar { height: 16px; }
+    .mmobile-checklist-card { border-radius: 18px; }
 
     .mmobile-checklist-sheet-row {
         min-height: 56px;
@@ -292,13 +439,14 @@
     }
 
     .mmobile-checklist-sheet-add {
-        padding: 16px 24px;
-        gap: 14px;
+        padding: 12px 14px;
+        gap: 12px;
     }
 
     .mmobile-checklist-sheet-input {
+        height: 48px;
         font-size: 1.15rem;
-        padding: 12px 16px;
+        padding: 0 16px;
         border-radius: 10px;
     }
 

@@ -1,5 +1,18 @@
 import ReportLink from '../ReportLink';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
+
+// Same breakpoint as $mobile in profileModal.scss, where the CSS swaps the two layouts.
+const PROFILE_MOBILE_QUERY = '(max-width: 576px)';
+function useIsProfileMobile(): boolean {
+    const [is, setIs] = useState(() => window.matchMedia(PROFILE_MOBILE_QUERY).matches);
+    useEffect(() => {
+        const mq = window.matchMedia(PROFILE_MOBILE_QUERY);
+        const update = () => setIs(mq.matches);
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+    }, []);
+    return is;
+}
 import AnimatedOverlay from '../AnimatedOverlay';
 import { useIdeaContext } from '../../context/IdeaContext';
 import { getMailProvider, resetMailUrl, verifyMailUrl } from '../../utilities/mailProvider';
@@ -16,6 +29,7 @@ import type { SortMode } from '../../utilities/idea/sorting';
 import { downloadFile } from '../../utilities/download';
 import { useSmoothHeight } from '../../utilities/useSmoothHeight';
 import ImportDataSection from './ImportDataSection';
+import ModalTester from './ModalTester';
 import VaultSettings from '../vault/VaultSettings';
 import { usePurchaseMode } from '../../utilities/billing/purchaseMode';
 import '../../styles/profileModal.scss';
@@ -67,6 +81,7 @@ function ProfileModal() {
     const [isRefunding, setIsRefunding] = useState(false);
     const [refundError, setRefundError] = useState('');
     const [devUnlocked, setDevUnlocked] = useState(false);
+    const [modalTesterOpen, setModalTesterOpen] = useState(false);
     const [devPasswordInput, setDevPasswordInput] = useState('');
     const [devPasswordError, setDevPasswordError] = useState('');
     const [isSettingPlan, setIsSettingPlan] = useState(false);
@@ -91,6 +106,16 @@ function ProfileModal() {
     // Read when the modal opens: auth.currentUser can still be null at first render.
     const [currentEmail, setCurrentEmail] = useState(auth.currentUser?.email ?? '');
     const { contentRef, height: contentHeight, animate: animateHeight } = useSmoothHeight<HTMLDivElement>();
+    const isProfileMobile = useIsProfileMobile();
+
+    // Rows pop in one by one when the mobile tab list appears, same as idea rows do.
+    const [tabsStaggerIn, setTabsStaggerIn] = useState(true);
+    useLayoutEffect(() => {
+        if (!profileModalOpen || mobileView !== 'tabs') return;
+        setTabsStaggerIn(true);
+        const t = setTimeout(() => setTabsStaggerIn(false), 1200);
+        return () => clearTimeout(t);
+    }, [profileModalOpen, mobileView]);
 
     useEffect(() => {
         if (profileModalOpen) {
@@ -753,6 +778,18 @@ function ProfileModal() {
     ) : (
         <div className="profile-account-content">
             <section className="profile-section profile-section--dev">
+                <h3 className="profile-section-title">Modal Testing</h3>
+                <p className="profile-section-desc">
+                    Open any modal in the app with dummy content, without leaving Profile. Dev-only.
+                </p>
+                <button
+                    className="profile-action-btn neobrutal-button"
+                    onClick={() => setModalTesterOpen(true)}
+                >
+                    Open modal tester
+                </button>
+            </section>
+            <section className="profile-section profile-section--dev">
                 <h3 className="profile-section-title">Set Plan</h3>
                 <p className="profile-section-desc">
                     Sets your plan directly with no payment or Stripe objects. Dev-only.
@@ -897,13 +934,14 @@ function ProfileModal() {
 
                 {/* Height animates between tabs / content changes (see useSmoothHeight) */}
                 <div
-                    className={`profile-resize${animateHeight ? ' profile-resize--animate' : ''}`}
-                    style={{ height: contentHeight }}
+                    className={`profile-resize${animateHeight && !isProfileMobile ? ' profile-resize--animate' : ''}`}
+                    style={{ height: isProfileMobile ? undefined : contentHeight }}
                 >
                     <div ref={contentRef} className="profile-content">
 
+                        {/* Only the active layout is mounted: the hidden one would run every section's effects twice. */}
                         {/* ── DESKTOP layout ── */}
-                        <div className="profile-desktop">
+                        {!isProfileMobile && <div className="profile-desktop">
                             <div className="profile-left">
                                 <h2 className="profile-heading">Profile Options</h2>
                                 {TABS.filter(tab => tab.id !== 'danger').map(tab => (
@@ -938,16 +976,25 @@ function ProfileModal() {
                                     {tabContent[activeTab]}
                                 </div>
                             </div>
-                        </div>
+                        </div>}
 
                         {/* ── MOBILE layout ── */}
-                        <div className="profile-mobile">
-                            {mobileView === 'tabs' ? (
+                        {isProfileMobile && <div className="profile-mobile">
+                            {mobileView === 'tabs' ? (() => {
+                                const visibleTabs = TABS.filter(tab => tab.id !== 'danger');
+                                const staggerProps = (index: number) => tabsStaggerIn ? {
+                                    className: ' profile-tab--stagger',
+                                    style: { animationDelay: `${index * 35}ms` },
+                                } : { className: '', style: undefined };
+                                return (
                                 <>
-                                    {TABS.filter(tab => tab.id !== 'danger').map(tab => (
+                                    {visibleTabs.map((tab, index) => {
+                                        const stagger = staggerProps(index);
+                                        return (
                                         <button
                                             key={tab.id}
-                                            className={`profile-tab profile-tab--mobile profile-tab--${tab.id} neobrutal-button`}
+                                            className={`profile-tab profile-tab--mobile profile-tab--${tab.id} neobrutal-button${stagger.className}`}
+                                            style={stagger.style}
                                             onClick={() => setMobileView(tab.id)}
                                         >
                                             <div>
@@ -956,9 +1003,11 @@ function ProfileModal() {
                                             </div>
                                             <span className="profile-tab-arrow">›</span>
                                         </button>
-                                    ))}
+                                        );
+                                    })}
                                     <button
-                                        className="profile-tab profile-tab--mobile profile-tab--customization profile-tab--disabled neobrutal-button"
+                                        className={`profile-tab profile-tab--mobile profile-tab--customization profile-tab--disabled neobrutal-button${staggerProps(visibleTabs.length).className}`}
+                                        style={staggerProps(visibleTabs.length).style}
                                         disabled
                                     >
                                         <div>
@@ -968,7 +1017,8 @@ function ProfileModal() {
                                         <span className="profile-tab-arrow">›</span>
                                     </button>
                                     <button
-                                        className="profile-tab profile-tab--mobile profile-tab--danger neobrutal-button"
+                                        className={`profile-tab profile-tab--mobile profile-tab--danger neobrutal-button${staggerProps(visibleTabs.length + 1).className}`}
+                                        style={staggerProps(visibleTabs.length + 1).style}
                                         onClick={() => setMobileView('danger')}
                                     >
                                         <div>
@@ -978,10 +1028,11 @@ function ProfileModal() {
                                         <span className="profile-tab-arrow">›</span>
                                     </button>
                                 </>
-                            ) : (
+                                );
+                            })() : (
                                 tabContent[mobileView]
                             )}
-                        </div>
+                        </div>}
                     </div>
                 </div>
 
@@ -991,6 +1042,8 @@ function ProfileModal() {
                 </div>
             </div>
         </AnimatedOverlay>
+
+            {import.meta.env.DEV && <ModalTester open={modalTesterOpen} onClose={() => setModalTesterOpen(false)} />}
 
             <AnimatedOverlay open={deleteConfirmOpen} onEscape={() => setDeleteConfirmOpen(false)}>
                 <div className="modal neobrutal session-ended">

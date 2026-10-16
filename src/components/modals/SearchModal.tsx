@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchFullIdeaList } from '../../utilities';
 import { readRecentVisits } from '../../utilities/idea/recentVisits';
-import { KIND_LABEL, searchIdeas, suggestedIdeas, visibleResults, type SearchResult } from '../../utilities/idea/search';
+import { KIND_LABEL, searchIdeas, suggestedIdeas, suggestTags, takeFinishedTag, visibleResults, type SearchResult, type SearchTag } from '../../utilities/idea/search';
+import SearchTagBar from '../SearchTagBar';
 import Highlighted from '../Highlighted';
 import AnimatedOverlay from '../AnimatedOverlay';
 
@@ -27,22 +28,25 @@ type Row =
 // Results come first; the commands sit below under their own "Actions" heading.
 function SearchModal({ open, onClose, onPick, commands }: Props) {
     const [query, setQuery] = useState('');
+    const [tags, setTags] = useState<SearchTag[]>([]);
+    // Backspace in the empty field highlights the last box first; a second one deletes it.
+    const [armed, setArmed] = useState<SearchTag | null>(null);
     const [active, setActive] = useState(0);
     const [expanded, setExpanded] = useState<Set<number>>(new Set());
     const listRef = useRef<HTMLUListElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (open) { setQuery(''); setActive(0); setExpanded(new Set()); }
+        if (open) { setQuery(''); setTags([]); setActive(0); setExpanded(new Set()); }
     }, [open]);
 
     const { rows, suggestedTitle } = useMemo(() => {
         if (!open) return { rows: [] as Row[], suggestedTitle: '' };
         const q = query.trim().toLowerCase();
-        const matchingCommands = commands.filter((c) => q === '' || c.label.toLowerCase().includes(q));
+        const matchingCommands = tags.length > 0 ? [] : commands.filter((c) => q === '' || c.label.toLowerCase().includes(q));
         const all = fetchFullIdeaList();
         const suggested = suggestedIdeas(all, readRecentVisits());
-        const results = q !== '' ? searchIdeas(all, query) : suggested.results;
+        const results = q !== '' || tags.length > 0 ? searchIdeas(all, query, 50, tags) : suggested.results;
         return {
             rows: [
                 ...visibleResults(results, expanded).map((result): Row => ({ type: 'idea', result })),
@@ -50,9 +54,31 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
             ],
             suggestedTitle: suggested.title,
         };
-    }, [open, query, commands, expanded]);
+    }, [open, query, tags, commands, expanded]);
 
-    useEffect(() => { setActive(0); setExpanded(new Set()); }, [query]);
+    useEffect(() => { setActive(0); setExpanded(new Set()); setArmed(null); }, [query, tags]);
+
+    const suggestions = useMemo(() => suggestTags(query, tags), [query, tags]);
+
+    function addTag(tag: SearchTag) {
+        setTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
+    }
+
+    // A finished "is:tag " becomes a box; anything typed or pasted around it stays.
+    function onQueryChange(value: string) {
+        let rest = value;
+        for (let found = takeFinishedTag(rest); found; found = takeFinishedTag(rest)) {
+            addTag(found.tag);
+            rest = found.rest;
+        }
+        setQuery(rest);
+    }
+
+    function pickSuggestion(tag: SearchTag) {
+        addTag(tag);
+        setQuery((q) => q.replace(/(^|\s)is:[a-z0-9]*$/i, '$1').trimStart());
+        inputRef.current?.focus();
+    }
 
     function toggle(id: number) {
         setExpanded((prev) => { const next = new Set(prev); if (!next.delete(id)) next.add(id); return next; });
@@ -70,13 +96,20 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
     }
 
     function onKeyDown(e: React.KeyboardEvent) {
-        if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(a + 1, rows.length - 1)); }
+        if (e.key === 'Backspace' && query === '' && tags.length > 0) {
+            e.preventDefault();
+            const last = tags[tags.length - 1];
+            if (armed === last) setTags((prev) => prev.slice(0, -1));
+            else setArmed(last);
+        }
+        else if ((e.key === 'Tab' || e.key === 'Enter') && suggestions.length > 0 && !e.nativeEvent.isComposing) { e.preventDefault(); pickSuggestion(suggestions[0]); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(a + 1, rows.length - 1)); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
         else if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); choose(rows[active]); }
     }
 
-    const hasQuery = query.trim() !== '';
-    const words = useMemo(() => query.trim().toLowerCase().split(/s+/).filter(Boolean), [query]);
+    const hasQuery = query.trim() !== '' || tags.length > 0;
+    const words = useMemo(() => query.trim().toLowerCase().split(/\s+/).filter(Boolean), [query]);
     const ideaCount = rows.filter((r) => r.type === 'idea' && r.result.isMatch).length;
     const isOpen = (r: SearchResult) => expanded.has(r.id);
     const colorOf = (r: SearchResult) => (r.kind !== 'idea' ? r.kind : r.hasChildren ? 'parent' : 'leaf');
@@ -94,25 +127,26 @@ function SearchModal({ open, onClose, onPick, commands }: Props) {
                         placeholder="Search ideas, notes and checklists…"
                         value={query}
                         autoFocus
-                        onChange={(e) => setQuery(e.target.value)}
+                        onChange={(e) => onQueryChange(e.target.value)}
                         onKeyDown={onKeyDown}
                         aria-label="Search ideas"
                         role="combobox"
                         aria-expanded="true"
                         aria-controls="search-modal-list"
                     />
-                    {query !== '' && (
+                    {(query !== '' || tags.length > 0) && (
                         <button
                             type="button"
                             className="search-modal-clear"
                             tabIndex={-1}
                             // mousedown is cancelled so the field keeps focus.
                             onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => { setQuery(''); inputRef.current?.focus(); }}
+                            onClick={() => { setQuery(''); setTags([]); inputRef.current?.focus(); }}
                             aria-label="Clear search"
                         ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" /></svg></button>
                     )}
                 </div>
+                <SearchTagBar armed={armed} tags={tags} suggestions={suggestions} onPick={pickSuggestion} onRemove={(tag) => { setTags((prev) => prev.filter((t) => t !== tag)); inputRef.current?.focus(); }} />
                 <ul className="search-modal-list" id="search-modal-list" ref={listRef} role="listbox" aria-label="Results">
                     {hasQuery && ideaCount === 0 && (
                         <li className="search-modal-empty" role="presentation">No idea says "{query.trim()}".</li>

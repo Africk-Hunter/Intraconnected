@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import { auth } from '../../firebaseConfig';
 import { fetchOnboardingSeen, markOnboardingSeen } from '../../utilities/firebase/preferences';
 import MoreDotsIcon from '../mobile/MoreDotsIcon';
+import { useDevModalRequest } from '../../utilities/devModals';
 
 const STORAGE_KEY = 'onboarding_v1_seen';
 
 function OnboardingModal() {
     const [open, setOpen] = useState(false);
+
+    useDevModalRequest('onboarding', () => setOpen(true));
 
     useEffect(() => {
         if (localStorage.getItem(STORAGE_KEY) === 'true') return;

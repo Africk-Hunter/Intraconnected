@@ -15,8 +15,8 @@
     @return $s;
 }
 
-@function icon($body) {
-    $svg: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>#{$body}</svg>";
+@function icon($body, $color: black) {
+    $svg: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#{$color}' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'>#{$body}</svg>";
     @return url("data:image/svg+xml,#{str-replace(str-replace($svg, '<', '%3C'), '>', '%3E')}");
 }
 
@@ -1178,6 +1178,11 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 }
 
+// Dark chip background — the shared black-stroke icon() has no contrast here.
+.profile-mobile .profile-tab--mobile.profile-tab--vault::before {
+    background-image: icon(map.get($icons, 'lock'), white);
+}
+
 .profile-desktop .profile-section--danger .profile-section-title {
     color: $danger;
 }
@@ -1270,6 +1275,27 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
             &:active {
                 box-shadow: 1px 1px 0 $danger;
             }
+        }
+
+        // Rows pop in one by one when the tab list appears, same as idea rows do on mobile.
+        &.profile-tab--stagger {
+            animation: profileTabStaggerIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        }
+    }
+
+    @keyframes profileTabStaggerIn {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 

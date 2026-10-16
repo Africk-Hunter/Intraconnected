@@ -49,14 +49,36 @@ $cl-base: 200ms;
     }
 
     &--modal {
+        --cl-hover: #{rgba($indigo, 0.1)};
         gap: 0.6rem;
-        padding: 0.55rem 1rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        padding: 0.6rem 0.75rem 0.6rem 0.4rem;
+        border-bottom: 1.5px solid $neutral;
         font-size: 1.1rem;
+        line-height: 1.35;
+        transition: background-color $cl-fast ease;
 
         &:last-child { border-bottom: none; }
+        &:hover { background: rgba($indigo, 0.05); }
 
-        @media (min-width: $large-desktop) { font-size: 1.4rem; }
+        // Indigo box like the card; fills in when ticked.
+        .cl-cb {
+            padding-top: 1px;
+            color: $indigo;
+
+            svg { width: 1.45rem; height: 1.45rem; }
+            rect { transition: fill $cl-fast ease; }
+        }
+
+        &.cl-item--checked .cl-cb {
+            rect { fill: $indigo; }
+            path { stroke: white; }
+        }
+
+        @media (min-width: $large-desktop) {
+            font-size: 1.4rem;
+
+            .cl-cb svg { width: 1.8rem; height: 1.8rem; }
+        }
     }
 
     &--entering { animation: cl-item-in $cl-base $cl-ease; }

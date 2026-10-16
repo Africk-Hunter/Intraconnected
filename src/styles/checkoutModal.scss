@@ -449,6 +449,10 @@
     &.upgrade-celebration-modal--annual {
         --celebration-color: #{$sky};
     }
+    // FeatureImplementedModal borrows this whole layout.
+    &.upgrade-celebration-modal--feature {
+        --celebration-color: #{$leaf};
+    }
 
     @media (max-width: $mobile) {
         width: min(88%, 25rem);
@@ -616,7 +620,60 @@
     }
 }
 
+// The idea that shipped, as a sticker-style chip under the title.
+.feature-impl-name {
+    max-width: 100%;
+    margin: 0.25rem 0 0.35rem;
+    padding: 0.35rem 1rem;
+    box-sizing: border-box;
+    background: $link;
+    border: $neo-detail-border;
+    border-radius: 0.6rem;
+    box-shadow: $neo-detail-shadow;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    animation: upgradeCelebrationRise 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.34s both;
+}
+
+// Plural case: one chip per shipped idea, scrolling if there are many.
+.feature-impl-list {
+    list-style: none;
+    margin: 0.25rem 0 0.35rem;
+    padding: 0 0.3rem 0.3rem 0;
+    width: 100%;
+    max-height: 14rem;
+    overflow-y: auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .feature-impl-name {
+        margin: 0;
+        font-size: 1.15rem;
+    }
+}
+
+@keyframes featureImplStar {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50%      { transform: scale(1.12) rotate(8deg); }
+}
+
+.feature-impl-star {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: featureImplStar 1.6s ease-in-out 0.7s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+    .feature-impl-name,
+    .feature-impl-star,
     .upgrade-celebration-rays,
     .upgrade-celebration-fleck,
     .upgrade-celebration-icon,

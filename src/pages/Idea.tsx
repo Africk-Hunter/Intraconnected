@@ -18,7 +18,6 @@ import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } fr
 import { auth } from '../firebaseConfig';
 import { firstUnseenHelpScreen } from '../components/helpScreens';
 import { fetchPlanCelebrated, markPlanCelebrated } from '../utilities/firebase/preferences';
-import { primeCelebrationSoundOnFirstGesture } from '../utilities/celebrationSound';
 import { useIdeaContext } from '../context/IdeaContext';
 import changelog from '../../programmer-docs/CHANGELOG.md?raw';
 import { parseChangelog } from '../utilities/parseChangelog';
@@ -202,9 +201,6 @@ function Idea() {
     useVaultLabels(newIdeaSwitch, setNewIdeaSwitch);
     const isMobileUI = useIsMobileUI();
     const { requestDelete, moveIdea, copyChildren } = useIdeaActions();
-
-    // Unlock the celebration sound on the first tap so it can play on its own later.
-    useEffect(() => primeCelebrationSoundOnFirstGesture(), []);
 
     // Annual or Lifetime granted without a checkout (Developer Testing):
     // celebrate once per plan per account (flag lives in Firestore, not this
