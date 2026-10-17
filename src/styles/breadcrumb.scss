@@ -52,11 +52,11 @@
     padding: 0.15rem 0.5rem;
     border-radius: 6px;
     cursor: pointer;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     border: $neo-detail-border;
 
     &:hover {
-        background: $link;
+        background: t(highlight, $link);
     }
 
     &:focus-visible {
@@ -72,7 +72,7 @@
     padding: 0.15rem 0.4rem;
     border-radius: 6px;
     cursor: pointer;
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
     border: $neo-detail-border;
 
     img {
@@ -91,7 +91,7 @@
     }
 
     &:focus-visible {
-        outline: 5px solid $orange;
+        outline: 5px solid t(accent-orange, $orange);
         outline-offset: 2px;
     }
 }

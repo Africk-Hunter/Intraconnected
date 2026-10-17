@@ -31,7 +31,7 @@ $error-ease: cubic-bezier(0.22, 1, 0.36, 1);
     align-items: center;
     gap: 1.1rem;
     padding: 1.4rem 1.75rem;
-    background: $burnt-orange;
+    background: t(status-warning, $burnt-orange);
     color: #fff;
     border-bottom: 3px solid #000;
 }
@@ -42,7 +42,7 @@ $error-ease: cubic-bezier(0.22, 1, 0.36, 1);
     place-items: center;
     width: 3.5rem;
     height: 3.5rem;
-    background: $link;
+    background: t(highlight, $link);
     color: #000;
     border: $neo-detail-border;
     border-radius: $neo-detail-radius;
@@ -88,7 +88,7 @@ $error-ease: cubic-bezier(0.22, 1, 0.36, 1);
     font-weight: 600;
     line-height: 1.3;
     color: #000;
-    background: rgba($leaf, 0.22);
+    @include t-alpha(background, status-success, $leaf, 0.22);
     border: $neo-detail-border;
     border-radius: $neo-detail-radius;
 
@@ -96,7 +96,7 @@ $error-ease: cubic-bezier(0.22, 1, 0.36, 1);
         flex: none;
         width: 1.4rem;
         height: 1.4rem;
-        color: $neo-green;
+        color: t(status-success, $neo-green);
     }
 }
 

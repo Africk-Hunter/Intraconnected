@@ -83,7 +83,7 @@
     }
 
     &--active {
-        background-color: $sky !important;
+        background-color: t(nav-active, $sky) !important;
         box-shadow: 0px 0px 0 2px black !important;
         translate: 4px 4px !important;
     }
@@ -250,14 +250,14 @@
     right: -6px;
     width: 12px;
     height: 12px;
-    background: $danger;
+    background: t(unread-dot, $danger);
     border: 2px solid #111;
     border-radius: 50%;
     pointer-events: none;
 }
 
 .tooltip-highlighted {
-    outline: 3px solid $link !important;
+    outline: 3px solid t(highlight, $link) !important;
     outline-offset: 2px;
 }
 
@@ -265,7 +265,7 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: $link;
+    background: t(highlight, $link);
     border: 2px solid #111;
     border-radius: 6px;
     padding: 0.35rem 0.65rem;
@@ -291,4 +291,9 @@
 
 .tooltip-text--bump {
     animation: tooltip-bump 4.5s ease-in-out infinite;
+}
+
+// The theme panel button draws its palette in currentColor.
+.navPalette {
+    color: #111;
 }

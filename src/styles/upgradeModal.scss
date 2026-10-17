@@ -33,7 +33,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     flex-shrink: 0;
     // .neobrutal-button's default shadow/press (index.scss) is sized for
     // full-width buttons — scaled down here so it doesn't dwarf this small
@@ -71,7 +71,7 @@
     padding: 0.8rem 1rem;
     width: 100%;
     box-sizing: border-box;
-    background: rgba($orange, 0.16);
+    @include t-alpha(background, accent-orange, $orange, 0.16);
     // Matches $neo-btn-border (the price cards' CTA buttons), not the cards'
     // own 4px border, per design feedback.
     border: 3px solid black;
@@ -141,7 +141,7 @@
 // The app's version of the plan cards: one link to the website (US store only).
 .upgradeModalLink {
     align-self: center;
-    background: $leaf;
+    background: t(btn-primary, $leaf);
     padding: 0.8rem 1.6rem;
     font-size: 1rem;
     font-weight: 700;

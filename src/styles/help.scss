@@ -62,7 +62,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     // Small icon button — scaled-down shadow, same as .upgradeModal-close.
     box-shadow: 1px 1px 0 1px black;
 
@@ -163,7 +163,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     &--active,
     &--active:hover {
         width: 1.75rem;
-        background: $leaf;
+        background: t(status-success, $leaf);
     }
 
     @media (min-width: $large-desktop) {
@@ -201,7 +201,7 @@ $help-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     &--primary {
-        background: $leaf;
+        background: t(btn-primary, $leaf);
     }
 
     &:disabled {
@@ -454,19 +454,19 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     &.helpLeaf {
-        background: $leaf;
+        background: t(node-leaf, $leaf);
     }
 
     &.helpRoot {
-        background: $roots;
+        background: t(node-root, $roots);
     }
 
     &.helpBack {
-        background: $back;
+        background: t(btn-back, $back);
     }
 
     &.helpMore {
-        background: $neutral;
+        background: t(btn-neutral, $neutral);
         font-size: 1.6rem;
         font-weight: 800;
         line-height: 1;
@@ -474,36 +474,36 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     &.helpParent {
-        background: $sky;
+        background: t(node-parent, $sky);
     }
 
     &.helpLink {
-        background: $link;
+        background: t(node-link, $link);
     }
 
     &.helpChecklist {
-        background: $indigo;
+        background: t(node-checklist, $indigo);
         color: white;
     }
 
     &.helpVault {
-        background: $vault;
+        background: t(node-vault, $vault);
         color: white;
     }
 
     &.helpNote {
-        background: $neo-green;
+        background: t(node-note, $neo-green);
         color: white;
     }
 
     &.helpPriorityHigh {
-        background: #D62000;
+        background: t(prio-high, #D62000);
         color: white;
         font-weight: 700;
     }
 
     &.helpSort {
-        background: $deep-yellow;
+        background: t(accent-gold, $deep-yellow);
         gap: 0.35rem;
         font-weight: 700;
     }
@@ -527,11 +527,11 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     &.helpTrash {
-        background: $danger;
+        background: t(btn-danger, $danger);
     }
 
     &.helpPlus {
-        background: $leaf;
+        background: t(btn-primary, $leaf);
     }
 }
 
@@ -661,17 +661,17 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
     20%,
     32% {
-        background: #C8A200;
+        background: t(prio-low, #C8A200);
     }
 
     44%,
     56% {
-        background: #E07800;
+        background: t(prio-medium, #E07800);
     }
 
     68%,
     80% {
-        background: #D62000;
+        background: t(prio-high, #D62000);
     }
 
     92%,
@@ -765,7 +765,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     20%,
     32% {
         height: 0.85rem;
-        background: #C8A200;
+        background: t(prio-low, #C8A200);
         border-color: #111;
         box-shadow: 1px 1px 0 1px #111;
     }
@@ -773,7 +773,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     44%,
     56% {
         height: 1.35rem;
-        background: #E07800;
+        background: t(prio-medium, #E07800);
         border-color: #111;
         box-shadow: 1px 1px 0 1px #111;
     }
@@ -781,7 +781,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     68%,
     80% {
         height: 2rem;
-        background: #D62000;
+        background: t(prio-high, #D62000);
         border-color: #111;
         box-shadow: 1px 1px 0 1px #111;
     }
@@ -872,7 +872,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     align-items: center;
     justify-content: space-around;
     gap: 1.5rem;
-    background-color: $background-color;
+    background-color: t(surface, $background-color);
     background-size: 20px 20px;
     background-image:
         linear-gradient(rgba(65, 188, 40, 0.18) 1px, transparent 1px),
@@ -900,7 +900,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     width: 5.5rem;
     height: 2.4rem;
     margin-top: 0.7rem;
-    background: $leaf;
+    background: t(node-leaf, $leaf);
     border: 2px solid #111;
     border-radius: 8px;
     box-shadow: 2px 2px 0 1px #111;
@@ -986,20 +986,20 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     overflow: visible;
 
     &--tasks {
-        background: $leaf;
+        background: t(node-leaf, $leaf);
         top: 0;
         animation: help-sort-tasks 7s ease-in-out infinite;
         z-index: 1;
     }
 
     &--notes {
-        background: $sky;
+        background: t(node-parent, $sky);
         top: 2.4rem;
         z-index: 2;
     }
 
     &--alerts {
-        background: $leaf;
+        background: t(node-leaf, $leaf);
         top: 4.8rem;
         animation: help-sort-alerts 7s ease-in-out infinite;
         z-index: 3;
@@ -1074,13 +1074,13 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     &--p1 {
         height: 1.5rem;
         top: -0.4rem;
-        background: #D62000;
+        background: t(prio-high, #D62000);
     }
 
     &--p2 {
         height: 1rem;
         top: -0.3rem;
-        background: #E07800;
+        background: t(prio-medium, #E07800);
     }
 
     @media (min-width: $large-desktop) {
@@ -1117,12 +1117,12 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     text-align: center;
 
     &--age {
-        color: $roots;
+        color: t(node-root, $roots);
         animation: help-sort-lbl-age 7s ease-in-out infinite;
     }
 
     &--prio {
-        color: $purple;
+        color: t(accent-purple, $purple);
         animation: help-sort-lbl-prio 7s ease-in-out infinite;
         opacity: 0;
     }
@@ -1135,7 +1135,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 // ── Help screen 4: Mind Map demo ────────────────────────────────
 
 .help-mm-demo {
-    background-color: $background-color;
+    background-color: t(surface, $background-color);
     background-size: 20px 20px;
     background-image:
         linear-gradient(rgba(65, 188, 40, 0.22) 1px, transparent 1px),
@@ -1223,7 +1223,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .help-mm-current-chip {
-    background: $roots;
+    background: t(node-root, $roots);
     color: #111;
     border-radius: 10px;
 
@@ -1239,7 +1239,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     padding: 0.2rem 0.4rem;
     vertical-align: middle;
     border-radius: 10px;
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
     box-shadow: none;
 
     @media (min-width: $large-desktop) {
@@ -1271,7 +1271,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 .help-depth-dot {
     width: 1.6rem;
     height: 1.6rem;
-    background: $roots;
+    background: t(node-root, $roots);
     border: 2px solid black;
     border-radius: 5px;
     box-shadow: $neo-detail-shadow;
@@ -1358,7 +1358,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 .patchNotes-tag {
     display: inline-block;
     padding: 0.15rem 0.5rem;
-    background: $sky;
+    background: t(active, $sky);
     border: 2px solid black;
     border-radius: 4px;
     font-size: 0.75rem;
@@ -1417,7 +1417,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .patchNotes-recommend-btn.patchNotes-bug-btn {
-    background: $danger;
+    background: t(btn-danger, $danger);
     color: #fff;
     display: inline-flex;
     align-items: center;
@@ -1436,7 +1436,7 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     padding: 0.35rem 0.75rem;
     font-size: 0.85rem;
     font-weight: 600;
-    background: $link;
+    background: t(btn-secondary, $link);
     white-space: nowrap;
 
     @media (min-width: $large-desktop) {
@@ -1506,11 +1506,11 @@ $help-tree-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     font-weight: 500;
 
     &--error {
-        color: $danger;
+        color: t(status-error, $danger);
     }
 
     &--success {
-        color: $neo-green;
+        color: t(node-note, $neo-green);
         font-size: 1rem;
     }
 

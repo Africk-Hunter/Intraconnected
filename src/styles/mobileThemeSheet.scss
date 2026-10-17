@@ -1,0 +1,403 @@
+@use "./variables" as *;
+
+// ── Mobile theme sheet (MobileThemeSheet.tsx) ────────────────────
+// The touch UI's theme editor. It sits low, above the bottom bar, and leaves
+// the top of the screen clear with no dimming: the real app is the preview,
+// the way the desktop theme panel works. While the keyboard is up,
+// MobileMindMap moves `bottom` to just above it and caps the height.
+
+$mtheme-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+// Still catches taps outside the sheet (they close it), but doesn't dim the app being previewed.
+.mmobile-scrim.mtheme-scrim {
+    background: transparent;
+    animation: none;
+}
+
+.mtheme-sheet {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    // Covers the bottom bar (z-index 32) completely, shadow included.
+    bottom: max(4px, env(safe-area-inset-bottom, 4px));
+    height: min(52dvh, 480px);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 3px solid #111;
+    border-radius: 20px;
+    background: t(panel, $neutral);
+    box-shadow: 0 6px 0 #111;
+    color: #111;
+    animation: mthemeSheetIn 0.3s $mtheme-ease-out;
+}
+
+@keyframes mthemeSheetIn {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: none; }
+}
+
+// Grab handle + Back / title / close: drag down here to close (useSheetSwipeDown).
+.mtheme-header {
+    position: relative;
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    column-gap: 8px;
+    padding: 16px 12px 8px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.15);
+    touch-action: none;
+
+    .mmobile-sheet-grab--panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        translate: -50% 0;
+        margin: 0;
+    }
+}
+
+.mtheme-title {
+    max-width: 52vw;
+    margin: 0 0 3px;
+    overflow: hidden;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mtheme-close { justify-self: end; }
+
+// Home page: the Built-in / Yours tabs take the title's place, with the close button beside them.
+.mtheme-header--home {
+    grid-template-columns: 1fr auto;
+    padding-top: 16px;
+
+    .mtheme-seg { margin-bottom: 0; }
+}
+
+.mtheme-back {
+    justify-self: start;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 40px;
+    margin-bottom: 3px; // room for the shadow
+    padding: 0 12px 0 8px;
+    background: t(btn-neutral, $neutral);
+    border: 2px solid #111;
+    border-radius: 10px;
+    box-shadow: 0 3px 0 #111;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+    span { font-size: 1.4rem; line-height: 1; }
+
+    &:active {
+        transform: translateY(3px);
+        box-shadow: 0 0 0 #111;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #111;
+        outline-offset: 2px;
+    }
+}
+
+// One page. Only the top of the stack shows; the ones under it keep their scroll.
+.mtheme-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 14px 14px 18px;
+
+    &[hidden] { display: none; }
+
+    &--in { animation: mthemePageIn 0.22s $mtheme-ease-out; }
+
+    // The free-plan pitch, centered in the sheet.
+    .cust--locked .cust-scroll {
+        align-items: center;
+        text-align: center;
+    }
+}
+
+@keyframes mthemePageIn {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: none; }
+}
+
+.mtheme-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mtheme-section-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.mtheme-seg {
+    align-self: flex-start;
+
+    .cust-seg-btn {
+        flex: 1; // the two tabs share the row evenly, no blank space after the last one
+        min-height: 40px;
+        padding: 0 1rem;
+        font-size: 0.95rem;
+    }
+}
+
+// Built-in themes: one row that scrolls sideways, so the editing rows stay close.
+.mtheme-tiles {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0 -14px;
+    padding: 4px 14px 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 14px; // snap to the content edge, so the first tile lines up with the rows below
+    scrollbar-width: none;
+    animation: custFadeIn 0.22s ease-out;
+
+    &::-webkit-scrollbar { display: none; }
+}
+
+.mtheme-tile {
+    flex: none;
+    width: 6.2rem;
+    scroll-snap-align: start;
+
+    .cust-tile-reset {
+        width: 2rem;
+        height: 2rem;
+        top: -0.5rem;
+        right: -0.5rem;
+    }
+}
+
+// The phone thumbnail: the title card over three rows.
+.cust-art.cust-art--rows {
+    aspect-ratio: 3 / 2;
+    gap: 6%;
+    padding: 9% 12%;
+
+    .cust-art-root {
+        width: 100%;
+        height: 18%;
+    }
+
+    .cust-art-nodes {
+        display: flex;
+        flex-direction: column;
+        gap: 9%;
+
+        i { flex: 1; }
+    }
+}
+
+.cust-mine-pick .cust-art.cust-art--rows {
+    width: 2.9rem;
+    padding: 0.35rem;
+}
+
+.mtheme-mine {
+    .cust-mine-row { min-height: 56px; }
+
+    .cust-mine-row .cust-icon-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+// Rows that open a page: name (and a line under it), the current colors, a chevron.
+.mtheme-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mtheme-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 56px;
+    padding: 0.5rem 0.6rem 0.5rem 0.85rem;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    background: #fff;
+    box-shadow: $neo-detail-shadow;
+    color: #111;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: box-shadow 0.12s ease, translate 0.12s ease;
+
+    &:active {
+        box-shadow: 0 0 0 1px #111;
+        translate: 3px 3px;
+    }
+
+    &:focus-visible {
+        outline: 3px solid t(focus-ring, $sky);
+        outline-offset: 2px;
+    }
+
+    .cust-dd-strip { margin-left: auto; }
+    .cust-layer-thumb { flex: none; }
+}
+
+.mtheme-nav-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.mtheme-nav-sub {
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+.mtheme-nav-chev {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+// A still frame of the background, in the Background row.
+.mtheme-nav-scene {
+    position: relative;
+    flex: none;
+    width: 4.5rem;
+    height: 2.4rem;
+    margin-left: auto;
+    overflow: hidden;
+    border: 2px solid #111;
+    border-radius: 6px;
+
+    .cust-stage-preview {
+        position: absolute;
+        inset: 0;
+        height: auto;
+        border: 0;
+    }
+}
+
+.mtheme-bg-head { margin-top: 0.25rem; }
+
+.mtheme-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mtheme-layer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+// Pinned under the page: shown once the colors differ from the theme they came from.
+.mtheme-footer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 10px 14px 12px;
+    border-top: 2px solid rgba(0, 0, 0, 0.15);
+    background: t(panel, $neutral);
+    animation: custFadeIn 0.2s ease-out;
+
+    .cust-savebar-actions > * { min-height: 44px; }
+}
+
+// ── Touch sizes inside the sheet ─────────────────────────────────
+// Targets of at least 44px, and fields of at least 16px so iOS doesn't zoom in on focus.
+.mtheme-sheet {
+    .cust-name,
+    .cust-hex,
+    .cust-num,
+    .cust-select {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    .cust-color-row { min-height: 52px; }
+    .cust-chip { min-height: 3.25rem; }
+    .cust-link { min-height: 36px; }
+    .cust-mini { min-height: 40px; }
+    .cust-swatch-chip { width: 2.6rem; height: 2.6rem; }
+
+    .cust-range {
+        height: 32px;
+    }
+
+    .cust-layer-foot {
+        flex-wrap: wrap;
+        gap: 0.4rem 1.25rem;
+    }
+}
+
+// ── Compact color picker (ColorPicker's ColorPickerBody layout="compact") ──
+.cust-picker-body.cust-picker-body--compact {
+    padding: 0;
+    gap: 0.9rem;
+
+    .cust-bar { height: 2rem; }
+    .cust-bar-thumb { width: 0.8rem; }
+    .cust-compare { height: 2.75rem; }
+    .cust-values-toggle { align-self: flex-start; }
+}
+
+.cust-channel--bare .cust-channel-label { display: none; }
+
+.cust-square.cust-square--flat {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    max-height: 34dvh;
+    transform: none;
+    border-width: 3px;
+    border-radius: 10px;
+    box-shadow: 3px 3px 0 #111;
+
+    .cust-square-thumb {
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mtheme-sheet,
+    .mtheme-body--in,
+    .mtheme-tiles,
+    .mtheme-footer {
+        animation: none;
+    }
+}

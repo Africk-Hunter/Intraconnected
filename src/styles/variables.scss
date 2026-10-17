@@ -1,3 +1,29 @@
+@use "sass:color";
+@use "sass:math";
+
+// ── Theme tokens ─────────────────────────────────────────────────────────────
+// Roles the user can recolor (src/utilities/theme.ts, Profile > Customization).
+// t(node-leaf, $leaf) is the user's color for that role, or the stock one.
+// The token name is the registry key in kebab-case; a test checks they match.
+@function t($token, $stock) {
+    @return var(--t-#{$token}, #{$stock});
+}
+
+// A lighter (or, negative, darker) version of a themed color. The Sass value is the
+// stock look and the fallback for browsers without relative colors; the second
+// declaration is the one that follows the theme.
+// $before is anything that precedes the color in the value ("2px solid ").
+@mixin t-shift($prop, $token, $stock, $amount, $before: "") {
+    #{$prop}: #{$before}#{color.adjust($stock, $lightness: $amount)};
+    #{$prop}: #{$before}#{"hsl(from var(--t-#{$token}, #{$stock}) h s calc(l + #{math.div($amount, 1%)}))"};
+}
+
+// A themed color at partial opacity (the rgba($stock, n) of the stock stylesheet).
+@mixin t-alpha($prop, $token, $stock, $alpha) {
+    #{$prop}: color.change($stock, $alpha: $alpha);
+    #{$prop}: #{"color-mix(in srgb, var(--t-#{$token}, #{$stock}) #{$alpha * 100}%, transparent)"};
+}
+
 // Colors
 $background-color: #E9F9E5;
 $neutral: #D3DED1;
@@ -111,31 +137,31 @@ $neo-m-sheet-shadow-t:    0 4px 0 #111;
 
 
 .neutral{
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
 }
 
 .leaf{
-    background: $leaf;
+    background: t(btn-primary, $leaf);
 }
 
 .danger {
-    background: $danger;
+    background: t(btn-danger, $danger);
 }
 
 .roots {
-    background: $roots;
+    background: t(node-root, $roots);
 }
 
 .backColor {
-    background: $back;
+    background: t(btn-back, $back);
 }
 
 .burnt-orange {
-    background: $burnt-orange;
+    background: t(btn-home, $burnt-orange);
 }
 
 .neo-pink {
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
 }
 
 // Marketing pages (landing, pricing) share this dotted-grid backdrop.

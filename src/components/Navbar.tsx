@@ -2,6 +2,7 @@ import React from 'react';
 import TooltipButton from './TooltipButton';
 import { useIdeaContext } from '../context/IdeaContext';
 import { canCreateIdea } from '../utilities/index';
+import { PaletteIcon } from './Icons';
 
 
 const SEARCH_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl+K';
@@ -16,9 +17,12 @@ interface NavbarProps {
     isNewPatchNotes?: boolean;
     hasNewHelp?: boolean;
     onSearch: () => void;
+    // The theme panel's palette button; left out when there is nothing to show (see Idea.tsx).
+    onToggleTheme?: () => void;
+    showTheme?: boolean;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, showMindMap, isNewPatchNotes, hasNewHelp, onSearch }) => {
+const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPatchNotes, showPatchNotes, showMindMap, isNewPatchNotes, hasNewHelp, onSearch, onToggleTheme, showTheme }) => {
 
     const { setCreationModalOpen, rootId, navigateToId, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
@@ -39,6 +43,11 @@ const Navbar: React.FC<NavbarProps> = ({ side, setShowHelp, showHelp, setShowPat
                 <nav className="navbar rightSide">
                     <section className="rightSideButtons">
                         <TooltipButton tooltip="Profile" tooltipSide="left" className={`mediumSideButton neobrutal-button navButton${profileModalOpen ? ' navButton--active' : ' neutral'}`} onClick={() => setProfileModalOpen(true)}><img src="/images/Profile.svg" alt="" className="buttonImg" /></TooltipButton>
+                        {onToggleTheme && (
+                            <TooltipButton tooltip="Theme" tooltipSide="left" aria-label="Theme" aria-expanded={!!showTheme} className={`smallSideButton neobrutal-button navButton${showTheme ? ' navButton--active' : ' neutral'}`} onClick={onToggleTheme}>
+                                <PaletteIcon className="buttonImg navPalette" />
+                            </TooltipButton>
+                        )}
                         <TooltipButton tooltip="Help & instructions" shortcut="?" tooltipSide="left" wrapperClassName={hasNewHelp ? 'tooltip-wrapper--badged' : ''} className={`smallSideButton neobrutal-button navButton${showHelp ? ' navButton--active' : ' neutral'}`} onClick={setShowHelp}><img src="/images/QuestionMark.svg" alt="Help" className="buttonImg" /></TooltipButton>
                         <TooltipButton tooltip="Patch notes" tooltipSide="left" alwaysVisible={isNewPatchNotes} className={`smallSideButton neobrutal-button navButton patchNotesBtn${showPatchNotes ? ' navButton--active' : ' neutral'}`} onClick={setShowPatchNotes}><img src="/images/PatchNotesIconSkinny.svg" alt="Patch notes" className="buttonImg" /></TooltipButton>
                     </section>

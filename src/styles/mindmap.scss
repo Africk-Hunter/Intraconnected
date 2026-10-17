@@ -22,8 +22,9 @@
     inset: 0;
     cursor: grab;
     user-select: none;
+    isolation: isolate; // themed background layers sit at z-index -1 inside
 
-    background: $background-color;
+    background: t(map-panel-bg, $background-color);
     background-size: 40px 40px;
     background-image:
         linear-gradient(rgba(65, 188, 40, 0.28) 1px, transparent 1px),
@@ -164,7 +165,7 @@
     }
 
     &:hover span {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
         box-shadow: 0 0 0 1px #111;
         translate: 2px 2px;
     }
@@ -202,19 +203,19 @@
         box-shadow: 6px 6px 0 2px #111;
     }
 
-    &--parent    { background: $sky; }
+    &--parent    { background: t(node-parent, $sky); }
     &--leaf {
-        background: $leaf;
+        background: t(node-leaf, $leaf);
         display: -webkit-box;
         -webkit-line-clamp: 15;
         line-clamp: 15;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-    &--link      { background: $link; }
-    &--note      { background: $neo-green; color: white; }
+    &--link      { background: t(node-link, $link); }
+    &--note      { background: t(node-note, $neo-green); color: white; }
     &--checklist {
-        background: $indigo;
+        background: t(node-checklist, $indigo);
         color: white;
         cursor: default;
 
@@ -224,7 +225,7 @@
         }
     }
     &--current {
-        background: $roots;
+        background: t(node-root, $roots);
         color: #fff;
         // Double shadow: offset shadow + tight ring to indicate "you are here"
         box-shadow: 4px 4px 0 2px #111, 0 0 0 4px #6b4929;
@@ -242,7 +243,7 @@
     border: 3px solid #111;
     border-radius: 8px;
     box-shadow: 4px 4px 0 2px #111;
-    background: $indigo;
+    background: t(node-checklist, $indigo);
     color: #fff;
     max-width: 200px;
     min-width: 120px;
@@ -323,7 +324,7 @@
     gap: 0.6rem;
     max-width: calc(100% - 2rem);
     padding: 0.5rem 0.7rem;
-    background: $background-color;
+    background: t(map-panel-bg, $background-color);
     border: 3px solid #111;
     border-radius: 12px;
     box-shadow: 4px 4px 0 2px #111;
@@ -336,16 +337,16 @@
     font: inherit;
     font-weight: 700;
     color: #111;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
 
     &--wide { padding: 0 0.9rem; }
 
     &--close {
-        background: $danger;
+        background: t(btn-danger, $danger);
         color: #fff;
     }
 
-    &[aria-pressed='true'] { background: $leaf; }
+    &[aria-pressed='true'] { background: t(btn-primary, $leaf); }
 }
 
 .mm-ctrl-zoom {
@@ -377,7 +378,7 @@
     gap: 0.5rem;
     max-width: calc(100% - 2rem);
     padding: 0.4rem 0.7rem;
-    background: $background-color;
+    background: t(map-panel-bg, $background-color);
     border: 3px solid #111;
     border-radius: 12px;
 
@@ -432,9 +433,9 @@
     // A chip that isn't picked while others are.
     &--off { opacity: 0.4; }
 
-    &--p1 { background: #D62000; color: #fff; }
-    &--p2 { background: #E07800; color: #111; }
-    &--p3 { background: #C8A200; color: #111; }
+    &--p1 { background: t(prio-high, #D62000); color: #fff; }
+    &--p2 { background: t(prio-medium, #E07800); color: #111; }
+    &--p3 { background: t(prio-low, #C8A200); color: #111; }
     &--today { background: #5A189A; color: #fff; }
     &--week { background: #8E4FD6; color: #fff; }
     &--month { background: #BE9BEA; color: #111; }
@@ -442,9 +443,9 @@
 
 // Ring around matching nodes, in the badge's colour.
 .mm-lens-ring {
-    &--p1 { box-shadow: 0 0 0 5px #D62000; }
-    &--p2 { box-shadow: 0 0 0 5px #E07800; }
-    &--p3 { box-shadow: 0 0 0 5px #C8A200; }
+    &--p1 { box-shadow: 0 0 0 5px t(prio-high, #D62000); }
+    &--p2 { box-shadow: 0 0 0 5px t(prio-medium, #E07800); }
+    &--p3 { box-shadow: 0 0 0 5px t(prio-low, #C8A200); }
     &--today { box-shadow: 0 0 0 5px #5A189A; }
     &--week { box-shadow: 0 0 0 5px #8E4FD6; }
     &--month { box-shadow: 0 0 0 5px #BE9BEA; }
@@ -477,12 +478,12 @@
 
 // Hovered while dragging, but the node can't go there.
 .mm-drop-denied {
-    outline: 4px dashed $danger;
+    outline: 4px dashed t(status-error, $danger);
     outline-offset: 6px;
 
     .mm-node-btn,
     .mm-checklist-card {
-        background: $danger;
+        background: t(status-error, $danger);
         color: #fff;
         cursor: not-allowed;
     }
@@ -497,7 +498,7 @@
     max-width: 260px;
     padding: 0.4rem 0.8rem;
     translate: 14px 14px;
-    background: $background-color;
+    background: t(map-panel-bg, $background-color);
     border: 3px solid #111;
     border-radius: 8px;
     box-shadow: 4px 4px 0 2px #111;
@@ -505,11 +506,11 @@
     pointer-events: none;
 
     &--denied {
-        border-color: $danger;
-        box-shadow: 4px 4px 0 2px $danger;
+        border-color: t(status-error, $danger);
+        box-shadow: 4px 4px 0 2px t(status-error, $danger);
 
         small {
-            color: $danger;
+            color: t(status-error, $danger);
             opacity: 1;
         }
     }

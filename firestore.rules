@@ -93,6 +93,21 @@ service cloud.firestore {
       }
     }
 
+    // Saved customization themes (Profile -> Customization), one doc per theme
+    // so a theme can be shared later. Owner-only; creating one needs a paid plan
+    // (customization is premium), matching the client gate. Deleting and
+    // starring stay open so a lapsed account can still tidy its list.
+    match /users/{userId}/themes/{themeId} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 40
+        && get(/databases/$(database)/documents/users/$(userId)/meta/billing).data.plan != 'free';
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 40;
+    }
+
     match /recoveryAudit/{auditId} {
       allow read: if request.auth != null && resource.data.uid == request.auth.uid;
       allow write: if false;

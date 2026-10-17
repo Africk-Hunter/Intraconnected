@@ -82,3 +82,22 @@ export async function clearPlanCelebrated(): Promise<void> {
     const prefsDoc = doc(db, "users", user.uid, "meta", "preferences");
     await setDoc(prefsDoc, { annualCelebrated: false, lifetimeCelebrated: false }, { merge: true });
 }
+
+// The active theme follows the account: JSON of the theme's colors ("" = stock
+// look) plus when it was set, so the newer of this device and the account wins.
+export interface SyncedTheme { json: string; at: number }
+
+export async function fetchActiveTheme(): Promise<SyncedTheme | null> {
+    const user = authCheck();
+    if (!user) return null;
+    const snap = await getDoc(doc(db, "users", user.uid, "meta", "preferences"));
+    const data = snap.data();
+    if (!data || typeof data.activeTheme !== "string" || typeof data.activeThemeAt !== "number") return null;
+    return { json: data.activeTheme, at: data.activeThemeAt };
+}
+
+export async function pushActiveTheme(json: string, at: number): Promise<void> {
+    const user = authCheck();
+    if (!user) return;
+    await setDoc(doc(db, "users", user.uid, "meta", "preferences"), { activeTheme: json, activeThemeAt: at }, { merge: true });
+}

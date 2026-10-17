@@ -22,7 +22,7 @@ $search-row-stagger: 25ms;
     overflow: hidden;
     border: 3px solid #111;
     border-radius: 20px;
-    background: $neutral;
+    background: t(panel, $neutral);
     transform-origin: 50% 100%;
     animation: mmMindMapIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); // mobileMindMapSheet.scss
 }
@@ -65,7 +65,7 @@ $search-row-stagger: 25ms;
     min-height: 40px;
     margin-bottom: 3px; // room for the shadow
     padding: 0 12px 0 8px;
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
     border: 2px solid #111;
     border-radius: 10px;
     box-shadow: 0 3px 0 #111;
@@ -101,7 +101,7 @@ $search-row-stagger: 25ms;
     align-items: center;
     justify-content: center;
     padding: 0;
-    background: $back;
+    background: t(btn-clear, $back);
     border: 2px solid #111;
     border-radius: 10px;
     box-shadow: 0 3px 0 #111;
@@ -162,7 +162,7 @@ $search-row-stagger: 25ms;
     transition: background-color 0.15s ease;
 
     &::placeholder { color: #777; }
-    &:focus { background: color.adjust($sky, $lightness: 45%); }
+    &:focus { @include t-shift(background, focus-ring, $sky, 45%); }
     // We draw our own clear button
     &::-webkit-search-cancel-button,
     &::-webkit-search-decoration { -webkit-appearance: none; }
@@ -182,7 +182,7 @@ $search-row-stagger: 25ms;
     border: 2px solid #111;
     border-radius: 8px;
     box-shadow: 0 2px 0 #111;
-    background: $back;
+    background: t(btn-clear, $back);
     color: #fff;
     cursor: pointer;
     animation: mmSearchPopIn 0.16s $search-ease-out;
@@ -271,12 +271,12 @@ $search-row-stagger: 25ms;
     color: #111;
     transition: translate 0.1s ease, box-shadow 0.1s ease;
 
-    &--leaf      { --kind-color: #{$leaf}; }
-    &--parent    { --kind-color: #{$sky}; }
-    &--link      { --kind-color: #{$link}; }
-    &--note      { --kind-color: #{$neo-green}; color: #fff; }
-    &--checklist { --kind-color: #{$indigo}; color: #fff; }
-    &--vault     { --kind-color: #{$vault}; color: #{$vault-ink}; }
+    &--leaf      { --kind-color: #{t(node-leaf, $leaf)}; }
+    &--parent    { --kind-color: #{t(node-parent, $sky)}; }
+    &--link      { --kind-color: #{t(node-link, $link)}; }
+    &--note      { --kind-color: #{t(node-note, $neo-green)}; color: #fff; }
+    &--checklist { --kind-color: #{t(node-checklist, $indigo)}; color: #fff; }
+    &--vault     { --kind-color: #{t(node-vault, $vault)}; color: #{$vault-ink}; }
 
     // Under a match, not a match itself.
     &--context {
@@ -385,7 +385,7 @@ $search-row-stagger: 25ms;
     padding: 0 12px;
     border: 2px solid #111;
     border-radius: 999px;
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
     color: #fff;
     box-shadow: 2px 2px 0 #111;
     font-size: 0.85rem;

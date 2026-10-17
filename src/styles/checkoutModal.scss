@@ -36,7 +36,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.45rem;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     flex-shrink: 0;
     z-index: 1;
     // .neobrutal-button's default shadow/press (index.scss) is sized for
@@ -82,7 +82,7 @@
 }
 
 .checkoutModalError {
-    color: $danger;
+    color: t(status-error, $danger);
 }
 
 // Three mini nodes in the leaf / parent / link colors, bouncing in sequence
@@ -101,9 +101,9 @@
         box-shadow: 2px 2px 0 0 black;
         animation: nodeLoaderBounce 1s ease-in-out infinite;
 
-        &.leaf { background: $leaf; }
-        &.parent { background: $sky; animation-delay: 0.15s; }
-        &.link { background: $link; animation-delay: 0.3s; }
+        &.leaf { background: t(node-leaf, $leaf); }
+        &.parent { background: t(node-parent, $sky); animation-delay: 0.15s; }
+        &.link { background: t(node-link, $link); animation-delay: 0.3s; }
     }
 
     // Same loader without the three node colors: one fill, picked by where it
@@ -116,7 +116,7 @@
         .nodeLoader-node,
         .nodeLoader-node.parent,
         .nodeLoader-node.link {
-            background: $background-color;
+            background: t(modal-bg, $background-color);
         }
     }
 
@@ -136,7 +136,7 @@
     }
 
     .ideaNode-loading &.mono .nodeLoader-node {
-        background: $leaf;
+        background: t(node-leaf, $leaf);
     }
 
     &.small {
@@ -217,7 +217,7 @@
     &-btn {
         display: block;
         padding: 0.7rem 1rem;
-        background: $leaf;
+        background: t(btn-primary, $leaf);
         color: inherit;
         font-weight: 700;
         text-align: center;
@@ -225,7 +225,7 @@
         cursor: pointer;
 
         &.neutral {
-            background: $link;
+            background: t(btn-secondary, $link);
         }
 
         &:disabled {
@@ -238,7 +238,7 @@
         margin: 0;
         font-size: 0.95rem;
         font-weight: 600;
-        color: $danger;
+        color: t(status-error, $danger);
     }
 
     @media (max-width: $mobile) {
@@ -269,7 +269,7 @@
     flex-direction: column;
     gap: 0.15rem;
     color: #000;
-    background: $neutral;
+    background: t(panel, $neutral);
     border: $neo-detail-border;
     border-radius: $neo-detail-radius;
 
@@ -323,7 +323,7 @@
 
 .checkoutFormCardBox {
     padding: 1.8rem 1.45rem;
-    background: $background-color;
+    background: t(modal-bg, $background-color);
     border: $neo-btn-border;
     box-shadow: $neo-btn-shadow;
     border-radius: $neo-btn-radius;
@@ -366,7 +366,7 @@
     display: block;
     padding: 0.8rem 1rem;
     border: $neo-detail-border;
-    background: rgba($danger, 0.1);
+    @include t-alpha(background, status-error, $danger, 0.1);
     font-size: 1.1rem;
     font-weight: 700;
     text-align: left;
@@ -626,7 +626,7 @@
     margin: 0.25rem 0 0.35rem;
     padding: 0.35rem 1rem;
     box-sizing: border-box;
-    background: $link;
+    background: t(highlight, $link);
     border: $neo-detail-border;
     border-radius: 0.6rem;
     box-shadow: $neo-detail-shadow;

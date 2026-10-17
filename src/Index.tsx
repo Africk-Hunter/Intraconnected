@@ -11,6 +11,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 import ReportModal from './components/modals/ReportModal';
 import { isNative } from './utilities/platform';
+import { applyEarlyTheme } from './utilities/theme';
+
+// Paint a saved theme before React mounts, not after the plan loads.
+applyEarlyTheme();
 
 // One chunk per route, so the marketing pages (the first thing a new
 // visitor loads) don't download the app, Firebase or Stripe up front.

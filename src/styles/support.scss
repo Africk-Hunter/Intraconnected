@@ -138,7 +138,7 @@
     }
 
     &[open] {
-        background: $background-color;
+        background: t(modal-bg, $background-color);
 
         .supportChevron {
             transform: rotate(180deg);
@@ -174,7 +174,7 @@
     display: flex;
     align-items: center;
     gap: 24px;
-    background: $link;
+    background: t(highlight, $link);
     width: calc(100% - 40px);
     box-sizing: border-box;
 
@@ -210,7 +210,7 @@
 .supportContactCta {
     display: inline-block;
     padding: 12px 22px;
-    background: $leaf;
+    background: t(btn-primary, $leaf);
     color: #111;
     font-size: 15px;
     font-weight: 700;

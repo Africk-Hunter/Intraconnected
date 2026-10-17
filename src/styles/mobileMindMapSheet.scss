@@ -14,11 +14,12 @@
     overflow: hidden;
     border: 3px solid #111;
     border-radius: 20px;
-    background: $background-color;
+    background: t(mobile-bg, $background-color);
     background-size: 40px 40px;
     background-image:
         linear-gradient(rgba(65, 188, 40, 0.28) 1px, transparent 1px),
         linear-gradient(to right, rgba(65, 188, 40, 0.28) 1px, transparent 1px);
+    isolation: isolate; // themed background layers sit at z-index -1 inside
     transform-origin: 50% 100%;
     animation: mmMindMapIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -31,7 +32,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
     border-bottom: 3px solid #111;
 }
 
@@ -61,7 +62,7 @@
 .mmobile-mindmap-close {
     min-width: 44px;
     min-height: 44px;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     border: 2px solid #111;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -120,7 +121,7 @@
     text-align: left;
     border: 2px solid #111;
     border-radius: 12px;
-    background: $roots;
+    background: t(node-root, $roots);
     color: white;
     font-family: inherit;
     font-size: 1.1rem;
@@ -218,7 +219,7 @@
     text-align: center;
 
     &--here {
-        background: $link;
+        background: t(highlight, $link);
         text-transform: uppercase;
         letter-spacing: 0.04em;
         font-size: 0.68rem;
@@ -249,12 +250,12 @@
         box-shadow: 0 0 0 #111;
     }
 
-    &--current   { background: $roots; color: white; cursor: default; }
-    &--parent    { background: $sky; }
-    &--leaf      { background: $leaf; }
-    &--link      { background: $link; }
-    &--note      { background: $neo-green; color: white; }
-    &--checklist { background: $indigo; color: white; cursor: default; opacity: 0.75; }
+    &--current   { background: t(node-root, $roots); color: white; cursor: default; }
+    &--parent    { background: t(node-parent, $sky); }
+    &--leaf      { background: t(node-leaf, $leaf); }
+    &--link      { background: t(node-link, $link); }
+    &--note      { background: t(node-note, $neo-green); color: white; }
+    &--checklist { background: t(node-checklist, $indigo); color: white; cursor: default; opacity: 0.75; }
 }
 
 .vtree-toggle {
@@ -283,7 +284,7 @@
 
     // An expanded branch stays pressed in until collapsed
     &--open {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
         transform: translate(2px, 2px);
         box-shadow: 0 0 0 #111;
 

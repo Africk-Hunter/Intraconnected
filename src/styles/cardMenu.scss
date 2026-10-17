@@ -59,7 +59,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
-    background: $background-color;
+    background: t(menu-bg, $background-color);
     border: $neo-card-border;
     border-radius: $neo-card-radius;
     box-shadow: $neo-card-shadow;
@@ -92,7 +92,7 @@
 
     &:hover,
     &:focus-visible {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
     }
 
     &:focus-visible {
@@ -100,11 +100,11 @@
     }
 
     &--danger {
-        color: $danger;
+        color: t(btn-danger, $danger);
 
         &:hover,
         &:focus-visible {
-            background: $danger;
+            background: t(btn-danger, $danger);
             color: #fff;
 
             kbd {
@@ -150,7 +150,7 @@
     border-radius: 6px;
 
     &:hover {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
     }
 
     &:focus-visible {
@@ -161,10 +161,10 @@
         box-shadow: inset 0 0 0 2px #111;
     }
 
-    &--p1.card-menu-chip--on { background: $danger; color: #fff; }
-    &--p2.card-menu-chip--on { background: $orange; }
-    &--p3.card-menu-chip--on { background: $deep-yellow; }
-    &--none.card-menu-chip--on { background: $neutral; }
+    &--p1.card-menu-chip--on { background: t(prio-high, $danger); color: #fff; }
+    &--p2.card-menu-chip--on { background: t(prio-medium, $orange); }
+    &--p3.card-menu-chip--on { background: t(prio-low, $deep-yellow); }
+    &--none.card-menu-chip--on { background: t(chip-bg, $neutral); }
 }
 
 // ── Move to… picker ─────────────────────────────────────────────
@@ -226,7 +226,7 @@
 
     &:focus {
         background: #fff;
-        box-shadow: $neo-detail-shadow, 0 0 0 3px $indigo;
+        box-shadow: $neo-detail-shadow, 0 0 0 3px t(node-checklist, $indigo);
     }
 }
 
@@ -258,11 +258,11 @@
     transition: background 0.12s ease;
 
     &:hover {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
     }
 
     &--active {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
         box-shadow: inset 0 0 0 2px #111;
     }
 
@@ -285,12 +285,12 @@
     flex-shrink: 0;
     width: 0.8rem;
     height: 0.8rem;
-    background: $leaf;
+    background: t(node-leaf, $leaf);
     border: 2px solid #111;
     border-radius: 3px;
 
-    &--parent { background: $sky; }
-    &--root { background: $roots; }
+    &--parent { background: t(node-parent, $sky); }
+    &--root { background: t(node-root, $roots); }
 }
 
 .move-modal-badge {
@@ -298,7 +298,7 @@
     padding: 0.1rem 0.5rem;
     font-size: 0.75rem;
     font-weight: 700;
-    background: $link;
+    background: t(highlight, $link);
     border: 2px solid #111;
     border-radius: 999px;
 }
@@ -381,7 +381,7 @@
 .ideaNode.ideaNode.checklist:focus-visible,
 .ideaNode.ideaNode.note:focus-visible,
 .ideaNode.ideaNode.ideaNode--vault:focus-visible {
-    --card-bg: #{$burnt-orange};
+    --card-bg: #{t(status-warning, $burnt-orange)};
 }
 
 .ideaPage .neobrutal-button:not(.ideaNode):focus-visible {
@@ -435,7 +435,7 @@
 }
 
 .shortcuts-group {
-    --accent: #{$sky};
+    --accent: #{t(active, $sky)};
     break-inside: avoid;
     margin-bottom: 1rem;
     padding: 0.8rem 1rem 1rem;
@@ -444,8 +444,8 @@
     border-radius: 10px;
     box-shadow: 4px 4px 0 #111;
 
-    &.accent-leaf { --accent: #{$leaf}; }
-    &.accent-link { --accent: #{$link}; }
+    &.accent-leaf { --accent: #{t(node-leaf, $leaf)}; }
+    &.accent-link { --accent: #{t(node-link, $link)}; }
     &.accent-pink { --accent: #f4a6c8; }
 
     h3 {
@@ -599,7 +599,7 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    background: $back;
+    background: t(btn-clear, $back);
     border: 2px solid #111;
     border-radius: 8px;
     box-shadow: 0 2px 0 #111;
@@ -697,12 +697,12 @@
         color: #111;
         transition: translate 0.12s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.12s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    &--leaf      { --kind-color: #{$leaf}; }
-    &--parent    { --kind-color: #{$sky}; }
-    &--link      { --kind-color: #{$link}; }
-    &--note      { --kind-color: #{$neo-green}; color: #fff; }
-    &--checklist { --kind-color: #{$indigo}; color: #fff; }
-    &--vault     { --kind-color: #{$vault}; color: #{$vault-ink}; }
+    &--leaf      { --kind-color: #{t(node-leaf, $leaf)}; }
+    &--parent    { --kind-color: #{t(node-parent, $sky)}; }
+    &--link      { --kind-color: #{t(node-link, $link)}; }
+    &--note      { --kind-color: #{t(node-note, $neo-green)}; color: #fff; }
+    &--checklist { --kind-color: #{t(node-checklist, $indigo)}; color: #fff; }
+    &--vault     { --kind-color: #{t(node-vault, $vault)}; color: #{$vault-ink}; }
 
     // Shown because it sits under a match: a smaller card.
     &--context {
@@ -722,19 +722,19 @@
     &--vault.search-modal-row--active {
         translate: 2px 2px;
         box-shadow: 1px 1px 0 #111;
-        background: $orange;
+        background: t(accent-orange, $orange);
         color: #111;
     }
     // White-text kinds can't carry plain orange, same as the focused card.
     &--note.search-modal-row--active,
     &--checklist.search-modal-row--active,
     &--vault.search-modal-row--active {
-        background: $burnt-orange;
+        background: t(status-warning, $burnt-orange);
         color: #fff;
     }
 
     &--active:not(.search-modal-row--idea) {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
     }
 
     &:focus-visible {
@@ -805,7 +805,7 @@
     padding: 0.12rem 0.65rem;
     border: 2px solid #111;
     border-radius: 999px;
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
     color: #fff;
     box-shadow: 2px 2px 0 #111;
     font-size: 0.85rem;

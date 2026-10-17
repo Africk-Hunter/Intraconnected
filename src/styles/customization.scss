@@ -1,0 +1,1661 @@
+@use './variables' as *;
+
+// Theme editor. On the desktop layout it lives in .theme-panel, docked left of
+// the right sidebar with no backdrop, so the app behind it is the preview; on
+// the touch UI the same editor sits inside Profile -> Customization.
+
+$cust-panel-w: 23rem;
+$cust-panel-w-lg: 28rem;
+// Clears the right sidebar's buttons (and their shadows).
+$cust-panel-right: 6rem;
+$cust-panel-right-lg: 7.5rem;
+$cust-row-swatch: 2rem;
+// Background layer controls: a label column on the left, the control on the right.
+$cust-field-label-w: 5.6rem;
+
+// ── Panel shell ──────────────────────────────────────────────────────────────
+.theme-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: $cust-panel-right;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    width: $cust-panel-w;
+    overflow: hidden;
+    background: t(modal-bg, $background-color);
+    border: $neo-btn-border;
+    border-radius: $neo-card-radius-lg;
+    box-shadow: $neo-btn-shadow;
+    text-align: left;
+
+    // Closed: fades and slips back toward the button that opened it.
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(1.25rem) scale(0.98);
+    transform-origin: top right;
+    transition:
+        opacity 0.18s ease-in,
+        transform 0.2s ease-in,
+        visibility 0s linear 0.2s;
+
+    &--open {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition:
+            opacity 0.25s ease-out,
+            transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+            visibility 0s;
+    }
+
+    &:focus-visible {
+        outline: 3px solid t(focus-ring, $sky);
+        outline-offset: 3px;
+    }
+
+    @media (min-width: $large-desktop) {
+        right: $cust-panel-right-lg;
+        width: $cust-panel-w-lg;
+        border-width: 4px;
+    }
+}
+
+.theme-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 0.85rem 0.75rem 1rem;
+    border-bottom: $neo-btn-border;
+    background: t(panel, $neutral);
+}
+
+.theme-panel-icon {
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    flex: none;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    background: t(highlight, $link);
+    color: #111;
+}
+
+.theme-panel-title {
+    flex: 1;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.theme-panel-close {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: none;
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 900;
+    background: t(btn-neutral, $neutral);
+    color: #111;
+}
+
+// ── Editor layout ────────────────────────────────────────────────────────────
+.cust {
+    display: flex;
+    flex-direction: column;
+    color: #111;
+
+    &--panel {
+        flex: 1;
+        min-height: 0;
+    }
+}
+
+.cust-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+
+    .cust--panel & {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 1rem 1rem 1.25rem;
+
+        // Neobrutal scrollbar, same look as Profile: outlined themed thumb on
+        // a panel-colored track with a black line on its left edge.
+        scrollbar-gutter: stable;
+
+        &::-webkit-scrollbar {
+            width: 18px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: linear-gradient(to right, #000 3px, t(panel, $neutral) 3px);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: t(btn-primary, $leaf);
+            background-clip: padding-box;
+            border: 3px solid transparent;
+            border-left-width: 6px;
+            border-radius: 999px;
+            box-shadow: inset 0 0 0 3px #000;
+        }
+
+        @supports not selector(::-webkit-scrollbar) {
+            scrollbar-width: thin;
+            scrollbar-color: t(btn-primary, $leaf) t(panel, $neutral);
+        }
+    }
+}
+
+.cust-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.cust-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 1.9rem;
+}
+
+.cust-section-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.cust-empty,
+.cust-footnote {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    opacity: 0.75;
+}
+
+.cust-footnote {
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.cust-export {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+}
+
+.cust-export-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 12rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    label { cursor: pointer; }
+}
+
+// Underlined text button for small secondary actions (Reset, Fine-tune, Undo all).
+.cust-link {
+    padding: 0.15rem 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration-thickness: 2px;
+    }
+
+    &:focus-visible {
+        outline: 2px solid t(focus-ring, $sky);
+        outline-offset: 2px;
+        border-radius: 3px;
+    }
+}
+
+// ── Built-in / Yours switch ──────────────────────────────────────────────────
+.cust-seg {
+    display: inline-flex;
+    padding: 2px;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    background: #fff;
+}
+
+.cust-seg-btn {
+    padding: 0.25rem 0.65rem;
+    border: 0;
+    border-radius: 5px;
+    background: none;
+    color: #111;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &--on {
+        background: t(highlight, $link);
+    }
+
+    &:focus-visible {
+        outline: 2px solid t(focus-ring, $sky);
+    }
+}
+
+// ── Theme thumbnails ─────────────────────────────────────────────────────────
+// A tiny picture of the app: the root bar over four idea cards.
+.cust-art {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10%;
+    aspect-ratio: 4 / 3;
+    padding: 11% 13%;
+    box-sizing: border-box;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    overflow: hidden;
+
+    i {
+        display: block;
+        border: 1.5px solid #111;
+        border-radius: 3px;
+    }
+}
+
+.cust-art-root {
+    width: 58%;
+    height: 20%;
+    flex: none;
+}
+
+.cust-art-nodes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14%;
+    flex: 1;
+    width: 100%;
+}
+
+.cust-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem 0.6rem;
+    animation: custFadeIn 0.22s ease-out;
+}
+
+.cust-tile-wrap {
+    position: relative;
+}
+
+.cust-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+
+    .cust-art {
+        box-shadow: $neo-detail-shadow;
+        outline: 3px solid transparent;
+        outline-offset: 2px;
+        transition: box-shadow 0.14s ease, translate 0.14s ease, outline-color 0.15s ease;
+    }
+
+    &:hover .cust-art {
+        box-shadow: 1px 1px 0 1px #111;
+        translate: 2px 2px;
+    }
+
+    &:active .cust-art {
+        box-shadow: 0 0 0 1px #111;
+        translate: 3px 3px;
+    }
+
+    &:focus-visible {
+        outline: none;
+
+        .cust-art { outline-color: t(focus-ring, $sky); }
+    }
+
+    &--on .cust-art,
+    &--on:focus-visible .cust-art {
+        outline-color: t(accent-purple, $purple);
+    }
+}
+
+.cust-tile-name {
+    overflow: hidden;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    .cust-tile--on & {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 2px;
+    }
+}
+
+// Shown on a built-in theme the user saved changes over.
+.cust-tile-reset {
+    position: absolute;
+    top: -0.45rem;
+    right: -0.45rem;
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0;
+    border: $neo-detail-border;
+    border-radius: 50%;
+    background: t(highlight, $link);
+    color: #111;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+
+    &:hover {
+        transform: rotate(-30deg);
+    }
+
+    &:focus-visible {
+        outline: 2px solid t(focus-ring, $sky);
+        outline-offset: 2px;
+    }
+}
+
+// ── Saved themes ─────────────────────────────────────────────────────────────
+.cust-mine {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    animation: custFadeIn 0.22s ease-out;
+}
+
+// One card per saved theme: thumbnail and name (the pick button), then star and delete inside it.
+.cust-mine-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.4rem 0.35rem 0.35rem;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    background: #fff;
+    box-shadow: $neo-detail-shadow;
+    outline: 3px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 0.15s ease;
+
+    &--on {
+        outline-color: t(accent-purple, $purple);
+    }
+}
+
+.cust-mine-pick {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: #111;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    // Percentage padding is measured against the parent's width, which here is the
+    // whole row (not the thumbnail, as in the tile grid), so it has to be fixed.
+    .cust-art {
+        width: 4.6rem;
+        flex: none;
+        gap: 14%;
+        padding: 0.45rem 0.55rem;
+        border-width: 2px;
+        border-radius: 6px;
+        box-shadow: 2px 2px 0 #111;
+        transition: box-shadow 0.14s ease, translate 0.14s ease;
+
+        i {
+            border-width: 1px;
+            border-radius: 2px;
+        }
+    }
+
+    .cust-art-root { width: 64%; height: 22%; }
+    .cust-art-nodes { gap: 18% 12%; }
+
+    &:hover .cust-art {
+        box-shadow: 0 0 0 #111;
+        translate: 2px 2px;
+    }
+
+    &:focus-visible {
+        outline: 2px solid t(focus-ring, $sky);
+        outline-offset: 3px;
+    }
+}
+
+.cust-mine-name {
+    overflow: hidden;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    .cust-mine-row--on & {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 2px;
+    }
+}
+
+// Inside the card the actions are quiet icon buttons, not a second row of boxes.
+.cust-mine-row .cust-icon-btn {
+    min-width: 2.25rem;
+    border-color: transparent;
+    background: none;
+    box-shadow: none;
+
+    &:hover {
+        border-color: #111;
+        background: #f3f3f3;
+        box-shadow: none;
+        translate: none;
+    }
+
+    &--star[aria-pressed="true"] {
+        border-color: #111;
+        background: t(highlight, $link);
+    }
+
+    &--delete:hover,
+    &--confirm {
+        border-color: #111;
+        background: t(btn-danger, $danger);
+        color: #fff;
+    }
+}
+
+.cust-icon-btn {
+    display: grid;
+    place-items: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    flex: none;
+    padding: 0;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    background: #fff;
+    box-shadow: $neo-detail-shadow;
+    color: #111;
+    font: inherit;
+    font-size: 1.2rem;
+    font-weight: 900;
+    line-height: 1;
+    cursor: pointer;
+    transition: box-shadow 0.14s ease, translate 0.14s ease, background-color 0.15s ease, color 0.15s ease;
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        box-shadow: 1px 1px 0 1px #111;
+        translate: 2px 2px;
+    }
+
+    &:focus-visible {
+        outline: 2px solid t(focus-ring, $sky);
+        outline-offset: 2px;
+    }
+
+    &--star[aria-pressed="true"] {
+        background: t(highlight, $link);
+    }
+
+    &--delete:hover,
+    &--confirm {
+        background: t(btn-danger, $danger);
+        color: #fff;
+    }
+
+    &--confirm {
+        padding: 0 0.6rem;
+        font-size: 0.8rem;
+        animation: custPop 0.2s ease-out;
+    }
+}
+
+// ── Idea colors: little idea cards laid out like the app (root above, the rest below) ──
+.cust-chips {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.7rem 0.6rem;
+
+    > :first-child {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: 66%;
+    }
+}
+
+.cust-chip {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.4rem;
+    border: $neo-btn-border;
+    border-radius: $neo-card-radius;
+    box-shadow: 4px 4px 0 #111;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    transition:
+        box-shadow 0.14s ease,
+        translate 0.14s ease,
+        background-color 0.2s ease,
+        color 0.2s ease;
+
+    &:hover {
+        box-shadow: 2px 2px 0 #111;
+        translate: 2px 2px;
+    }
+
+    &:active {
+        box-shadow: 0 0 0 #111;
+        translate: 4px 4px;
+    }
+
+    &:focus-visible {
+        outline: 3px solid t(focus-ring, $sky);
+        outline-offset: 3px;
+    }
+}
+
+// ── Dropdowns ────────────────────────────────────────────────────────────────
+.cust-dds {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.cust-dd {
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    background: rgba(255, 255, 255, 0.6);
+    transition: box-shadow 0.2s ease;
+
+    &--open {
+        box-shadow: $neo-detail-shadow;
+    }
+}
+
+.cust-dd-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border: 0;
+    border-radius: $neo-detail-radius;
+    background: none;
+    color: #111;
+    font: inherit;
+    font-size: 0.98rem;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background: t(hover-bg, $neutral);
+    }
+
+    &:focus-visible {
+        outline: 3px solid t(focus-ring, $sky);
+        outline-offset: 1px;
+    }
+}
+
+.cust-dd-chev {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    transition: rotate 0.22s ease-in-out;
+
+    .cust-dd--open & {
+        rotate: 90deg;
+    }
+}
+
+.cust-dd-title {
+    flex: 1;
+    min-width: 0;
+}
+
+// The group's current colors, so a closed dropdown still says what is inside.
+.cust-dd-strip {
+    display: flex;
+    flex: none;
+
+    i {
+        width: 0.85rem;
+        height: 0.85rem;
+        margin-left: -3px;
+        border: 1.5px solid #111;
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+    }
+}
+
+// Height reveal without measuring: the grid row eases from 0fr to 1fr.
+.cust-dd-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+    .cust-dd--open & {
+        grid-template-rows: 1fr;
+    }
+}
+
+.cust-dd-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.cust-dd-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.1rem 0.4rem 0.6rem;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+
+    .cust-dd--open & {
+        opacity: 1;
+        transition-delay: 0.06s;
+    }
+}
+
+// ── One color ────────────────────────────────────────────────────────────────
+.cust-row {
+    display: flex;
+    flex-direction: column;
+}
+
+.cust-color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    padding: 0.4rem 0.35rem;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: #111;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background: t(hover-bg, $neutral);
+    }
+
+    &:focus-visible {
+        outline: 3px solid t(focus-ring, $sky);
+        outline-offset: 1px;
+    }
+}
+
+.cust-swatch {
+    width: $cust-row-swatch;
+    height: $cust-row-swatch;
+    flex: none;
+    border: $neo-detail-border;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 #111;
+    transition: background-color 0.2s ease, box-shadow 0.14s ease, translate 0.14s ease;
+
+    .cust-color-row:hover & {
+        box-shadow: 0 0 0 #111;
+        translate: 2px 2px;
+    }
+}
+
+.cust-color-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.cust-color-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.cust-color-hint {
+    font-size: 0.78rem;
+    line-height: 1.3;
+    opacity: 0.68;
+}
+
+.cust-color-hex {
+    flex: none;
+    font-family: $note-font;
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.6;
+}
+
+.cust-row-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.85rem;
+    padding: 0 0.35rem 0.3rem calc(0.35rem + #{$cust-row-swatch} + 0.65rem);
+    font-size: 0.8rem;
+}
+
+.cust-row-note {
+    opacity: 0.68;
+}
+
+// Members of a net, under their head.
+.cust-row-nested {
+    display: flex;
+    flex-direction: column;
+    margin: 0 0 0.35rem 1.35rem;
+    padding-left: 0.4rem;
+    border-left: 2px dashed rgba(0, 0, 0, 0.3);
+    animation: custFadeIn 0.2s ease-out;
+}
+
+// ── Save bar ─────────────────────────────────────────────────────────────────
+// Slides up only when the colors differ from every saved theme.
+.cust-savebar {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &--open {
+        grid-template-rows: 1fr;
+    }
+
+    .cust--inline & {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+    }
+}
+
+.cust-savebar-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.cust-savebar-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.75rem 1rem 0.9rem;
+    border-top: $neo-btn-border;
+    background: t(panel, $neutral);
+
+    .cust--inline & {
+        margin-top: 1rem;
+        border: $neo-btn-border;
+        border-radius: $neo-card-radius;
+    }
+}
+
+.cust-savebar-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.cust-savebar-actions {
+    display: flex;
+    gap: 0.5rem;
+    // The buttons' shadows reach outside them; keep that room inside the clipped bar.
+    padding: 0 4px 4px 0;
+
+    > button {
+        flex: 1;
+        min-width: 0;
+    }
+
+    > .cust-name ~ button {
+        flex: none;
+    }
+}
+
+.cust-name {
+    flex: 1 1 8rem;
+    min-width: 0;
+    padding: 0.45rem 0.6rem;
+    background: #fff;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.cust-primary,
+.cust-secondary {
+    padding: 0.5rem 0.8rem;
+    overflow: hidden;
+    color: #111;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: progress;
+    }
+}
+
+.cust-primary {
+    background: t(btn-confirm, $leaf);
+}
+
+.cust-secondary {
+    background: #fff;
+}
+
+.cust-error {
+    margin: 0;
+    color: t(status-error, $danger);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+// ── Locked (free plan) ───────────────────────────────────────────────────────
+.cust--locked .cust-scroll {
+    gap: 0.9rem;
+}
+
+.cust-pitch-art {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+
+    .cust-art {
+        box-shadow: $neo-detail-shadow;
+    }
+}
+
+.cust-pitch-title {
+    margin: 0.4rem 0 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.cust-pitch-desc {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.cust--locked .cust-primary {
+    align-self: flex-start;
+    padding-inline: 1.4rem;
+}
+
+@keyframes custFadeIn {
+    from { opacity: 0; translate: 0 -0.3rem; }
+    to   { opacity: 1; translate: 0 0; }
+}
+
+@keyframes custPop {
+    from { scale: 0.85; }
+    to   { scale: 1; }
+}
+
+// Color picker opened from the panel: no dimming, and it sits left of the panel
+// so the app stays in view while the color is chosen.
+.overlay.cust-picker-overlay {
+    justify-content: flex-end;
+    padding-right: calc(2rem + #{$cust-panel-right} + #{$cust-panel-w} + 1.5rem);
+    box-sizing: border-box;
+    background: transparent;
+
+    @media (min-width: $large-desktop) {
+        padding-right: calc(2rem + #{$cust-panel-right-lg} + #{$cust-panel-w-lg} + 1.5rem);
+    }
+
+    // Too narrow to sit beside the panel: centre it over a light scrim instead.
+    @media (max-width: 1100px) {
+        justify-content: center;
+        padding-right: 0;
+        background: rgba(0, 0, 0, 0.3);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .theme-panel {
+        transform: none;
+        transition: opacity 0.15s ease, visibility 0s linear 0.15s;
+    }
+
+    .theme-panel--open {
+        transform: none;
+        transition: opacity 0.15s ease, visibility 0s;
+    }
+
+    .cust-dd-body,
+    .cust-savebar,
+    .cust-dd-chev,
+    .cust-tile .cust-art,
+    .cust-chip,
+    .cust-tile-reset {
+        transition: none;
+    }
+
+    .cust-tiles,
+    .cust-mine,
+    .cust-row-nested,
+    .cust-icon-btn--confirm {
+        animation: none;
+    }
+}
+
+// Shared by the color picker's hex field and its RGB/HSV/HSL tabs.
+.cust-hex {
+    width: 6.2rem;
+    padding: 0.3rem 0.5rem;
+    font-family: $note-font;
+    font-weight: 700;
+    text-transform: lowercase;
+}
+
+.cust-tab {
+    padding: 0.35rem 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+
+    &--active {
+        background: $link;
+    }
+}
+
+// ── Color picker modal ───────────────────────────────────────────────────────
+// Same card as session-ended: grid paper, a colored header strip, hard shadows.
+$cust-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+.neobrutal.modal.cust-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    width: min(23rem, 94vw);
+    min-height: auto;
+    padding: 0;
+    overflow: hidden;
+    text-align: left;
+    background-color: $background-color;
+    background-image:
+        linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+// The header is painted with the color being edited, so it doubles as a live swatch.
+.cust-picker-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 3px solid #000;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.cust-picker-title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.cust-picker-hexlabel {
+    font-family: $note-font;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.04em;
+}
+
+.cust-picker-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem 1.25rem;
+}
+
+// Hue ring with the saturation/brightness square in its hole.
+.cust-wheel {
+    position: relative;
+    width: min(14rem, 66vw);
+    aspect-ratio: 1;
+    align-self: center;
+    border: 4px solid #000;
+    border-radius: 50%;
+    box-shadow: 5px 5px 0 2px #000;
+    background: conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+    cursor: pointer;
+    touch-action: none;
+}
+
+.cust-wheel-hole {
+    position: absolute;
+    inset: 16%;
+    border: 4px solid #000;
+    border-radius: 50%;
+    background: $background-color;
+    pointer-events: none;
+}
+
+.cust-wheel-thumb,
+.cust-square-thumb {
+    position: absolute;
+    border: 3px solid #000;
+    border-radius: 50%;
+    box-shadow: 2px 2px 0 #000;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: scale 0.12s $cust-ease;
+}
+
+.cust-wheel-thumb {
+    z-index: 2;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.cust-square-thumb {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.cust-wheel:active .cust-wheel-thumb,
+.cust-square:active .cust-square-thumb {
+    scale: 1.25;
+}
+
+.cust-square {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 43%;
+    height: 43%;
+    transform: translate(-50%, -50%);
+    border: 4px solid #000;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: crosshair;
+    touch-action: none;
+
+    .cust-square-white,
+    .cust-square-black {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .cust-square-white { background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0)); }
+    .cust-square-black { background: linear-gradient(to top, #000, rgba(0, 0, 0, 0)); }
+}
+
+.cust-wheel:focus-visible,
+.cust-square:focus-visible,
+.cust-bar:focus-visible {
+    outline: 3px solid $purple;
+    outline-offset: 3px;
+}
+
+// Original (click to revert) next to New, plus the screen eyedropper where supported.
+.cust-compare {
+    display: flex;
+    align-items: stretch;
+    gap: 0.6rem;
+    height: 2.6rem;
+
+    .cust-compare-old,
+    .cust-compare-new {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        border-radius: 8px;
+    }
+
+    .cust-compare-new {
+        border: 3px solid #000;
+        box-shadow: $neo-btn-shadow;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+}
+
+.cust-eyedropper {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    background: $link;
+    color: #000;
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+.cust-modes {
+    display: flex;
+    gap: 0.5rem;
+
+    .cust-tab {
+        flex: 1;
+        padding: 0.3rem 0;
+        background: #fff;
+        color: #000;
+
+        &--active {
+            background: $link;
+        }
+    }
+}
+
+.cust-channels {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.cust-channel {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.cust-channel-label {
+    width: 1rem;
+    flex: none;
+    font-weight: 700;
+    font-family: $note-font;
+    text-align: center;
+}
+
+.cust-bar {
+    position: relative;
+    flex: 1;
+    height: 1.3rem;
+    border: 3px solid #000;
+    border-radius: 6px;
+    box-shadow: 3px 3px 0 #000;
+    cursor: pointer;
+    touch-action: none;
+}
+
+.cust-bar-thumb {
+    position: absolute;
+    top: -7px;
+    bottom: -7px;
+    width: 0.55rem;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 3px solid #000;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.cust-num {
+    width: 4.2rem;
+    flex: none;
+    padding: 0.25rem 0.4rem;
+    font-family: $note-font;
+    font-weight: 700;
+    text-align: right;
+}
+
+.cust-hex--wide {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+}
+
+.cust-swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.cust-swatch-chip {
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    border-radius: 6px;
+    box-shadow: $neo-detail-shadow;
+
+    &:hover,
+    &:active {
+        box-shadow: 0 0 0 1px #000;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cust-picker-header,
+    .cust-compare-new,
+    .cust-wheel-thumb,
+    .cust-square-thumb {
+        transition: none;
+    }
+}
+// ── Background section ───────────────────────────────────────────────────────
+// Its own framed card: a still preview of the scene on top, the base color and the layers under it.
+.cust-stage {
+    overflow: hidden;
+    background: #fff;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    box-shadow: $neo-detail-shadow;
+}
+
+.cust-stage-preview {
+    position: relative;
+    height: 5.5rem;
+    overflow: hidden;
+    background: t(page-bg, $background-color);
+    border-bottom: $neo-detail-border;
+    isolation: isolate;
+}
+
+.cust-stage-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.4rem 0.4rem 0.6rem;
+}
+
+.cust-bg {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.6rem 0.35rem 0;
+    border-top: 2px dashed rgba(0, 0, 0, 0.25);
+}
+
+.cust-bg-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.cust-bg-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.cust-bg-count {
+    margin-left: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    opacity: 0.6;
+}
+
+.cust-bg-empty {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    opacity: 0.7;
+}
+
+.cust-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+// ── One layer: a closed row that opens into its controls ─────────────────────
+.cust-layer {
+    background: #fff;
+    border: $neo-detail-border;
+    border-radius: $neo-detail-radius;
+    transition: box-shadow 0.18s $cust-ease, translate 0.18s $cust-ease;
+    animation: custLayerIn 0.25s $cust-ease;
+
+    &--open {
+        box-shadow: $neo-detail-shadow;
+        translate: -2px -2px;
+    }
+}
+
+@keyframes custLayerIn {
+    from { opacity: 0; translate: 0 -0.4rem; }
+}
+
+.cust-layer-head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 2.9rem;
+    padding: 0.4rem 0.6rem 0.4rem 0.45rem;
+    border: 0;
+    border-radius: $neo-detail-radius;
+    background: none;
+    color: #111;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+        background: t(hover-bg, $neutral);
+    }
+
+    &:focus-visible {
+        outline: 3px solid t(focus-ring, $sky);
+        outline-offset: 1px;
+    }
+
+    .cust-dd-chev {
+        .cust-layer--open & {
+            rotate: 90deg;
+        }
+    }
+}
+
+.cust-layer-thumb {
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+    border: $neo-detail-border;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+}
+
+.cust-layer-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.cust-layer-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.cust-layer-sub {
+    font-size: 0.78rem;
+    opacity: 0.65;
+}
+
+// Same height reveal as the color groups.
+.cust-layer-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.28s $cust-ease;
+
+    .cust-layer--open & {
+        grid-template-rows: 1fr;
+    }
+}
+
+.cust-layer-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.cust-layer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.35rem 0.7rem 0.7rem;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+
+    .cust-layer--open & {
+        opacity: 1;
+        transition-delay: 0.06s;
+    }
+}
+
+.cust-layer-hint {
+    margin: -0.35rem 0 0 $cust-field-label-w;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    opacity: 0.65;
+}
+
+
+.cust-field {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.cust-field-label {
+    width: $cust-field-label-w - 0.6rem;
+    flex: none;
+    font-weight: 600;
+}
+
+.cust-select {
+    flex: 1;
+    min-width: 0;
+    padding: 0.3rem 0.4rem;
+    font-weight: 700;
+    background: #fff;
+    color: #000;
+}
+
+.cust-seg--wrap {
+    flex-wrap: wrap;
+}
+
+.cust-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.cust-swatch-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    min-width: 3.2rem;
+    padding: 0.2rem 0.15rem;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: #111;
+    font: inherit;
+    cursor: pointer;
+
+    .cust-swatch {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+
+    &:hover .cust-swatch {
+        box-shadow: 0 0 0 #111;
+        translate: 2px 2px;
+    }
+
+    &:focus-visible {
+        outline: 3px solid t(focus-ring, $sky);
+        outline-offset: 1px;
+    }
+}
+
+.cust-swatch-cap {
+    max-width: 4.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-align: center;
+    opacity: 0.75;
+}
+
+.cust-sliders {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.cust-slider {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 600;
+
+    > span {
+        width: $cust-field-label-w - 0.6rem;
+        flex: none;
+    }
+
+    output {
+        width: 2.2rem;
+        flex: none;
+        text-align: right;
+        font-family: $note-font;
+        font-weight: 700;
+    }
+}
+
+.cust-range {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    min-width: 0;
+    height: 0.9rem;
+    border: 3px solid #000;
+    border-radius: 6px;
+    background: $neutral;
+    cursor: pointer;
+
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 0.7rem;
+        height: 1.5rem;
+        background: #fff;
+        border: 3px solid #000;
+        border-radius: 4px;
+    }
+
+    &::-moz-range-thumb {
+        width: 0.7rem;
+        height: 1.5rem;
+        background: #fff;
+        border: 3px solid #000;
+        border-radius: 4px;
+    }
+
+    &:focus-visible {
+        outline: 3px solid $purple;
+        outline-offset: 3px;
+    }
+}
+
+.cust-layer-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    padding-top: 0.5rem;
+    border-top: 2px dashed rgba(0, 0, 0, 0.2);
+    font-size: 0.85rem;
+}
+
+.cust-link--danger {
+    margin-left: auto;
+    color: t(btn-danger, $danger);
+}
+
+.cust-link--confirm {
+    text-decoration-thickness: 2px;
+}
+
+.cust-mini {
+    flex: none;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.6rem;
+    font-weight: 700;
+    background: $link;
+    color: #000;
+    border-radius: 6px;
+    box-shadow: $neo-detail-shadow;
+
+    &:disabled {
+        opacity: 0.4;
+        pointer-events: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cust-layer,
+    .cust-layer-body,
+    .cust-layer-content,
+    .cust-layer-head .cust-dd-chev {
+        animation: none;
+        transition: none;
+    }
+
+    .cust-layer--open {
+        translate: none;
+    }
+}

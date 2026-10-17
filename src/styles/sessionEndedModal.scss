@@ -21,7 +21,7 @@
     padding: 0;
     overflow: hidden;
     text-align: left;
-    background-color: $background-color;
+    background-color: t(modal-bg, $background-color);
     background-image:
         linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
         linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
@@ -42,17 +42,17 @@
     align-items: center;
     gap: 1.1rem;
     padding: 1.5rem 2rem;
-    background: $burnt-orange;
+    background: t(status-warning, $burnt-orange);
     color: #fff;
     border-bottom: 3px solid #000;
 }
 
 // Same card for destructive confirmations (delete account).
 .session-ended-header--danger {
-    background: $danger;
+    background: t(status-error, $danger);
 
     .session-ended-icon {
-        background: $back;
+        background: t(status-error, $back);
         color: #000;
     }
 }
@@ -76,7 +76,7 @@
     place-items: center;
     width: 3.8rem;
     height: 3.8rem;
-    background: $link;
+    background: t(highlight, $link);
     color: #000;
     border: $neo-detail-border;
     border-radius: $neo-detail-radius;
@@ -144,7 +144,7 @@
     font-size: 0.9rem;
     font-weight: 600;
     color: #fff;
-    background: $danger;
+    background: t(status-error, $danger);
     border: $neo-detail-border;
     border-radius: $neo-detail-radius;
 }

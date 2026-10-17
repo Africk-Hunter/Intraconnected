@@ -19,9 +19,10 @@ interface Props {
     onEscape?: () => void;
     children: ReactNode;
     origin?: { x: number; y: number };
+    className?: string;
 }
 
-export default function AnimatedOverlay({ open, scrollable, onClick, onEscape, children, origin }: Props) {
+export default function AnimatedOverlay({ open, scrollable, onClick, onEscape, children, origin, className }: Props) {
     const [show, setShow] = useState(open);
     const [closing, setClosing] = useState(false);
     const [animOrigin, setAnimOrigin] = useState({ x: 0, y: 0 });
@@ -57,6 +58,7 @@ export default function AnimatedOverlay({ open, scrollable, onClick, onEscape, c
         'overlay',
         scrollable && 'overlay--scroll',
         closing && 'overlay--closing',
+        className,
     ].filter(Boolean).join(' ');
 
     return (

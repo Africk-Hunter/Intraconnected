@@ -64,6 +64,9 @@ interface IdeaContextType {
     deleteModalOrigin: { x: number; y: number } | null;
     setDeleteModalOrigin: (origin: { x: number; y: number } | null) => void;
     profileModalOpen: boolean;
+    // The touch UI's theme sheet (MobileThemeSheet), opened from Profile → Customization.
+    themeSheetOpen: boolean;
+    setThemeSheetOpen: (open: boolean) => void;
     setProfileModalOpen: (open: boolean) => void;
     billingPlan: BillingPlan;
     setBillingPlan: (plan: BillingPlan) => void;
@@ -119,6 +122,7 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [checklistModalId, setChecklistModalId] = useState<number | null>(null);
     const [deleteModalOrigin, setDeleteModalOrigin] = useState<{ x: number; y: number } | null>(null);
     const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [themeSheetOpen, setThemeSheetOpen] = useState(false);
     const [billingPlan, setBillingPlan] = useState<BillingPlan>('free');
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [upgradeModalReason, setUpgradeModalReason] = useState<'limit' | null>(null);
@@ -199,6 +203,8 @@ export const IdeaProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 deleteModalOrigin,
                 setDeleteModalOrigin,
                 profileModalOpen,
+                themeSheetOpen,
+                setThemeSheetOpen,
                 setProfileModalOpen,
                 billingPlan,
                 setBillingPlan,

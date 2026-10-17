@@ -1,4 +1,5 @@
 import React from 'react';
+import ColorName from './ColorName';
 
 const HelpMenuSix: React.FC = () => {
     return (
@@ -47,7 +48,7 @@ const HelpMenuSix: React.FC = () => {
                     <span className="help-chip-lbl help-chip-lbl--p3">P3</span>
                 </div>
                 <p className="details">
-                    Mark how important an idea is with the <strong>ribbon</strong> in its top-left corner: <strong>High (red)</strong>, <strong>Medium (orange)</strong> or <strong>Low (yellow)</strong>. The more important, the longer the ribbon.
+                    Mark how important an idea is with the <strong>ribbon</strong> in its top-left corner: <strong>High (<ColorName token="prioHigh" />)</strong>, <strong>Medium (<ColorName token="prioMedium" />)</strong> or <strong>Low (<ColorName token="prioLow" />)</strong>. The more important, the longer the ribbon.
                 </p>
                 <div className="helpGridIcon helpSort">
                     <img src="/images/sort.svg" className="helpSortImg" alt="" />

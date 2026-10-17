@@ -80,3 +80,19 @@ export function CheckboxIcon({ checked, ...props }: IconProps & { checked: boole
         </svg>
     );
 }
+
+// Painter's palette: a round board with a thumb hole, a finger notch and dabs of paint. The theme panel.
+export function PaletteIcon(props: IconProps) {
+    return (
+        <svg {...base(props)}>
+            <path d="M12 3.5c-5 0-9 3.4-9 7.8 0 3.9 3.3 7.2 7.6 7.2 1.3 0 1.9-.7 1.9-1.6 0-.6-.3-1-.3-1.6 0-1 .8-1.7 1.8-1.7h2.2c2.9 0 4.8-1.6 4.8-4C21 6.6 17 3.5 12 3.5z" />
+            <circle cx="16.8" cy="11.4" r="1.3" />
+            <g fill="currentColor" stroke="none">
+                <circle cx="7.4" cy="9.6" r="1.45" />
+                <circle cx="11.2" cy="6.9" r="1.45" />
+                <circle cx="15.4" cy="7.2" r="1.45" />
+                <circle cx="6.9" cy="13.7" r="1.45" />
+            </g>
+        </svg>
+    );
+}

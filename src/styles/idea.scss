@@ -174,7 +174,7 @@ body.dnd-blocked * {
     gap: 0.75rem;
     width: var(--root-btn-w, 7rem);
     height: var(--root-btn-h, 2.75rem);
-    background: $back;
+    background: t(btn-back, $back);
     font-size: 1.25rem;
     font-weight: 500;
 
@@ -235,7 +235,7 @@ body.dnd-blocked * {
     min-width: 14.75rem;
     min-height: 7.25rem;
     font-size: calc(3.125rem * var(--root-scale));
-    background: $roots;
+    background: t(node-root, $roots);
     padding: .5rem 2rem;
     // Size changes are animated in RootTitle (needs the final size to measure).
     transition: box-shadow 0.3s ease, translate 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
@@ -259,21 +259,21 @@ body.dnd-blocked * {
 
         // Thin black thumb on a darker brown track, like the card's own borders.
         scrollbar-width: thin;
-        scrollbar-color: black darken($roots, 12%);
+        @include t-shift(scrollbar-color, node-root, $roots, -12%, $before: "black ");
 
         &::-webkit-scrollbar {
             width: 0.8rem;
         }
 
         &::-webkit-scrollbar-track {
-            background: darken($roots, 12%);
+            @include t-shift(background, node-root, $roots, -12%);
             border-radius: 6px;
         }
 
         &::-webkit-scrollbar-thumb {
             background: black;
             border-radius: 6px;
-            border: 2px solid darken($roots, 12%);
+            @include t-shift(border, node-root, $roots, -12%, $before: "2px solid ");
         }
     }
 
@@ -301,7 +301,7 @@ body.dnd-blocked * {
     transition: background-color 0.15s ease;
 
     &:hover {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
     }
 
     &:focus-visible {
@@ -332,11 +332,11 @@ body.dnd-blocked * {
     height: 2.75rem;
     font-size: 1.2rem;
     font-weight: 700;
-    background: $background-color;
-    color: $purple;
+    background: t(surface, $background-color);
+    color: t(accent-purple, $purple);
 
     &--active {
-        background: $purple;
+        background: t(accent-purple, $purple);
         color: white;
     }
 
@@ -547,7 +547,7 @@ body.dnd-blocked * {
     gap: 0.6rem;
     width: 15rem;
     min-height: 4.625rem;
-    background: $background-color;
+    background: t(surface, $background-color);
     border: $neo-idea-border;
     box-shadow: $neo-idea-shadow;
     border-radius: $neo-btn-radius;
@@ -594,7 +594,7 @@ body.dnd-blocked * {
     display: grid;
     grid-template-columns: 1fr;
     align-items: center;
-    background: $leaf;
+    background: t(node-leaf, $leaf);
     width: 15rem;
     min-height: 4.625rem;
     height: fit-content;
@@ -631,7 +631,7 @@ body.dnd-blocked * {
     }
 
     &.parent {
-        background: $sky;
+        background: t(node-parent, $sky);
         font-size: 1.875rem;
         text-align: center;
         justify-content: center;
@@ -654,7 +654,7 @@ body.dnd-blocked * {
     }
 
     &.leaf {
-        --card-bg: #{$leaf};
+        --card-bg: #{t(node-leaf, $leaf)};
         background: var(--card-bg);
         font-size: 1.6rem;
         text-align: left;
@@ -739,7 +739,7 @@ body.dnd-blocked * {
             line-height: 1.4;
             font-size: 1rem;
             color: black;
-            background: $background-color;
+            background: t(surface, $background-color);
             border: 2px solid black;
             border-radius: $neo-btn-radius;
             padding: 0.3rem 0.75rem;
@@ -783,7 +783,7 @@ body.dnd-blocked * {
     }
 
     &.link {
-        background: $link;
+        background: t(node-link, $link);
         font-size: 1.875rem;
         text-align: center;
         justify-content: center;
@@ -885,17 +885,17 @@ body.dnd-blocked * {
 
     &--p1 {
         height: 3.8rem;
-        &::after { height: 3rem; background: #D62000; }
+        &::after { height: 3rem; background: t(prio-high, #D62000); }
     }
 
     &--p2 {
         height: 2.8rem;
-        &::after { height: 2rem; background: #E07800; }
+        &::after { height: 2rem; background: t(prio-medium, #E07800); }
     }
 
     &--p3 {
         height: 2.05rem;
-        &::after { height: 1.25rem; background: #C8A200; }
+        &::after { height: 1.25rem; background: t(prio-low, #C8A200); }
     }
 
     // Droop animation — suppress height/color transitions so only the keyframe plays
@@ -991,7 +991,7 @@ body.dnd-blocked * {
     gap: 0.5rem;
     width: var(--root-btn-w, 7rem);
     height: var(--root-btn-h, 2.75rem);
-    background: $deep-yellow;
+    background: t(accent-gold, $deep-yellow);
     font-size: 1.1rem;
     font-weight: 600;
 
@@ -1034,7 +1034,7 @@ body.dnd-blocked * {
 
 // Same box as the sort button; the copy glyph swaps for a tick after a copy.
 .copy-all-btn {
-    background: $leaf;
+    background: t(btn-primary, $leaf);
     gap: 0.5rem;
 
     .copy-all-glyph {
@@ -1154,7 +1154,7 @@ body.dnd-blocked * {
 
 // Checklist node
 .ideaNode.checklist {
-    --card-bg: #{$indigo};
+    --card-bg: #{t(node-checklist, $indigo)};
     background: var(--card-bg);
     color: white;
     display: flex;
@@ -1297,7 +1297,7 @@ body.dnd-blocked * {
         }
 
         &:focus-visible {
-            outline: 3px solid $orange;
+            outline: 3px solid t(accent-orange, $orange);
             outline-offset: 2px;
         }
 
@@ -1359,7 +1359,7 @@ body.dnd-blocked * {
 }
 
 .ideaNode.note {
-    --card-bg: #{$neo-green};
+    --card-bg: #{t(node-note, $neo-green)};
     background: var(--card-bg);
     color: white;
     display: flex;
@@ -1637,8 +1637,8 @@ body.dnd-blocked * {
 // The card being dragged turns red while it hovers one that can't take a drop
 // (the `dnd-blocked` body class comes from Idea.tsx).
 body.dnd-blocked [data-idea-id][data-dragging] {
-    border-color: $danger;
-    box-shadow: 0 0 0 3px $danger;
+    border-color: t(status-error, $danger);
+    box-shadow: 0 0 0 3px t(status-error, $danger);
 }
 
 // "Copied" badge on a card just copied (Ctrl/Cmd+C or the card menu); the

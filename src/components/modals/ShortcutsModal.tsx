@@ -33,6 +33,18 @@ const GROUPS: { title: string; accent: string; rows: { keys: string; action: str
         ],
     },
     {
+        title: 'In the create dialog',
+        accent: 'leaf',
+        rows: [
+            { keys: 'Tab', action: 'Open field, then Create, then Cancel (the four tabs first when nothing is typed)' },
+            { keys: 'Shift+Tab', action: 'The same ring, backwards' },
+            { keys: `${MOD}+Enter`, action: 'Create from a long text field' },
+            { keys: 'Alt+1 to 4', action: 'Idea, Checklist, Note, Vault' },
+            { keys: 'Alt+L', action: 'Add or remove the link' },
+            { keys: 'Alt+P', action: 'Cycle priority' },
+        ],
+    },
+    {
         title: 'Anywhere',
         accent: 'link',
         rows: [

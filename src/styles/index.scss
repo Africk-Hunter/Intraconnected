@@ -41,11 +41,11 @@ html {
 
 body {
     margin: 0;
-    background: $background-color;
+    background: t(page-bg, $background-color);
     background-size: 40px 40px;
-    background-image:
+    background-image: var(--t-bg-image,
         linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
-        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
+        linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px));
     font-family: "DM Sans", sans-serif;
 }
 
@@ -103,7 +103,7 @@ button {
 
 .neobrutal-input:focus {
     box-shadow: $neo-card-shadow;
-    background: $sky;
+    background: t(focus-ring, $sky);
     color: black;
 
     &::placeholder {

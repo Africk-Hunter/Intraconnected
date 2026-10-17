@@ -31,12 +31,13 @@ import { downloadFile } from '../../utilities/download';
 import { useSmoothHeight } from '../../utilities/useSmoothHeight';
 import ImportDataSection from './ImportDataSection';
 import ModalTester from './ModalTester';
+import { useIsMobileUI } from '../../utilities/useIsMobileUI';
 import VaultSettings from '../vault/VaultSettings';
 import { usePurchaseMode } from '../../utilities/billing/purchaseMode';
 import '../../styles/profileModal.scss';
 import '../../styles/sessionEndedModal.scss';
 
-type Tab = 'account' | 'data' | 'vault' | 'danger' | 'developer';
+type Tab = 'account' | 'data' | 'vault' | 'customization' | 'danger' | 'developer';
 type ExportFormat = 'md' | 'opml' | 'json';
 
 const EXPORT_MIME_TYPES: Record<ExportFormat, string> = {
@@ -51,6 +52,7 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
     { id: 'account', label: 'Account', desc: 'Plan, email, password & account settings' },
     { id: 'data', label: 'Data', desc: 'Import & export your ideas' },
     { id: 'vault', label: 'Vault', desc: 'Passphrase, recovery code and auto-lock for vault notes' },
+    { id: 'customization', label: 'Customization', desc: 'Themes, colors and the theme editor' },
     { id: 'danger', label: 'Danger Zone', desc: 'Delete your account' },
     ...(import.meta.env.DEV
         ? [{ id: 'developer' as const, label: 'Developer Testing', desc: 'Dev-only tools' }]
@@ -60,7 +62,7 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
 function ProfileModal() {
     // The app offers no upgrade prompts (purchaseMode.ts); managing a plan bought on the website still works.
     const purchaseMode = usePurchaseMode();
-    const { profileModalOpen, setProfileModalOpen, billingPlan, setBillingPlan, setUpgradeModalOpen, setUpgradeModalReason, profileTabRequest, setProfileTabRequest } = useIdeaContext();
+    const { profileModalOpen, setProfileModalOpen, billingPlan, setBillingPlan, setUpgradeModalOpen, setUpgradeModalReason, profileTabRequest, setProfileTabRequest, setThemeSheetOpen } = useIdeaContext();
 
     const [activeTab, setActiveTab] = useState<Tab>('account');
     const [mobileView, setMobileView] = useState<MobileView>('tabs');
@@ -108,6 +110,8 @@ function ProfileModal() {
     const [currentEmail, setCurrentEmail] = useState(auth.currentUser?.email ?? '');
     const { contentRef, height: contentHeight, animate: animateHeight } = useSmoothHeight<HTMLDivElement>();
     const isProfileMobile = useIsProfileMobile();
+    // On the desktop layout themes live in the theme panel (palette button), not here.
+    const isMobileUI = useIsMobileUI();
 
     // Phone Back inside a tab steps out to the tab list (above MobileMindMap's close-Profile handler).
     useBackHandler(profileModalOpen && isProfileMobile && mobileView !== 'tabs', () => setMobileView('tabs'), 2);
@@ -162,6 +166,12 @@ function ProfileModal() {
     useEffect(() => {
         if (isProfileMobile && mobileView === 'tabs') clearDeleteFields();
     }, [isProfileMobile, mobileView]);
+
+    // Customization only shows on the touch UI, where it is a sheet over the live app, not a Profile page.
+    function openThemeSheet() {
+        handleClose();
+        setThemeSheetOpen(true);
+    }
 
     function handleClose() {
         setProfileModalOpen(false);
@@ -937,6 +947,8 @@ function ProfileModal() {
         account: accountContent,
         data: dataContent,
         vault: <VaultSettings />,
+        // Opens the theme sheet over the app instead (openThemeSheet): the app is the preview.
+        customization: null,
         danger: dangerContent,
         developer: import.meta.env.DEV ? developerContent : null,
     };
@@ -976,21 +988,15 @@ function ProfileModal() {
                         {!isProfileMobile && <div className="profile-desktop">
                             <div className="profile-left">
                                 <h2 className="profile-heading">Profile Options</h2>
-                                {TABS.filter(tab => tab.id !== 'danger').map(tab => (
+                                {TABS.filter(tab => tab.id !== 'danger' && (tab.id !== 'customization' || isMobileUI)).map(tab => (
                                     <button
                                         key={tab.id}
                                         className={`profile-tab profile-tab--${tab.id} neobrutal-button${activeTab === tab.id ? ' profile-tab--active' : ''}`}
-                                        onClick={() => setActiveTab(tab.id)}
+                                        onClick={() => (tab.id === 'customization' ? openThemeSheet() : setActiveTab(tab.id))}
                                     >
                                         {tab.label}
                                     </button>
                                 ))}
-                                <button
-                                    className="profile-tab profile-tab--customization profile-tab--disabled neobrutal-button"
-                                    disabled
-                                >
-                                    Customization
-                                </button>
                                 {/* Last item in the sidebar column */}
                                 <button
                                     className={`profile-tab profile-tab--danger neobrutal-button${activeTab === 'danger' ? ' profile-tab--active' : ''}`}
@@ -1013,7 +1019,7 @@ function ProfileModal() {
                         {/* ── MOBILE layout ── */}
                         {isProfileMobile && <div className="profile-mobile">
                             {mobileView === 'tabs' ? (() => {
-                                const visibleTabs = TABS.filter(tab => tab.id !== 'danger');
+                                const visibleTabs = TABS.filter(tab => tab.id !== 'danger' && (tab.id !== 'customization' || isMobileUI));
                                 const staggerProps = (index: number) => tabsStaggerIn ? {
                                     className: ' profile-tab--stagger',
                                     style: { animationDelay: `${index * 35}ms` },
@@ -1027,7 +1033,7 @@ function ProfileModal() {
                                             key={tab.id}
                                             className={`profile-tab profile-tab--mobile profile-tab--${tab.id} neobrutal-button${stagger.className}`}
                                             style={stagger.style}
-                                            onClick={() => setMobileView(tab.id)}
+                                            onClick={() => (tab.id === 'customization' ? openThemeSheet() : setMobileView(tab.id))}
                                         >
                                             <div>
                                                 <span className="profile-tab-label">{tab.label}</span>
@@ -1038,19 +1044,8 @@ function ProfileModal() {
                                         );
                                     })}
                                     <button
-                                        className={`profile-tab profile-tab--mobile profile-tab--customization profile-tab--disabled neobrutal-button${staggerProps(visibleTabs.length).className}`}
+                                        className={`profile-tab profile-tab--mobile profile-tab--danger neobrutal-button${staggerProps(visibleTabs.length).className}`}
                                         style={staggerProps(visibleTabs.length).style}
-                                        disabled
-                                    >
-                                        <div>
-                                            <span className="profile-tab-label">Customization</span>
-                                            <span className="profile-tab-soon">Coming soon</span>
-                                        </div>
-                                        <span className="profile-tab-arrow">›</span>
-                                    </button>
-                                    <button
-                                        className={`profile-tab profile-tab--mobile profile-tab--danger neobrutal-button${staggerProps(visibleTabs.length + 1).className}`}
-                                        style={staggerProps(visibleTabs.length + 1).style}
                                         onClick={() => setMobileView('danger')}
                                     >
                                         <div>

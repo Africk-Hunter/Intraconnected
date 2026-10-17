@@ -6,7 +6,7 @@
     right: 10px;
     top: max(8px, env(safe-area-inset-top, 8px));
     z-index: 31;
-    background: $neutral;
+    background: t(panel, $neutral);
     border: 3px solid #111;
     border-radius: 20px;
     padding: 16px;
@@ -137,7 +137,7 @@
 
     &--active::before {
         width: 20px;
-        background: $leaf;
+        background: t(status-success, $leaf);
     }
 }
 
@@ -163,7 +163,7 @@
     gap: 6px;
     height: 36px;
     padding: 0 12px;
-    background: $sky;
+    background: t(active, $sky);
     border: 2px solid #111;
     border-radius: 10px;
     box-shadow: 0 2px 0 #111;
@@ -189,7 +189,7 @@
     right: -6px;
     width: 12px;
     height: 12px;
-    background: $danger;
+    background: t(unread-dot, $danger);
     border: 2px solid #111;
     border-radius: 50%;
 }
@@ -206,7 +206,7 @@
     justify-content: center;
     min-width: 44px;
     height: 44px;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     border: 2px solid #111;
     border-radius: 10px;
     box-shadow: 0 2px 0 #111;
@@ -278,31 +278,31 @@
     box-shadow: 0 2px 0 #111;
     color: #111;
 
-    &--root            { background: $roots; }
-    &--add             { background: $leaf; }
+    &--root            { background: t(node-root, $roots); }
+    &--add             { background: t(btn-primary, $leaf); }
     &--back {
-        background: $back;
+        background: t(btn-back, $back);
         .mmobile-help-badge-icon { object-fit: contain; }
     }
-    &--delete          { background: $danger; .mmobile-help-badge-icon { filter: invert(1); } }
-    &--leaf            { background: $leaf; }
-    &--parent          { background: $sky; }
-    &--link            { background: $link; }
-    &--checklist-node  { background: $indigo; color: white; }
-    &--nav             { background: $neo-pink; }
+    &--delete          { background: t(btn-swipe-delete, $danger); .mmobile-help-badge-icon { filter: invert(1); } }
+    &--leaf            { background: t(node-leaf, $leaf); }
+    &--parent          { background: t(node-parent, $sky); }
+    &--link            { background: t(node-link, $link); }
+    &--checklist-node  { background: t(node-checklist, $indigo); color: white; }
+    &--nav             { background: t(accent-pink, $neo-pink); }
     &--patchnotes      { background: white; }
     &--edit            { background: white; padding: 0; overflow: hidden; align-items: stretch; }
-    &--p1              { background: #D62000; color: white; }
-    &--sort            { background: $deep-yellow; }
+    &--p1              { background: t(prio-high, #D62000); color: white; }
+    &--sort            { background: t(accent-gold, $deep-yellow); }
 }
 
 // ── Screen 6: priority & sorting ────────────────────────────────
 
 @keyframes mmobile-help-rib-cycle {
     0%, 8%   { height: 0.65rem; background: rgba(150, 70, 0, 0.2);  border-color: rgba(0, 0, 0, 0.2); box-shadow: none; }
-    20%, 32% { height: 2.5rem;  background: #D62000;                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
-    44%, 56% { height: 1.75rem; background: #E07800;                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
-    68%, 80% { height: 1.1rem;  background: #C8A200;                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
+    20%, 32% { height: 2.5rem;  background: t(prio-high, #D62000);                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
+    44%, 56% { height: 1.75rem; background: t(prio-medium, #E07800);                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
+    68%, 80% { height: 1.1rem;  background: t(prio-low, #C8A200);                 border-color: #111;                box-shadow: 2px 2px 0 1px #111; }
     92%, 100%{ height: 0.65rem; background: rgba(150, 70, 0, 0.2);  border-color: rgba(0, 0, 0, 0.2); box-shadow: none; }
 }
 
@@ -310,7 +310,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    background: $leaf;
+    background: t(node-leaf, $leaf);
     border: 2.5px solid #111;
     border-radius: 14px;
     box-shadow: 3px 3px 0 #111;
@@ -350,7 +350,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: $background-color;
+    background-color: t(mobile-bg, $background-color);
     background-size: 18px 18px;
     background-image:
         linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
@@ -371,9 +371,9 @@
     box-shadow: 2px 2px 0 1px #111;
     white-space: nowrap;
 
-    &--current { background: $roots; color: #fff; box-shadow: 2px 2px 0 1px #111, 0 0 0 3px #6b4929; }
-    &--parent  { background: $sky; }
-    &--leaf    { background: $leaf; }
+    &--current { background: t(node-root, $roots); color: #fff; box-shadow: 2px 2px 0 1px #111, 0 0 0 3px #6b4929; }
+    &--parent  { background: t(node-parent, $sky); }
+    &--leaf    { background: t(node-leaf, $leaf); }
 }
 
 .mmobile-mm-trunk {
@@ -416,7 +416,7 @@
 // ── Screen 4: vertical tree demo ────────────────────────────────
 
 .mmobile-help-vtree-demo {
-    background-color: $background-color;
+    background-color: t(mobile-bg, $background-color);
     background-size: 18px 18px;
     background-image:
         linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
@@ -429,7 +429,7 @@
 
 .mmobile-help-vtree-root {
     display: inline-block;
-    background: $roots;
+    background: t(node-root, $roots);
     color: white;
     border: 2px solid #111;
     border-radius: 7px;
@@ -505,8 +505,8 @@
     box-shadow: 2px 2px 0 1px #111;
     color: #111;
 
-    &--parent { background: $sky; }
-    &--leaf   { background: $leaf; }
+    &--parent { background: t(node-parent, $sky); }
+    &--leaf   { background: t(node-leaf, $leaf); }
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -533,12 +533,12 @@
     padding: 6px 12px;
     cursor: pointer;
     box-shadow: 0 3px 0 #111;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     color: #111;
     font-weight: 600;
     transition: translate 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
 
-    &--next { background: $leaf; padding: 12px; }
+    &--next { background: t(btn-primary, $leaf); padding: 12px; }
 
     &:active:not(:disabled) {
         translate: 0 3px;
@@ -653,9 +653,9 @@
 
     img { width: 16px; height: 16px; filter: invert(1); }
 
-    &--rename { background: $sky; }
-    &--move   { background: $deep-yellow; }
-    &--delete { background: $danger; }
+    &--rename { background: t(active, $sky); }
+    &--move   { background: t(accent-gold, $deep-yellow); }
+    &--delete { background: t(btn-swipe-delete, $danger); }
 }
 
 // The ⋯ button drawn inline in help text, so it looks like the real thing

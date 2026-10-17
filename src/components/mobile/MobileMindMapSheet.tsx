@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { IdeaType, getIdeaLink, openIdeaLink, resolveIdeaLabel, isNoteMode } from '../../utilities';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
+import { PanelBackground } from '../ThemeBackground';
 
 interface Props {
     currentId: number;
@@ -154,6 +155,7 @@ function MobileMindMapSheet({ currentId, allIdeas, onNavigate, onClose, style }:
         <>
             <div className="mmobile-scrim" onClick={onClose} />
             <div ref={swipe.sheetRef} className="mmobile-mindmap-sheet" style={style} role="dialog" aria-modal="true" aria-label="Mind map">
+                <PanelBackground />
                 <div className="mmobile-mindmap-header" {...swipe.dragProps}>
                     <div className="mmobile-sheet-grab mmobile-sheet-grab--panel" aria-hidden="true" />
                     <span className="mmobile-mindmap-title">

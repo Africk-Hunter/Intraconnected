@@ -100,7 +100,7 @@ $profile-modal-max-mobile: calc(100dvh - 3rem - 6px - env(safe-area-inset-top, 0
         // Lines up with .profile-mobile's insets (the +1px offsets the
         // buttons' -1px shadow nudge).
         padding: 0 calc(1rem + 1px) 0 calc(1rem + 1px);
-        background: $background-color;
+        background: t(surface, $background-color);
         border-bottom: 3px solid #111;
     }
 }
@@ -227,7 +227,7 @@ $profile-scrollbar-end-gap: 6px;
     }
 
     &::-webkit-scrollbar-thumb {
-        background: $leaf;
+        background: t(btn-primary, $leaf);
         background-clip: padding-box;
         border: $pad solid transparent;
         border-left-width: $pad + $line;
@@ -265,7 +265,7 @@ $profile-scrollbar-end-gap: 6px;
     // browsers without ::-webkit-scrollbar get the plain version.
     @supports not selector(::-webkit-scrollbar) {
         scrollbar-width: thin;
-        scrollbar-color: $leaf color.adjust($background-color, $lightness: -4%);
+        scrollbar-color: t(btn-primary, $leaf) color.adjust($background-color, $lightness: -4%);
     }
 }
 
@@ -283,22 +283,22 @@ $profile-scrollbar-end-gap: 6px;
     padding: 0.85rem 1.2rem;
     font-size: 1.1rem;
     font-weight: 600;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     cursor: pointer;
 
     &--active {
-        background: $sky;
+        background: t(nav-active, $sky);
         color: #fff;
     }
 
     // Last item in the sidebar column. Stays red when selected, unlike the
     // blue active tabs.
     &--danger {
-        background: $danger;
+        background: t(btn-danger, $danger);
         color: #fff;
 
         &.profile-tab--active {
-            background: color.adjust($danger, $lightness: -8%);
+            @include t-shift(background, btn-danger, $danger, -8%);
         }
     }
 
@@ -324,7 +324,7 @@ $profile-scrollbar-end-gap: 6px;
     margin: 0 0 0.6rem 0;
 
     &--danger {
-        color: $danger;
+        color: t(status-error, $danger);
     }
 }
 
@@ -339,15 +339,15 @@ $profile-scrollbar-end-gap: 6px;
     padding: 0.7rem 1.6rem;
     font-size: 1rem;
     font-weight: 600;
-    background: $leaf;
+    background: t(btn-primary, $leaf);
     cursor: pointer;
 
     &.neutral {
-        background: $neutral;
+        background: t(btn-neutral, $neutral);
     }
 
     &.danger {
-        background: $danger;
+        background: t(btn-danger, $danger);
         color: #fff;
     }
 
@@ -360,7 +360,7 @@ $profile-scrollbar-end-gap: 6px;
     &.profile-action-btn--link {
         display: inline-block;
         box-sizing: border-box;
-        background: $link;
+        background: t(node-link, $link);
         color: black;
         text-align: center;
         text-decoration: none;
@@ -375,7 +375,7 @@ $profile-scrollbar-end-gap: 6px;
     font-size: 1rem;
     font-family: inherit;
     margin-bottom: 0.75rem;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     outline: none;
 }
 
@@ -429,7 +429,7 @@ $profile-scrollbar-end-gap: 6px;
     font-size: 0.95rem;
     font-weight: 600;
     margin: 0 0 0.8rem 0;
-    color: $danger;
+    color: t(status-error, $danger);
 }
 
 .profile-import-success {
@@ -438,7 +438,7 @@ $profile-scrollbar-end-gap: 6px;
     gap: 0.75rem;
     margin: 0 0 0.9rem 0;
     padding: 0.8rem 1rem;
-    background: lighten($leaf, 38%);
+    @include t-shift(background, status-success, $leaf, 38%);
     border: 3px solid #111;
     box-shadow: 4px 4px 0 #111;
     color: #111;
@@ -447,7 +447,7 @@ $profile-scrollbar-end-gap: 6px;
         flex: none;
         width: 1.8rem;
         height: 1.8rem;
-        color: $leaf;
+        color: t(status-success, $leaf);
     }
 
     .profile-import-success-title {
@@ -503,7 +503,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     &:focus-visible {
-        outline: 3px solid $sky;
+        outline: 3px solid t(focus-ring, $sky);
         outline-offset: 3px;
     }
 }
@@ -611,23 +611,23 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     font-family: inherit;
     color: #111;
     text-align: left;
-    background: lighten($sky, 42%);
+    @include t-shift(background, active, $sky, 42%);
     border: 3px dashed #111;
     border-radius: 12px;
     cursor: pointer;
     transition: background-color 0.16s ease, transform 0.16s $data-ease, border-style 0s;
 
     &:hover {
-        background: lighten($sky, 36%);
+        @include t-shift(background, active, $sky, 36%);
     }
 
     &:focus-visible {
-        outline: 3px solid $sky;
+        outline: 3px solid t(focus-ring, $sky);
         outline-offset: 3px;
     }
 
     &--over {
-        background: lighten($sky, 32%);
+        @include t-shift(background, active, $sky, 32%);
         border-style: solid;
         transform: scale(1.015);
     }
@@ -639,7 +639,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     width: 1.3rem;
     height: 1.3rem;
     padding: 0.4rem;
-    background: $sky;
+    background: t(active, $sky);
     color: #fff;
     border: 2px solid #111;
     border-radius: 11px;
@@ -713,11 +713,11 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     cursor: pointer;
 
     &:hover {
-        color: $sky;
+        color: t(active, $sky);
     }
 
     &:focus-visible {
-        outline: 3px solid $sky;
+        outline: 3px solid t(focus-ring, $sky);
         outline-offset: 2px;
         border-radius: 3px;
     }
@@ -795,7 +795,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .profile-error {
-    color: $danger;
+    color: t(status-error, $danger);
     font-size: 0.9rem;
     margin: 0.75rem 0;
 }
@@ -832,7 +832,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .profile-close {
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     font-size: 1.1rem;
     width: 2.2rem;
     height: 2.2rem;
@@ -856,7 +856,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     display: flex;
     align-items: center;
     padding: 0 0.75rem;
-    background: $back;
+    background: t(btn-back, $back);
     color: #fff;
     font-family: inherit;
     font-size: 0.9rem;
@@ -900,7 +900,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     min-width: 16rem;
     display: flex;
     flex-direction: column;
-    background: color.adjust($background-color, $lightness: -3%);
+    @include t-shift(background, modal-bg, $background-color, -3%);
     border-right: 3px solid #000;
     padding-bottom: 1.25rem;
 
@@ -957,7 +957,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
         // Selected tab sits pressed in, like a held-down button.
         &.profile-tab--active {
-            background: $sky;
+            background: t(nav-active, $sky);
             color: #fff;
             box-shadow: $neo-btn-press;
             translate: $neo-btn-translate;
@@ -988,10 +988,10 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
         &--danger {
             margin-top: auto !important;
             background: #fff;
-            color: $danger;
+            color: t(status-error, $danger);
 
             &.profile-tab--active {
-                background: $danger;
+                background: t(btn-danger, $danger);
                 color: #fff;
             }
         }
@@ -1137,8 +1137,8 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
         grid-column: 1 / -1;
         max-width: 34rem;
         background: #fff8f8;
-        border-color: $danger;
-        box-shadow: 4px 4px 0 $danger;
+        border-color: t(status-error, $danger);
+        box-shadow: 4px 4px 0 t(status-error, $danger);
     }
 
     .profile-section-title {
@@ -1159,7 +1159,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
             border: 2px solid #111;
             border-radius: 9px;
             box-shadow: 2px 2px 0 #111;
-            background-color: $leaf;
+            background-color: t(btn-primary, $leaf);
             background-repeat: no-repeat;
             background-position: center;
             background-size: 60%;
@@ -1178,15 +1178,15 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @each $section, $name, $color in
-    ('plan', 'star', $sky),
-    ('verify', 'shield', $orange),
-    ('email', 'mail', $link),
-    ('reset', 'key', $leaf),
-    ('logout', 'logout', $neutral),
+    ('plan', 'star', t(active, $sky)),
+    ('verify', 'shield', t(accent-orange, $orange)),
+    ('email', 'mail', t(highlight, $link)),
+    ('reset', 'key', t(btn-primary, $leaf)),
+    ('logout', 'logout', t(panel, $neutral)),
     ('danger', 'trash', #ffb3b3),
-    ('export', 'export', $leaf),
-    ('import', 'import', $sky),
-    ('dev', 'terminal', $neutral) {
+    ('export', 'export', t(btn-primary, $leaf)),
+    ('import', 'import', t(active, $sky)),
+    ('dev', 'terminal', t(panel, $neutral)) {
     .profile-desktop .profile-section--#{$section} .profile-section-title::before,
     .profile-mobile .profile-section--#{$section} .profile-section-title::before {
         background-color: $color;
@@ -1206,13 +1206,13 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .profile-desktop .profile-section--danger .profile-section-title {
-    color: $danger;
+    color: t(status-error, $danger);
 }
 
 // The plan name (desktop) reads as a badge.
 .profile-desktop .profile-section--plan .profile-section-desc strong {
     padding: 0.05rem 0.55rem;
-    background: $sky;
+    background: t(active, $sky);
     color: #fff;
     border: 2px solid #111;
     border-radius: 7px;
@@ -1262,7 +1262,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
             border: 2px solid #111;
             border-radius: 11px;
             box-shadow: 2px 2px 0 #111;
-            background-color: $sky;
+            background-color: t(nav-active, $sky);
             background-repeat: no-repeat;
             background-position: center;
             background-size: 58%;
@@ -1280,7 +1280,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         &.profile-tab--disabled {
-            background: $neutral;
+            background: t(btn-neutral, $neutral);
             opacity: 0.55;
             pointer-events: none;
             box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
@@ -1289,13 +1289,13 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
         &.profile-tab--danger {
             margin-top: 4px;
             background: #fff8f8;
-            border-color: $danger;
-            box-shadow: 4px 4px 0 $danger;
-            color: $danger;
+            border-color: t(btn-danger, $danger);
+            box-shadow: 4px 4px 0 t(btn-danger, $danger);
+            color: t(btn-danger, $danger);
 
             &:hover,
             &:active {
-                box-shadow: 1px 1px 0 $danger;
+                box-shadow: 1px 1px 0 t(btn-danger, $danger);
             }
         }
 
@@ -1321,11 +1321,11 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
         }
     }
 
-    .profile-tab--account::before { background-color: $sky; }
-    .profile-tab--data::before { background-color: $leaf; }
-    .profile-tab--vault::before { background-color: $vault; }
-    .profile-tab--developer::before { background-color: $neutral; }
-    .profile-tab--customization::before { background-color: $link; }
+    .profile-tab--account::before { background-color: t(active, $sky); }
+    .profile-tab--data::before { background-color: t(btn-primary, $leaf); }
+    .profile-tab--vault::before { background-color: t(node-vault, $vault); }
+    .profile-tab--developer::before { background-color: t(panel, $neutral); }
+    .profile-tab--customization::before { background-color: t(highlight, $link); }
     .profile-tab--danger::before { background-color: #ffb3b3; }
 
     .profile-tab-label {
@@ -1343,7 +1343,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .profile-tab--danger .profile-tab-desc {
-        color: $danger;
+        color: t(btn-danger, $danger);
         opacity: 0.8;
     }
 
@@ -1400,8 +1400,8 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
         &--danger {
             background: #fff8f8;
-            border-color: $danger;
-            box-shadow: 4px 4px 0 $danger;
+            border-color: t(status-error, $danger);
+            box-shadow: 4px 4px 0 t(status-error, $danger);
         }
     }
 
@@ -1421,7 +1421,7 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
             border: 2px solid #111;
             border-radius: 9px;
             box-shadow: 2px 2px 0 #111;
-            background-color: $leaf;
+            background-color: t(btn-primary, $leaf);
             background-repeat: no-repeat;
             background-position: center;
             background-size: 60%;
@@ -1429,12 +1429,12 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .profile-section--danger .profile-section-title {
-        color: $danger;
+        color: t(status-error, $danger);
     }
 
     .profile-section--plan .profile-section-desc strong {
         padding: 0.05rem 0.5rem;
-        background: $sky;
+        background: t(active, $sky);
         color: #fff;
         border: 2px solid #111;
         border-radius: 7px;
@@ -1463,19 +1463,19 @@ $data-ease: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .profile-section--reset .profile-action-btn {
-        background: $leaf;
+        background: t(btn-primary, $leaf);
 
         &.profile-action-btn--link {
-            background: $link;
+            background: t(node-link, $link);
         }
     }
 
     .profile-section--logout .profile-action-btn {
-        background: $back;
+        background: t(btn-cancel, $back);
     }
 
     .profile-section--danger .profile-action-btn.danger {
-        background: $danger;
+        background: t(btn-danger, $danger);
         color: #fff;
         border-color: #111;
         box-shadow: 0 3px 0 #111;

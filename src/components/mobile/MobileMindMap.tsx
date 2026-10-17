@@ -34,6 +34,7 @@ import MobileHelpSheet from './MobileHelpSheet';
 import MobileMoveSheet from './MobileMoveSheet';
 import MobileMindMapSheet from './MobileMindMapSheet';
 import MobileSearchSheet from './MobileSearchSheet';
+import MobileThemeSheet from './MobileThemeSheet';
 import { updateIdeaCensored } from '../../utilities/idea/ideaStore';
 import { recordVisit } from '../../utilities/idea/recentVisits';
 import { branchCopyText, childrenCopyText, ideaCopyText } from '../../utilities/idea/copyText';
@@ -109,7 +110,7 @@ function pointerOrigin() {
 
 
 function MobileMindMap() {
-    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, setUpgradeModalOpen, setUpgradeModalReason, pendingOpenId, setPendingOpenId, createReturn, setCreateReturn } = useIdeaContext();
+    const { setNewIdeaSwitch, newIdeaSwitch, profileModalOpen, setProfileModalOpen, themeSheetOpen, setThemeSheetOpen, setUpgradeModalOpen, setUpgradeModalReason, pendingOpenId, setPendingOpenId, createReturn, setCreateReturn } = useIdeaContext();
 
     const [currentId, setCurrentId] = useState(1);
     // Rows pop in one by one when a level opens, not on create/delete/move.
@@ -329,8 +330,24 @@ function MobileMindMap() {
         }
     }, [profileModalOpen]);
 
+    // The theme sheet (opened from Profile → Customization) follows the same rule.
     useEffect(() => {
-        if (!sheet && !showSearch) { setKeyboardInset(0); return; }
+        if (themeSheetOpen) {
+            setSheet(null);
+            setShowHelp(false);
+            setShowPatchNotes(false);
+            setShowMindMap(false);
+            setShowSearch(false);
+            setProfileModalOpen(false);
+        }
+    }, [themeSheetOpen, setProfileModalOpen]);
+
+    useEffect(() => {
+        if (sheet !== null || showHelp || showPatchNotes || showMindMap || showSearch || profileModalOpen) setThemeSheetOpen(false);
+    }, [sheet, showHelp, showPatchNotes, showMindMap, showSearch, profileModalOpen, setThemeSheetOpen]);
+
+    useEffect(() => {
+        if (!sheet && !showSearch && !themeSheetOpen) { setKeyboardInset(0); return; }
         const vv = window.visualViewport;
         // In the app the keyboard can cover the WebView without shrinking any
         // viewport, so the plugin's height counts too, minus whatever the
@@ -393,7 +410,7 @@ function MobileMindMap() {
             setViewportOffsetTop(0);
             setKeyboardOpen(false);
         };
-    }, [sheet, showSearch]);
+    }, [sheet, showSearch, themeSheetOpen]);
 
     // Once the sheet has moved above the keyboard, bring the field being typed
     // in back into view (the sheet scrolls inside when it is short on room).
@@ -960,6 +977,7 @@ function MobileMindMap() {
     useBackHandler(showPatchNotes, () => setShowPatchNotes(false), 1);
     useBackHandler(showMindMap, () => setShowMindMap(false), 1);
     useBackHandler(showSearch, () => setShowSearch(false), 1);
+    useBackHandler(themeSheetOpen, () => setThemeSheetOpen(false), 1);
 
     function pickSearchResult(result: SearchResult) {
         recordVisit(result.id);
@@ -1530,6 +1548,15 @@ function MobileMindMap() {
                         '--origin-dy': `${searchOrigin.dy}px`,
                         ...(keyboardOpen ? { bottom: `${keyboardInset + 8}px` } : {}),
                     } as React.CSSProperties}
+                />
+            </ExitPresence>
+            <ExitPresence show={themeSheetOpen}>
+                <MobileThemeSheet
+                    onClose={() => setThemeSheetOpen(false)}
+                    style={keyboardOpen ? {
+                        bottom: `${keyboardInset + 8}px`,
+                        height: `min(480px, calc(${viewportHeight - 16}px - env(safe-area-inset-top, 0px)))`,
+                    } : undefined}
                 />
             </ExitPresence>
             <ExitPresence show={showMindMap}>

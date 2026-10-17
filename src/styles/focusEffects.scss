@@ -21,7 +21,7 @@
 // clear even on a coloured background. Small controls pass a tighter offset
 // (negative draws it inside, for rows that sit flush in a container).
 @mixin focus-ring($offset: 3px) {
-    outline: 5px solid $orange;
+    outline: 5px solid t(accent-orange, $orange);
     outline-offset: $offset;
 }
 
@@ -29,7 +29,7 @@
 // "Show more" fade) plus the lift. No ring; the fill is the marker.
 @mixin focus-card {
     outline: none;
-    --card-bg: #{$orange};
+    --card-bg: #{t(accent-orange, $orange)};
     background: var(--card-bg);
     @include focus-lift;
 }

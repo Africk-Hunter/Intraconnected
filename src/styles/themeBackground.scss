@@ -1,0 +1,42 @@
+// Theme background layers (see components/ThemeBackground.tsx).
+// The page host sits at z-index -1: behind all page content, above the body color.
+.tbg-stack {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--t-page-bg, transparent);
+    // Fades in over the stock grid instead of snapping in.
+    animation: tbg-fade-in 0.9s ease-out both;
+
+    &--contained {
+        position: absolute;
+        z-index: 0;
+        animation: none;
+    }
+
+    &--behind {
+        z-index: -1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+}
+
+@keyframes tbg-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.tbg {
+    position: absolute;
+    inset: 0;
+}
+
+.tbg-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}

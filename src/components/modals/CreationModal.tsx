@@ -75,7 +75,10 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
     const noteContentHolderRef = useRef<HTMLElement>(null);
     const noteBodyRef = useRef<HTMLTextAreaElement>(null);
     const vaultSectionRef = useRef<HTMLDivElement>(null);
-    const removeTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+    const tabsRef = useRef<HTMLDivElement>(null);
+    const createBtnRef =useRef<HTMLButtonElement>(null);
+    const cancelBtnRef = useRef<HTMLButtonElement>(null);
+    const removeTimeoutsRef =useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
     const pressFallbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Full, untruncated text last typed into the idea or note fields (the two
     // uncapped/near-uncapped long-form tabs). Checklist title is capped at 100
@@ -346,6 +349,69 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
         }
     }
 
+    // Tab walks a short ring instead of the DOM order: the fields still open
+    // (required ones that are empty) -> Create -> Cancel -> back round. With
+    // nothing open it starts at the tab's main field. Tabs, Add Link, priority and
+    // item rows are skipped; Alt+1-4 / Alt+L / Alt+P reach them from the keyboard.
+    // The vault tab keeps the default order (its fields live in VaultCreateCard).
+    function tabRing(): (HTMLElement | null)[] {
+        const createEnabled =
+            activeTab === 'idea' ? !!modalContent.trim()
+            : activeTab === 'checklist' ? !!checklistTitle.trim()
+            : !!noteTitle.trim();
+        let fields: (HTMLElement | null)[];
+        if (activeTab === 'idea') {
+            fields = [ideaTextareaRef.current];
+        } else if (activeTab === 'checklist') {
+            const open: (HTMLElement | null)[] = [];
+            if (!checklistTitle.trim()) open.push(checklistTitleRef.current);
+            if (checklistItems.length === 0 && !itemDraft.trim()) open.push(itemInputRef.current);
+            fields = open.length ? open : [itemInputRef.current];
+        } else {
+            const open: (HTMLElement | null)[] = [];
+            if (!noteTitle.trim()) open.push(noteTitleRef.current);
+            if (!noteBody.trim()) open.push(noteBodyRef.current);
+            fields = open.length ? open : [noteBodyRef.current];
+        }
+        // Nothing typed anywhere yet: walk the four tabs before leaving the form.
+        const pristine =
+            activeTab === 'idea' ? !modalContent.trim() && !link.trim()
+            : activeTab === 'checklist' ? !checklistTitle.trim() && !itemDraft.trim() && checklistItems.length === 0
+            : !noteTitle.trim() && !noteBody.trim();
+        const tabButtons = pristine ? Array.from(tabsRef.current?.querySelectorAll<HTMLElement>('.creation-tab') ?? []) : [];
+        return [...fields, ...tabButtons, ...(createEnabled ? [createBtnRef.current] : []), cancelBtnRef.current].filter(Boolean);
+    }
+
+    function handleModalKeyDown(e: React.KeyboardEvent) {
+        if (e.altKey && !e.ctrlKey && !e.metaKey) {
+            const tabs: Tab[] = ['idea', 'checklist', 'note', 'vault'];
+            const n = Number(e.key);
+            if (n >= 1 && n <= 4) {
+                e.preventDefault();
+                switchTab(tabs[n - 1]);
+            } else if (e.key.toLowerCase() === 'l' && activeTab === 'idea') {
+                e.preventDefault();
+                toggleLinkBox();
+            } else if (e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                setPriority(prev => (prev === undefined ? 1 : prev === 3 ? undefined : (prev + 1) as 2 | 3));
+            }
+            return;
+        }
+        if (e.key !== 'Tab' || e.ctrlKey || e.metaKey || e.altKey || activeTab === 'vault') return;
+        const ring = tabRing();
+        if (ring.length === 0) return;
+        const at = ring.indexOf(document.activeElement as HTMLElement);
+        let next: number;
+        if (at === -1) next = e.shiftKey ? ring.length - 1 : 0;
+        else next = (at + (e.shiftKey ? -1 : 1) + ring.length) % ring.length;
+        e.preventDefault();
+        // The modal's focus trap also listens for Tab on document; it would re-wrap
+        // from the last button, so this one must not reach it.
+        e.stopPropagation();
+        ring[next]!.focus();
+    }
+
     function getTabContent(tab: Tab): string {
         if (tab === 'idea') return modalContent;
         if (tab === 'checklist') return checklistTitle;
@@ -373,8 +439,8 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
 
     return (
         <AnimatedOverlay open={creationModalOpen} scrollable onEscape={handleClose}>
-            <div className="modal neobrutal creationModal">
-                        <div className="creation-tabs">
+            <div className="modal neobrutal creationModal" onKeyDown={handleModalKeyDown}>
+                        <div className="creation-tabs" ref={tabsRef}>
                             <button
                                 className={`creation-tab creation-tab--idea${activeTab === 'idea' ? ' creation-tab--active' : ''}`}
                                 onClick={() => switchTab('idea')}
@@ -532,9 +598,10 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                         </div>
 
                         <section className="modalButtons">
-                            <button className="modalButton cancel neobrutal-button" onClick={handleClose}>Cancel</button>
+                            <button ref={cancelBtnRef} className="modalButton cancel neobrutal-button" onClick={handleClose}>Cancel</button>
                             {activeTab === 'idea' && (
                                 <button
+                                    ref={createBtnRef}
                                     className="modalButton continue neobrutal-button"
                                     onClick={handleCreateIdea}
                                     disabled={!modalContent.trim()}
@@ -544,6 +611,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                             )}
                             {activeTab === 'checklist' && (
                                 <button
+                                    ref={createBtnRef}
                                     className="modalButton continue neobrutal-button"
                                     onClick={handleCreateChecklist}
                                     disabled={!checklistTitle.trim()}
@@ -553,6 +621,7 @@ function CreationModal({ handleIdeaCreation, handleChecklistCreation, handleNote
                             )}
                             {activeTab === 'note' && (
                                 <button
+                                    ref={createBtnRef}
                                     className="modalButton continue neobrutal-button"
                                     onClick={handleCreateNote}
                                     disabled={!noteTitle.trim()}

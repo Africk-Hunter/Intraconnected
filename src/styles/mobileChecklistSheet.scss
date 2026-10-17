@@ -24,14 +24,14 @@
     width: 44px;
     height: 44px;
     box-sizing: border-box;
-    background: $indigo;
+    background: t(node-checklist, $indigo);
     color: white;
     border: $neo-m-detail-border;
     border-radius: 10px;
     box-shadow: $neo-m-detail-shadow;
     transition: background-color 200ms ease;
 
-    &--done { background: $leaf; color: #111; }
+    &--done { background: t(status-success, $leaf); color: #111; }
 }
 
 .mmobile-checklist-head-text {
@@ -88,12 +88,12 @@
 
     &-fill {
         height: 100%;
-        background: $indigo;
+        background: t(node-checklist, $indigo);
         transform-origin: left;
         transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms ease;
     }
 
-    &--done &-fill { background: $leaf; }
+    &--done &-fill { background: t(status-success, $leaf); }
 }
 
 // The list scrolls inside the card; the add row stays pinned at its foot.
@@ -124,7 +124,7 @@
 // One row: handle · (checkbox + text: one target that ticks it) · ↗ · ⋯.
 // Visuals stay small; the hit areas are 44px through padding.
 .mmobile-checklist-sheet-item {
-    border-bottom: 1px solid $neutral;
+    border-bottom: 1px solid t(panel, $neutral);
     font-size: 1rem;
 
     &:last-child { border-bottom: none; }
@@ -134,7 +134,7 @@
         opacity: 0.4;
     }
 
-    &--menu { background: rgba($indigo, 0.06); }
+    &--menu { @include t-alpha(background, node-checklist, $indigo, 0.06); }
 }
 
 .mmobile-checklist-sheet-row {
@@ -171,22 +171,22 @@
     padding: 12px 4px;
     cursor: pointer;
 
-    &:active { background: rgba($indigo, 0.08); }
+    &:active { @include t-alpha(background, node-checklist, $indigo, 0.08); }
 }
 
 .mmobile-checklist-sheet-cb {
     flex-shrink: 0;
     width: 22px;
     height: 22px;
-    border: 2px solid $indigo;
+    border: 2px solid t(node-checklist, $indigo);
     border-radius: 5px;
     position: relative;
     background: transparent;
     box-sizing: border-box;
 
     .mmobile-checklist-sheet-item--checked & {
-        background: $indigo;
-        border-color: $indigo;
+        background: t(node-checklist, $indigo);
+        border-color: t(node-checklist, $indigo);
 
         &::after {
             content: '';
@@ -209,7 +209,7 @@
     word-break: break-word;
 
     &--linked {
-        color: $indigo;
+        color: t(node-checklist, $indigo);
         text-decoration: underline;
         text-decoration-thickness: 1px;
     }
@@ -224,7 +224,7 @@
     font-family: inherit;
     font-size: 1rem;
     line-height: inherit;
-    border-bottom: 1.5px solid $indigo;
+    border-bottom: 1.5px solid t(node-checklist, $indigo);
     padding-bottom: 1px;
     word-break: break-word;
     resize: none;
@@ -248,7 +248,7 @@
 }
 
 .mmobile-checklist-sheet-open {
-    color: $indigo;
+    color: t(node-checklist, $indigo);
     font-size: 1.1rem;
     font-weight: 700;
 }
@@ -290,7 +290,7 @@
     &:active { translate: 0 2px; box-shadow: none; }
 
     &--delete {
-        background: $danger;
+        background: t(btn-danger, $danger);
         color: #fff;
         img { filter: invert(1); }
     }
@@ -312,10 +312,10 @@
     padding: 7px 10px;
     border-radius: 6px;
     border: $neo-m-detail-border;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     min-width: 0;
 
-    &:focus { outline: none; border-color: $indigo; }
+    &:focus { outline: none; border-color: t(node-checklist, $indigo); }
 }
 
 .mmobile-checklist-sheet-item-link-clear {
@@ -347,7 +347,7 @@
     gap: 10px;
     margin: 0;
     padding: 10px;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     border-top: 2px solid #111;
 }
 
@@ -366,7 +366,7 @@
     transition: box-shadow 160ms ease;
 
     &::placeholder { color: #111; opacity: 0.45; }
-    &:focus { outline: none; box-shadow: 0 0 0 3px $indigo; }
+    &:focus { outline: none; box-shadow: 0 0 0 3px t(node-checklist, $indigo); }
 }
 
 .mmobile-checklist-sheet-add-btn {
@@ -378,7 +378,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: $indigo;
+    background: t(node-checklist, $indigo);
     color: white;
     font-size: 1.5rem;
     font-weight: 700;

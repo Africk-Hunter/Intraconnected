@@ -10,7 +10,8 @@ import Trash from '../components/Trash';
 import LastIdea from '../components/LastIdea';
 
 // 3rd Party Libraries
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { BillingPlan } from '../../shared/billing';
 import type { Modifier, CollisionDetection, DragEndEvent, DragOverEvent } from '@dnd-kit/core';
 import { DndContext, PointerSensor, useSensor, useSensors, rectIntersection } from '@dnd-kit/core';
 
@@ -63,6 +64,11 @@ import { checkAndMarkImplementedFeatures } from '../utilities/firebase/featureRe
 import { consumePendingCheckoutPlan } from '../utilities/billing/billing';
 import { useBillingPlanSync } from '../utilities/billing/useBillingPlanSync';
 import { useNodeCountResync } from '../utilities/billing/useNodeCountResync';
+import { applyTheme, loadSavedTheme, rememberThemeEntitlement } from '../utilities/theme';
+import { syncActiveTheme } from '../utilities/firebase/themeSync';
+import ThemeBackgroundHost from '../components/ThemeBackground';
+import ThemePanel from '../components/ThemePanel';
+import { usePurchaseMode } from '../utilities/billing/purchaseMode';
 import { useIsMobileUI } from '../utilities/useIsMobileUI';
 import { syncOnLoad, startSyncListener } from '../utilities/sync/syncEngine';
 import { warmVaultMeta } from '../utilities/vault/vaultService';
@@ -115,6 +121,7 @@ function Idea() {
     const [isLoadingIdeas, setIsLoadingIdeas] = useState(true);
     const [showHelp, setShowHelp] = useState(false);
     const [showPatchNotes, setShowPatchNotes] = useState(false);
+    const [showTheme, setShowTheme] = useState(false);
     const [showMindMap, setShowMindMap] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
     const [mapReveal, setMapReveal] = useState<{ id: number; tick: number } | null>(null);
@@ -185,22 +192,53 @@ function Idea() {
             markPatchNotesSeen(auth.currentUser?.uid, _changelogEntries);
             setIsNewPatchNotes(false);
             setShowHelp(false);
+            setShowTheme(false);
         }
         setShowPatchNotes(prev => !prev);
     }
 
     function handleToggleHelp() {
         setShowPatchNotes(false);
+        setShowTheme(false);
         setShowHelp(prev => !prev);
+    }
+
+    // Help, patch notes and the theme panel share the space left of the right sidebar: one at a time.
+    function handleToggleTheme() {
+        setShowHelp(false);
+        setShowPatchNotes(false);
+        setShowTheme(prev => !prev);
     }
 
     const { rootId, setRootId, rootName, setRootName, newIdeaSwitch, rootIdStack, ideas, setIdeas, setRenameModalOpen, setCardMenu, nodesVisible, navigateToId, billingPlan, setBillingPlan, setCheckoutPlan, celebrationPlan, setCelebrationPlan, setNewIdeaSwitch, checklistModalId, setChecklistModalId, setCreationModalOpen, setUpgradeModalOpen, setUpgradeModalReason } = useIdeaContext();
 
-    useBillingPlanSync(setBillingPlan);
+    // billingPlan starts at 'free' before Firestore answers; a theme applied
+    // early (Index.tsx) must survive until the real plan is known.
+    const [planResolved, setPlanResolved] = useState(false);
+    const onBillingPlan = useCallback((plan: BillingPlan) => {
+        setBillingPlan(plan);
+        setPlanResolved(true);
+    }, [setBillingPlan]);
+    useBillingPlanSync(onBillingPlan);
+    useEffect(() => {
+        if (!planResolved) return;
+        const entitled = billingPlan === 'annual' || billingPlan === 'lifetime';
+        rememberThemeEntitlement(entitled);
+        applyTheme(entitled ? loadSavedTheme() : null);
+        if (!entitled) return;
+        // The theme follows the account: adopt a newer one chosen on another device, now and whenever the tab comes back.
+        const pull = () => { if (document.visibilityState === 'visible') void syncActiveTheme(); };
+        pull();
+        document.addEventListener('visibilitychange', pull);
+        return () => document.removeEventListener('visibilitychange', pull);
+    }, [billingPlan, planResolved]);
     useIdleSignOut();
     useNodeCountResync(billingPlan, serverSynced);
     useVaultLabels(newIdeaSwitch, setNewIdeaSwitch);
     const isMobileUI = useIsMobileUI();
+    // Free accounts get the palette button too (it explains the feature), except in the app, which shows no upgrade prompts.
+    const purchaseMode = usePurchaseMode();
+    const themeAvailable = billingPlan === 'annual' || billingPlan === 'lifetime' || purchaseMode !== 'none';
     const { requestDelete, moveIdea, copyChildren } = useIdeaActions();
 
     // Annual or Lifetime granted without a checkout (Developer Testing):
@@ -659,9 +697,10 @@ function Idea() {
                     </section>
 
                 <section className="right">
-                    <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} />
+                    <Navbar side="right" setShowHelp={handleToggleHelp} showHelp={showHelp} setShowPatchNotes={handleTogglePatchNotes} showPatchNotes={showPatchNotes} showMindMap={showMindMap} isNewPatchNotes={isNewPatchNotes} hasNewHelp={hasNewHelp} onSearch={() => setShowSearch(true)} onToggleTheme={themeAvailable ? handleToggleTheme : undefined} showTheme={showTheme} />
                     <Help showHelp={showHelp} onClose={() => setShowHelp(false)} onSeenChange={() => setHasNewHelp(firstUnseenHelpScreen(auth.currentUser?.uid) >= 0)} />
                     <PatchNotes showPatchNotes={showPatchNotes} />
+                    {themeAvailable && <ThemePanel open={showTheme} onClose={() => setShowTheme(false)} />}
                 </section>
             </section>
             {isMobileUI && <MobileMindMap />}
@@ -696,6 +735,7 @@ function Idea() {
             <OnboardingModal />
             {!isMobileUI && <VaultNoteModal />}
             <ProfileModal />
+            <ThemeBackgroundHost />
             <SessionEndedModal />
             <UpgradeModal />
             <LazyCheckoutModal />

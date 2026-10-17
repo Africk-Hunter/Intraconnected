@@ -12,7 +12,7 @@
     gap: 1rem;
     max-width: min(90vw, 40rem);
     padding: 0.7rem 0.9rem 0.7rem 1.2rem;
-    background: $background-color;
+    background: t(toast-bg, $background-color);
     border: $neo-card-border;
     border-radius: $neo-card-radius;
     box-shadow: $neo-card-shadow;
@@ -41,7 +41,7 @@
     padding: 0.3rem 1rem;
     font-size: 1.15rem;
     font-weight: 700;
-    background: $link;
+    background: t(btn-secondary, $link);
     color: #111;
 }
 

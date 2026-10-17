@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useSheetSwipeDown } from './useSheetSwipeDown';
 import MoreDotsIcon from './MoreDotsIcon';
 import HelpTreeAnim from '../helpMenus/HelpTreeAnim';
+import ColorName from '../helpMenus/ColorName';
 
 interface Props {
     onClose: () => void;
@@ -45,15 +46,15 @@ const SCREENS: React.FC[] = [
             <p className="mmobile-help-subtext">What each color means</p>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--leaf">Leaf</span>
-                <p className="mmobile-help-text">Green ideas have nothing inside them yet. Tap one to open it and start adding related ideas.</p>
+                <p className="mmobile-help-text"><ColorName token="nodeLeaf" cap /> ideas have nothing inside them yet. Tap one to open it and start adding related ideas.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--parent">Parent</span>
-                <p className="mmobile-help-text">Blue ideas already have other ideas inside them. Tap one to open it and see what's in there.</p>
+                <p className="mmobile-help-text"><ColorName token="nodeParent" cap /> ideas already have other ideas inside them. Tap one to open it and see what's in there.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--link">Link</span>
-                <p className="mmobile-help-text">Yellow ideas open a web page when you tap them. A link can't hold other ideas.</p>
+                <p className="mmobile-help-text"><ColorName token="nodeLink" cap /> ideas open a web page when you tap them. A link can't hold other ideas.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--checklist-node">
                     <span className="mmobile-checklist-inline-cb mmobile-checklist-inline-cb--checked" />
                 </span>
-                <p className="mmobile-help-text">Indigo cards are to-do lists. Tap one to see its items and tick them off, or tap Full view to edit them. A checklist can't hold other ideas.</p>
+                <p className="mmobile-help-text"><ColorName token="nodeChecklist" cap /> cards are to-do lists. Tap one to see its items and tick them off, or tap Full view to edit them. A checklist can't hold other ideas.</p>
             </div>
         </>
     ),
@@ -68,7 +69,7 @@ const SCREENS: React.FC[] = [
             </div>
             <div className="mmobile-help-grid">
                 <span className="mmobile-help-badge mmobile-help-badge--p1">P1</span>
-                <p className="mmobile-help-text">Mark how important an idea is with its <strong>ribbon</strong>. Tap it to switch between <strong>High (red)</strong>, <strong>Medium (orange)</strong>, <strong>Low (yellow)</strong> and none. The more important, the longer the ribbon.</p>
+                <p className="mmobile-help-text">Mark how important an idea is with its <strong>ribbon</strong>. Tap it to switch between <strong>High (<ColorName token="prioHigh" />)</strong>, <strong>Medium (<ColorName token="prioMedium" />)</strong>, <strong>Low (<ColorName token="prioLow" />)</strong> and none. The more important, the longer the ribbon.</p>
                 <span className="mmobile-help-badge mmobile-help-badge--sort"><img src="/images/sort.svg" className="mmobile-help-badge-icon" alt="Sort" /></span>
                 <p className="mmobile-help-text">Tap <strong>Sort</strong> to put the most important ideas first. Tap again to go back to oldest first.</p>
             </div>

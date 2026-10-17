@@ -27,7 +27,7 @@ $cl-base: 200ms;
 .cl-item {
     --cl-fg: currentColor;
     --cl-hover: rgba(0, 0, 0, 0.08);
-    --cl-line: #{$indigo};
+    --cl-line: #{t(node-checklist, $indigo)};
     --cl-icon: none;
     --cl-handle: none;
 
@@ -49,28 +49,28 @@ $cl-base: 200ms;
     }
 
     &--modal {
-        --cl-hover: #{rgba($indigo, 0.1)};
+        @include t-alpha(--cl-hover, node-checklist, $indigo, 0.1);
         gap: 0.6rem;
         padding: 0.6rem 0.75rem 0.6rem 0.4rem;
-        border-bottom: 1.5px solid $neutral;
+        border-bottom: 1.5px solid t(panel, $neutral);
         font-size: 1.1rem;
         line-height: 1.35;
         transition: background-color $cl-fast ease;
 
         &:last-child { border-bottom: none; }
-        &:hover { background: rgba($indigo, 0.05); }
+        &:hover { @include t-alpha(background, node-checklist, $indigo, 0.05); }
 
         // Indigo box like the card; fills in when ticked.
         .cl-cb {
             padding-top: 1px;
-            color: $indigo;
+            color: t(node-checklist, $indigo);
 
             svg { width: 1.45rem; height: 1.45rem; }
             rect { transition: fill $cl-fast ease; }
         }
 
         &.cl-item--checked .cl-cb {
-            rect { fill: $indigo; }
+            rect { fill: t(node-checklist, $indigo); }
             path { stroke: white; }
         }
 
@@ -134,8 +134,8 @@ $cl-base: 200ms;
         cursor: pointer;
     }
 
-    .cl-item--card &--linked { color: color.adjust($sky, $lightness: 25%); }
-    .cl-item--modal &--linked { color: $indigo; }
+    .cl-item--card &--linked { @include t-shift(color, active, $sky, 25%); }
+    .cl-item--modal &--linked { color: t(node-checklist, $indigo); }
 
     .cl-item--checked & {
         text-decoration-color: currentColor;
@@ -255,7 +255,7 @@ $cl-base: 200ms;
         @media (min-width: $large-desktop) { font-size: 1.1rem; }
     }
 
-    &--done &-fill { background: $leaf; }
+    &--done &-fill { background: t(status-success, $leaf); }
 }
 
 @media (prefers-reduced-motion: reduce) {

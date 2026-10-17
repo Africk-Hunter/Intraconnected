@@ -45,7 +45,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 // the body. The body shows a recessed "secret slot" and a live lock chip.
 
 .ideaNode.ideaNode--vault {
-    --card-bg: #{$vault};
+    --card-bg: #{t(node-vault, $vault)};
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -154,7 +154,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     height: 2.75rem;
     padding: 0 0.9rem;
     overflow: hidden;
-    background: $vault-deep;
+    background: t(node-vault-slot, $vault-deep);
     border: 2px solid black;
     border-radius: $neo-detail-radius;
     box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.4);
@@ -188,7 +188,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     align-items: center;
     gap: 0.35rem;
     padding: 0.2rem 0.65rem 0.2rem 0.5rem;
-    background: $link;
+    background: t(highlight, $link);
     color: black;
     border: $neo-detail-border;
     border-radius: 999px;
@@ -199,7 +199,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
     .vault-lock { width: 1.15em; height: 1.15em; }
 
-    .ideaNode--vault-open & { background: $leaf; }
+    .ideaNode--vault-open & { background: t(btn-primary, $leaf); }
 
     @media (min-width: $large-desktop) { font-size: 1.05rem; }
 }
@@ -248,13 +248,13 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     place-items: center;
     width: 3.5rem;
     height: 3.5rem;
-    background: $vault;
+    background: t(node-vault, $vault);
     color: $vault-ink;
     border: $neo-detail-border;
     border-radius: $neo-card-radius;
     box-shadow: $neo-detail-shadow;
 
-    &--danger { background: $danger; }
+    &--danger { background: t(btn-danger, $danger); }
 
     @media (min-width: $large-desktop) {
         width: 4.5rem;
@@ -303,7 +303,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     align-items: center;
     gap: 0.35rem;
     padding: 0.45rem 0.85rem;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     font-family: inherit;
     font-size: 1rem;
     font-weight: 700;
@@ -320,7 +320,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     display: flex;
     flex-direction: column;
     margin: 0;
-    background: $neutral;
+    background: t(panel, $neutral);
     border: $neo-detail-border;
     border-radius: 12px;
     box-shadow: 4px 4px 0 2px black;
@@ -329,7 +329,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
         gap: 0.9rem;
         padding: 1.1rem;
 
-        .vault-input { background: $background-color; }
+        .vault-input { background: t(surface, $background-color); }
         .vault-text-btn { align-self: flex-start; }
     }
 
@@ -386,7 +386,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     min-height: 2.75rem;
     padding: 0.45rem 0.9rem;
     box-sizing: border-box;
-    background: $vault-deep;
+    background: t(node-vault-slot, $vault-deep);
     color: $vault-ink;
     border: 2px solid black;
     border-radius: $neo-detail-radius;
@@ -434,7 +434,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     max-height: 12rem;
     margin: 0;
     overflow: auto;
-    @include vault-scrollbar($vault-deep);
+    @include vault-scrollbar(t(node-vault-slot, $vault-deep));
     font-family: $note-font;
     font-size: 1rem;
     line-height: 1.45;
@@ -464,7 +464,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     min-height: 2.4rem;
     padding: 0.3rem 0.75rem;
     box-sizing: border-box;
-    background: $background-color;
+    background: t(surface, $background-color);
     color: black;
     font-family: inherit;
     font-size: 0.95rem;
@@ -472,7 +472,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     // Keeps .neobrutal-button's press and adds the "Copied" colour change.
     transition: box-shadow 0.3s ease, translate 0.3s ease, background-color 160ms ease;
 
-    &--done { background: $leaf; }
+    &--done { background: t(status-success, $leaf); }
     &:focus-visible { @include focus-ring; }
 
     @media (pointer: coarse) { min-height: 2.75rem; }
@@ -499,11 +499,11 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     font-family: inherit;
     font-size: 1.5rem;
 
-    &--cancel { background: $link; }
-    &--edit { background: $neutral; }
-    &--back { background: $back; }
-    &--go { background: $leaf; }
-    &--danger { background: $danger; }
+    &--cancel { background: t(btn-secondary, $link); }
+    &--edit { background: t(panel, $neutral); }
+    &--back { background: t(btn-cancel, $back); }
+    &--go { background: t(btn-primary, $leaf); }
+    &--danger { background: t(btn-danger, $danger); }
 
     &:disabled {
         opacity: 0.4;
@@ -520,7 +520,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 // Inside the phone's bottom sheet (already $neutral): lift the field card off
 // it and use the sheet's button size.
 .mmobile-sheet {
-    .vault-sheet { background: $background-color; }
+    .vault-sheet { background: t(mobile-bg, $background-color); }
     .vault-sheet--form .vault-input { background: #fff; }
     // Same typeface as the idea and note fields; the secret is mono only on the card.
     .vault-secret-input { font-family: inherit; }
@@ -613,7 +613,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     align-items: center;
     gap: 0.6rem;
     padding: 1.5rem 1.25rem;
-    background: $neutral;
+    background: t(panel, $neutral);
     border: $neo-detail-border;
     border-radius: 12px;
     box-shadow: 4px 4px 0 black;
@@ -634,7 +634,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     justify-content: center;
     width: 3.4rem;
     height: 3.4rem;
-    background: $vault;
+    background: t(node-vault, $vault);
     color: $vault-ink;
     border: $neo-detail-border;
     border-radius: 50%;
@@ -674,7 +674,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     margin: 0;
     font-size: 0.95rem;
     font-weight: 600;
-    color: $danger;
+    color: t(status-error, $danger);
 }
 
 .vault-label {
@@ -693,7 +693,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     padding: 0.7rem 1rem;
     font-size: 1rem;
     font-family: inherit;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     outline: none;
 
     @media (max-width: $mobile) {
@@ -706,7 +706,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 .vault-secret-input {
     resize: vertical;
     font-family: $note-font;
-    @include vault-scrollbar($neutral);
+    @include vault-scrollbar(t(input-bg, $neutral));
 }
 
 .vault-field {
@@ -745,10 +745,10 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     font-size: 1rem;
     font-weight: 600;
     padding: 0.6rem 1.2rem;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     cursor: pointer;
 
-    &--primary { background: $leaf; }
+    &--primary { background: t(btn-primary, $leaf); }
 
     &:disabled {
         opacity: 0.5;
@@ -774,7 +774,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 .vault-code {
     margin: 0;
     padding: 0.8rem 1rem;
-    background: $neutral;
+    background: t(chip-bg, $neutral);
     border: $neo-detail-border;
     border-radius: 8px;
     font-family: $note-font;
@@ -809,7 +809,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
-    background: $vault;
+    background: t(node-vault, $vault);
     color: $vault-ink;
     border: 2px solid black;
     border-radius: 12px;
@@ -837,7 +837,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     box-sizing: border-box;
     width: 100%;
     color: $vault-ink;
-    caret-color: $link;
+    caret-color: t(highlight, $link);
 
     &::placeholder { color: rgba(255, 255, 255, 0.5); }
 }
@@ -849,7 +849,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     box-shadow: 0 2px 0 transparent;
     transition: box-shadow 150ms ease;
 
-    &:focus { box-shadow: 0 2px 0 $link; }
+    &:focus { box-shadow: 0 2px 0 t(highlight, $link); }
 }
 
 .vault-ccard-name,
@@ -884,13 +884,13 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     margin: 0;
     padding: 0.55rem 0.9rem;
     box-sizing: border-box;
-    background: $vault-deep;
+    background: t(node-vault-slot, $vault-deep);
     border: 2px solid black;
     border-radius: $neo-detail-radius;
     box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.4);
     transition: border-color 150ms ease;
 
-    &:focus-within { border-color: $link; }
+    &:focus-within { border-color: t(highlight, $link); }
 
     // Each state (locked → open) mounts a new slot: it eases in while the chip
     // turns green and the shackle swings open.
@@ -941,7 +941,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
         margin-left: auto;
         color: $vault-ink;
 
-        &:focus-visible { outline-color: $link; }
+        &:focus-visible { outline-color: t(highlight, $link); }
     }
 
     @media (min-width: $large-desktop) {
@@ -949,13 +949,13 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 }
 
-.vault-ccard--open .vault-chip { background: $leaf; }
+.vault-ccard--open .vault-chip { background: t(btn-primary, $leaf); }
 
 .vault-ccard-error {
     margin: 0;
     font-size: 0.95rem;
     font-weight: 700;
-    color: $link;
+    color: t(highlight, $link);
 
     @media (min-width: $large-desktop) { font-size: 1.15rem; }
 }
@@ -968,14 +968,14 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
 // ── Elsewhere: create tabs, phone rows, profile tab ─────────────────────────
 
-.creation-tab--vault.creation-tab--active { background: $vault; color: $vault-ink; }
+.creation-tab--vault.creation-tab--active { background: t(node-vault, $vault); color: $vault-ink; }
 
-.mmobile-create-tab--vault.mmobile-create-tab--active { background: $vault; color: $vault-ink; }
+.mmobile-create-tab--vault.mmobile-create-tab--active { background: t(node-vault, $vault); color: $vault-ink; }
 
 .mmobile-node--vault .mmobile-node-more { color: #fff; }
 
 .mmobile-node--vault {
-    background: $vault;
+    background: t(node-vault, $vault);
     color: $vault-ink;
 
     .mmobile-node-vault {
@@ -1009,7 +1009,7 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
         height: 2.25rem;
         padding: 0 0.8rem;
         overflow: hidden;
-        background: $vault-deep;
+        background: t(node-vault-slot, $vault-deep);
         border: 2px solid black;
         border-radius: $neo-detail-radius;
         box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.4);
@@ -1024,4 +1024,4 @@ $vault-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 }
 
-.profile-tab--vault::before { background-color: $vault; }
+.profile-tab--vault::before { background-color: t(node-vault, $vault); }

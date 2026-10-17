@@ -80,7 +80,7 @@ div.largeLogo:not(.brandLogo){
 .input{
     width: 26rem;
     height: 2.5rem;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     padding: 1rem;
     font-size: 1.6rem;
 
@@ -99,7 +99,7 @@ div.largeLogo:not(.brandLogo){
     height: 3.5rem;
     font-size: 1.875rem;
     margin-top: 3.5rem;
-    background: $leaf;
+    background: t(btn-primary, $leaf);
     user-select: none;
     &.login{
         transform: translateY(-8.4rem);
@@ -141,7 +141,7 @@ div.largeLogo:not(.brandLogo){
 
 .switchAuthButton{
     text-decoration: underline;
-    color: $neo-green;
+    color: t(text-link, $neo-green);
     cursor: pointer;
 }
 
@@ -185,7 +185,7 @@ div.largeLogo:not(.brandLogo){
 
 .forgotPassword {
     font-size: 1.1rem;
-    color: $neo-green;
+    color: t(text-link, $neo-green);
     text-decoration: underline;
     cursor: pointer;
     background: none;
@@ -216,7 +216,7 @@ div.largeLogo:not(.brandLogo){
     font-weight: 700;
     line-height: 1;
     padding: 0.35rem 0.8rem;
-    background: $link;
+    background: t(highlight, $link);
     color: black;
     text-decoration: none;
     white-space: nowrap;
@@ -282,7 +282,7 @@ div.largeLogo:not(.brandLogo){
     display: flex;
     align-items: center;
     justify-content: center;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     border-radius: $neo-detail-radius;
     border: $neo-detail-border;
     box-shadow: 2px 2px 0 1px black;
@@ -292,7 +292,7 @@ div.largeLogo:not(.brandLogo){
 }
 
 .rememberMeInput:checked + .rememberMeBox {
-    background: $leaf;
+    background: t(status-success, $leaf);
     box-shadow: 0px 0px 0 1px black;
     translate: 2px 2px;
 
@@ -303,7 +303,7 @@ div.largeLogo:not(.brandLogo){
 
 .rememberMeInput:focus-visible + .rememberMeBox {
     box-shadow: $neo-card-shadow;
-    background: $sky;
+    background: t(focus-ring, $sky);
 }
 
 .confirmPassword {
@@ -324,7 +324,7 @@ div.largeLogo:not(.brandLogo){
 
 
 .authActionCard {
-    background: $background-color;
+    background: t(modal-bg, $background-color);
     padding: 2.5rem 2.25rem 2.25rem;
     max-width: 30rem;
     width: 90%;
@@ -378,7 +378,7 @@ div.largeLogo:not(.brandLogo){
     box-sizing: border-box;
     padding: 0.3rem 0.8rem;
     margin-bottom: 0.75rem;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     border: $neo-detail-border;
     border-radius: $neo-detail-radius;
     font-size: 1rem;
@@ -392,7 +392,7 @@ div.largeLogo:not(.brandLogo){
     box-sizing: border-box;
     margin: 0;
     padding: 0.6rem 0.9rem;
-    background: rgba($back, 0.12);
+    @include t-alpha(background, status-error, $back, 0.12);
     border: $neo-btn-border;
     border-radius: $neo-btn-radius;
     font-size: 0.95rem;
@@ -467,7 +467,7 @@ div.largeLogo:not(.brandLogo){
     transition: background-color 0.15s ease, translate 0.12s ease;
 
     &:hover {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
     }
 
     &:active {
@@ -492,7 +492,7 @@ div.largeLogo:not(.brandLogo){
     font-family: inherit;
     font-size: 1rem;
     font-weight: 600;
-    color: $neo-green;
+    color: t(text-link, $neo-green);
     text-decoration: underline;
     background: none;
     border: none;
@@ -503,7 +503,7 @@ div.largeLogo:not(.brandLogo){
 .authLearnMore {
     font-size: 1rem;
     font-weight: 600;
-    color: $neo-green;
+    color: t(text-link, $neo-green);
     text-decoration: none;
 
     &:hover {
@@ -544,7 +544,7 @@ div.largeLogo:not(.brandLogo){
 
 .legalLink {
     font-size: 1rem;
-    color: $neo-green;
+    color: t(text-link, $neo-green);
     text-decoration: underline;
 
     @media (max-width: $mobile) {
@@ -554,7 +554,7 @@ div.largeLogo:not(.brandLogo){
 
 .legalPage {
     min-height: 100vh;
-    background: $background-color;
+    background: t(page-bg, $background-color);
     font-family: "DM Sans", sans-serif;
     padding: calc(4rem + env(safe-area-inset-top, 0px)) 2rem 4rem;
 }
@@ -569,7 +569,7 @@ div.largeLogo:not(.brandLogo){
 
 .legalBack {
     align-self: flex-start;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     font-size: 1.1rem;
     padding: 0.5rem 1.25rem;
     margin-bottom: 1rem;
@@ -615,13 +615,13 @@ div.largeLogo:not(.brandLogo){
     }
 
     a {
-        color: $neo-green;
+        color: t(text-link, $neo-green);
         text-decoration: underline;
     }
 
     code {
         font-family: monospace;
-        background: $neutral;
+        background: t(chip-bg, $neutral);
         padding: 0.1em 0.4em;
         font-size: 1rem;
     }
@@ -681,12 +681,12 @@ div.largeLogo:not(.brandLogo){
     }
 
     &.bad {
-        background: $back;
+        background: t(status-error, $back);
         opacity: 1;
     }
 
     &.good {
-        background: $leaf;
+        background: t(status-success, $leaf);
         opacity: 1;
     }
 }

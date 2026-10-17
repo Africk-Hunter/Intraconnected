@@ -261,6 +261,9 @@ Plain TypeScript imported by both `src/` and `netlify/functions/` (functions can
 ### No emojis, ever
 The site must NEVER contain emojis (UI, copy, titles, toasts, aria labels shown on screen). Icons are hand-made inline SVGs (`currentColor` stroke/fill so they follow the theme), never emoji characters and never an icon font. Plain typographic glyphs already in use (⋯ › ↗ ▾) are not emojis; anything that renders as a colour picture is.
 
+### Theming (palette button → `ThemePanel`, premium)
+Edited in `ThemePanel` (desktop: docked beside the right sidebar, no backdrop, so the app is the preview; renders `CustomizationSettings`) or, on the touch UI, `MobileThemeSheet` (Profile → Customization closes Profile and opens it: a low sheet with an undimmed scrim, pages instead of one scroll, the color picker as a page via `ColorPickerBody layout="compact"`). Both use `useThemeEditor()` for state and actions and `customizationParts.tsx` for shared pieces; `EditorRow.touch`/`EditorSection.touchTitle` hold phone wording. Colors users can change are roles in the `TOKENS` registry (`utilities/theme.ts`), not raw Sass variables. In a stylesheet write `t(node-leaf, $leaf)` (`variables.scss`) = `var(--t-node-leaf, stock)`; in a custom property value `#{t(...)}`; for a tint or see-through version use `@include t-shift(...)` / `t-alpha(...)`, never `lighten()`/`rgba()` on a themed color (they cannot read a CSS variable). Pick the role by what the element is, not by its color (`$leaf` is a leaf node, a confirm button or a success state). A new role is one `tok(...)` line plus a place in `EDITOR_SECTIONS` (the editor's groups, most noticed first; a test enforces it); a net head (`net === key`) recolors its members, which sit under it as "Fine-tune" unless listed as a row of their own. Keys are saved in themes: never rename. `theme.test.ts` fails on a `t()` name missing from the registry. Role list: `programmer-docs/artifacts/theme-role-map.md`. Not themed yet: `#111` text/borders/shadows, landing, pricing, celebration modal.
+
 ### Modals
 ```tsx
 <section className="overlay">
@@ -272,7 +275,7 @@ The site must NEVER contain emojis (UI, copy, titles, toasts, aria labels shown 
   </div>
 </section>
 ```
-`cancel` → yellow (`$link`), `continue` → green (`$leaf`), `delete` → red (`$danger`).
+`cancel` → orange-red (`$back`; the confirm-modal variant is yellow `$link`), `continue` → green (`$leaf`), `delete` → red (`$danger`).
 Add `confirmModal` to `.modal` for modals without a textarea (fixes `min-height`).
 
 ### Rename Flow (Desktop)

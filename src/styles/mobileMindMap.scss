@@ -13,13 +13,18 @@
         flex-direction: column;
         position: fixed;
         inset: 0;
-        background: $background-color;
+        background: t(mobile-bg, $background-color);
         background-size: 40px 40px;
         background-image:
             linear-gradient(rgba(65, 188, 40, 0.2) 1px, transparent 1px),
             linear-gradient(to right, rgba(65, 188, 40, 0.2) 1px, transparent 1px);
         overflow: hidden;
         z-index: 10;
+
+        // A theme background (ThemeBackground.tsx) sits behind the page; let it show through.
+        html.has-theme-bg & {
+            background: none;
+        }
     }
 }
 
@@ -48,7 +53,7 @@
     align-items: center;
     gap: 6px;
     padding: 0 14px;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     border: 3px solid #111;
     border-radius: 10px;
     box-shadow: 0 3px 0 #111;
@@ -129,11 +134,11 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    &:active { background: color.adjust($sky, $lightness: 35%); }
+    &:active { @include t-shift(background, active, $sky, 35%); }
 
     &--current {
         font-weight: 700;
-        background: color.adjust($roots, $lightness: 30%);
+        @include t-shift(background, node-root, $roots, 30%);
         cursor: default;
     }
 }
@@ -147,7 +152,7 @@
     flex-shrink: 0;
     width: 42px;
     height: 42px;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     border: 3px solid #111;
     border-radius: 10px;
     box-shadow: 0 3px 0 #111;
@@ -172,7 +177,7 @@
     flex-shrink: 0;
     width: 42px;
     height: 42px;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     border: 3px solid #111;
     border-radius: 10px;
     box-shadow: 0 3px 0 #111;
@@ -197,7 +202,7 @@
     }
 
     &--active {
-        background: $sky;
+        background: t(nav-active, $sky);
         box-shadow: 0 0px 0 #111;
         translate: 0 3px;
     }
@@ -210,7 +215,7 @@
         right: -6px;
         width: 12px;
         height: 12px;
-        background: $danger;
+        background: t(unread-dot, $danger);
         border: 2px solid #111;
         border-radius: 50%;
     }
@@ -219,7 +224,7 @@
 .mmobile-header {
     flex-shrink: 0;
     margin: 0 16px 12px;
-    background: $roots;
+    background: t(node-root, $roots);
     border: 3px solid #111;
     transition: opacity 0.06s ease;
     border-radius: 14px;
@@ -315,7 +320,7 @@
     font-size: 0.75rem;
     font-weight: 700;
     color: #111;
-    background: $deep-yellow;
+    background: t(accent-gold, $deep-yellow);
     border: $neo-m-detail-border;
     border-radius: 6px;
     box-shadow: $neo-m-detail-shadow;
@@ -347,8 +352,12 @@
     touch-action: pan-y;
     overscroll-behavior: none;
     transition: opacity 0.06s ease;
-    padding: 8px 16px 12px;
+    // The bottom bar floats over the list (see .mmobile-fab-area), so rows
+    // show past its rounded corners; this keeps the last row scrollable clear of it.
+    padding: 8px 16px calc(12px + var(--mmobile-bar-space, 108px) + env(safe-area-inset-bottom, 0px));
     scrollbar-width: none;
+    // Ends above the bar's bottom corner radius, so rows never show in the corner cutouts.
+    margin-bottom: calc(max(10px, env(safe-area-inset-bottom, 10px)) + 22px);
 
     &::-webkit-scrollbar {
         display: none;
@@ -383,11 +392,11 @@
     z-index: 2; // stays above swipe action buttons
     transition: opacity 0.18s ease;
 
-    &--parent    { background: $sky; }
-    &--leaf      { background: $leaf; }
-    &--link      { background: $link; }
-    &--note      { background: $neo-green; color: white; align-items: flex-start; }
-    &--checklist { background: $indigo; color: white; }
+    &--parent    { background: t(node-parent, $sky); }
+    &--leaf      { background: t(node-leaf, $leaf); }
+    &--link      { background: t(node-link, $link); }
+    &--note      { background: t(node-note, $neo-green); color: white; align-items: flex-start; }
+    &--checklist { background: t(node-checklist, $indigo); color: white; }
 
     &--selectable {
         outline: 3px dashed #111;
@@ -466,9 +475,9 @@
             box-shadow: none;
         }
     }
-    &--p1 { height: 3.2rem; &::after { height: 2.5rem;  background: #D62000; } }
-    &--p2 { height: 2.45rem; &::after { height: 1.75rem; background: #E07800; } }
-    &--p3 { height: 1.8rem; &::after { height: 1.1rem;  background: #C8A200; } }
+    &--p1 { height: 3.2rem; &::after { height: 2.5rem;  background: t(prio-high, #D62000); } }
+    &--p2 { height: 2.45rem; &::after { height: 1.75rem; background: t(prio-medium, #E07800); } }
+    &--p3 { height: 1.8rem; &::after { height: 1.1rem;  background: t(prio-low, #C8A200); } }
 
     &--animating {
         animation: mobile-ribbon-drop 0.18s ease-out;
@@ -593,15 +602,17 @@
 }
 
 .mmobile-fab-area {
-    position: relative;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 32;
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin: 0 16px max(10px, env(safe-area-inset-bottom, 10px));
     padding: 12px 16px;
-    background: $neutral;
+    background: t(panel, $neutral);
     border: 3px solid #111;
     border-radius: calc(20px + env(safe-area-inset-bottom, 0px) * 0.35);
     box-shadow: 0 5px 0 #111;
@@ -702,7 +713,7 @@
 .mmobile-patchnotes-tag {
     flex-shrink: 0;
     padding: 2px 8px;
-    background: $sky;
+    background: t(active, $sky);
     border: 2px solid #111;
     border-radius: 4px;
     font-size: 0.75rem;
@@ -735,7 +746,7 @@
 .mmobile-patchnotes-recommend-btn {
     flex-shrink: 0;
     padding: 4px 10px;
-    background: $link;
+    background: t(btn-secondary, $link);
     border: $neo-m-detail-border;
     border-radius: 8px;
     font-size: 0.8rem;
@@ -753,7 +764,7 @@
 }
 
 .mmobile-patchnotes-recommend-btn.mmobile-patchnotes-bug-btn {
-    background: $danger;
+    background: t(btn-danger, $danger);
     color: #fff;
     display: inline-flex;
     align-items: center;
@@ -776,13 +787,13 @@
     font-weight: 500;
     margin: 0;
 
-    &--error { color: $danger; }
-    &--success { color: $neo-green; }
+    &--error { color: t(status-error, $danger); }
+    &--success { color: t(node-note, $neo-green); }
 }
 
 .mmobile-home-btn {
     @extend %mmobile-btn;
-    background: $burnt-orange;
+    background: t(btn-home, $burnt-orange);
     filter: grayscale(0) opacity(1);
     transition: filter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease, translate 0.12s ease;
     img { width: 28px; height: 28px; }
@@ -802,14 +813,14 @@
 
 .mmobile-navigate-btn {
     @extend %mmobile-btn;
-    background: $neo-pink;
+    background: t(accent-pink, $neo-pink);
     font-size: 1.9rem;
     line-height: 1;
 
     img, svg { width: 32px; height: 32px; }
 
     &--active {
-        background: $sky;
+        background: t(nav-active, $sky);
         box-shadow: 0 2px 0 #111;
         translate: 0 3px;
         color: #fff;
@@ -819,7 +830,7 @@
 
 .mmobile-fab {
     @extend %mmobile-btn;
-    background: $leaf;
+    background: t(btn-primary, $leaf);
     font-size: 2.4rem;
     font-family: inherit;
     line-height: 0;
@@ -827,7 +838,7 @@
     img { width: 28px; height: 28px; }
 
     &--active {
-        background: $sky;
+        background: t(nav-active, $sky);
         box-shadow: 0 2px 0 #111;
         translate: 0 3px;
         img { transform: scale(1.4) translateY(-4px); filter: invert(1); }
@@ -898,14 +909,14 @@
     img { width: 22px; height: 22px; filter: invert(1); }
 
     &--rename {
-        background: $sky;
+        background: t(active, $sky);
         border-right: 2px solid rgba(0, 0, 0, 0.25);
     }
     &--move {
-        background: $deep-yellow;
+        background: t(accent-gold, $deep-yellow);
         border-right: 2px solid rgba(0, 0, 0, 0.25);
     }
-    &--delete { background: $danger; }
+    &--delete { background: t(btn-swipe-delete, $danger); }
 }
 
 // ── Drag-and-drop ────────────────────────────────────────────────
@@ -970,7 +981,7 @@
     transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
 
     &--active {
-        background: $roots;
+        background: t(node-root, $roots);
         color: white;
         border-style: solid;
         border-color: #111;
@@ -1042,7 +1053,7 @@
     right: 10px;
     bottom: calc(max(10px, env(safe-area-inset-bottom, 10px)) + 102px);
     z-index: 31;
-    background: $neutral;
+    background: t(panel, $neutral);
     border: 3px solid #111;
     border-radius: calc(20px + env(safe-area-inset-bottom, 0px) * 0.35);
     padding: 16px;
@@ -1076,7 +1087,7 @@
     z-index: 2;
     margin: -16px -16px 0;
     padding: 8px 16px 0;
-    background: $neutral;
+    background: t(panel, $neutral);
     touch-action: none;
     flex-shrink: 0;
 }
@@ -1163,7 +1174,7 @@
     text-align: left;
     border: 2px solid #111;
     border-radius: 11px;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     font-family: inherit;
     font-size: 1rem;
     font-weight: 600;
@@ -1177,7 +1188,7 @@
     &--rename { background: #fff; }
     &--move   { background: #fff; }
     &--delete {
-        background: $danger;
+        background: t(btn-danger, $danger);
         color: #fff;
         .mmobile-action-icon { filter: invert(1); }
     }
@@ -1236,19 +1247,19 @@
         border: 1.5px solid #111;
         border-radius: 2px 1px 3px 3px;
     }
-    &--p1::before { background: #D62000; }
-    &--p2::before { background: #E07800; }
-    &--p3::before { background: #C8A200; }
+    &--p1::before { background: t(prio-high, #D62000); }
+    &--p2::before { background: t(prio-medium, #E07800); }
+    &--p3::before { background: t(prio-low, #C8A200); }
     &--none::before { display: none; }
 
     &--active {
         translate: 0 2px;
         box-shadow: 0 0 0 #111;
     }
-    &--p1.mmobile-priority-btn--active { background: #D62000; color: #fff; }
-    &--p2.mmobile-priority-btn--active { background: #E07800; color: #111; }
-    &--p3.mmobile-priority-btn--active { background: #C8A200; color: #111; }
-    &--none.mmobile-priority-btn--active { background: $neutral; }
+    &--p1.mmobile-priority-btn--active { background: t(prio-high, #D62000); color: #fff; }
+    &--p2.mmobile-priority-btn--active { background: t(prio-medium, #E07800); color: #111; }
+    &--p3.mmobile-priority-btn--active { background: t(prio-low, #C8A200); color: #111; }
+    &--none.mmobile-priority-btn--active { background: t(btn-neutral, $neutral); }
     &--active::before { border-color: currentColor; background: transparent; }
 }
 
@@ -1320,7 +1331,7 @@
     flex-shrink: 0;
     min-height: 44px;
     padding: 0 16px;
-    background: $link;
+    background: t(btn-secondary, $link);
     color: #111;
     border: 2px solid #fff;
     border-radius: 10px;
@@ -1368,11 +1379,11 @@
     padding: 13px 14px;
     outline: none;
     box-shadow: 0 3px 0 #111;
-    background: $neutral;
+    background: t(input-bg, $neutral);
     box-sizing: border-box;
 
     &:focus {
-        background: color.adjust($sky, $lightness: 35%);
+        @include t-shift(background, focus-ring, $sky, 35%);
     }
 
     &--grow {
@@ -1386,10 +1397,10 @@
 // A required name that was left empty when Create was tapped: stays red until
 // something is typed (the flash itself is animated from MobileMindMap).
 .mmobile-rename-input[aria-invalid='true'] {
-    border-color: $danger;
-    box-shadow: 0 3px 0 $danger;
+    border-color: t(status-error, $danger);
+    box-shadow: 0 3px 0 t(status-error, $danger);
 
-    &::placeholder { color: $danger; opacity: 0.8; }
+    &::placeholder { color: t(status-error, $danger); opacity: 0.8; }
 }
 
 .mmobile-link-input {
@@ -1417,11 +1428,11 @@
     cursor: pointer;
     box-shadow: 0 3px 0 #111;
 
-    &--cancel { background: $back; }
-    &--save   { background: $leaf; }
+    &--cancel { background: t(btn-cancel, $back); }
+    &--save   { background: t(btn-primary, $leaf); }
     // Still tappable (it flashes the missing field) but looks unavailable
     &[aria-disabled='true'] { opacity: 0.55; }
-    &--delete { background: $danger; }
+    &--delete { background: t(btn-danger, $danger); }
 }
 
 .mmobile-confirm-text {
@@ -1501,7 +1512,7 @@
     text-align: left;
     border: 2px solid #111;
     border-radius: 11px;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     box-shadow: 2px 2px 0 #111;
     color: #111;
     font-family: inherit;
@@ -1511,12 +1522,12 @@
     cursor: pointer;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
 
-    &--parent     { background: $sky; }
-    &--leaf       { background: $leaf; }
-    &--link       { background: $link; }
-    &--note       { background: $neo-green; color: white; }
-    &--checklist  { background: $indigo; color: white; }
-    &--vault      { background: $vault; color: $vault-ink; }
+    &--parent     { background: t(node-parent, $sky); }
+    &--leaf       { background: t(node-leaf, $leaf); }
+    &--link       { background: t(node-link, $link); }
+    &--note       { background: t(node-note, $neo-green); color: white; }
+    &--checklist  { background: t(node-checklist, $indigo); color: white; }
+    &--vault      { background: t(node-vault, $vault); color: $vault-ink; }
 
     &:active:not(:disabled) {
         transform: translate(2px, 2px);
@@ -1576,7 +1587,7 @@
     }
 
     &--open {
-        background: $neutral;
+        background: t(hover-bg, $neutral);
         transform: translate(2px, 2px);
         box-shadow: 0 0 0 #111;
 
@@ -1603,7 +1614,7 @@
 
 // Mobile checklist node — inline accordion
 .mmobile-node--checklist {
-    background: $indigo;
+    background: t(node-checklist, $indigo);
     .mmobile-node-title { color: white; }
     .mmobile-node-count { color: rgba(255, 255, 255, 0.65); }
     .mmobile-node-arrow { color: white; }
@@ -1769,7 +1780,7 @@
             top: 50%;
             width: 4px;
             height: 8px;
-            border: 2px solid $indigo;
+            border: 2px solid t(node-checklist, $indigo);
             border-top: none;
             border-left: none;
             transform: translate(-50%, -60%) rotate(45deg);
@@ -1782,7 +1793,7 @@
     word-break: break-word;
 
     &--linked {
-        color: color.adjust($sky, $lightness: 20%);
+        @include t-shift(color, active, $sky, 20%);
         text-decoration: underline;
     }
 }
@@ -1833,7 +1844,7 @@
     font-size: 0.82rem; // 13px: "Checklist" fits one of four tabs on a 360px screen
     font-weight: 700;
     cursor: pointer;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     color: #111;
     border: 2px solid #111;
     border-radius: 10px;
@@ -1853,9 +1864,9 @@
         box-shadow: 0 0 0 #111;
     }
 
-    &--idea.mmobile-create-tab--active { background: $leaf; }
-    &--checklist.mmobile-create-tab--active { background: $indigo; }
-    &--note.mmobile-create-tab--active { background: $neo-green; }
+    &--idea.mmobile-create-tab--active { background: t(node-leaf, $leaf); }
+    &--checklist.mmobile-create-tab--active { background: t(node-checklist, $indigo); }
+    &--note.mmobile-create-tab--active { background: t(node-note, $neo-green); }
 }
 
 // The create sheet is three zones: a fixed header (grab handle + ✕), a body that
@@ -1930,12 +1941,12 @@
     border: 3px solid #111;
     border-radius: 11px;
     box-shadow: 0 3px 0 #111;
-    background: $neutral;
+    background: t(btn-neutral, $neutral);
     color: #111;
     cursor: pointer;
 
     // A link is typed in but the field is folded: still visible that there is one.
-    &--filled { background: $link; }
+    &--filled { background: t(btn-secondary, $link); }
     &:active { transform: translateY(2px); box-shadow: 0 1px 0 #111; }
     &:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
 }
@@ -2016,7 +2027,7 @@
     border: 2px solid #111;
     border-radius: 10px;
     box-shadow: 3px 3px 0 1px #111;
-    background: $indigo;
+    background: t(node-checklist, $indigo);
     color: white;
     font-size: 1rem;
     flex-shrink: 0;
@@ -2062,7 +2073,7 @@
     border: 3px solid #111;
     border-radius: 11px;
     box-shadow: 0 3px 0 #111;
-    background: $indigo;
+    background: t(node-checklist, $indigo);
     color: #111;
     font-family: inherit;
     font-size: 1.5rem;
@@ -2189,7 +2200,9 @@
     }
 
     .mmobile-list {
-        padding: 10px 24px 18px;
+        --mmobile-bar-space: 146px;
+        margin-bottom: calc(max(14px, env(safe-area-inset-bottom, 14px)) + 30px);
+        padding: 10px 24px calc(18px + var(--mmobile-bar-space) + env(safe-area-inset-bottom, 0px));
     }
 
     .mmobile-node {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo, type MouseEvent, type MutableRefObject } from 'react';
 import { useIdeaContext } from '../context/IdeaContext';
+import { PanelBackground } from './ThemeBackground';
 import { useIdeaActions, subtreeIds } from '../utilities/idea/useIdeaActions';
 import { computeLens, type MapLens, type LensInfo } from '../utilities/idea/mapLens';
 import { fetchFullIdeaList, IdeaType, ChecklistIdea, getIdeaLink, openIdeaLink, resolveIdeaLabel, isNoteMode } from '../utilities';
@@ -569,6 +570,7 @@ function MindMap({ onClose, visible, reveal }: MindMapProps) {
                 className={`mm-body${dragging || drag ? ' mm-body--dragging' : ''}`}
                 onMouseDown={onMouseDown}
             >
+                <PanelBackground />
                 <div
                     ref={canvasRef}
                     className="mm-canvas"

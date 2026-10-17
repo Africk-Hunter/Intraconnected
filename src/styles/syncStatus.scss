@@ -35,12 +35,12 @@
 
     &--failed {
         background: #FFD9D4;
-        border-color: $danger;
-        box-shadow: 4px 4px 0 1px $danger;
+        border-color: t(status-error, $danger);
+        box-shadow: 4px 4px 0 1px t(status-error, $danger);
     }
 
     &--waiting {
-        background: $link;
+        background: t(highlight, $link);
     }
 
     &--notice {
@@ -69,11 +69,11 @@
     color: black;
 
     &--retry {
-        background: $leaf;
+        background: t(btn-primary, $leaf);
     }
 
     &--discard {
-        background: $link;
+        background: t(btn-secondary, $link);
     }
 
     &:disabled {
@@ -93,7 +93,7 @@
     color: black;
 
     &:focus-visible {
-        outline: 3px solid $sky;
+        outline: 3px solid t(focus-ring, $sky);
         outline-offset: 2px;
         border-radius: 4px;
     }
