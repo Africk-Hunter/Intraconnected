@@ -164,7 +164,7 @@ export default async (req: Request, _context: Context) => {
                 return jsonError(409, "You already have Lifetime access.");
             }
 
-            const { amount, currency } = await getLifetimePrice(uid, priceId);
+            const { amount, currency } = await getLifetimePrice(priceId);
 
             const paymentIntent = await stripe().paymentIntents.create({
                 amount,

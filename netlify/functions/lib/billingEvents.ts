@@ -84,10 +84,7 @@ export function extractUidFromEvent(event: Stripe.Event): string | null {
 // Everything else — incomplete (first payment never confirmed),
 // incomplete_expired (that confirmation window lapsed), unpaid (retries
 // exhausted), paused, and canceled if it's ever reported this way instead of
-// via .deleted — does not. Deliberately a *stricter* superset than
-// LIFETIME_UPGRADE_DISCOUNT_ELIGIBLE_STATUSES below: keeping access during a
-// payment hiccup is one thing, handing out a new discount while behind on
-// payment is another.
+// via .deleted — does not.
 const ANNUAL_ACCESS_STATUSES: Stripe.Subscription.Status[] = ["active", "trialing", "past_due"];
 
 // A non-access-granting subscription that isn't the one the account currently
@@ -155,12 +152,11 @@ export function deriveBillingUpdate(event: Stripe.Event, currentBilling?: Billin
                             ? (currentBilling.lifetimePurchasedAt ?? currentBilling.updatedAt)
                             : Date.now(),
                 },
-                // An Annual subscriber upgrading to Lifetime already paid for
-                // this purchase (see the flat, non-prorated credit in
-                // lifetimePricing.ts) — the old subscription now needs to
-                // stop renewing entirely, immediately, not linger through
-                // cancel_at_period_end. The caller performs the actual
-                // Stripe cancel call; see stripe-webhook.ts.
+                // An Annual subscriber upgrading to Lifetime no longer needs
+                // the old subscription — it must stop renewing entirely,
+                // immediately, not linger through cancel_at_period_end. The
+                // caller performs the actual Stripe cancel call; see
+                // stripe-webhook.ts.
                 cancelSubscriptionId: currentBilling?.stripeSubscriptionId ?? null,
             };
         }
@@ -320,20 +316,4 @@ export function deriveLifetimeRefundUpdate(uid: string, currentBilling: BillingD
             lifetimePurchasedAt: null,
         },
     };
-}
-
-const LIFETIME_UPGRADE_DISCOUNT_ELIGIBLE_STATUSES: Stripe.Subscription.Status[] = ["active", "trialing"];
-
-// Annual subscribers already paid for the current term, so they get a flat
-// credit toward Lifetime regardless of how far into the year they are (not
-// day-prorated — the whole annual price is ~$15, not worth date math for).
-// cancelAtPeriodEnd is deliberately not checked: a cancel-pending sub is
-// still paid-through and stays eligible until access actually lapses.
-// Cancel/resubscribe discount-farming is an accepted risk given the amounts.
-export function isEligibleForLifetimeUpgradeDiscount(
-    billing: Pick<BillingDoc, "plan" | "subscriptionStatus"> | null
-): boolean {
-    if (!billing) return false;
-    if (billing.plan !== "annual") return false;
-    return billing.subscriptionStatus !== null && LIFETIME_UPGRADE_DISCOUNT_ELIGIBLE_STATUSES.includes(billing.subscriptionStatus);
 }

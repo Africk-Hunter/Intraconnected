@@ -3,8 +3,7 @@ import { useIdeaContext } from "../../context/IdeaContext";
 import AnimatedOverlay from "../AnimatedOverlay";
 import { WarningIcon } from "../Icons";
 import PriceCard from "../landing/PriceCard";
-import { startCheckout, formatMoney } from "../../utilities/billing/billing";
-import { useLifetimePrice } from "../../utilities/billing/useLifetimePrice";
+import { startCheckout } from "../../utilities/billing/billing";
 import { FREE_NODE_LIMIT } from "../../utilities/billing/limits";
 import { ANNUAL_PRICE_DISPLAY, ANNUAL_PRICE_PER_MONTH_DISPLAY, LIFETIME_PRICE_DISPLAY } from "../../utilities/billing/pricingDisplay";
 import { useModalFocusTrap } from "../../utilities/useModalFocusTrap";
@@ -20,7 +19,6 @@ function UpgradeModal() {
     const isMobileUI = useIsMobileUI();
     // In the app the website's checkout isn't offered (see purchaseMode.ts).
     const mode = usePurchaseMode();
-    const { preview: lifetimePreview, loading: lifetimeLoading } = useLifetimePrice(upgradeModalOpen && mode === 'checkout', billingPlan === 'annual');
 
     function handleClose() {
         setUpgradeModalOpen(false);
@@ -60,20 +58,6 @@ function UpgradeModal() {
         : mode === 'none'
             ? `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused. Deleting ideas you no longer need makes room.`
             : `Your idea tree has reached ${FREE_NODE_LIMIT} nodes, the max the Free plan allows. New ideas are paused until you upgrade.`;
-    const lifetimeDiscount = lifetimePreview && lifetimePreview.discountCents > 0 ? lifetimePreview : null;
-    const lifetimePrice = lifetimeLoading
-        ? '…'
-        : lifetimeDiscount
-            ? formatMoney(lifetimeDiscount.amount, lifetimeDiscount.currency)
-            : LIFETIME_PRICE_DISPLAY;
-    // Only for Annual subscribers; `where` says where the discounted price is shown.
-    const lifetimeCreditNote = (where: string) => billingPlan !== 'annual'
-        ? null
-        : lifetimeLoading
-            ? 'Applying your Annual credit…'
-            : lifetimeDiscount
-                ? `Your Annual payment is credited, ${formatMoney(lifetimeDiscount.discountCents, lifetimeDiscount.currency)} off, already applied ${where}.`
-                : "You've already paid for this year, that's credited at checkout.";
 
     if (isMobileUI) {
         return (
@@ -85,10 +69,7 @@ function UpgradeModal() {
                 notice={notice}
                 subtitle={subtitle}
                 showAnnual={showAnnual}
-                lifetimePrice={lifetimePrice}
-                lifetimeWasPrice={!lifetimeLoading && lifetimeDiscount ? LIFETIME_PRICE_DISPLAY : null}
-                lifetimeNote={lifetimeCreditNote('to the price')}
-                lifetimeLoading={lifetimeLoading}
+                lifetimePrice={LIFETIME_PRICE_DISPLAY}
                 onUpgrade={handleUpgrade}
                 onOpenPricing={handleOpenPricing}
                 fromProfile={profileModalOpen}
@@ -147,11 +128,10 @@ function UpgradeModal() {
                         variant="lifetime"
                         badge="LIFETIME"
                         tier="Lifetime"
-                        price={lifetimePrice}
-                        ctaDisabled={lifetimeLoading}
+                        price={LIFETIME_PRICE_DISPLAY}
                         priceSuffix="one time"
                         subtitle="Pay once, yours forever"
-                        note={lifetimeCreditNote('above') ?? 'No renewals. No surprises.'}
+                        note="No renewals. No surprises."
                         features={[
                             { label: 'Unlimited nodes', bold: true },
                             { label: 'Full feature access' },

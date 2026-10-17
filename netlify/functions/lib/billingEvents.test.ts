@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type Stripe from 'stripe';
-import { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent, isStaleSubscriptionEvent, isEligibleForLifetimeUpgradeDiscount, type BillingDoc } from './billingEvents';
+import { deriveBillingUpdate, deriveLifetimeRefundUpdate, extractUidFromEvent, isStaleSubscriptionEvent, type BillingDoc } from './billingEvents';
 
 function fakeEvent(type: string, object: Record<string, unknown>): Stripe.Event {
     return { type, data: { object } } as unknown as Stripe.Event;
@@ -488,39 +488,5 @@ describe('deriveLifetimeRefundUpdate', () => {
 
     it('is a no-op when there is no billing doc at all', () => {
         expect(deriveLifetimeRefundUpdate('uid-123', null)).toBeNull();
-    });
-});
-
-describe('isEligibleForLifetimeUpgradeDiscount', () => {
-    it('is eligible on an active annual subscription', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount({ plan: 'annual', subscriptionStatus: 'active' })).toBe(true);
-    });
-
-    it('is eligible on a trialing annual subscription', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount({ plan: 'annual', subscriptionStatus: 'trialing' })).toBe(true);
-    });
-
-    it('is not eligible when payment is past due', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount({ plan: 'annual', subscriptionStatus: 'past_due' })).toBe(false);
-    });
-
-    it('is not eligible when unpaid', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount({ plan: 'annual', subscriptionStatus: 'unpaid' })).toBe(false);
-    });
-
-    it('is not eligible once canceled', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount({ plan: 'annual', subscriptionStatus: 'canceled' })).toBe(false);
-    });
-
-    it('is not eligible on the free plan', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount({ plan: 'free', subscriptionStatus: null })).toBe(false);
-    });
-
-    it('is not eligible on the lifetime plan', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount({ plan: 'lifetime', subscriptionStatus: null })).toBe(false);
-    });
-
-    it('is not eligible with no billing doc at all', () => {
-        expect(isEligibleForLifetimeUpgradeDiscount(null)).toBe(false);
     });
 });

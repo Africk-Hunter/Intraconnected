@@ -389,6 +389,138 @@
     }
 }
 
+// Shown only to Lifetime members.
+.pricingThanks {
+    position: relative;
+    max-width: 640px;
+    margin: 12px auto 40px;
+    padding: 34px 32px 26px;
+    text-align: center;
+    background: $leaf;
+    border: $neo-card-border;
+    box-shadow: $neo-card-shadow;
+    border-radius: 8px;
+    animation: pricingThanksPop 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    @media (max-width: $mobile) {
+        margin: 14px 20px 28px;
+        padding: 30px 18px 20px;
+    }
+}
+
+@keyframes pricingThanksPop {
+    0% { opacity: 0; transform: translateY(16px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pricingThanksStar {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(72deg) scale(1.25); }
+}
+
+.pricingThanksBadge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transform: translateX(-50%) rotate(-2deg);
+    padding: 4px 14px;
+    background: $link;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+
+    svg {
+        animation: pricingThanksStar 2.6s ease-in-out infinite;
+    }
+}
+
+.pricingThanksChips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.pricingThanksChip {
+    padding: 7px 13px;
+    border: $neo-detail-border;
+    box-shadow: $neo-detail-shadow;
+    border-radius: $neo-detail-radius;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+    animation: pricingBob 4s ease-in-out infinite;
+    transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &:hover {
+        animation-play-state: paused;
+        transform: translateY(-3px) rotate(var(--rot, 0deg)) scale(1.06);
+    }
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    &--sky { background: $sky; --rot: -3deg; }
+    &--link { background: $link; --rot: 2deg; animation-delay: 0.8s; }
+    &--indigo { background: $indigo; color: #fff; --rot: -2deg; animation-delay: 1.6s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pricingThanks,
+    .pricingThanksChip,
+    .pricingThanksBadge svg {
+        animation: none;
+    }
+}
+
+.pricingThanksTitle {
+    margin: 0;
+    font-size: clamp(24px, 3.4vw, 34px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    color: #111;
+
+    span {
+        display: inline-block;
+        padding: 0 10px;
+        background: #fff;
+        border: $neo-detail-border;
+        box-shadow: $neo-detail-shadow;
+        border-radius: 8px;
+        transform: rotate(-1.5deg);
+    }
+}
+
+.pricingThanksText {
+    margin: 16px auto 0;
+    max-width: 30rem;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.55;
+    color: #222;
+}
+
+.pricingThanksSign {
+    margin: 14px 0 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.6);
+}
+
 // ── Shared "Every plan includes" + phone-only pieces ─────────────────────────
 
 // Desktop shows the full feature list on each card, so these stay hidden.
@@ -541,7 +673,7 @@
     }
 
     // Free's and Annual's notes just repeat the subtitle/footnote; Lifetime's
-    // can carry the Annual-credit message, so it stays.
+    // stays.
     .pricingCards .priceCard--free .priceCardNote,
     .pricingCards .priceCard--annual .priceCardNote {
         display: none;

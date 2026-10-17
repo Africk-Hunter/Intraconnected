@@ -31,8 +31,7 @@ export interface CheckoutIntent {
 
 // Creates a PaymentIntent (lifetime) or an incomplete Subscription (annual)
 // and returns its client secret — what <Elements> needs to mount the
-// Payment Element — plus the actual amount that will be charged (Lifetime's
-// may be discounted; see fetchLifetimePricePreview).
+// Payment Element — plus the amount that will be charged.
 export class EmailNotVerifiedError extends Error {
     constructor() {
         super('Please verify your email address before upgrading.');
@@ -74,54 +73,6 @@ export async function fetchCheckoutIntent(plan: CheckoutPlan): Promise<CheckoutI
     }
 
     return (await res.json()) as CheckoutIntent;
-}
-
-export interface LifetimePricePreview {
-    amount: number;
-    currency: string;
-    discountCents: number;
-}
-
-// Lets the plan-picker modal show Lifetime's real price (credited if the
-// user already has Annual) before they've committed to a plan — mirrors
-// what create-payment-intent.ts will actually charge.
-export async function fetchLifetimePricePreview(): Promise<LifetimePricePreview> {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error('You must be signed in.');
-    }
-
-    const idToken = await user.getIdToken();
-    const res = await fetch(apiUrl('/.netlify/functions/get-lifetime-price'), {
-        headers: { Authorization: `Bearer ${idToken}` },
-    });
-
-    if (!res.ok) {
-        throw new Error(await res.text());
-    }
-
-    return (await res.json()) as LifetimePricePreview;
-}
-
-// Memoized so the prefetch (fired as soon as the plan is known to be Annual,
-// see useBillingPlanSync) and the modal/pricing card share one request. Short
-// TTL because the credit changes with time; failures aren't cached.
-const PREVIEW_TTL_MS = 5 * 60 * 1000;
-let previewCache: { uid: string; at: number; promise: Promise<LifetimePricePreview> } | null = null;
-
-export function getLifetimePricePreview(): Promise<LifetimePricePreview> {
-    const uid = auth.currentUser?.uid;
-    if (uid && previewCache && previewCache.uid === uid && Date.now() - previewCache.at < PREVIEW_TTL_MS) {
-        return previewCache.promise;
-    }
-    const promise = fetchLifetimePricePreview();
-    if (uid) {
-        previewCache = { uid, at: Date.now(), promise };
-        promise.catch(() => {
-            if (previewCache?.promise === promise) previewCache = null;
-        });
-    }
-    return promise;
 }
 
 export { formatMoney } from './pricingDisplay';

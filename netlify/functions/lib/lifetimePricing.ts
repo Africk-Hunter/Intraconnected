@@ -1,14 +1,6 @@
 import { firestore } from "./firebaseAdmin";
-import { ANNUAL_PRICE_CENTS } from "../../../shared/pricing";
 import { stripe } from "./stripe";
-import { isEligibleForLifetimeUpgradeDiscount, type BillingDoc } from "./billingEvents";
-
-// Flat credit toward Lifetime for existing Annual subscribers, equal to
-// what they already paid for the year. Not a secret/per-environment value —
-// committed as a constant (shared with the app's displayed price) rather than
-// an env var, since env vars aren't committed and this needs to just work in
-// every environment without extra setup.
-const LIFETIME_UPGRADE_DISCOUNT_CENTS = ANNUAL_PRICE_CENTS;
+import type { BillingDoc } from "./billingEvents";
 
 export async function getBillingDoc(uid: string): Promise<BillingDoc | null> {
     const doc = await firestore().collection("users").doc(uid).collection("meta").doc("billing").get();
@@ -53,32 +45,17 @@ export async function recordStripeCustomer(uid: string, customerId: string, exis
     }
 }
 
-// Best-effort: a failure here should never block checkout, just fall back
-// to full price.
-export async function getLifetimeUpgradeDiscountCents(uid: string): Promise<number> {
-    try {
-        const billing = await getBillingDoc(uid);
-        return isEligibleForLifetimeUpgradeDiscount(billing) ? LIFETIME_UPGRADE_DISCOUNT_CENTS : 0;
-    } catch {
-        return 0;
-    }
-}
-
 export interface LifetimePrice {
     amount: number;
     currency: string;
-    discountCents: number;
 }
 
-// Shared by create-payment-intent.ts (actually charges this) and
-// get-lifetime-price.ts (previews it before checkout opens) so the two
-// never drift out of sync.
-export async function getLifetimePrice(uid: string, priceId: string): Promise<LifetimePrice> {
+// The amount create-payment-intent.ts charges for Lifetime, straight from the
+// Stripe price.
+export async function getLifetimePrice(priceId: string): Promise<LifetimePrice> {
     const price = await stripe().prices.retrieve(priceId);
     if (typeof price.unit_amount !== "number") {
         throw new Error("Lifetime price has no unit_amount.");
     }
-    const discountCents = await getLifetimeUpgradeDiscountCents(uid);
-    const amount = Math.max(price.unit_amount - discountCents, 0);
-    return { amount, currency: price.currency, discountCents };
+    return { amount: price.unit_amount, currency: price.currency };
 }

@@ -26,10 +26,6 @@ interface Props {
     subtitle: string;
     showAnnual: boolean;
     lifetimePrice: string;
-    // The undiscounted price, struck through, when an Annual credit applies.
-    lifetimeWasPrice: string | null;
-    lifetimeNote: string | null;
-    lifetimeLoading: boolean;
     onUpgrade: (plan: Plan) => void;
     onOpenPricing: () => void;
     // Opened from Profile: shows Back (returns to Profile) instead of ✕.
@@ -49,7 +45,7 @@ export default function MobileUpgradeSheet(props: Props) {
 
 function UpgradeSheetBody({
     onClose, mode, title, notice, subtitle, showAnnual,
-    lifetimePrice, lifetimeWasPrice, lifetimeNote, lifetimeLoading, onUpgrade, onOpenPricing, fromProfile,
+    lifetimePrice, onUpgrade, onOpenPricing, fromProfile,
 }: Props) {
     const [plan, setPlan] = useState<Plan>(showAnnual ? DEFAULT_PLAN : 'lifetime');
     const swipe = useSheetSwipeDown(onClose);
@@ -57,7 +53,6 @@ function UpgradeSheetBody({
     useModalFocusTrap(true, swipe.sheetRef, onClose);
 
     const selected = showAnnual ? plan : 'lifetime';
-    const ctaBusy = selected === 'lifetime' && lifetimeLoading;
 
     function handlePlanKey(e: React.KeyboardEvent) {
         if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
@@ -80,13 +75,11 @@ function UpgradeSheetBody({
                     </span>
                 </span>
                 <span className="mupgrade-plan-price">
-                    {!isAnnual && lifetimeWasPrice && <s className="mupgrade-plan-was">{lifetimeWasPrice}</s>}
                     <strong key={isAnnual ? ANNUAL_PRICE_DISPLAY : lifetimePrice} className="mupgrade-plan-amount">
                         {isAnnual ? ANNUAL_PRICE_DISPLAY : lifetimePrice}
                     </strong>
                     <span className="mupgrade-plan-suffix">{isAnnual ? 'per year' : 'one time'}</span>
                 </span>
-                {!isAnnual && lifetimeNote && <span className="mupgrade-plan-note">{lifetimeNote}</span>}
             </>
         );
         const className = `mupgrade-plan mupgrade-plan--${id}${isSelected ? ' is-selected' : ''}`;
@@ -171,10 +164,9 @@ function UpgradeSheetBody({
                                 type="button"
                                 className={`mupgrade-cta mupgrade-cta--${selected}`}
                                 onClick={() => onUpgrade(selected)}
-                                disabled={ctaBusy}
                             >
-                                <span key={ctaBusy ? 'busy' : selected} className="mupgrade-swap">
-                                    {ctaBusy ? 'Applying your credit…' : selected === 'annual' ? `Start Annual for ${ANNUAL_PRICE_DISPLAY}` : `Unlock Lifetime for ${lifetimePrice}`}
+                                <span key={selected} className="mupgrade-swap">
+                                    {selected === 'annual' ? `Start Annual for ${ANNUAL_PRICE_DISPLAY}` : `Unlock Lifetime for ${lifetimePrice}`}
                                 </span>
                             </button>
                             <p key={selected} className="mupgrade-fineprint mupgrade-swap">

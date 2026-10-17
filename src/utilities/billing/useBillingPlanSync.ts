@@ -14,11 +14,6 @@ export function watchBillingPlan(setBillingPlan: (plan: BillingPlan) => void): (
         if (!user) return;
         unsubscribeBilling = subscribeBillingStatus(status => {
             setBillingPlan(status.plan);
-            // Warm the discounted Lifetime price so the upgrade card has it
-            // by the time it's opened (the endpoint is a cold-start + Stripe call).
-            if (status.plan === 'annual') {
-                void import('./billing').then(({ getLifetimePricePreview }) => getLifetimePricePreview().catch(() => {}));
-            }
         });
     });
     return () => {

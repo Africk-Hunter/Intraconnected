@@ -279,9 +279,9 @@ const PHASES = [
     { l: "On Annual, go to Profile → Account → Cancel.", e: ["<a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Subscription</a> shows <code>cancel_at_period_end: true</code>", "<code>customer.subscription.updated</code> arrives; plan stays <code>annual</code>"] },
     { l: "In the <a href='https://dashboard.stripe.com/test/subscriptions' target='_blank' rel='noopener'>Stripe Dashboard</a>, open the subscription and cancel it immediately.", e: ["<code>customer.subscription.deleted</code> arrives; plan becomes <code>free</code>"] }
   ]},
-  { t: "Annual → Lifetime upgrade", s: "Discount and immediate cancel", steps: [
-    { l: "Reset, buy Annual, then open the upgrade picker.", e: ["Lifetime price is $14.99 less (the <code>get-lifetime-price</code> preview)"] },
-    { l: "Buy Lifetime.", e: ["Charged amount in <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Stripe Payments</a> matches the discounted price", "Old subscription cancelled immediately", "<code>plan: \"lifetime\"</code>, <code>previousPlan: \"annual\"</code>"] },
+  { t: "Annual → Lifetime upgrade", s: "Immediate cancel", steps: [
+    { l: "Reset, buy Annual, then open the upgrade picker.", e: ["Lifetime shows the full $39.99, with no credit note"] },
+    { l: "Buy Lifetime.", e: ["Charged amount in <a href='https://dashboard.stripe.com/test/payments' target='_blank' rel='noopener'>Stripe Payments</a> is the full Lifetime price", "Old subscription cancelled immediately", "<code>plan: \"lifetime\"</code>, <code>previousPlan: \"annual\"</code>"] },
     { l: "Check the <code>.updated</code> and <code>.deleted</code> events for the old subscription in <a href='https://dashboard.stripe.com/test/events' target='_blank' rel='noopener'>Stripe Events</a>.", e: ["They did not downgrade the plan", "Subscription fields cleared; plan stays <code>lifetime</code>"] }
   ]},
   { t: "Refunds", s: "Six small tests. Each one starts from Reset to Free", steps: [

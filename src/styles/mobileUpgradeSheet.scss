@@ -237,29 +237,10 @@ $mupgrade-press: 120ms;
     font-variant-numeric: tabular-nums;
 }
 
-.mupgrade-plan-was {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: rgba(0, 0, 0, 0.55);
-}
-
 .mupgrade-plan-suffix {
     font-size: 0.75rem;
     font-weight: 700;
     color: rgba(0, 0, 0, 0.6);
-}
-
-// Annual subscribers' credit, kept in view under the price it changes.
-.mupgrade-plan-note {
-    grid-column: 1 / -1;
-    margin-top: 10px;
-    padding: 8px 10px;
-    background: rgba(255, 255, 255, 0.6);
-    border: 2px solid #111;
-    border-radius: 9px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    line-height: 1.35;
 }
 
 // ── Included in every plan ───────────────────────────────────────────────
@@ -372,8 +353,8 @@ $mupgrade-press: 120ms;
 
 // ── Motion ───────────────────────────────────────────────────────────────
 
-// The button label, fine print and price change with the picked plan (or
-// once the Annual credit loads): a short rise shows what just changed.
+// The button label, fine print and price change with the picked plan:
+// a short rise shows what just changed.
 @keyframes mupgradeSwap {
     from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: none; }
